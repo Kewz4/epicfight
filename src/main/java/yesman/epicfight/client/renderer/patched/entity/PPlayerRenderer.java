@@ -50,6 +50,25 @@ public class PPlayerRenderer extends PHumanoidRenderer<AbstractClientPlayer, Abs
 		mesh.rightLeg.setHidden(!model.rightLeg.visible);
 		mesh.rightPants.setHidden(!model.rightPants.visible);
 		mesh.rightSleeve.setHidden(!model.rightSleeve.visible);
+		
+		
+		/**
+		mesh.head.setHidden(true);
+		mesh.hat.setHidden(true);
+		mesh.jacket.setHidden(true);
+		mesh.torso.setHidden(true);
+		mesh.leftArm.setHidden(!model.leftArm.visible);
+		mesh.leftLeg.setHidden(true);
+		mesh.leftPants.setHidden(true);
+		mesh.leftSleeve.setHidden(true);
+		mesh.rightArm.setHidden(!model.rightArm.visible);
+		mesh.rightLeg.setHidden(true);
+		mesh.rightPants.setHidden(true);
+		mesh.rightSleeve.setHidden(true);
+		
+		mesh.leftArm.setVanillaModelPart(renderer.getModel().leftArm);
+		mesh.rightArm.setVanillaModelPart(renderer.getModel().rightArm);
+		**/
 	}
 	
 	@Override

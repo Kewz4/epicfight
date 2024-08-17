@@ -365,17 +365,6 @@ public class ClientAnimator extends Animator {
 		return this.baseLayer.priority;
 	}
 	
-	public LivingMotion getLivingMotionFor(DynamicAnimation animation) {
-		Layer.LayerType layerType = animation.getProperty(ClientAnimationProperties.LAYER_TYPE).orElse(Layer.LayerType.BASE_LAYER);
-		
-		if (layerType == Layer.LayerType.BASE_LAYER) {
-			return animation == this.baseLayer.animationPlayer.getAnimation() ? this.currentMotion : this.entitypatch.currentLivingMotion;
-		} else {
-			Layer.Priority priority = animation.getProperty(ClientAnimationProperties.PRIORITY).orElse(Layer.Priority.LOWEST);
-			return animation == this.baseLayer.compositeLayers.get(priority).animationPlayer.getAnimation() ? this.currentCompositeMotion : this.entitypatch.currentCompositeMotion;
-		}
-	}
-	
 	public LivingMotion currentMotion() {
 		return this.currentMotion;
 	}

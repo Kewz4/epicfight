@@ -36,4 +36,12 @@ public abstract class ModelPart<T extends VertexBuilder> {
 	public List<T> getVertices() {
 		return this.verticies;
 	}
+	
+	public OpenMatrix4f getVanillaPartTransform() {
+		if (this.vanillaPartTracer == null) {
+			return null;
+		}
+		
+		return this.vanillaPartTracer.get();
+	}
 }

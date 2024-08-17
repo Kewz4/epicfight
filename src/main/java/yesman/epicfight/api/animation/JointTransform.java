@@ -113,8 +113,7 @@ public class JointTransform {
 	}
 	
 	public OpenMatrix4f toMatrix() {
-		OpenMatrix4f matrix = new OpenMatrix4f().translate(this.translation).mulBack(OpenMatrix4f.fromQuaternion(this.rotation)).scale(this.scale);
-		return matrix;
+		return new OpenMatrix4f().translate(this.translation).mulBack(OpenMatrix4f.fromQuaternion(this.rotation)).scale(this.scale);
 	}
 	
 	@Override

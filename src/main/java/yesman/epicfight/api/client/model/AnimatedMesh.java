@@ -197,18 +197,28 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	public void drawToBuffer(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 		Matrix4f matrix4f = poseStack.last().pose();
 		Matrix3f matrix3f = poseStack.last().normal();
-		OpenMatrix4f[] posesNoTranslation = new OpenMatrix4f[poses.length];
 		
-		for (int i = 0; i < poses.length; i++) {
-			if (armature != null) {
-				posesNoTranslation[i] = OpenMatrix4f.mul(poses[i], armature.searchJointById(i).getToOrigin(), null).removeTranslation();
-			} else {
-				posesNoTranslation[i] = poses[i].removeTranslation();
-			}
-		}
-		
-		for (ModelPart<AnimatedVertexBuilder> part : this.parts.values()) {
+		for (AnimatedModelPart part : this.parts.values()) {
 			if (!part.isHidden()) {
+				OpenMatrix4f transform = part.getVanillaPartTransform();
+				OpenMatrix4f[] finalPoses = new OpenMatrix4f[poses.length];
+				OpenMatrix4f[] normalPoses = new OpenMatrix4f[poses.length];
+				
+				for (int i = 0; i < poses.length; i++) {
+					OpenMatrix4f finalPose = new OpenMatrix4f(poses[i]);
+					
+					if (armature != null) {
+						finalPose.mulBack(armature.searchJointById(i).getToOrigin());
+					}
+					
+					if (transform != null) {
+						finalPose.mulBack(transform);
+					}
+					
+					finalPoses[i] = finalPose;
+					normalPoses[i] = finalPose.removeTranslation();
+				}
+				
 				for (AnimatedVertexBuilder vi : part.getVertices()) {
 					int pos = vi.position * 3;
 					int norm = vi.normal * 3;
@@ -224,13 +234,8 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 						int weightIndex = vi.getWeightIndex(i);
 						float weight = this.weights[weightIndex];
 						
-						if (armature != null) {
-							Vec4f.add(OpenMatrix4f.transform(OpenMatrix4f.mul(poses[jointIndex], armature.searchJointById(jointIndex).getToOrigin(), null), position, null).scale(weight), totalPos, totalPos);
-						} else {
-							Vec4f.add(OpenMatrix4f.transform(poses[jointIndex], position, null).scale(weight), totalPos, totalPos);
-						}
-
-						Vec4f.add(OpenMatrix4f.transform(posesNoTranslation[jointIndex], normal, null).scale(weight), totalNorm, totalNorm);
+						Vec4f.add(OpenMatrix4f.transform(finalPoses[jointIndex], position, null).scale(weight), totalPos, totalPos);
+						Vec4f.add(OpenMatrix4f.transform(normalPoses[jointIndex], normal, null).scale(weight), totalNorm, totalNorm);
 					}
 					
 					Vector4f posVec = new Vector4f(totalPos.x, totalPos.y, totalPos.z, 1.0F);
@@ -331,12 +336,6 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 			animationShaderInstance.getLightUniform().set(packedLight & '\uffff', packedLight >> 16 & '\uffff');
 		}
 		
-		for (int i = 0; i < poses.length; i++) {
-			if (animationShaderInstance.getPoses(i) != null) {
-				animationShaderInstance.getPoses(i).set(OpenMatrix4f.exportToMojangMatrix(armature == null ? poses[i] : OpenMatrix4f.mul(poses[i], armature.searchJointById(i).getToOrigin(), null)));
-			}
-		}
-		
 		animationShaderInstance.setupShaderLights();
 		
 		int currentBoundVao = GlStateManager._getInteger(GLConstants.GL_VERTEX_ARRAY_BINDING);
@@ -345,15 +344,9 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		GlStateManager._glBindVertexArray(this.arrayObjectId);
 		EpicFightVertexFormatElement.bindDrawing(this);
 		
-		animationShaderInstance._getVertexFormat().setupBufferState();
-		animationShaderInstance._apply();
-		
 		for (AnimatedModelPart part : this.parts.values()) {
-			part.drawWithShader();
+			part.drawWithShader(animationShaderInstance, armature, poses);
 		}
-		
-		animationShaderInstance._clear();
-		animationShaderInstance._getVertexFormat().clearBufferState();
 		
 		EpicFightVertexFormatElement.unbindDrawing();
 		
@@ -428,14 +421,43 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 			}
 		}
 		
-		public void drawWithShader() {
+		public void drawWithShader(AnimationShaderInstance animationShaderInstance, Armature armature, OpenMatrix4f[] poses) {
 			if (this.isHidden()) {
 				return;
 			}
 			
+			OpenMatrix4f transform = this.getVanillaPartTransform();
+			OpenMatrix4f[] finalPoses = new OpenMatrix4f[poses.length];
+			
+			for (int i = 0; i < poses.length; i++) {
+				OpenMatrix4f finalPose = new OpenMatrix4f(poses[i]);
+				
+				if (armature != null) {
+					finalPose.mulBack(armature.searchJointById(i).getToOrigin());
+				}
+				
+				if (transform != null) {
+					finalPose.mulBack(transform);
+				}
+				
+				finalPoses[i] = finalPose;
+			}
+			
+			for (int i = 0; i < finalPoses.length; i++) {
+				if (animationShaderInstance.getPoses(i) != null) {
+					animationShaderInstance.getPoses(i).set(OpenMatrix4f.exportToMojangMatrix(finalPoses[i]));
+				}
+			}
+			
+			animationShaderInstance._getVertexFormat().setupBufferState();
+			animationShaderInstance._apply();
+			
 			GlStateManager._glBindBuffer(GLConstants.GL_ELEMENT_ARRAY_BUFFER, this.indexBufferId);
 			RenderSystem.drawElements(VertexFormat.Mode.TRIANGLES.asGLMode, this.getVertices().size(), VertexFormat.IndexType.INT.asGLType);
 			GlStateManager._glBindBuffer(GLConstants.GL_ELEMENT_ARRAY_BUFFER, 0);
+			
+			animationShaderInstance._clear();
+			animationShaderInstance._getVertexFormat().clearBufferState();
 		}
 		
 		static byte normalIntValue(float f) {

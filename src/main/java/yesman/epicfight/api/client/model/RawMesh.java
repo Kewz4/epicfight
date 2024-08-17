@@ -67,8 +67,16 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 				return;
 			}
 			
+			poseStack.pushPose();
+			OpenMatrix4f transform = this.getVanillaPartTransform();
+			
+			if (transform != null) {
+				poseStack.mulPoseMatrix(OpenMatrix4f.exportToMojangMatrix(transform));
+			}
+			
 			Matrix4f matrix4f = poseStack.last().pose();
 			Matrix3f matrix3f = poseStack.last().normal();
+			matrix4f.mul(matrix4f);
 			
 			for (VertexBuilder vi : this.getVertices()) {
 				int pos = vi.position * 3;
@@ -79,6 +87,8 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 				
 				drawingFunction.draw(builder, posVec.x(), posVec.x(), posVec.z(), normVec.x(), normVec.y(), normVec.z(), packedLight, r, g, b, a, uvs[uv], uvs[uv + 1], overlay);
 			}
+			
+			poseStack.popPose();
 		}
 	}
 	

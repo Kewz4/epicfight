@@ -15,7 +15,8 @@ import yesman.epicfight.main.EpicFightMod;
 public enum EpicFightArmorMaterials implements ArmorMaterial {
 	STRAY_CLOTH("stray_cloth", 4, new int[]{1, 2, 3, 1}, 15, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> {
 	      return Ingredient.of(Items.STRING);
-	   });
+	   })
+	;
 	
 	private static final int[] HEALTH_PER_SLOT = new int[]{13, 15, 16, 11};
 	private final String name;

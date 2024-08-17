@@ -52,7 +52,6 @@ import yesman.epicfight.client.gui.screen.config.IngameConfigurationScreen;
 import yesman.epicfight.client.renderer.patched.item.EpicFightItemProperties;
 import yesman.epicfight.compat.AzureLibArmorCompat;
 import yesman.epicfight.compat.AzureLibCompat;
-import yesman.epicfight.compat.CuriosCompat;
 import yesman.epicfight.compat.FirstPersonCompat;
 import yesman.epicfight.compat.GeckolibCompat;
 import yesman.epicfight.compat.ICompatModule;
@@ -203,7 +202,7 @@ public class EpicFightMod {
     		}
     		
     		if (ModList.get().isLoaded("curios")) {
-    			ICompatModule.loadCompatModule(CuriosCompat.class);
+    			//ICompatModule.loadCompatModule(CuriosCompat.class);
     		}
     		
     		if (ModList.get().isLoaded("firstperson")) {

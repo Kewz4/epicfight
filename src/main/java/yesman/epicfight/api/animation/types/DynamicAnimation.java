@@ -162,10 +162,6 @@ public abstract class DynamicAnimation {
 	public boolean doesHeadRotFollowEntityHead() {
 		return false;
 	}
-	
-	public DynamicAnimation getThis() {
-		return this;
-	}
 
 	@OnlyIn(Dist.CLIENT)
 	public void renderDebugging(PoseStack poseStack, MultiBufferSource buffer, LivingEntityPatch<?> entitypatch, float playTime, float partialTicks) {

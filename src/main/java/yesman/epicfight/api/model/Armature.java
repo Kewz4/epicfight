@@ -50,15 +50,15 @@ public class Armature {
 		return jointMap.get(name);
 	}
 	
+	/**
+	 * @param applyOriginTransform if you need a final pose of the animations, give it false. 
+	 */
 	public OpenMatrix4f[] getPoseAsTransformMatrix(Pose pose, boolean applyOriginTransform) {
 		OpenMatrix4f[] jointMatrices = new OpenMatrix4f[this.jointNumber];
 		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, jointMatrices, applyOriginTransform);
 		return jointMatrices;
 	}
 	
-	/**
-	 * @param applyOriginTransform if you need a final pose of the animations, give it false. 
-	 */
 	private void getPoseTransform(Joint joint, OpenMatrix4f parentTransform, Pose pose, OpenMatrix4f[] jointMatrices, boolean applyOriginTransform) {
 		OpenMatrix4f result = pose.getOrDefaultTransform(joint.getName()).getAnimationBindedMatrix(joint, parentTransform);
 		jointMatrices[joint.getId()] = result;

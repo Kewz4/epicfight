@@ -165,12 +165,15 @@ public class CapabilityItem {
 			if (contents.getKey().equals(key)) {
 				return component;
 			}
-			// check all arguments.
-			for (Object arg : contents.getArgs()) {
-				if (arg instanceof Component argComponent) {
-					Object ret = this.findComponentArgument(argComponent, key);
-					if (ret != null) {
-						return ret;
+			
+			if (contents.getArgs() != null) {
+				// check all arguments.
+				for (Object arg : contents.getArgs()) {
+					if (arg instanceof Component argComponent) {
+						Object ret = this.findComponentArgument(argComponent, key);
+						if (ret != null) {
+							return ret;
+						}
 					}
 				}
 			}

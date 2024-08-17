@@ -1,7 +1,5 @@
 package yesman.epicfight.events;
 
-import java.lang.reflect.Method;
-
 import com.google.common.collect.Multimap;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -47,7 +45,6 @@ import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.event.entity.player.PlayerFlyableFallEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.AttackResult;
@@ -83,8 +80,6 @@ import yesman.epicfight.world.gamerule.EpicFightGamerules;
 
 @Mod.EventBusSubscriber(modid=EpicFightMod.MODID)
 public class EntityEvents {
-	protected static Method getDamageAfterMagicAbsorb = ObfuscationReflectionHelper.findMethod(LivingEntity.class, "m_6515_", DamageSource.class, float.class);
-	
 	@SuppressWarnings("unchecked")
 	@SubscribeEvent
 	public static void spawnEvent(EntityJoinLevelEvent event) {

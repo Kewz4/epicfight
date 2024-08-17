@@ -2,12 +2,12 @@ package yesman.epicfight.compat;
 
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.model.transformer.AzureArmorTransformer;
-import yesman.epicfight.api.client.model.transformer.CustomModelBakery;
+import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
 
 public class AzureLibArmorCompat implements ICompatModule {
 	@Override
 	public void onModEventBusClient(IEventBus eventBus) {
-		CustomModelBakery.registerNewTransformer(new AzureArmorTransformer());
+		HumanoidModelBaker.registerNewTransformer(new AzureArmorTransformer());
 	}
 	
 	@Override

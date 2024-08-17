@@ -22,7 +22,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class Layer {
-	protected DynamicAnimation nextAnimation;
+	protected StaticAnimation nextAnimation;
 	protected final LinkAnimation linkAnimation;
 	protected final ConcurrentLinkAnimation concurrentLinkAnimation;
 	protected final LayerOffAnimation layerOffAnimation;

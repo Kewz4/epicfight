@@ -34,9 +34,9 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
 import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Mesh.DrawingFunction;
-import yesman.epicfight.api.client.model.transformer.CustomModelBakery;
+import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.model.JsonModelLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -213,7 +213,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 				JsonModelLoader modelLoader = new JsonModelLoader(resourceManager, rl);
 				animatedMesh = modelLoader.loadAnimatedMesh(AnimatedMesh::new);
 			} else {
-				animatedMesh = CustomModelBakery.bakeArmor(entityliving, itemstack, armorItem, slot, originalModel, forgeModel, originalRenderer.getParentModel(), this.mesh.get());
+				animatedMesh = HumanoidModelBaker.bakeArmor(entityliving, itemstack, armorItem, slot, originalModel, forgeModel, originalRenderer.getParentModel(), this.mesh.get());
 			}
 			
 			putModel(registryName, animatedMesh);

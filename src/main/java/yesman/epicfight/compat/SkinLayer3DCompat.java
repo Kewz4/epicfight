@@ -1,7 +1,5 @@
 package yesman.epicfight.compat;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
@@ -11,7 +9,6 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.tr7zw.skinlayers.SkinLayersModBase;
-import dev.tr7zw.skinlayers.SkinUtil;
 import dev.tr7zw.skinlayers.accessor.PlayerEntityModelAccessor;
 import dev.tr7zw.skinlayers.accessor.PlayerSettings;
 import dev.tr7zw.skinlayers.api.Mesh;
@@ -57,6 +54,7 @@ import yesman.epicfight.client.renderer.patched.entity.PPlayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.mixin.SkinLayer3DMixinSkinUtil;
 
 public class SkinLayer3DCompat implements ICompatModule {
 	private static Capability<SkinLayer3DMeshes> SKIN_LAYER_3D_CAPABILITY;
@@ -147,17 +145,6 @@ public class SkinLayer3DCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class EpicFight3DSkinLayerRenderer extends ModelRenderLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CustomLayerFeatureRenderer, HumanoidMesh> {
-		private static Method skinUtil$getSkinTexture;
-		
-		static {
-			try {
-				skinUtil$getSkinTexture = SkinUtil.class.getDeclaredMethod("getSkinTexture", AbstractClientPlayer.class);
-				skinUtil$getSkinTexture.setAccessible(true);
-			} catch (NoSuchMethodException | SecurityException e) {
-				e.printStackTrace();
-			}
-		}
-		
 		private final Map<PlayerModelPart, Function<Player, Boolean>> partVisibilities = Maps.newHashMap();
 		
 		public EpicFight3DSkinLayerRenderer() {
@@ -244,14 +231,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 		
 		private static AnimatedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
             CustomizableCubeListBuilder builder = new CustomizableCubeListBuilder();
-			NativeImage skinImage = null;
-			
-			try {
-				skinImage = (NativeImage)skinUtil$getSkinTexture.invoke(null, player);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
-				return null;
-			}
+			NativeImage skinImage = SkinLayer3DMixinSkinUtil.invokeGetSkinTexture(player);
             
             if (SolidPixelWrapper.wrapBox(builder, new WrappedNativeImage(skinImage), width, height, depth, textureU, textureV, topPivot, rotationOffset) != null) {
                 return SkinLayer3DTransformer.transformMesh(player, (skinlayerModelPart == null) ? new CustomizableModelPart(builder.getVanillaCubes(), builder.getCubes(), Collections.emptyMap()) : (CustomizableModelPart)skinlayerModelPart,

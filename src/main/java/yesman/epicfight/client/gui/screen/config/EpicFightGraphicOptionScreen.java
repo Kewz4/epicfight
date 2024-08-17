@@ -12,7 +12,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.transformer.CustomModelBakery;
+import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.widgets.ColorWidget;
 import yesman.epicfight.client.gui.widgets.EpicFightOptionList;
@@ -87,7 +87,7 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		Button exportCustomArmors = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".export_custom_armor"), (button) -> {
 			File resourcePackDirectory = Minecraft.getInstance().getResourcePackDirectory().toFile();
 			try {
-				CustomModelBakery.exportModels(resourcePackDirectory);
+				HumanoidModelBaker.exportModels(resourcePackDirectory);
 				Util.getPlatform().openFile(resourcePackDirectory);
 			} catch (IOException e) {
 				EpicFightMod.LOGGER.info("Failed to export custom armor models");
