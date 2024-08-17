@@ -206,6 +206,7 @@ public class EpicFightMod {
         ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory(IngameConfigurationScreen::new));
         ModLoadingContext.get().registerExtensionPoint(EpicFightExtensions.class, () -> new EpicFightExtensions(EpicFightCreativeTabs.ITEMS.get()));
         
+<<<<<<< Upstream, based on 1.20.1
     	if (ModList.get().isLoaded("geckolib")) {
 			ICompatModule.loadCompatModule(GeckolibCompat.class);
 		}
@@ -241,6 +242,37 @@ public class EpicFightMod {
         if (ModList.get().isLoaded("iceandfire")) {
 			ICompatModule.loadCompatModule(IceAndFireCompat.class);
 		}
+=======
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        	if (ModList.get().isLoaded("geckolib")) {
+    			ICompatModule.loadCompatModule(GeckolibCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("azurelib")) {
+    			ICompatModule.loadCompatModule(AzureLibCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("azurelibarmor")) {
+    			ICompatModule.loadCompatModule(AzureLibArmorCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("curios")) {
+    			//ICompatModule.loadCompatModule(CuriosCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("firstperson")) {
+    			ICompatModule.loadCompatModule(FirstPersonCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("skinlayers3d")) {
+    			ICompatModule.loadCompatModule(SkinLayer3DCompat.class);
+    		}
+    		
+    		if (ModList.get().isLoaded("oculus")) {
+    			ICompatModule.loadCompatModule(IRISCompat.class);
+    		}
+		});
+>>>>>>> d4d5333 20.8.10
 	}
     
     /**

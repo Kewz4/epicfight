@@ -251,7 +251,14 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 				//Render armor to get the visibility of each part
 				originalRenderer.render(ps, Minecraft.getInstance().renderBuffers().bufferSource(), 0, entityliving, 0, 0, 0, 0, 0, 0);
 				
-				animatedMesh = HumanoidModelBaker.bakeArmor(entityliving, itemstack, armorItem, slot, originalModel, forgeModel, originalRenderer.getParentModel(), this.mesh.get());
+				if (armorItems instanceof List<ItemStack> armorItemList) {
+					armorItemList.set(0, feet);
+					armorItemList.set(1, legs);
+					armorItemList.set(2, chest);
+					armorItemList.set(3, head);
+				}
+				
+				animatedMesh = HumanoidModelBaker.bakeArmor(entityliving, itemstack, armorItem, slot, originalModel, forgeHooksArmorModel, originalRenderer.getParentModel(), this.mesh.get());
 			}
 			
 			putModel(registryName, animatedMesh);
