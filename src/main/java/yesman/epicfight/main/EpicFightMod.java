@@ -265,10 +265,6 @@ public class EpicFightMod {
     }
 	
 	private void addReloadListnerEvent(final AddReloadListenerEvent event) {
-		if (!isPhysicalClient()) {
-			event.addListener(AnimationManager.getInstance());
-		}
-		
 		event.addListener(new ColliderPreset());
 		event.addListener(new SkillManager());
 		event.addListener(new WeaponTypeReloadListener());
@@ -303,6 +299,11 @@ public class EpicFightMod {
 		@SubscribeEvent
 		public static void doServerStuff(final FMLDedicatedServerSetupEvent event) {
 			EpicFightMod.getInstance().animatorProvider = ServerAnimator::getAnimator;
+		}
+		
+		@SubscribeEvent
+		public static  void addReloadListnerEvent(final AddReloadListenerEvent event) {
+			event.addListener(AnimationManager.getInstance());
 		}
     }
 	
