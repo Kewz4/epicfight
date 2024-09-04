@@ -6,18 +6,27 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AddPackFindersEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -41,6 +50,7 @@ import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.ServerAnimator;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
+import yesman.epicfight.api.client.model.ClothSimulator;
 import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
@@ -317,6 +327,25 @@ public class EpicFightMod {
     		event.registerReloadListener(AnimationManager.getInstance());
     		event.registerReloadListener(ItemSkins.INSTANCE);
     	}
+        
+        @SubscribeEvent
+        public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+    		event.register(ClothSimulator.class);
+    	}
+        
+        @SubscribeEvent
+        public static void attachEntityCapability(AttachCapabilitiesEvent<Entity> event) {
+        	if (event.getObject().getType() == EntityType.PLAYER) {
+        		event.addCapability(new ResourceLocation(EpicFightMod.MODID, "cloth_simulator"), new ICapabilityProvider() {
+        			final ClothSimulator clothSimulator = new ClothSimulator();
+    				
+    				@Override
+    				public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+    					return cap == ClothSimulator.CAPABILITY_KEY ? LazyOptional.of(() -> this.clothSimulator).cast() :  LazyOptional.empty();
+    				}
+        		});
+        	}
+        }
     }
 	
 	@Mod.EventBusSubscriber(modid = EpicFightMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.DEDICATED_SERVER)
