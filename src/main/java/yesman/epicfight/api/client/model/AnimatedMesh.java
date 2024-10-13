@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -37,6 +38,7 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
+import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.model.JsonModelLoader;
 import yesman.epicfight.api.utils.GLConstants;
@@ -59,6 +61,8 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	private VertexBuffer<Byte> normalsBuffer = new VertexBuffer<> (GLConstants.GL_BYTE, 3, true, ByteBuffer::put);
 	private VertexBuffer<Short> jointsBuffer = new VertexBuffer<> (GLConstants.GL_SHORT, 3, false, ByteBuffer::putShort);
 	private VertexBuffer<Float> weightsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
+	
+	protected Map<Integer, OBBCollider> meshCollider;
 	
 	public AnimatedMesh(@Nullable Map<String, float[]> arrayMap, @Nullable Map<MeshPartDefinition, List<AnimatedVertexBuilder>> partBuilders, @Nullable AnimatedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
@@ -162,6 +166,14 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		}
 		
 		return parts.get(name);
+	}
+	
+	public void setMeshCollider(Map<Integer, OBBCollider> meshColliders) {
+		this.meshCollider = meshColliders;
+	}
+	
+	public Set<Map.Entry<Integer, OBBCollider>> getMeshColliderEntry() {
+		return this.meshCollider.entrySet();
 	}
 	
 	/**

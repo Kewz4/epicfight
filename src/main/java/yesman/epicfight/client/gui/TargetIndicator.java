@@ -41,14 +41,15 @@ public class TargetIndicator extends EntityIndicator {
 	@Override
 	public void drawIndicator(LivingEntity entity, @Nullable LivingEntityPatch<?> entitypatch, LocalPlayerPatch playerpatch, PoseStack poseStack, MultiBufferSource multiBufferSource, float partialTicks) {
 		Matrix4f mvMatrix = super.getMVMatrix(poseStack, entity, 0.0F, entity.getBbHeight() + 0.45F, 0.0F, true, partialTicks);
+		float textureSize = 1.0F / 256.0F;
 		
 		if (entitypatch == null) {
-			this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 97, 2, 128, 33);
+			this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 97, 2, 128, 33, textureSize);
 		} else {
 			if (entity.tickCount % 2 == 0 && !entitypatch.flashTargetIndicator(playerpatch)) {
-				this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 132, 0, 167, 36);
+				this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 132, 0, 167, 36, textureSize);
 			} else {
-				this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 97, 2, 128, 33);
+				this.drawTexturedModalRect2DPlane(mvMatrix, multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON)), -0.1F, -0.1F, 0.1F, 0.1F, 97, 2, 128, 33, textureSize);
 			}
 		}
 	}

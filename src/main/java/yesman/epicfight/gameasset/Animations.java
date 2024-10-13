@@ -746,6 +746,9 @@ public class Animations {
 					JointTransform head = pose.getOrDefaultTransform("Head");
 					MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
 				})
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, AnimationEvent.create((entitypatch, animation, params) -> {
+					entitypatch.getClientAnimator().resetCompositeMotion(true);
+				}, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
 				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true);
@@ -783,13 +786,14 @@ public class Animations {
 		FIST_DASH = new DashAttackAnimation(0.06F, 0.05F, 0.15F, 0.3F, 0.7F, null, biped.shoulderR, "biped/combat/fist_dash", biped)
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE);
+		
 		SWORD_AUTO1 = new BasicAttackAnimation(0.1F, 0.0F, 0.1F, 0.4F, null, biped.toolR, "biped/combat/sword_auto1", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F);
 		SWORD_AUTO2 = new BasicAttackAnimation(0.1F, 0.05F, 0.15F, 0.4F, null, biped.toolR, "biped/combat/sword_auto2", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F);
 		SWORD_AUTO3 = new BasicAttackAnimation(0.1F, 0.05F, 0.15F, 0.6F, null, biped.toolR, "biped/combat/sword_auto3", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F);
-		SWORD_DASH = new DashAttackAnimation(0.1F, 0.1F, 0.1F, 0.2F, 0.65F, null, biped.toolR, "biped/combat/sword_dash", biped, true)
+		SWORD_DASH = new DashAttackAnimation(0.15F, 0.1F, 0.1F, 0.2F, 0.65F, null, biped.toolR, "biped/combat/sword_dash", biped, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F);
 		GREATSWORD_AUTO1 = new BasicAttackAnimation(0.25F, 0.15F, 0.25F, 0.65F, null, biped.toolR, "biped/combat/greatsword_auto1", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F);
@@ -829,7 +833,9 @@ public class Animations {
 				new Phase(0.0F, 0.05F, 0.05F, 0.3F, 0.75F, Float.MAX_VALUE, InteractionHand.MAIN_HAND, AttackAnimation.JointColliderPair.of(biped.toolR, null), AttackAnimation.JointColliderPair.of(biped.toolL, null)))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null);
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD);
+		
 		UCHIGATANA_AUTO1 = new BasicAttackAnimation(0.05F, 0.15F, 0.25F, 0.3F, null, biped.toolR, "biped/combat/uchigatana_auto1", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F);
 		UCHIGATANA_AUTO2 = new BasicAttackAnimation(0.05F, 0.2F, 0.3F, 0.3F, null, biped.toolR, "biped/combat/uchigatana_auto2", biped)
@@ -857,7 +863,7 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F);
 		LONGSWORD_AUTO3 = new BasicAttackAnimation(0.05F, 0.2F, 0.3F, 1.0F, null, biped.toolR, "biped/combat/longsword_auto3", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F);
-		LONGSWORD_DASH = new DashAttackAnimation(0.1F, 0.1F, 0.25F, 0.4F, 0.75F, null, biped.toolR, "biped/combat/longsword_dash", biped, true)
+		LONGSWORD_DASH = new DashAttackAnimation(0.15F, 0.1F, 0.25F, 0.4F, 0.75F, null, biped.toolR, "biped/combat/longsword_dash", biped, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F);
 
 		LONGSWORD_LIECHTENAUER_AUTO1 = new BasicAttackAnimation(0.1F, 0.15F, 0.25F, 0.5F, null, biped.toolR, "biped/combat/longsword_liechtenauer_auto1", biped)
@@ -1008,17 +1014,20 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (self, entitypatch, transformSheet) -> {
+					if (self.isLinkAnimation()) {
+						return;
+					}
+					
 					HitResult hitResult = entitypatch.getOriginal().pick(50.0D, 1.0F, false);
 					Vec3 to = hitResult.getLocation();
-
-
 					Vec3 from = entitypatch.getOriginal().position();
-					Vec3 correction = to.subtract(from).normalize().scale(2.0D);
-
+					Vec3 correction = to.subtract(from).normalize().scale(5.0D);
+					
 					TransformSheet correctedCoord = self.getCoord().getCorrectedModelCoord(entitypatch, from, to.add(correction), 0, 2);
 					transformSheet.readFrom(correctedCoord);
 				})
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (0.2F > elapsedTime) {
 						if (entitypatch instanceof PlayerPatch<?> playerpatch) {
@@ -1048,8 +1057,8 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.setter(0.5F))
 				.addProperty(AttackPhaseProperty.ARMOR_NEGATION_MODIFIER, ValueModifier.setter(0.0F))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.setter(2.0F))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_LOCROT_TARGET) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_LOCROT_TARGET)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_LOCATION_ROTATION)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE);
 		
 		REVELATION_TWOHAND = new AttackAnimation(0.1F, 0.0F, 0.05F, 0.1F, 0.35F, ColliderPreset.FIST_FIXED, biped.rootJoint, "biped/skill/revelation_twohand", biped)
@@ -1062,8 +1071,8 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.setter(0.5F))
 				.addProperty(AttackPhaseProperty.ARMOR_NEGATION_MODIFIER, ValueModifier.setter(0.0F))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.setter(2.0F))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_LOCROT_TARGET) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_LOCROT_TARGET)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_LOCATION_ROTATION)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE);
 		
 		BIPED_HIT_SHORT = new HitAnimation(0.05F, "biped/combat/hit_short", biped);
@@ -1089,8 +1098,8 @@ public class Animations {
 		ENDERMAN_KNEE = new AttackAnimation(0.16F, 0.25F, 0.25F, 0.31F, 1.0F, ColliderPreset.FIST, enderman.legR, "enderman/knee", enderman)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.LONG);
 		ENDERMAN_KICK_COMBO = new AttackAnimation(0.1F, "enderman/kick_twice", enderman,
-					new Phase(0.0F, 0.15F, 0.15F, 0.21F, 0.46F, 0.6F, enderman.legR, ColliderPreset.ENDERMAN_LIMB),
-					new Phase(0.6F, 0.75F, 0.75F, 0.81F, 1.6F, Float.MAX_VALUE, enderman.legL, ColliderPreset.ENDERMAN_LIMB))
+					new Phase(0.0F, 0.15F, 0.15F, 0.2F, 0.45F, 0.6F, enderman.legR, ColliderPreset.ENDERMAN_LIMB),
+					new Phase(0.6F, 0.75F, 0.75F, 0.8F, 1.5F, Float.MAX_VALUE, enderman.legL, ColliderPreset.ENDERMAN_LIMB))
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
 		ENDERMAN_GRASP = new AttackAnimation(0.06F, 0.5F, 0.45F, 1.0F, 1.0F, ColliderPreset.ENDERMAN_LIMB, biped.toolR, "enderman/grasp", enderman)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
@@ -1141,7 +1150,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.MOVE_TIME, TimePairList.create(0.0F, 1.35F))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (self, entitypatch, transformSheet) -> {
-					if (entitypatch instanceof EnderDragonPatch dragonpatch) {
+					if (!self.isLinkAnimation() && entitypatch instanceof EnderDragonPatch dragonpatch) {
 						TransformSheet transform = self.getCoord().copyAll();
 						Vec3 dragonpos = dragonpatch.getOriginal().position();
 						Vec3 targetpos = dragonpatch.getOriginal().getPhaseManager().getPhase(PatchedPhases.LANDING).getLandingPosition();
@@ -1155,8 +1164,11 @@ public class Animations {
 						jt0.translation().set(jointCoord);
 						jt1.translation().set(MathUtils.lerpVector(jt0.translation(), jt2.translation(), transform.getKeyframes()[1].time() / transform.getKeyframes()[2].time()));
 						transformSheet.readFrom(transform);
+					} else {
+						transformSheet.readFrom(self.getCoord().copyAll());
 					}
 				})
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addEvents(
 					TimeStampedEvent.create(0.3F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT), TimeStampedEvent.create(1.1F, (entitypatch, animation, params) -> {
 						entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
@@ -1272,6 +1284,7 @@ public class Animations {
 		DRAGON_BACKJUMP_MOVE = new AttackAnimation(0.0F, 10.0F, 10.0F, 10.0F, 10.0F, ColliderPreset.FIST, dragon.rootJoint, "dragon/backjump_move", dragon)
 			.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 			.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+			.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 			.addEvents(TimeStampedEvent.create(1.0F, (entitypatch, animation, params) -> {
 				entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_RECOVERY);
 			}, Side.BOTH));
@@ -1372,7 +1385,8 @@ public class Animations {
 		VEX_CHARGE = new AttackAnimation(0.11F, 0.3F, 0.3F, 0.5F, 1.2F, ColliderPreset.VEX_CHARGE, vex.rootJoint, "vex/charge", vex)
 				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, (entitypatch) -> entitypatch.getLastAttackPosition())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.VEX_TRACE)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, (self, entitypatch, transformSheet) -> {})
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, AnimationEvent.create((entitypatch, animation, params) -> entitypatch.setLastAttackPosition(), Side.SERVER));
 		
@@ -1396,7 +1410,7 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.setter(15.0F))
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (self, entitypatch, transformSheet) -> {
-					if (entitypatch instanceof WitherPatch witherpatch && witherpatch.getOriginal().getAlternativeTarget(0) > 0) {
+					if (!self.isLinkAnimation() && entitypatch instanceof WitherPatch witherpatch && witherpatch.getOriginal().getAlternativeTarget(0) > 0) {
 						TransformSheet transform = self.getTransfroms().get("Root").copyAll();
 						Keyframe[] keyframes = transform.getKeyframes();
 						int startFrame = 1;
@@ -1422,7 +1436,8 @@ public class Animations {
 					} else {
 						transformSheet.readFrom(self.getTransfroms().get("Root").copyAll());
 					}
-				}).addProperty(ActionAnimationProperty.COORD_SET_TICK, (self, entitypatch, transformSheet) -> {})
+				}).addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addEvents(TimeStampedEvent.create(0.4F, (entitypatch, animation, params) -> {
 						if (entitypatch instanceof WitherPatch witherpatch) {
 							witherpatch.startCharging();
@@ -1598,6 +1613,7 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				;
 		
 		ZOMBIE_ATTACK1 = new AttackAnimation(0.1F, 0.3F, 0.4F, 0.6F, 0.85F, ColliderPreset.FIST, biped.toolR, "zombie/attack1", biped)
@@ -1680,6 +1696,7 @@ public class Animations {
 					}
 				})
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
@@ -1704,6 +1721,7 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.addEvents(
 					TimeStampedEvent.create(0.05F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.SERVER).params(EpicFightSounds.SWORD_IN.get()),
@@ -1746,48 +1764,48 @@ public class Animations {
 		
 		EVISCERATE_FIRST = new AttackAnimation(0.08F, 0.0F, 0.05F, 0.15F, 0.45F, null, biped.toolR, "biped/skill/eviscerate_first", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F)
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_LOCROT_TARGET) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_LOCROT_TARGET);
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_LOCATION_ROTATION);
 		
 		EVISCERATE_SECOND = new AttackAnimation(0.15F, 0.0F, 0.04F, 0.05F, 0.4F, null, biped.toolR, "biped/skill/eviscerate_second", biped)
 				.addProperty(AttackPhaseProperty.HIT_SOUND, EpicFightSounds.EVISCERATE.get())
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.EVISCERATE)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F);
 		
-		BLADE_RUSH_COMBO1 = new AttackAnimation(0.1F, 0.0F, 0.2F, 0.25F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo1", biped)
+		BLADE_RUSH_COMBO1 = new AttackAnimation(0.1F, 0.0F, 0.15F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo1", biped)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.0F, 0.35F))
 				.addProperty(ActionAnimationProperty.COORD_UPDATE_TIME, TimePairList.create(0.0F, 0.25F))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_DEST_LOCATION_BEGIN) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_DEST_LOCATION)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.65F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false);
 		
-		BLADE_RUSH_COMBO2 = new AttackAnimation(0.1F, 0.0F, 0.2F, 0.25F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo2", biped)
+		BLADE_RUSH_COMBO2 = new AttackAnimation(0.1F, 0.0F, 0.15F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo2", biped)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.0F, 0.35F))
 				.addProperty(ActionAnimationProperty.COORD_UPDATE_TIME, TimePairList.create(0.0F, 0.25F))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_DEST_LOCATION_BEGIN) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_DEST_LOCATION)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.65F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false);
 		
-		BLADE_RUSH_COMBO3 = new AttackAnimation(0.1F, 0.0F, 0.25F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo3", biped)
+		BLADE_RUSH_COMBO3 = new AttackAnimation(0.1F, 0.0F, 0.2F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/blade_rush_combo3", biped)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.0F, 0.35F))
 				.addProperty(ActionAnimationProperty.COORD_UPDATE_TIME, TimePairList.create(0.0F, 0.25F))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_DEST_LOCATION_BEGIN) 
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_DEST_LOCATION)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.6F)
@@ -1834,6 +1852,7 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.2F, 1.1F))
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
@@ -1857,11 +1876,10 @@ public class Animations {
 		
 		TSUNAMI_REINFORCED = new AttackAnimation(0.2F, 0.2F, 0.35F, 0.65F, 1.3F, ColliderPreset.BIPED_BODY_COLLIDER, biped.rootJoint, "biped/skill/tsunami_reinforced", biped)
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
-				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD_WITH_X_ROT)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.RAW_COORD_WITH_X_ROT)
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
+				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.15F, 0.85F))
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.ROOT_X_MODIFIER)

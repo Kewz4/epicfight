@@ -76,7 +76,6 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 			
 			Matrix4f matrix4f = poseStack.last().pose();
 			Matrix3f matrix3f = poseStack.last().normal();
-			matrix4f.mul(matrix4f);
 			
 			for (VertexBuilder vi : this.getVertices()) {
 				int pos = vi.position * 3;

@@ -85,6 +85,7 @@ public class Armature {
 		JointTransform jt = pose.getOrDefaultTransform(joint.getName());
 		OpenMatrix4f result = jt.getAnimationBindedMatrix(joint, parentTransform);
 		int nextIndex = pathIndex % 10;
+		
 		return nextIndex > 0 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoints().get(nextIndex - 1), result, pathIndex / 10) : result;
 	}
 	

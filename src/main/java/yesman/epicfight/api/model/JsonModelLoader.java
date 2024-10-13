@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -26,6 +28,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.GsonHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModList;
@@ -43,6 +46,9 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
 import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.ClothMesh;
+import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
+import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.Meshes.MeshContructor;
@@ -313,6 +319,77 @@ public class JsonModelLoader {
 			
 			return constructor.invoke(arrayMap, meshMap, null, this.getRenderProperties());
 		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public <T extends ClothMesh> T loadClothMesh(MeshContructor<ClothPart, VertexBuilder, T> constructor) {
+		JsonObject obj = this.rootJson.getAsJsonObject("vertices");
+		JsonObject positions = obj.getAsJsonObject("positions");
+		JsonObject normals = obj.getAsJsonObject("normals");
+		JsonObject uvs = obj.getAsJsonObject("uvs");
+		JsonObject parts = obj.getAsJsonObject("parts");
+		
+		float[] positionArray = ParseUtil.toFloatArray(positions.get("array").getAsJsonArray());
+		
+		for (int i = 0; i < positionArray.length / 3; i++) {
+			int k = i * 3;
+			Vec4f posVector = new Vec4f(positionArray[k], positionArray[k+1], positionArray[k+2], 1.0F);
+			OpenMatrix4f.transform(BLENDER_TO_MINECRAFT_COORD, posVector, posVector);
+			positionArray[k] = posVector.x;
+			positionArray[k+1] = posVector.y;
+			positionArray[k+2] = posVector.z;
+		}
+		
+		float[] normalArray = ParseUtil.toFloatArray(normals.get("array").getAsJsonArray());
+		
+		for (int i = 0; i < normalArray.length / 3; i++) {
+			int k = i * 3;
+			Vec4f normVector = new Vec4f(normalArray[k], normalArray[k+1], normalArray[k+2], 1.0F);
+			OpenMatrix4f.transform(BLENDER_TO_MINECRAFT_COORD, normVector, normVector);
+			normalArray[k] = normVector.x;
+			normalArray[k+1] = normVector.y;
+			normalArray[k+2] = normVector.z;
+		}
+		
+		float[] uvArray = ParseUtil.toFloatArray(uvs.get("array").getAsJsonArray());
+		
+		Map<String, float[]> arrayMap = Maps.newHashMap();
+		Map<MeshPartDefinition, List<VertexBuilder>> meshMap = Maps.newHashMap();
+		
+		arrayMap.put("positions", positionArray);
+		arrayMap.put("normals", normalArray);
+		arrayMap.put("uvs", uvArray);
+		
+		if (parts != null) {
+			for (Map.Entry<String, JsonElement> e : parts.entrySet()) {
+				JsonObject partObject = e.getValue().getAsJsonObject();
+				int[] particlesArray = ParseUtil.toIntArray(partObject.get("particles").getAsJsonObject().get("array").getAsJsonArray());
+				
+				JsonArray constraintsArray = partObject.get("constraints").getAsJsonArray();
+				List<int[]> constraintsList = new ArrayList<> (constraintsArray.size());
+				float[] compliances = new float[constraintsArray.size()];
+				ClothPartDefinition.ConstraintType[] constraintType = new ClothPartDefinition.ConstraintType[constraintsArray.size()];
+				int i = 0;
+				
+				for (JsonElement element : constraintsArray) {
+					JsonObject asJsonObject = element.getAsJsonObject();
+					
+					if (asJsonObject.has("unused") && GsonHelper.getAsBoolean(asJsonObject, "unused")) {
+						continue;
+					}
+					
+					constraintType[i] = ClothPartDefinition.ConstraintType.valueOf(GsonHelper.getAsString(asJsonObject, "type").toUpperCase(Locale.ROOT));
+					compliances[i] = GsonHelper.getAsFloat(asJsonObject, "compliance");
+					constraintsList.add(ParseUtil.toIntArray(asJsonObject.get("array").getAsJsonArray()));
+					element.getAsJsonObject().get("compliance");
+					i++;
+				}
+				
+				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+			}
+		}
+		
+		return constructor.invoke(arrayMap, meshMap, null, this.getRenderProperties());
 	}
 	
 	public <T extends Armature> T loadArmature(ArmatureContructor<T> constructor) {

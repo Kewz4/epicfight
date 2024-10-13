@@ -113,8 +113,8 @@ public class SPChangeLivingMotion {
 					ClientAnimator animator = entitypatch.getClientAnimator();
 					animator.resetLivingAnimations();
 					animator.offAllLayers();
-					animator.resetMotion();
-					animator.resetCompositeMotion();
+					animator.resetMotion(false);
+					animator.resetCompositeMotion(false);
 					
 					for (int i = 0; i < msg.count; i++) {
 						entitypatch.getClientAnimator().addLivingAnimation(msg.motionList.get(i), msg.animationList.get(i));

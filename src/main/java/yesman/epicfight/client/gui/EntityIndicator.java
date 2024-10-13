@@ -33,16 +33,15 @@ public abstract class EntityIndicator extends ModIngameGui {
 		new HealthBarIndicator();
 	}
 	
-	public void drawTexturedModalRect2DPlane(Matrix4f matrix, VertexConsumer vertexConsumer, float minX, float minY, float maxX, float maxY, float minTexU, float minTexV, float maxTexU, float maxTexV) {
-		this.drawTexturedModalRect3DPlane(matrix, vertexConsumer, minX, minY, this.getBlitOffset(), maxX, maxY, this.getBlitOffset(), minTexU, minTexV, maxTexU, maxTexV);
+	public void drawTexturedModalRect2DPlane(Matrix4f matrix, VertexConsumer vertexConsumer, float minX, float minY, float maxX, float maxY, float minTexU, float minTexV, float maxTexU, float maxTexV, float size) {
+		this.drawTexturedModalRect3DPlane(matrix, vertexConsumer, minX, minY, this.getBlitOffset(), maxX, maxY, this.getBlitOffset(), minTexU, minTexV, maxTexU, maxTexV, size);
 	}
 	
-	public void drawTexturedModalRect3DPlane(Matrix4f matrix, VertexConsumer vertexConsumer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float minTexU, float minTexV, float maxTexU, float maxTexV) {
-		float cor = 0.00390625F;
-		vertexConsumer.vertex(matrix, minX, minY, maxZ).uv((minTexU * cor), (maxTexV) * cor).endVertex();
-        vertexConsumer.vertex(matrix, maxX, minY, maxZ).uv((maxTexU * cor), (maxTexV) * cor).endVertex();
-        vertexConsumer.vertex(matrix, maxX, maxY, minZ).uv((maxTexU * cor), (minTexV) * cor).endVertex();
-        vertexConsumer.vertex(matrix, minX, maxY, minZ).uv((minTexU * cor), (minTexV) * cor).endVertex();
+	public void drawTexturedModalRect3DPlane(Matrix4f matrix, VertexConsumer vertexConsumer, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float minTexU, float minTexV, float maxTexU, float maxTexV, float size) {
+		vertexConsumer.vertex(matrix, minX, minY, maxZ).uv((minTexU * size), (maxTexV) * size).endVertex();
+        vertexConsumer.vertex(matrix, maxX, minY, maxZ).uv((maxTexU * size), (maxTexV) * size).endVertex();
+        vertexConsumer.vertex(matrix, maxX, maxY, minZ).uv((maxTexU * size), (minTexV) * size).endVertex();
+        vertexConsumer.vertex(matrix, minX, maxY, minZ).uv((minTexU * size), (minTexV) * size).endVertex();
 	}
 	
 	public EntityIndicator() {

@@ -9,6 +9,7 @@ public class Vec3f extends Vec2f {
 	public static final Vec3f X_AXIS = new Vec3f(1.0F, 0.0F, 0.0F);
 	public static final Vec3f Y_AXIS = new Vec3f(0.0F, 1.0F, 0.0F);
 	public static final Vec3f Z_AXIS = new Vec3f(0.0F, 0.0F, 1.0F);
+	public static final Vec3f ZERO = new Vec3f(0.0F, 0.0F, 0.0F);
 	
 	public float z;
 	
@@ -20,6 +21,10 @@ public class Vec3f extends Vec2f {
 	public Vec3f(float x, float y, float z) {
 		super(x, y);
 		this.z = z;
+	}
+	
+	public Vec3f(double x, double y, double z) {
+		this((float)x, (float)y, (float)z);
 	}
 	
 	public void set(float x, float y, float z) {
@@ -35,11 +40,25 @@ public class Vec3f extends Vec2f {
 	}
 	
 	public Vec3f add(float x, float y, float z) {
-		return add(new Vec3f(x, y, z));
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		return this;
 	}
 	
 	public Vec3f add(Vec3f vec) {
-		return Vec3f.add(vec, this, this);
+		return this.add(vec.x, vec.y, vec.z);
+	}
+	
+	public Vec3f sub(float x, float y, float z) {
+		this.x -= x;
+		this.y -= y;
+		this.z -= z;
+		return this;
+	}
+	
+	public Vec3f sub(Vec3f vec) {
+		return this.sub(vec.x, vec.y, vec.z);
 	}
 	
 	public static Vec3f add(Vec3f left, Vec3f right, Vec3f dest) {
@@ -49,10 +68,6 @@ public class Vec3f extends Vec2f {
 			dest.set(left.x + right.x, left.y + right.y, left.z + right.z);
 			return dest;
 		}
-	}
-	
-	public Vec3f sub(Vec3f vec) {
-		return sub(this, vec, this);
 	}
 	
 	public static Vec3f sub(Vec3f left, Vec3f right, Vec3f dest) {
@@ -113,8 +128,12 @@ public class Vec3f extends Vec2f {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
 	
+	public float distance(Vec3f opponent) {
+		return (float)Math.sqrt(this.distanceSqr(opponent));
+	}
+	
 	public float distanceSqr(Vec3f opponent) {
-		return new Vec3f(this.x - opponent.x, this.y - opponent.y, this.z - opponent.z).lengthSqr();
+		return (float)(Math.pow(this.x - opponent.x, 2) + Math.pow(this.y - opponent.y, 2) + Math.pow(this.z - opponent.z, 2));
 	}
 	
 	public void rotate(float degree, Vec3f axis) {
@@ -158,7 +177,18 @@ public class Vec3f extends Vec2f {
 		}
 		
 		float radian = (float)Math.acos(Math.min(1.0F, dotDivLength));
+		
 		return QuaternionUtils.rotation(axis.toMojangVector(), radian);
+	}
+	
+	public static void interpolate(Vec3f from, Vec3f to, float interpolation, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.x = from.x + (to.x - from.x) * interpolation;
+		dest.y = from.y + (to.y - from.y) * interpolation;
+		dest.z = from.z + (to.z - from.z) * interpolation;
 	}
 	
 	public Vec3f normalise() {

@@ -553,23 +553,23 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	public void toggleMode() {
 		switch (this.playerMode) {
-		case MINING:
+		case MINING -> {
 			this.toBattleMode(true);
-			break;
-		case BATTLE:
+		}
+		case BATTLE -> {
 			this.toMiningMode(true);
-			break;
+		}
 		}
 	}
 	
 	public void toMode(PlayerMode playerMode, boolean synchronize) {
 		switch (playerMode) {
-		case MINING:
+		case MINING -> {
 			this.toMiningMode(synchronize);
-			break;
-		case BATTLE:
+		}
+		case BATTLE -> {
 			this.toBattleMode(synchronize);
-			break;
+		}
 		}
 	}
 	
@@ -629,13 +629,13 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.modelYRot;
 	}
 	
+	public float getYRotO() {
+		return this.modelYRotO;
+	}
+	
 	@Override
 	public void setYRot(float yRot) {
-		if (this.useModelYRot) {
-			this.setModelYRot(yRot, true);
-		} else {
-			this.original.setYRot(yRot);
-		}
+		this.setModelYRot(yRot, true);
 	}
 	
 	@Override

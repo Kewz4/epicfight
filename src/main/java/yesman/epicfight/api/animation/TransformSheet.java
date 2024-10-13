@@ -66,6 +66,9 @@ public class TransformSheet {
 		return this;
 	}
 	
+	/**
+	 * Transform each joint
+	 */
 	public void transform(Consumer<JointTransform> transformFunc) {
 		this.transform(transformFunc, 0, this.keyframes.length);
 	}
@@ -154,15 +157,18 @@ public class TransformSheet {
 		return transform;
 	}
 	
-	public TransformSheet getCorrectedWorldCoord(LivingEntityPatch<?> entitypatch, Vec3 start, Vec3 dest, float xRot, float yRot, int startFrame, int endFrame) {
+	public TransformSheet getCorrectedWorldCoord(LivingEntityPatch<?> entitypatch, Vec3 start, Vec3 dest, float xRot, float yRot, int startFrame, int endFrame, boolean startFromOrigin) {
 		TransformSheet newTransformSheet = this.copyAll();
-		Vec3f firstPos = newTransformSheet.keyframes[0].transform().translation().copy();
 		
-		newTransformSheet.transform((jt) -> {
-			jt.translation().sub(firstPos);
-		});
+		if (startFromOrigin) {
+			Vec3f firstPos = newTransformSheet.keyframes[0].transform().translation().copy();
+			
+			newTransformSheet.transform((jt) -> {
+				jt.translation().sub(firstPos);
+			});
+		}
 		
-		Vec3f fromCoord = newTransformSheet.keyframes[startFrame].transform().translation();
+		Vec3f fromCoord = startFromOrigin ? newTransformSheet.keyframes[startFrame].transform().translation() : Vec3f.ZERO;
 		Vec3f toCoord = newTransformSheet.keyframes[endFrame - 1].transform().translation();
 		float originalDistance = (float)Math.sqrt(fromCoord.distanceSqr(toCoord));
 		float worldDistance = (float)Math.sqrt(dest.distanceToSqr(start));
@@ -171,8 +177,7 @@ public class TransformSheet {
 		newTransformSheet.transform((jt) -> {
 			Vec3f kfTranslation = jt.translation();
 			kfTranslation.set(-kfTranslation.x, kfTranslation.y, kfTranslation.z > 0.0F ? kfTranslation.z : kfTranslation.z * ratio);
-			Vec3f relativeCoord = Vec3f.rotate(xRot, Vec3f.X_AXIS, Vec3f.sub(kfTranslation, fromCoord, null), null);
-			kfTranslation.set(Vec3f.add(fromCoord, relativeCoord, null));
+			Vec3f.rotate(xRot, Vec3f.X_AXIS, kfTranslation, kfTranslation);
 		}, startFrame, endFrame);
 		
 		newTransformSheet.transform((jt) -> {
@@ -204,7 +209,7 @@ public class TransformSheet {
 		
 		float progression = (currentTime - this.keyframes[prev].time()) / (this.keyframes[next].time() - this.keyframes[prev].time());
 		
-		return new InterpolationInfo(prev, next, progression);
+		return new InterpolationInfo(prev, next, Float.isNaN(progression) ? 1.0F : progression);
 	}
 	
 	@Override
@@ -223,15 +228,6 @@ public class TransformSheet {
 		return sb.toString();
 	}
 	
-	private static class InterpolationInfo {
-		private final int prev;
-		private final int next;
-		private final float zero2One;
-		
-		private InterpolationInfo(int prev, int next, float zero2One) {
-			this.prev = prev;
-			this.next = next;
-			this.zero2One = zero2One;
-		}
+	private static record InterpolationInfo(int prev, int next, float zero2One) {
 	}
 }

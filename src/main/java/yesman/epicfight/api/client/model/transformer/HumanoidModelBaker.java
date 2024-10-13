@@ -37,9 +37,11 @@ import yesman.epicfight.main.EpicFightMod;
 public class HumanoidModelBaker {
 	static final Map<ResourceLocation, AnimatedMesh> BAKED_MODELS = Maps.newHashMap();
 	static final List<HumanoidModelTransformer> MODEL_TRANSFORMERS = Lists.newArrayList();
-	static final HumanoidModelTransformer VANILLA_TRANSFORMER = new VanillaModelTransformer();
+	
 	static final Set<ArmorItem> EXCEPTIONAL_MODELS = Sets.newHashSet();
 	static final Set<ModelPart> MODEL_PARTS = Sets.newHashSet();
+	
+	public static final HumanoidModelTransformer VANILLA_TRANSFORMER = new VanillaModelTransformer();
 	
 	@OnlyIn(Dist.CLIENT)
 	public interface ModelProvider {

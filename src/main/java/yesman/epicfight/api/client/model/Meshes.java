@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.resources.ResourceLocation;
@@ -19,6 +20,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModLoader;
 import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
+import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.Mesh.RenderProperties;
 import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
@@ -79,6 +81,8 @@ public class Meshes implements PreparableReloadListener {
 	public static RawMesh FORCE_FIELD;
 	public static RawMesh LASER;
 	
+	public static ClothMesh CAPE;
+	
 	public static void build(ResourceManager resourceManager) {
 		MESHES.values().stream().filter((mesh) -> mesh instanceof AnimatedMesh).map((mesh) -> (AnimatedMesh)mesh).forEach(AnimatedMesh::destroy);
 		MESHES.clear();
@@ -119,6 +123,17 @@ public class Meshes implements PreparableReloadListener {
 		LEGGINS = event.getAnimated(EpicFightMod.MODID, "armor/leggins", AnimatedMesh::new);
 		BOOTS = event.getAnimated(EpicFightMod.MODID, "armor/boots", AnimatedMesh::new);
 		
+		//Cloth
+		CAPE = event.getCloth(EpicFightMod.MODID, "layer/cape", ClothMesh::new);
+		
+		ALEX.setMeshCollider(ImmutableMap.of(
+			
+		));
+		
+		BIPED.setMeshCollider(ImmutableMap.of(
+			
+		));
+		
 		ModLoader.get().postEvent(event);
 	}
 	
@@ -135,6 +150,14 @@ public class Meshes implements PreparableReloadListener {
 		return (M) MESHES.computeIfAbsent(rl, (key) -> {
 			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
 			return jsonModelLoader.loadAnimatedMesh(constructor);
+		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <M extends ClothMesh> M getOrCreateClothMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<ClothPart, VertexBuilder, M> constructor) {
+		return (M) MESHES.computeIfAbsent(rl, (key) -> {
+			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
+			return jsonModelLoader.loadClothMesh(constructor);
 		});
 	}
 	

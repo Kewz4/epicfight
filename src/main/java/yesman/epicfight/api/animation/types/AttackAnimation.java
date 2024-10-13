@@ -92,8 +92,10 @@ public class AttackAnimation extends ActionAnimation {
 	public AttackAnimation(float convertTime, String path, Armature armature, boolean noRegister, Phase... phases) {
 		super(convertTime, path, armature, noRegister);
 		
-		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_LOC_TARGET);
-		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_LOC_TARGET);
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_LOCATION);
+		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD_WHEN_TARGET_ALIVE);
+		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
 		this.phases = phases;
 		this.stateSpectrumBlueprint.clear();

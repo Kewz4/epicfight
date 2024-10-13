@@ -87,7 +87,8 @@ public class HealthBarIndicator extends EntityIndicator {
 					
 					VertexConsumer vertexBuilder1 = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(rl));
 					
-					this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder1, x, y, x + 0.3F, y + 0.3F, 0, 0, 256, 256);
+					this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder1, x, y, x + 0.3F, y + 0.3F, 0, 0, 256, 256, 0.003921F);
+					
 					if (!iter.hasNext()) {
 						break;
 					}
@@ -96,18 +97,30 @@ public class HealthBarIndicator extends EntityIndicator {
 		}
 		
 		VertexConsumer vertexBuilder = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON));
+		//VertexConsumer vertexBuilder = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(new ResourceLocation(EpicFightMod.MODID, "textures/gui/custom_health_bars.png")));
 		
+		float size = 0.003921F;
 		float ratio = Mth.clamp(entity.getHealth() / entity.getMaxHealth(), 0.0F, 1.0F);
 		float healthRatio = -0.5F + ratio;
+		
 		int textureRatio = (int) (62 * ratio);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, healthRatio, 0.05F, 1, 15, textureRatio, 20);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -0.05F, 0.5F, 0.05F, textureRatio, 10, 62, 15);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, healthRatio, 0.05F, 1, 15, textureRatio, 20, size);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -0.05F, 0.5F, 0.05F, textureRatio, 10, 62, 15, size);
+		
+		/**
+		int textureRatio = (int) (67 * ratio);
+		float boxWidth = 0.5F;
+		float boxHeight = 0.055F;
+		
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -boxWidth, -boxHeight, healthRatio, boxHeight, 0, 7, textureRatio, 14, 1.0F / 128.0F);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -boxHeight, boxWidth, boxHeight, textureRatio, 0, 67, 7, 1.0F / 128.0F);
+		**/
 		float absorption = entity.getAbsorptionAmount();
 		
 		if (absorption > 0.0D) {
 			float absorptionRatio = Mth.clamp(absorption / entity.getMaxHealth(), 0.0F, 1.0F);
 			int absTexRatio = (int) (62 * absorptionRatio);
-			this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, absorptionRatio - 0.5F, 0.05F, 1, 20, absTexRatio, 25);
+			this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, absorptionRatio - 0.5F, 0.05F, 1, 20, absTexRatio, 25, size);
 		}
 		
 		if (entitypatch != null) {
@@ -120,11 +133,12 @@ public class HealthBarIndicator extends EntityIndicator {
 			return;
 		}
 		
+		float size = 0.003921F;
 		float ratio = Mth.clamp(entitypatch.getStunShield() / entitypatch.getMaxStunShield(), 0.0F, 1.0F);
 		float barRatio = -0.5F + ratio;
 		int textureRatio = (int) (62 * ratio);
 		
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, -0.5F, -0.1F, barRatio, -0.05F, 1, 5, textureRatio, 10);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, barRatio, -0.1F, 0.5F, -0.05F, textureRatio, 0, 63, 5);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, -0.5F, -0.1F, barRatio, -0.05F, 1, 5, textureRatio, 10, size);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, barRatio, -0.1F, 0.5F, -0.05F, textureRatio, 0, 63, 5, size);
 	}
 }

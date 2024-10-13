@@ -170,12 +170,12 @@ public abstract class AnimationProperty<T> {
 		public static final ActionAnimationProperty<TimePairList> MOVE_TIME = new ActionAnimationProperty<TimePairList> ();
 		
 		/**
-		 * Set the dynamic coordinates of action animation.
+		 * Set the dynamic coordinates of {@link ActionAnimation}. Called before creation of {@link LinkAnimation}.
 		 */
 		public static final ActionAnimationProperty<MoveCoordSetter> COORD_SET_BEGIN = new ActionAnimationProperty<MoveCoordSetter> ();
 		
 		/**
-		 * Set the dynamic coordinates of action animation.
+		 * Set the dynamic coordinates of {@link ActionAnimation}.
 		 */
 		public static final ActionAnimationProperty<MoveCoordSetter> COORD_SET_TICK = new ActionAnimationProperty<MoveCoordSetter> ();
 		
@@ -200,7 +200,7 @@ public abstract class AnimationProperty<T> {
 		public static final ActionAnimationProperty<Boolean> IS_DEATH_ANIMATION = new ActionAnimationProperty<Boolean> ("is_death", Codec.BOOL);
 		
 		/**
-		 * This property determines the update time of {@link ActionAnimationProperty#COORD_SET_TICK}
+		 * This property determines the update time of {@link ActionAnimationProperty#COORD_SET_TICK}. If the current time out of the bound it uses {@link MoveCoordFunctions#RAW_COORD and MoveCoordFunctions#DIFF_FROM_PREV_COORD}}
 		 */
 		public static final ActionAnimationProperty<TimePairList> COORD_UPDATE_TIME = new ActionAnimationProperty<TimePairList> ();
 		

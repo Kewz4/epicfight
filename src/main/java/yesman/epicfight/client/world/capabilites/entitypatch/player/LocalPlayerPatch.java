@@ -363,7 +363,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	@Override
-	public void correctRotation() {
+	public void beginAction() {
 		if (!this.useModelYRot) {
 			this.modelYRot = this.getOriginal().getYRot();
 		}

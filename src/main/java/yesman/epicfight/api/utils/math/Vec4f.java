@@ -18,15 +18,24 @@ public class Vec4f extends Vec3f {
 		this.w = 1.0F;
 	}
 	
-	@Override
-	public Vec4f scale(float f) {
-		super.scale(f);
-		this.w *= f;
-		return this;
+	public void set(float x, float y, float z, float w) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+	}
+	
+	public void set(Vec4f vec4f) {
+		super.set(vec4f);
+		this.w = vec4f.w;
 	}
 	
 	public Vec4f add(float x, float y, float z, float w) {
-		return add(this, new Vec4f(x, y, z, w), this);
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		this.w += w;
+		return this;
 	}
 	
 	public static Vec4f add(Vec4f left, Vec4f right, Vec4f dest) {
@@ -40,6 +49,13 @@ public class Vec4f extends Vec3f {
 		dest.w = left.w + right.w;
 		
 		return dest;
+	}
+	
+	@Override
+	public Vec4f scale(float f) {
+		super.scale(f);
+		this.w *= f;
+		return this;
 	}
 	
 	public Vec4f transform(OpenMatrix4f matrix) {

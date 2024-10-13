@@ -11,12 +11,14 @@ import net.minecraftforge.fml.event.IModBusEvent;
 import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
 import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
-import yesman.epicfight.api.client.model.VertexBuilder;
+import yesman.epicfight.api.client.model.ClothMesh;
+import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.Meshes.MeshContructor;
 import yesman.epicfight.api.client.model.RawMesh;
 import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
+import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.Armatures.ArmatureContructor;
@@ -50,6 +52,10 @@ public abstract class ModelBuildEvent<T> extends Event implements IModBusEvent {
 		
 		public <M extends AnimatedMesh> M getAnimated(String modid, String path, MeshContructor<AnimatedModelPart, AnimatedVertexBuilder, M> constructor) {
 			return Meshes.getOrCreateAnimatedMesh(this.resourceManager, new ResourceLocation(modid, path), constructor);
+		}
+		
+		public <M extends ClothMesh> M getCloth(String modid, String path, MeshContructor<ClothPart, VertexBuilder, M> constructor) {
+			return Meshes.getOrCreateClothMesh(this.resourceManager, new ResourceLocation(modid, path), constructor);
 		}
 	}
 }

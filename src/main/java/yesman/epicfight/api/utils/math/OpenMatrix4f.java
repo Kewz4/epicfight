@@ -52,6 +52,9 @@ public class OpenMatrix4f {
 	}
 
 	private static final FloatBuffer MATRIX_TRANSFORMER = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+	private static final Vec3f VEC3_STORAGE = new Vec3f();
+	private static final Vec4f VEC4_STORAGE = new Vec4f();
+	private static final OpenMatrix4f MAT4X4_STORAGE = new OpenMatrix4f();
 	
 	/*
 	 * m00 m01 m02 m03
@@ -353,7 +356,9 @@ public class OpenMatrix4f {
 			dest = new Vec3f();
 		}
 		
-		Vec4f result = transform(matrix, new Vec4f(src.x, src.y, src.z, 1.0F), null);
+		VEC4_STORAGE.set(src.x, src.y, src.z, 1.0F);
+		
+		Vec4f result = transform(matrix, VEC4_STORAGE, null);
 		dest.x = result.x;
 		dest.y = result.y;
 		dest.z = result.z;
@@ -478,7 +483,8 @@ public class OpenMatrix4f {
 	}
 	
 	public OpenMatrix4f translate(float x, float y, float z) {
-		return translate(new Vec3f(x, y ,z), this);
+		VEC3_STORAGE.set(x, y, z);
+		return translate(VEC3_STORAGE, this);
 	}
 	
 	public OpenMatrix4f translate(Vec3f vec) {
@@ -503,11 +509,13 @@ public class OpenMatrix4f {
 	}
 	
 	public static OpenMatrix4f createTranslation(float x, float y, float z) {
-		return new OpenMatrix4f().translate(new Vec3f(x, y ,z));
+		VEC3_STORAGE.set(x, y, z);
+		return new OpenMatrix4f().translate(VEC3_STORAGE);
 	}
 	
 	public static OpenMatrix4f createScale(float x, float y, float z) {
-		return new OpenMatrix4f().scale(new Vec3f(x, y ,z));
+		VEC3_STORAGE.set(x, y, z);
+		return new OpenMatrix4f().scale(VEC3_STORAGE);
 	}
 	
 	public OpenMatrix4f rotateDeg(float angle, Vec3f axis) {
@@ -590,32 +598,35 @@ public class OpenMatrix4f {
 	}
 	
 	public static Quaternionf toQuaternion(OpenMatrix4f matrix) {
+		OpenMatrix4f.load(matrix, MAT4X4_STORAGE);
+		MAT4X4_STORAGE.removeScale();
+		
 		float w, x, y, z;
-		float diagonal = matrix.m00 + matrix.m11 + matrix.m22;
+		float diagonal = MAT4X4_STORAGE.m00 + MAT4X4_STORAGE.m11 + MAT4X4_STORAGE.m22;
 		
 		if (diagonal > 0) {
 			float w4 = (float) (Math.sqrt(diagonal + 1f) * 2f);
 			w = w4 / 4f;
-			x = (matrix.m21 - matrix.m12) / w4;
-			y = (matrix.m02 - matrix.m20) / w4;
-			z = (matrix.m10 - matrix.m01) / w4;
-		} else if ((matrix.m00 > matrix.m11) && (matrix.m00 > matrix.m22)) {
-			float x4 = (float) (Math.sqrt(1f + matrix.m00 - matrix.m11 - matrix.m22) * 2f);
-			w = (matrix.m21 - matrix.m12) / x4;
+			x = (MAT4X4_STORAGE.m21 - MAT4X4_STORAGE.m12) / w4;
+			y = (MAT4X4_STORAGE.m02 - MAT4X4_STORAGE.m20) / w4;
+			z = (MAT4X4_STORAGE.m10 - MAT4X4_STORAGE.m01) / w4;
+		} else if ((MAT4X4_STORAGE.m00 > MAT4X4_STORAGE.m11) && (MAT4X4_STORAGE.m00 > MAT4X4_STORAGE.m22)) {
+			float x4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m11 - MAT4X4_STORAGE.m22) * 2f);
+			w = (MAT4X4_STORAGE.m21 - MAT4X4_STORAGE.m12) / x4;
 			x = x4 / 4f;
-			y = (matrix.m01 + matrix.m10) / x4;
-			z = (matrix.m02 + matrix.m20) / x4;
-		} else if (matrix.m11 > matrix.m22) {
-			float y4 = (float) (Math.sqrt(1f + matrix.m11 - matrix.m00 - matrix.m22) * 2f);
-			w = (matrix.m02 - matrix.m20) / y4;
-			x = (matrix.m01 + matrix.m10) / y4;
+			y = (MAT4X4_STORAGE.m01 + MAT4X4_STORAGE.m10) / x4;
+			z = (MAT4X4_STORAGE.m02 + MAT4X4_STORAGE.m20) / x4;
+		} else if (MAT4X4_STORAGE.m11 > MAT4X4_STORAGE.m22) {
+			float y4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m11 - MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m22) * 2f);
+			w = (MAT4X4_STORAGE.m02 - MAT4X4_STORAGE.m20) / y4;
+			x = (MAT4X4_STORAGE.m01 + MAT4X4_STORAGE.m10) / y4;
 			y = y4 / 4f;
-			z = (matrix.m12 + matrix.m21) / y4;
+			z = (MAT4X4_STORAGE.m12 + MAT4X4_STORAGE.m21) / y4;
 		} else {
-			float z4 = (float) (Math.sqrt(1f + matrix.m22 - matrix.m00 - matrix.m11) * 2f);
-			w = (matrix.m10 - matrix.m01) / z4;
-			x = (matrix.m02 + matrix.m20) / z4;
-			y = (matrix.m12 + matrix.m21) / z4;
+			float z4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m22 - MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m11) * 2f);
+			w = (MAT4X4_STORAGE.m10 - MAT4X4_STORAGE.m01) / z4;
+			x = (MAT4X4_STORAGE.m02 + MAT4X4_STORAGE.m20) / z4;
+			y = (MAT4X4_STORAGE.m12 + MAT4X4_STORAGE.m21) / z4;
 			z = z4 / 4f;
 		}
 		
@@ -646,11 +657,13 @@ public class OpenMatrix4f {
 		matrix.m20 = 2.0F * (xz - yw);
 		matrix.m21 = 2.0F * (yz + xw);
 		matrix.m22 = 1.0F - xSquared - ySquared;
+		
 		return matrix;
 	}
 	
 	public OpenMatrix4f scale(float x, float y, float z) {
-		return this.scale(new Vec3f(x, y, z));
+		VEC3_STORAGE.set(x, y, z);
+		return this.scale(VEC3_STORAGE);
 	}
 	
 	public OpenMatrix4f scale(Vec3f vec) {
@@ -679,7 +692,16 @@ public class OpenMatrix4f {
 	}
 	
 	public Vec3f toScaleVector() {
-		return new Vec3f(new Vec3f(this.m00, this.m01, this.m02).length(), new Vec3f(this.m10, this.m11, this.m12).length(), new Vec3f(this.m20, this.m21, this.m22).length());
+		VEC3_STORAGE.set(this.m00, this.m01, this.m02);
+		float xScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(this.m10, this.m11, this.m12);
+		float yScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(this.m20, this.m21, this.m22);
+		float zScale = VEC3_STORAGE.length();
+		
+		return new Vec3f(xScale, yScale, zScale);
 	}
 	
 	public OpenMatrix4f removeTranslation() {
@@ -696,13 +718,29 @@ public class OpenMatrix4f {
 	}
 	
 	public OpenMatrix4f removeScale() {
-		return removeScale(this);
+		VEC3_STORAGE.set(this.m00, this.m01, this.m02);
+		float xScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(this.m10, this.m11, this.m12);
+		float yScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(this.m20, this.m21, this.m22);
+		float zScale = VEC3_STORAGE.length();
+		
+		this.scale(1 / xScale, 1 / yScale, 1 / zScale);
+		
+		return this;
 	}
 	
 	public static OpenMatrix4f removeScale(OpenMatrix4f src) {
-		float xScale = new Vec3f(src.m00, src.m01, src.m02).length();
-		float yScale = new Vec3f(src.m10, src.m11, src.m12).length();
-		float zScale = new Vec3f(src.m20, src.m21, src.m22).length();
+		VEC3_STORAGE.set(src.m00, src.m01, src.m02);
+		float xScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(src.m10, src.m11, src.m12);
+		float yScale = VEC3_STORAGE.length();
+		
+		VEC3_STORAGE.set(src.m20, src.m21, src.m22);
+		float zScale = VEC3_STORAGE.length();
 		
 		OpenMatrix4f copy = new OpenMatrix4f(src);
 		copy.scale(1 / xScale, 1 / yScale, 1 / zScale);
@@ -717,6 +755,7 @@ public class OpenMatrix4f {
 				m01 + " " + m11 + " " + m21 + " " + m31 + "\n" +
 				m02 + " " + m12 + " " + m22 + " " + m32 + "\n" +
 				m03 + " " + m13 + " " + m23 + " " + m33) + "\n";
+		
 		return buf;
 	}
 	

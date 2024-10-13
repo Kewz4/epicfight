@@ -1,5 +1,7 @@
 package yesman.epicfight.client.world.capabilites.entitypatch.player;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -7,9 +9,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -36,6 +40,12 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
+import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.physics.ClothSimulatable;
+import yesman.epicfight.api.client.physics.ClothSimulator;
+import yesman.epicfight.api.physics.PhysicsSimulator;
+import yesman.epicfight.api.physics.SimulatableObject;
+import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -46,15 +56,22 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 
 @OnlyIn(Dist.CLIENT)
-public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> {
+public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements SimulatableObject, ClothSimulatable {
 	private Item prevHeldItem;
 	private Item prevHeldItemOffHand;
 	
 	@Override
 	public void onJoinWorld(T entityIn, EntityJoinLevelEvent event) {
 		super.onJoinWorld(entityIn, event);
+		
 		this.prevHeldItem = Items.AIR;
 		this.prevHeldItemOffHand = Items.AIR;
+		
+		if (this.original.isCapeLoaded() && this.original.getCloakTextureLocation() != null) {
+			this.clothSimulator.runWhenPermanent(Meshes.CAPE, () -> {
+				return !this.original.isInvisible() && this.original.isModelPartShown(PlayerModelPart.CAPE) && this.original.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
+			});
+		}
 	}
 	
 	@Override
@@ -188,6 +205,8 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		if (this.original.deathTime == 1) {
 			this.getClientAnimator().playDeathAnimation();
 		}
+		
+		this.clothSimulator.tick(this);
 	}
 	
 	protected boolean isMoving() {
@@ -396,5 +415,17 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
         }
 		
 		return Direction.UP;
+	}
+	
+	private final ClothSimulator clothSimulator = new ClothSimulator();
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <SIM extends PhysicsSimulator<?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, SIM> simulationType) {
+		if (simulationType == SimulationTypes.CLOTH) {
+			return Optional.of((SIM)this.clothSimulator);
+		}
+		
+		return Optional.empty();
 	}
 }

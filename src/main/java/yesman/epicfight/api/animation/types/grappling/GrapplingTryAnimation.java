@@ -37,8 +37,8 @@ public class GrapplingTryAnimation extends AttackAnimation {
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F);
 		this.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false);
-		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_DEST_LOCATION_BEGIN);
-		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_DEST_LOCATION);
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION_BEGIN);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION);
 		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD);
 	}
 	

@@ -134,7 +134,7 @@ public abstract class Mesh<P extends ModelPart<V>, V extends VertexBuilder> {
 			builder.endVertex();
 		};
 		
-		public static final DrawingFunction ENTITY_NO_LIGHTING = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction PARTICLE_3D = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.color(r, g, b, a);
 			builder.uv(u, v);

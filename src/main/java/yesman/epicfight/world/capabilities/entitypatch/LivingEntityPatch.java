@@ -475,7 +475,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return false;
 	}
 	
-	public void correctRotation() {
+	public void beginAction() {
 	}
 	
 	public void updateHeldItem(CapabilityItem fromCap, CapabilityItem toCap, ItemStack from, ItemStack to, InteractionHand hand) {

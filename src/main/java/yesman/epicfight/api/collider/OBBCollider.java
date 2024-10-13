@@ -118,7 +118,7 @@ public class OBBCollider extends Collider {
 	}
 	
 	/**
-	 * Transform every elements of this Bounding Box
+	 * Transform the bounding box
 	 **/
 	@Override
 	public void transform(OpenMatrix4f modelMatrix) {
@@ -142,6 +142,32 @@ public class OBBCollider extends Collider {
 		return this.outerAABB.inflate((this.outerAABB.maxX - this.outerAABB.minX) * this.scale.x,
 				(this.outerAABB.maxY - this.outerAABB.minY) * this.scale.y,
 				(this.outerAABB.maxZ - this.outerAABB.minZ) * this.scale.z).move(-this.worldCenter.x, this.worldCenter.y, -this.worldCenter.z);
+	}
+	
+	public Vec3 getCollidePoint(Vec3 point) {
+		Vec3 toOpponent = point.subtract(this.worldCenter);
+		
+		for (Vec3 sepAxis : this.rotatedNormal) {
+			Vec3 maxProj = null, distance;
+			double maxDot = -1;
+			distance = sepAxis.dot(toOpponent) > 0.0F ? toOpponent : toOpponent.scale(-1.0D);
+			
+			for (Vec3 vertexVector : this.rotatedVertex) {
+				Vec3 temp = sepAxis.dot(vertexVector) > 0.0F ? vertexVector : vertexVector.scale(-1.0D);
+				double dot = sepAxis.dot(temp);
+				
+				if (dot > maxDot) {
+					maxDot = dot;
+					maxProj = temp;
+				}
+			}
+			
+			if (MathUtils.projectVector(distance, sepAxis).length() < MathUtils.projectVector(maxProj, sepAxis).length()) {
+				return point;
+			}
+		}
+		
+		return point;
 	}
 	
 	public boolean isCollide(OBBCollider opponent) {
@@ -194,9 +220,12 @@ public class OBBCollider extends Collider {
 	}
 	
 	private static boolean collisionDetection(Vec3 seperateAxis, Vec3 toOpponent, OBBCollider box1, OBBCollider box2) {
-		Vec3 maxProj1 = null, maxProj2 = null, distance;
+		Vec3 maxProj1 = null, maxProj2 = null;//, distance;
 		double maxDot1 = -1, maxDot2 = -1;
-		distance = seperateAxis.dot(toOpponent) > 0.0F ? toOpponent : toOpponent.scale(-1.0D);
+		
+		if (seperateAxis.dot(toOpponent) < 0.0F) {
+			seperateAxis.scale(-1.0D);
+		}
 		
 		for (Vec3 vertexVector : box1.rotatedVertex) {
 			Vec3 temp = seperateAxis.dot(vertexVector) > 0.0F ? vertexVector : vertexVector.scale(-1.0D);
@@ -218,7 +247,7 @@ public class OBBCollider extends Collider {
 			}
 		}
 
-		return !(MathUtils.projectVector(distance, seperateAxis).length() > MathUtils.projectVector(maxProj1, seperateAxis).length() + MathUtils.projectVector(maxProj2, seperateAxis).length());
+		return MathUtils.projectVector(toOpponent, seperateAxis).length() < MathUtils.projectVector(maxProj1, seperateAxis).length() + MathUtils.projectVector(maxProj2, seperateAxis).length();
 	}
 	
 	@Override
@@ -235,8 +264,11 @@ public class OBBCollider extends Collider {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void drawInternal(PoseStack poseStack, VertexConsumer vertexConsumer, Armature armature, Joint joint, Pose pose1, Pose pose2, float partialTicks, int color) {
+		partialTicks = 1.0F;
+		
 		int pathIndex = armature.searchPathIndex(joint.getName());
 		OpenMatrix4f poseMatrix;
+		
 		Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, partialTicks);
 		
 		if (pathIndex == -1) {

@@ -97,8 +97,8 @@ public class PhantomAscentSkill extends Skill {
 						
 						container.getExecuter().getOriginal().setDeltaMovement(deltaMove.x + jumpDir.x, 0.6D + container.getExecuter().getOriginal().getJumpBoostPower(), deltaMove.z + jumpDir.z);
 						
-						event.getPlayerPatch().playAnimationClientPreemptive(this.animations[vertic < 0 ? 1 : 0].get(), 0.0F);
 						event.getPlayerPatch().setModelYRot(Minecraft.getInstance().gameRenderer.getMainCamera().getYRot() + degree, true);
+						event.getPlayerPatch().playAnimationClientPreemptive(this.animations[vertic < 0 ? 1 : 0].get(), 0.0F);
 					};
 				} else {
 					container.getDataManager().setData(SkillDataKeys.JUMP_COUNT.get(), 1);

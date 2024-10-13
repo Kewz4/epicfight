@@ -153,6 +153,7 @@ public class ClientAnimator extends Animator {
 		}
 		System.out.println();
 		**/
+		
 		this.baseLayer.update(this.entitypatch);
 		
 		if (this.baseLayer.animationPlayer.isEnd() && this.baseLayer.nextAnimation == null && this.currentMotion != LivingMotions.DEATH) {
@@ -316,14 +317,22 @@ public class ClientAnimator extends Animator {
 		return this.currentCompositeMotion.isSame(motion);
 	}
 	
-	public void resetMotion() { 
+	public void resetMotion(boolean playIdleMotion) { 
 		this.currentMotion = LivingMotions.IDLE;
 		this.entitypatch.currentLivingMotion = LivingMotions.IDLE;
+		
+		if (playIdleMotion && this.livingAnimations.containsKey(LivingMotions.IDLE)) {
+			this.baseLayer.playAnimation(this.getLivingMotion(LivingMotions.IDLE), this.entitypatch, 0.0F);
+		}
 	}
 	
-	public void resetCompositeMotion() {
+	public void resetCompositeMotion(boolean playIdleMotion) {
 		this.currentCompositeMotion = LivingMotions.NONE;
 		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
+		
+		if (playIdleMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
+			this.playAnimation(this.getCompositeLivingMotion(LivingMotions.IDLE), 0.0F);
+		}
 	}
 	
 	public void offAllLayers() {
@@ -340,7 +349,7 @@ public class ClientAnimator extends Animator {
 		if (this.compositeLivingAnimations.containsKey(LivingMotions.SHOT)) {
 			this.playAnimation(this.compositeLivingAnimations.get(LivingMotions.SHOT), 0.0F);
 			this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
-			this.resetCompositeMotion();
+			this.resetCompositeMotion(false);
 		}
 	}
 	

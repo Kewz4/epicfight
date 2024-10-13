@@ -516,8 +516,9 @@ public class RenderEngine {
 							EpicFightMod.CLIENT_CONFIGS.useAnimationShader.setValue(true);
 						}
 						
-						localPlayerPatch.disableModelYRotInGui(originalYRot);
 						event.setCanceled(true);
+						
+						localPlayerPatch.disableModelYRotInGui(originalYRot);
 					}
 					
 					return;
