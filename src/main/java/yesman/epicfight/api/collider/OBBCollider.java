@@ -264,11 +264,8 @@ public class OBBCollider extends Collider {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void drawInternal(PoseStack poseStack, VertexConsumer vertexConsumer, Armature armature, Joint joint, Pose pose1, Pose pose2, float partialTicks, int color) {
-		partialTicks = 1.0F;
-		
 		int pathIndex = armature.searchPathIndex(joint.getName());
 		OpenMatrix4f poseMatrix;
-		
 		Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, partialTicks);
 		
 		if (pathIndex == -1) {
