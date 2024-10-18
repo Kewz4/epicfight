@@ -10,6 +10,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimation
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.ValueModifier;
@@ -31,7 +32,9 @@ public class AirSlashAnimation extends AttackAnimation {
 		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.5F));
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, false);
-		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true);
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.RAW_COORD);
+		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD);
 	}
 	
 	@Override

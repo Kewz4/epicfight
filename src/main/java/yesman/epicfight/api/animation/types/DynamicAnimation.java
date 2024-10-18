@@ -31,7 +31,7 @@ public abstract class DynamicAnimation {
 	
 	public DynamicAnimation(float convertTime, boolean isRepeat) {
 		this.isRepeat = isRepeat;
-		this.convertTime = Math.abs(convertTime) < 1E-5F ? convertTime : convertTime + EpicFightOptions.A_TICK;
+		this.convertTime = convertTime;
 	}
 	
 	public final Pose getRawPose(float time) {
