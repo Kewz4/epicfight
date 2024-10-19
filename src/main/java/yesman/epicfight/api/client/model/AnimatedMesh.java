@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -172,8 +173,8 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		this.meshCollider = meshColliders;
 	}
 	
-	public Set<Map.Entry<Integer, OBBCollider>> getMeshColliderEntry() {
-		return this.meshCollider.entrySet();
+	public Optional<Set<Map.Entry<Integer, OBBCollider>>> getMeshColliderEntry() {
+		return (this.meshCollider != null || this.meshCollider.isEmpty()) ? Optional.of(this.meshCollider.entrySet()) : Optional.empty();
 	}
 	
 	/**

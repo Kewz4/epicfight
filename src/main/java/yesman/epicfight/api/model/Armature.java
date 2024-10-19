@@ -25,8 +25,9 @@ public class Armature {
 	private final Map<String, Joint> jointByName;
 	private final Object2IntMap<String> pathIndexMap;
 	private final int jointNumber;
-	public final Joint rootJoint;
 	private final TransformSheet actionAnimationCoord = new TransformSheet();
+	
+	public final Joint rootJoint;
 	
 	public Armature(String name, int jointNumber, Joint rootJoint, Map<String, Joint> jointMap) {
 		this.name = name;

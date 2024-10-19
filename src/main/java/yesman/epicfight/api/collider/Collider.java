@@ -43,15 +43,14 @@ public abstract class Collider {
 	public List<Entity> updateAndSelectCollideEntity(LivingEntityPatch<?> entitypatch, AttackAnimation attackAnimation, float prevElapsedTime, float elapsedTime, Joint joint, float attackSpeed) {
 		OpenMatrix4f transformMatrix;
 		Armature armature = entitypatch.getArmature();
-		int pathIndex = armature.searchPathIndex(joint.getName());
 		
-		if (pathIndex == -1) {
+		if (armature.rootJoint.equals(joint)) {
 			Pose rootPose = new Pose();
 			rootPose.putJointData("Root", JointTransform.empty());
 			attackAnimation.modifyPose(attackAnimation, rootPose, entitypatch, elapsedTime, 1.0F);
 			transformMatrix = rootPose.getOrDefaultTransform("Root").getAnimationBindedMatrix(armature.rootJoint, new OpenMatrix4f()).removeTranslation();
 		} else {
-			transformMatrix = armature.getBindedTransformByJointIndex(attackAnimation.getPoseByTime(entitypatch, elapsedTime, 1.0F), pathIndex);
+			transformMatrix = armature.getBindedTransformFor(attackAnimation.getPoseByTime(entitypatch, elapsedTime, 1.0F), joint);
 		}
 		
 		OpenMatrix4f toWorldCoord = OpenMatrix4f.createTranslation(-(float)entitypatch.getOriginal().getX(), (float)entitypatch.getOriginal().getY(), -(float)entitypatch.getOriginal().getZ());
@@ -126,6 +125,6 @@ public abstract class Collider {
 	
 	@Override
 	public String toString() {
-		return "[ColliderInfo] type: " + this.getClass() + " center: " + this.modelCenter;
+		return this.getClass().getSimpleName() + " center: " + this.modelCenter;
 	}
 }

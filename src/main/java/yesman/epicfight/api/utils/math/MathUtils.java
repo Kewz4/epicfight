@@ -96,7 +96,23 @@ public class MathUtils {
 		}
 		return (float)d;
 	}
-
+	
+	public static Vec3 getNearestVector(Vec3 from, Vec3... vectors) {
+		double maxLength = Double.MAX_VALUE;
+		int index = 0;
+		
+		for (int i = 0; i < vectors.length; i++) {
+			double distSqr = from.distanceToSqr(vectors[i]);
+			
+			if (distSqr < maxLength) {
+				maxLength = distSqr;
+				index = i;
+			}
+		}
+		
+		return vectors[index];
+	}
+	
 	public static void translateStack(PoseStack poseStack, OpenMatrix4f mat) {
 		Vector3f vector = new Vector3f(mat.m30, mat.m31, mat.m32);
 		poseStack.translate(vector.x(), vector.y(), vector.z());
@@ -241,4 +257,6 @@ public class MathUtils {
 		number = Float.intBitsToFloat(i);
 		return number * (1.5F - f * number * number);
 	}
+	
+	private MathUtils() {}
 }

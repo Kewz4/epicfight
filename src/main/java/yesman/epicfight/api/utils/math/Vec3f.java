@@ -33,6 +33,12 @@ public class Vec3f extends Vec2f {
 		this.z = z;
 	}
 	
+	public void set(Vec3 vec3f) {
+		this.x = (float)vec3f.x;
+		this.y = (float)vec3f.y;
+		this.z = (float)vec3f.z;
+	}
+	
 	public void set(Vec3f vec3f) {
 		this.x = vec3f.x;
 		this.y = vec3f.y;

@@ -24,6 +24,7 @@ import com.mojang.math.Axis;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
@@ -35,7 +36,7 @@ import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition.Constrain
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.ModelPart;
 import yesman.epicfight.api.client.model.VertexBuilder;
-import yesman.epicfight.api.client.physics.ClothSimulator.ClothObject.Part.Particle;
+import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.physics.SimulationData;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -84,22 +85,16 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 		public void tick(ClothSimulatable simulatableObj) {
 		}
 		
-		public void tick(OpenMatrix4f transform, float partialTick, @Nullable OpenMatrix4f[] poses, @Nullable AnimatedMesh colliderMesh) {
-			for (Part part : this.parts.values()) {
-				for (Particle p : part.particles.values()) {
-					float influence = 1.0F - p.influence;
-					
-					if (influence > 0.0) {
-						OpenMatrix4f.transform3v(transform, p.initPosition, TRASNFORMED);
-						Vec3f.interpolate(p.position, TRASNFORMED, influence, TRASNFORMED);
-						p.position.set(TRASNFORMED);
-					}
-				}
-			}
-			
+		public void tick(OpenMatrix4f rootTransform, float partialTick, @Nullable OpenMatrix4f colliderRootTransform, @Nullable OpenMatrix4f[] poses, @Nullable AnimatedMesh colliderMesh) {
 			if (!Minecraft.getInstance().isPaused()) {
+				colliderMesh.getMeshColliderEntry().ifPresent((meshColliderEntry) -> {
+					for (Map.Entry<Integer, OBBCollider> entry : meshColliderEntry) {
+						entry.getValue().transform(OpenMatrix4f.mul(colliderRootTransform, poses[entry.getKey()], null));
+					}
+				});
+				
 				for (Part part : this.parts.values()) {
-					part.tick(TIME_STEP, poses, colliderMesh);
+					part.tick(TIME_STEP, rootTransform, colliderMesh);
 				}
 			}
 		}
@@ -147,7 +142,6 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 				for (int i = 0; i < clothPart.particles().length / 2; i++) {
 					int posIndex = clothPart.particles()[i * 2];
 					int influence = clothPart.particles()[i * 2 + 1];
-					
 					float x = positions[posIndex * 3];
 					float y = positions[posIndex * 3 + 1];
 					float z = positions[posIndex * 3 + 2];
@@ -234,8 +228,19 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 				this.constraints = constraintsBuilder.build();
 			}
 			
-			public void tick(float deltaTime, @Nullable OpenMatrix4f[] poses, @Nullable AnimatedMesh colliderMesh) {
+			public void tick(float deltaTime, OpenMatrix4f rootTransform, @Nullable AnimatedMesh colliderMesh) {
 				this.spatialHash.clear();
+				
+				// Apply animation transform
+				for (Particle p : this.particles.values()) {
+					float influence = 1.0F - p.influence;
+					
+					if (influence > 0.0) {
+						OpenMatrix4f.transform3v(rootTransform, p.initPosition, TRASNFORMED);
+						Vec3f.interpolate(p.position, TRASNFORMED, influence, TRASNFORMED);
+						p.position.set(TRASNFORMED);
+					}
+				}
 				
 				// Create spatial hash map
 				for (Particle p : this.particles.values()) {
@@ -255,6 +260,30 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 							c.solve(subSteppingDeltaTime, pair.getFirst());
 						}
 					}
+					
+					colliderMesh.getMeshColliderEntry().ifPresent((meshColliderEntry) -> {
+						for (Map.Entry<Integer, OBBCollider> entry : meshColliderEntry) {
+							//entry.getValue().transform(colliderRootTransform);
+							//System.out.println(colliderRootTransform);
+							//System.out.println(entry.getKey() +" "+ entry.getValue());
+							
+							for (Particle p : this.particles.values()) {
+								if (p.influence == 0.0F) {
+									continue;
+								}
+								
+								//System.out.println( p.position.toDoubleVector() +" "+ entry.getValue().getCollidePoint(p.position.toDoubleVector()) );
+								
+								Vec3 pushedPoint = entry.getValue().getCollidePoint(p.position.toDoubleVector());
+								
+								if ((double)p.position.x != pushedPoint.x && (double)p.position.y != pushedPoint.y && (double)p.position.z != pushedPoint.z) {
+									//System.out.println(p.position +" "+ pushedPoint);
+								}
+								
+								p.position.set(pushedPoint);
+							}
+						}
+					});
 					
 					// Detect self collision
 					for (Particle p1 : this.particles.values()) {

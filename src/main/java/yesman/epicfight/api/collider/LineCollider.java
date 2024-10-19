@@ -136,14 +136,13 @@ public class LineCollider extends Collider {
 	
 	@Override
 	public void drawInternal(PoseStack poseStack, VertexConsumer vertexConsumer, Armature armature, Joint joint, Pose pose1, Pose pose2, float partialTicks, int color) {
-		int pathIndex = armature.searchPathIndex(joint.getName());
 		OpenMatrix4f poseMatrix;
 		Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, partialTicks);
 		
-		if (pathIndex == -1) {
+		if (armature.rootJoint.equals(joint)) {
 			poseMatrix = interpolatedPose.getOrDefaultTransform("Root").getAnimationBindedMatrix(armature.rootJoint, new OpenMatrix4f()).removeTranslation();
 		} else {
-			poseMatrix = armature.getBindedTransformByJointIndex(interpolatedPose, pathIndex);
+			poseMatrix = armature.getBindedTransformFor(interpolatedPose, joint);
 		}
 		
 		OpenMatrix4f transpose = new OpenMatrix4f();

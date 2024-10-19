@@ -5,6 +5,7 @@ import org.joml.Matrix4f;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -86,8 +87,8 @@ public class OBBCollider extends Collider {
 		this.rotatedNormal = new Vec3[2];
 		this.modelVertex[0] = new Vec3(pos1_x, pos1_y, pos1_z);
 		this.modelVertex[1] = new Vec3(pos2_x, pos2_y, pos2_z);
-		this.modelNormal[0] = new Vec3(norm1_x,norm1_y,norm1_z);
-		this.modelNormal[1] = new Vec3(norm2_x,norm2_y,norm2_z);
+		this.modelNormal[0] = new Vec3(norm1_x, norm1_y, norm1_z);
+		this.modelNormal[1] = new Vec3(norm2_x, norm2_y, norm2_z);
 		this.rotatedVertex[0] = new Vec3(0.0D, 0.0D, 0.0D);
 		this.rotatedVertex[1] = new Vec3(0.0D, 0.0D, 0.0D);
 		this.rotatedNormal[0] = new Vec3(0.0D, 0.0D, 0.0D);
@@ -139,35 +140,78 @@ public class OBBCollider extends Collider {
 	
 	@Override
 	protected AABB getHitboxAABB() {
-		return this.outerAABB.inflate((this.outerAABB.maxX - this.outerAABB.minX) * this.scale.x,
-				(this.outerAABB.maxY - this.outerAABB.minY) * this.scale.y,
-				(this.outerAABB.maxZ - this.outerAABB.minZ) * this.scale.z).move(-this.worldCenter.x, this.worldCenter.y, -this.worldCenter.z);
+		return this.outerAABB.inflate(
+					  (this.outerAABB.maxX - this.outerAABB.minX) * this.scale.x
+					, (this.outerAABB.maxY - this.outerAABB.minY) * this.scale.y
+					, (this.outerAABB.maxZ - this.outerAABB.minZ) * this.scale.z
+				)
+				.move(-this.worldCenter.x, this.worldCenter.y, -this.worldCenter.z);
 	}
 	
 	public Vec3 getCollidePoint(Vec3 point) {
 		Vec3 toOpponent = point.subtract(this.worldCenter);
+		Vec3 projection1 = null;
+		Vec3 projection2 = null;
+		Vec3 projection3 = null;
+		Vec3 toPlane1 = null;
+		Vec3 toPlane2 = null;
+		Vec3 toPlane3 = null;
+		int order = 0;
 		
-		for (Vec3 sepAxis : this.rotatedNormal) {
-			Vec3 maxProj = null, distance;
+		for (Vec3 seperateAxis : this.rotatedNormal) {
+			Vec3 maxProj = null;
 			double maxDot = -1;
-			distance = sepAxis.dot(toOpponent) > 0.0F ? toOpponent : toOpponent.scale(-1.0D);
+			
+			//System.out.println(seperateAxis +" "+ toOpponent +" "+ seperateAxis.dot(toOpponent));
+			
+			if (seperateAxis.dot(toOpponent) < 0.0D) {
+				seperateAxis = seperateAxis.scale(-1.0D);
+			}
+			
+			//System.out.println(seperateAxis);
 			
 			for (Vec3 vertexVector : this.rotatedVertex) {
-				Vec3 temp = sepAxis.dot(vertexVector) > 0.0F ? vertexVector : vertexVector.scale(-1.0D);
-				double dot = sepAxis.dot(temp);
+				Vec3 toVertex = seperateAxis.dot(vertexVector) > 0.0D ? vertexVector : vertexVector.scale(-1.0D);
+				double dot = seperateAxis.dot(toVertex);
 				
 				if (dot > maxDot) {
 					maxDot = dot;
-					maxProj = temp;
+					maxProj = toVertex;
 				}
 			}
 			
-			if (MathUtils.projectVector(distance, sepAxis).length() < MathUtils.projectVector(maxProj, sepAxis).length()) {
+			Vec3 opponentProjection = MathUtils.projectVector(toOpponent, seperateAxis);
+			Vec3 vertexProjection = MathUtils.projectVector(maxProj, seperateAxis);
+			
+			if (opponentProjection.length() > vertexProjection.length()) {
 				return point;
+			} else {
+				switch (order) {
+				case 0 -> {
+					projection1 = opponentProjection;
+					toPlane1 = vertexProjection;
+				}
+				case 1 -> {
+					projection2 = opponentProjection;
+					toPlane2 = vertexProjection;
+				}
+				case 2 -> {
+					projection3 = opponentProjection;
+					toPlane3 = vertexProjection;
+				}
+				}
 			}
+			
+			order++;
 		}
 		
-		return point;
+		Vec3 destCandidate1 = projection1.add(projection2).add(toPlane3);
+		Vec3 destCandidate2 = projection2.add(projection3).add(toPlane1);
+		Vec3 destCandidate3 = projection3.add(projection1).add(toPlane2);
+		
+		//System.out.println(point +" "+ this +" \n "+ MathUtils.getNearestVector(Vec3.ZERO, destCandidate1, destCandidate2, destCandidate3).add(this.worldCenter));
+		
+		return MathUtils.getNearestVector(Vec3.ZERO, destCandidate1, destCandidate2, destCandidate3).add(this.worldCenter);
 	}
 	
 	public boolean isCollide(OBBCollider opponent) {
@@ -246,13 +290,13 @@ public class OBBCollider extends Collider {
 				maxProj2 = temp;
 			}
 		}
-
+		
 		return MathUtils.projectVector(toOpponent, seperateAxis).length() < MathUtils.projectVector(maxProj1, seperateAxis).length() + MathUtils.projectVector(maxProj2, seperateAxis).length();
 	}
 	
 	@Override
 	public String toString() {
-		return super.toString() + " worldCenter : " + this.modelCenter + " direction : " + this.modelVertex[0];
+		return super.toString() + " worldCenter : " + this.worldCenter + " world direction : " + this.rotatedVertex[0];
 	}
 	
 	@Override
@@ -261,14 +305,87 @@ public class OBBCollider extends Collider {
 		return RenderType.lines();
 	}
 	
+	@OnlyIn(Dist.CLIENT)
+	public void draw(PoseStack poseStack, MultiBufferSource buffer, int color) {
+		VertexConsumer vertexConsumer = buffer.getBuffer(this.getRenderType());
+		Matrix4f matrix = poseStack.last().pose();
+		
+		float v1x = (float) (this.worldCenter.x + this.rotatedVertex[0].x);
+		float v1y = (float) (this.worldCenter.y + this.rotatedVertex[0].y);
+		float v1z = (float) (this.worldCenter.z + this.rotatedVertex[0].z);
+		
+		float v2x = (float) (this.worldCenter.x + this.rotatedVertex[1].x);
+		float v2y = (float) (this.worldCenter.y + this.rotatedVertex[1].y);
+		float v2z = (float) (this.worldCenter.z + this.rotatedVertex[1].z);
+		
+		float v3x = (float) (this.worldCenter.x + this.rotatedVertex[2].x);
+		float v3y = (float) (this.worldCenter.y + this.rotatedVertex[2].y);
+		float v3z = (float) (this.worldCenter.z + this.rotatedVertex[2].z);
+
+		float v4x = (float) (this.worldCenter.x + this.rotatedVertex[3].x);
+		float v4y = (float) (this.worldCenter.y + this.rotatedVertex[3].y);
+		float v4z = (float) (this.worldCenter.z + this.rotatedVertex[3].z);
+		
+		float v5x = (float) (this.worldCenter.x + -this.rotatedVertex[2].x);
+		float v5y = (float) (this.worldCenter.y + -this.rotatedVertex[2].y);
+		float v5z = (float) (this.worldCenter.z + -this.rotatedVertex[2].z);
+		
+		float v6x = (float) (this.worldCenter.x + -this.rotatedVertex[3].x);
+		float v6y = (float) (this.worldCenter.y + -this.rotatedVertex[3].y);
+		float v6z = (float) (this.worldCenter.z + -this.rotatedVertex[3].z);
+		
+		float v7x = (float) (this.worldCenter.x + -this.rotatedVertex[0].x);
+		float v7y = (float) (this.worldCenter.y + -this.rotatedVertex[0].y);
+		float v7z = (float) (this.worldCenter.z + -this.rotatedVertex[0].z);
+		
+		float v8x = (float) (this.worldCenter.x + -this.rotatedVertex[1].x);
+		float v8y = (float) (this.worldCenter.y + -this.rotatedVertex[1].y);
+		float v8z = (float) (this.worldCenter.z + -this.rotatedVertex[1].z);
+		
+		vertexConsumer.vertex(matrix, v1x, v1y, v1z).color(color).normal(v2x - v1x, v2y - v1y, v2z - v1z).endVertex();
+		vertexConsumer.vertex(matrix, v2x, v2y, v2z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v2x, v2y, v2z).color(color).normal(v3x - v2x, v3y - v2y, v3z - v2z).endVertex();
+		vertexConsumer.vertex(matrix, v3x, v3y, v3z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v3x, v3y, v3z).color(color).normal(v4x - v3x, v4y - v3y, v4z - v3z).endVertex();
+		vertexConsumer.vertex(matrix, v4x, v4y, v4z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v4x, v4y, v4z).color(color).normal(v1x - v4x, v1y - v4y, v1z - v4z).endVertex();
+		vertexConsumer.vertex(matrix, v1x, v1y, v1z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v1x, v1y, v1z).color(color).normal(v5x - v1x, v5y - v1y, v5z - v1z).endVertex();
+		vertexConsumer.vertex(matrix, v5x, v5y, v5z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v2x, v2y, v2z).color(color).normal(v6x - v2x, v6y - v2y, v6z - v2z).endVertex();
+		vertexConsumer.vertex(matrix, v6x, v6y, v6z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v3x, v3y, v3z).color(color).normal(v7x - v3x, v7y - v3y, v7z - v3z).endVertex();
+		vertexConsumer.vertex(matrix, v7x, v7y, v7z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v4x, v4y, v4z).color(color).normal(v8x - v4x, v8y - v4y, v8z - v4z).endVertex();
+		vertexConsumer.vertex(matrix, v8x, v8y, v8z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v5x, v5y, v5z).color(color).normal(v6x - v5x, v6y - v5y, v6z - v5z).endVertex();
+		vertexConsumer.vertex(matrix, v6x, v6y, v6z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v6x, v6y, v6z).color(color).normal(v7x - v6x, v7y - v6y, v7z - v6z).endVertex();
+		vertexConsumer.vertex(matrix, v7x, v7y, v7z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v7x, v7y, v7z).color(color).normal(v8x - v7x, v8y - v7y, v8z - v7z).endVertex();
+		vertexConsumer.vertex(matrix, v8x, v8y, v8z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+		
+		vertexConsumer.vertex(matrix, v8x, v8y, v8z).color(color).normal(v5x - v8x, v5y - v8y, v5z - v8z).endVertex();
+		vertexConsumer.vertex(matrix, v5x, v5y, v5z).color(color).normal(0.0F, 0.0F, 0.0F).endVertex();
+	}
+	
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void drawInternal(PoseStack poseStack, VertexConsumer vertexConsumer, Armature armature, Joint joint, Pose pose1, Pose pose2, float partialTicks, int color) {
-		int pathIndex = armature.searchPathIndex(joint.getName());
 		OpenMatrix4f poseMatrix;
 		Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, partialTicks);
 		
-		if (pathIndex == -1) {
+		if (armature.rootJoint.equals(joint)) {
 			JointTransform jt = interpolatedPose.getOrDefaultTransform("Root");
 			jt.rotation().x = 0.0F;
 			jt.rotation().y = 0.0F;
@@ -277,7 +394,7 @@ public class OBBCollider extends Collider {
 			
 			poseMatrix = jt.getAnimationBindedMatrix(armature.rootJoint, new OpenMatrix4f()).removeTranslation();
 		} else {
-			poseMatrix = armature.getBindedTransformByJointIndex(interpolatedPose, pathIndex);
+			poseMatrix = armature.getBindedTransformFor(interpolatedPose, joint);
 		}
 		
 		OpenMatrix4f transpose = new OpenMatrix4f();
