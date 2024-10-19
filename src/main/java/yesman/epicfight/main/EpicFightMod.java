@@ -128,6 +128,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  1. Enhanced the accuracy of tracing ability of the player when attacking
  *  
+ *  2. Cloth simulation for cape
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
