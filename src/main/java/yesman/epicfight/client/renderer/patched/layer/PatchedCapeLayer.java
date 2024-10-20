@@ -2,7 +2,6 @@ package yesman.epicfight.client.renderer.patched.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -31,11 +30,7 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 				float xPos = (float)Mth.lerp(partialTicks, entitypatch.getOriginal().xOld, entitypatch.getOriginal().getX());
 				float yPos = (float)Mth.lerp(partialTicks, entitypatch.getOriginal().yOld, entitypatch.getOriginal().getY());
 				float zPos = (float)Mth.lerp(partialTicks, entitypatch.getOriginal().zOld, entitypatch.getOriginal().getZ());
-				
 				float yRotLerp = Mth.rotLerp(partialTicks, entitypatch.getYRot(), entitypatch.getYRotO());
-				
-				OpenMatrix4f colliderRootTransform = OpenMatrix4f.createRotatorDeg(180.0F - yRotLerp, Vec3f.Y_AXIS)
-																 .mulFront(OpenMatrix4f.createTranslation(xPos, yPos, zPos));
 				
 				double d0 = Mth.lerp((double)partialTicks, entitypatch.getOriginal().xCloakO, entitypatch.getOriginal().xCloak) - Mth.lerp((double)partialTicks, entitypatch.getOriginal().xo, entitypatch.getOriginal().getX());
 	            double d1 = Mth.lerp((double)partialTicks, entitypatch.getOriginal().yCloakO, entitypatch.getOriginal().yCloak) - Mth.lerp((double)partialTicks, entitypatch.getOriginal().yo, entitypatch.getOriginal().getY());
@@ -57,19 +52,21 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 	            float f4 = Mth.lerp(partialTicks, entitypatch.getOriginal().oBob, entitypatch.getOriginal().bob);
 	            f1 += Mth.sin(Mth.lerp(partialTicks, entitypatch.getOriginal().walkDistO, entitypatch.getOriginal().walkDist) * 6.0F) * 32.0F * f4;
 	            
+	            OpenMatrix4f colliderRootTransform = OpenMatrix4f.createRotatorDeg(180.0F - yRotLerp, Vec3f.Y_AXIS)
+						 										 .mulFront(OpenMatrix4f.createTranslation(xPos, yPos, zPos));
+	            
 	            OpenMatrix4f transform = new OpenMatrix4f(colliderRootTransform)
 						 .mulBack(poses[Armatures.BIPED.chest.getId()])
 						 .mulBack(Armatures.BIPED.chest.getLocalTrasnform())
 						 .translate(0.0F, 0.0F, 0.125F)
 						 .rotateDeg(-(6.0F + f2 / 2.0F + f1), Vec3f.X_AXIS)
 						 .rotateDeg(f3 / 2.0F, Vec3f.Z_AXIS)
-						 .rotateDeg(f3 / 2.0F, Vec3f.Y_AXIS)
-						 ;
+						 .rotateDeg(f3 / 2.0F, Vec3f.Y_AXIS);
 	            
-				clothObj.tick(transform, partialTicks, colliderRootTransform, poses, "default".equals(entitypatch.getOriginal().getModelName()) ? Meshes.BIPED : Meshes.ALEX);
+				clothObj.tick(entitypatch, transform, partialTicks, colliderRootTransform, poses);
 				
 				VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(entityliving.getCloakTextureLocation())));
-				clothObj.draw(vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTicks);
+				clothObj.draw(buffer, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTicks);
 			});
 		});
 	}

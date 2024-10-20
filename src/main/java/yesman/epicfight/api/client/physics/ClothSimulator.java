@@ -3,6 +3,7 @@ package yesman.epicfight.api.client.physics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
@@ -24,20 +25,22 @@ import com.mojang.math.Axis;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles;
-import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.ClothMesh;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition.ConstraintType;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.ModelPart;
 import yesman.epicfight.api.client.model.VertexBuilder;
+import yesman.epicfight.api.client.physics.ClothSimulator.ClothObjectBuilder;
 import yesman.epicfight.api.collider.OBBCollider;
-import yesman.epicfight.api.physics.SimulationData;
+import yesman.epicfight.api.physics.SimulationObject;
+import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 
@@ -49,7 +52,7 @@ import yesman.epicfight.api.utils.math.Vec3f;
  * https://www.youtube.com/@TenMinutePhysics
  **/
 @OnlyIn(Dist.CLIENT)
-public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatable, ClothSimulator.ClothObject> {
+public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothMesh, ClothSimulatable, ClothSimulator.ClothObject> {
 	private static final int SUB_STEPS = 15;
 	private static final float GRAVITY = 9.8F;
 	private static final float PARTICLE_MASS = 0.01F;
@@ -58,14 +61,35 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 	private static final float TIME_STEP = 0.16F;
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class ClothObject implements SimulationData<ClothMesh, ClothSimulatable> {
+	public static class ClothObjectBuilder extends SimulationObject.SimulationBuilder {
+		List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders = Lists.newArrayList();
+		
+		public ClothObjectBuilder addEntry(Function<ClothSimulatable, OpenMatrix4f> obbTransformer, ClothOBBCollider clothOBBCollider) {
+			this.clothColliders.add(Pair.of(obbTransformer, clothOBBCollider));
+			return this;
+		}
+		
+		public ClothObjectBuilder putAll(List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothOBBColliders) {
+			this.clothColliders.addAll(clothOBBColliders);
+			return this;
+		}
+		
+		public static ClothObjectBuilder create() {
+			return new ClothObjectBuilder();
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public static class ClothObject implements SimulationObject<ClothObjectBuilder, ClothMesh, ClothSimulatable> {
 		private final ClothMesh provider;
 		private final Map<String, Part> parts;
+		@Nullable
+		protected List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders;
 		
 		//Storage vectors
 		private static final Vec3f TRASNFORMED = new Vec3f();
 		
-		public ClothObject(ClothMesh provider, Map<String, ClothPart> parts, float[] positions) {
+		public ClothObject(ClothObjectBuilder builder, ClothMesh provider, Map<String, ClothPart> parts, float[] positions) {
 			ImmutableMap.Builder<String, Part> partBuilder = ImmutableMap.builder();
 			
 			for (Map.Entry<String, ClothPart> entry : parts.entrySet()) {
@@ -74,6 +98,7 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 			
 			this.parts = partBuilder.build();
 			this.provider = provider;
+			this.clothColliders = builder.clothColliders;
 		}
 		
 		@Override
@@ -85,28 +110,27 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 		public void tick(ClothSimulatable simulatableObj) {
 		}
 		
-		public void tick(OpenMatrix4f rootTransform, float partialTick, @Nullable OpenMatrix4f colliderRootTransform, @Nullable OpenMatrix4f[] poses, @Nullable AnimatedMesh colliderMesh) {
+		public void tick(ClothSimulatable simulatableObj, OpenMatrix4f animationTransform, float partialTick, @Nullable OpenMatrix4f worldTransform, @Nullable OpenMatrix4f[] poses) {
 			if (!Minecraft.getInstance().isPaused()) {
-				colliderMesh.getMeshColliderEntry().ifPresent((meshColliderEntry) -> {
-					for (Map.Entry<Integer, OBBCollider> entry : meshColliderEntry) {
-						entry.getValue().transform(OpenMatrix4f.mul(colliderRootTransform, poses[entry.getKey()], null));
+				if (this.clothColliders != null) {
+					for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : this.clothColliders) {
+						entry.getSecond().transform(OpenMatrix4f.mul(worldTransform, entry.getFirst().apply(simulatableObj), null));
 					}
-				});
+				}
 				
 				for (Part part : this.parts.values()) {
-					part.tick(TIME_STEP, rootTransform, colliderMesh);
+					part.tick(TIME_STEP, animationTransform, this.clothColliders);
 				}
 			}
 		}
 		
-		public void draw(VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
-			PoseStack poseStack$2 = new PoseStack();
-			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-			
+		public void draw(MultiBufferSource bufferSource, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
 			Minecraft mc = Minecraft.getInstance();
+			PoseStack poseStack$2 = new PoseStack();
+			Camera camera = mc.gameRenderer.getMainCamera();
 			Camera dummy = new Camera();
 			dummy.setup(mc.level, mc.player, !mc.options.getCameraType().isFirstPerson(), mc.options.getCameraType().isMirrored(), partialTick);
-			ComputeCameraAngles cameraSetup = ForgeHooksClient.onCameraSetup(Minecraft.getInstance().gameRenderer, dummy, partialTick);
+			ComputeCameraAngles cameraSetup = ForgeHooksClient.onCameraSetup(mc.gameRenderer, dummy, partialTick);
 			
 			poseStack$2.mulPose(Axis.ZP.rotationDegrees(cameraSetup.getRoll()));
 			poseStack$2.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
@@ -114,7 +138,14 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 			poseStack$2.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
 			
 			for (Part part : this.parts.values()) {
-				part.draw(poseStack$2, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+				part.draw(poseStack$2, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
+			}
+			
+			if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && this.clothColliders != null) {
+				for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : this.clothColliders) {
+					//entry.getValue().transform(poseMatrices[entry.getKey()]);
+					entry.getSecond().draw(poseStack$2, bufferSource, -1);
+				}
 			}
 		}
 		
@@ -228,11 +259,12 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 				this.constraints = constraintsBuilder.build();
 			}
 			
-			public void tick(float deltaTime, OpenMatrix4f rootTransform, @Nullable AnimatedMesh colliderMesh) {
+			public void tick(float deltaTime, OpenMatrix4f rootTransform, List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders) {
 				this.spatialHash.clear();
 				
 				// Apply animation transform
 				for (Particle p : this.particles.values()) {
+					//p.oPosition.set(p.position);
 					float influence = 1.0F - p.influence;
 					
 					if (influence > 0.0) {
@@ -248,7 +280,7 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 					this.spatialHash.put(hash, p);
 				}
 				
-				for (Particle p : particles.values()) {
+				for (Particle p : this.particles.values()) {
 					p.position.y -= GRAVITY * PARTICLE_MASS * p.influence * deltaTime;
 				}
 				
@@ -261,29 +293,19 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 						}
 					}
 					
-					colliderMesh.getMeshColliderEntry().ifPresent((meshColliderEntry) -> {
-						for (Map.Entry<Integer, OBBCollider> entry : meshColliderEntry) {
-							//entry.getValue().transform(colliderRootTransform);
-							//System.out.println(colliderRootTransform);
-							//System.out.println(entry.getKey() +" "+ entry.getValue());
-							
+					if (clothColliders != null) {
+						for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>entry : clothColliders) {
 							for (Particle p : this.particles.values()) {
 								if (p.influence == 0.0F) {
 									continue;
 								}
 								
-								//System.out.println( p.position.toDoubleVector() +" "+ entry.getValue().getCollidePoint(p.position.toDoubleVector()) );
-								
-								Vec3 pushedPoint = entry.getValue().getCollidePoint(p.position.toDoubleVector());
-								
-								if ((double)p.position.x != pushedPoint.x && (double)p.position.y != pushedPoint.y && (double)p.position.z != pushedPoint.z) {
-									//System.out.println(p.position +" "+ pushedPoint);
-								}
-								
+								Vec3 particlePos = p.position.toDoubleVector();
+								Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos);
 								p.position.set(pushedPoint);
 							}
 						}
-					});
+					}
 					
 					// Detect self collision
 					for (Particle p1 : this.particles.values()) {
@@ -394,7 +416,9 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 				
 				void solve(float deltaTime, float compliance) {
 				    float alpha = compliance / (deltaTime * deltaTime);
-				    float influenceSum = this.p1.influence + this.p2.influence;
+				    float p1Influence = this.p1.influence;
+				    float p2Influence = this.p2.influence;
+				    float influenceSum = p1Influence + p2Influence;
 				    
 				    if (influenceSum == 0.0F) {
 				        return;
@@ -410,9 +434,9 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 				    TOWARD.scale(1.0F / distanceLength);
 				    
 				    float distanceGap = distanceLength - this.restLength;
-				    float force = distanceGap / (this.p1.influence + this.p2.influence + alpha);
-				    float p1Modifier = this.p1.influence / influenceSum;
-				    float p2Modifier = this.p2.influence / influenceSum;
+				    float force = distanceGap / (p1Influence + p2Influence + alpha);
+				    float p1Modifier = p1Influence / influenceSum;
+				    float p2Modifier = p2Influence / influenceSum;
 				    
 				    if (distanceGap > 1.6F) {
 				    	float mod = Math.min(distanceGap / 3.0F, 0.47F);
@@ -492,6 +516,73 @@ public class ClothSimulator extends AbstractSimulator<ClothMesh, ClothSimulatabl
 					return Vec3f.dot(TET_CROSS, P1_TO_P4) / 6.0F;
 				}
 			}
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public static class ClothOBBCollider extends OBBCollider {
+		public ClothOBBCollider(double vertexX, double vertexY, double vertexZ, double centerX, double centerY, double centerZ) {
+			super(vertexX, vertexY, vertexZ, centerX, centerY, centerZ);
+		}
+		
+		public Vec3 getCollidePoint(Vec3 point) {
+			Vec3 toOpponent = point.subtract(this.worldCenter);
+			Vec3 projection1 = null;
+			Vec3 projection2 = null;
+			Vec3 projection3 = null;
+			Vec3 toPlane1 = null;
+			Vec3 toPlane2 = null;
+			Vec3 toPlane3 = null;
+			int order = 0;
+			
+			for (Vec3 seperateAxis : this.rotatedNormal) {
+				Vec3 maxProj = null;
+				double maxDot = -1;
+				
+				if (seperateAxis.dot(toOpponent) < 0.0D) {
+					seperateAxis = seperateAxis.scale(-1.0D);
+				}
+				
+				for (Vec3 vertexVector : this.rotatedVertex) {
+					Vec3 toVertex = seperateAxis.dot(vertexVector) > 0.0D ? vertexVector : vertexVector.scale(-1.0D);
+					double dot = seperateAxis.dot(toVertex);
+					
+					if (dot > maxDot) {
+						maxDot = dot;
+						maxProj = toVertex;
+					}
+				}
+				
+				Vec3 opponentProjection = MathUtils.projectVector(toOpponent, seperateAxis);
+				Vec3 vertexProjection = MathUtils.projectVector(maxProj, seperateAxis);
+				
+				if (opponentProjection.length() > vertexProjection.length()) {
+					return point;
+				} else {
+					switch (order) {
+					case 0 -> {
+						projection1 = opponentProjection;
+						toPlane1 = vertexProjection;
+					}
+					case 1 -> {
+						projection2 = opponentProjection;
+						toPlane2 = vertexProjection;
+					}
+					case 2 -> {
+						projection3 = opponentProjection;
+						toPlane3 = vertexProjection;
+					}
+					}
+				}
+				
+				order++;
+			}
+			
+			Vec3 destCandidate1 = projection1.add(projection2).add(toPlane3);
+			Vec3 destCandidate2 = projection2.add(projection3).add(toPlane1);
+			Vec3 destCandidate3 = projection3.add(projection1).add(toPlane2);
+			
+			return MathUtils.getNearestVector(Vec3.ZERO, destCandidate1, destCandidate2, destCandidate3).add(this.worldCenter);
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package yesman.epicfight.api.physics;
 
-public interface SimulationProvider<O, T extends SimulationData<?, ?>> {
-	public T createSimulationData(O simObject);
+import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
+
+public interface SimulationProvider<O, T extends SimulationObject<?, ?, ?>, B extends SimulationBuilder> {
+	public T createSimulationData(O simObject, B simBuilder);
 }

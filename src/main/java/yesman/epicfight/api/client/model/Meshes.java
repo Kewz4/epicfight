@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.resources.ResourceLocation;
@@ -23,7 +22,6 @@ import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.Mesh.RenderProperties;
 import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
-import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
 import yesman.epicfight.api.model.JsonModelLoader;
 import yesman.epicfight.client.mesh.CreeperMesh;
@@ -126,38 +124,6 @@ public class Meshes implements PreparableReloadListener {
 		
 		//Cloth
 		CAPE = event.getCloth(EpicFightMod.MODID, "layer/cape", ClothMesh::new);
-		
-		ImmutableMap.Builder<Integer, OBBCollider> alexCollider = ImmutableMap.builder();
-		
-		alexCollider.put(1, new OBBCollider(0.125D, 0.24D, 0.125D, 0.0D, 0.22D, 0.0D));
-		alexCollider.put(2, new OBBCollider(0.125D, 0.1875D, 0.125D, 0.0D, 0.1875D, 0.0D));
-		alexCollider.put(4, new OBBCollider(0.125D, 0.24D, 0.125D, 0.0D, 0.22D, 0.0D));
-		alexCollider.put(5, new OBBCollider(0.125D, 0.1875D, 0.125D, 0.0D, 0.1875D, 0.0D));
-		alexCollider.put(7, new OBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.14D, 0.0D));
-		alexCollider.put(8, new OBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.1875D, 0.0D));
-		alexCollider.put(9, new OBBCollider(0.25D, 0.25D, 0.25D, 0.0D, 0.25D, 0.0D));
-		alexCollider.put(11, new OBBCollider(0.12D, 0.24D, 0.125D, -0.05D, 0.14D, 0.0D));
-		alexCollider.put(12, new OBBCollider(0.12D, 0.1875D, 0.125D, -0.05D, 0.14D, 0.0D));
-		alexCollider.put(16, new OBBCollider(0.12D, 0.24D, 0.125D, 0.05D, 0.14D, 0.0D));
-		alexCollider.put(17, new OBBCollider(0.12D, 0.1875D, 0.125D, 0.05D, 0.14D, 0.0D));
-		
-		ALEX.setMeshCollider(alexCollider.build());
-		
-		ImmutableMap.Builder<Integer, OBBCollider> bipedCollider = ImmutableMap.builder();
-		
-		bipedCollider.put(1, new OBBCollider(0.125D, 0.24D, 0.125D, 0.0D, 0.22D, 0.0D));
-		bipedCollider.put(2, new OBBCollider(0.125D, 0.1875D, 0.125D, 0.0D, 0.1875D, 0.0D));
-		bipedCollider.put(4, new OBBCollider(0.125D, 0.24D, 0.125D, 0.0D, 0.22D, 0.0D));
-		bipedCollider.put(5, new OBBCollider(0.125D, 0.1875D, 0.125D, 0.0D, 0.1875D, 0.0D));
-		bipedCollider.put(7, new OBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.14D, 0.0D));
-		bipedCollider.put(8, new OBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.1875D, 0.0D));
-		bipedCollider.put(9, new OBBCollider(0.25D, 0.25D, 0.25D, 0.0D, 0.25D, 0.0D));
-		bipedCollider.put(11, new OBBCollider(0.125D, 0.24D, 0.125D, -0.05D, 0.14D, 0.0D));
-		bipedCollider.put(12, new OBBCollider(0.125D, 0.1875D, 0.125D, -0.05D, 0.14D, 0.0D));
-		bipedCollider.put(16, new OBBCollider(0.125D, 0.24D, 0.125D, 0.05D, 0.14D, 0.0D));
-		bipedCollider.put(17, new OBBCollider(0.125D, 0.1875D, 0.125D, 0.05D, 0.14D, 0.0D));
-		
-		BIPED.setMeshCollider(bipedCollider.build());
 		
 		ModLoader.get().postEvent(event);
 	}

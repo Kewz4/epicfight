@@ -40,16 +40,16 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
         this.mulPoseStack(poseStack, armature, entityIn, entitypatch, partialTicks);
-		OpenMatrix4f[] poses = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
-		poses[0] = OpenMatrix4f.rotate(-90.0F, Vec3f.X_AXIS, poses[0], null);
+		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		armature.getPoseMatrices()[0] = OpenMatrix4f.rotate(-90.0F, Vec3f.X_AXIS, armature.getPoseMatrices()[0], null);
 		
 		if (entityIn.dragonDeathTime > 0) {
 			poseStack.translate(entityIn.getRandom().nextGaussian() * 0.08D, 0.0D, entityIn.getRandom().nextGaussian() * 0.08D);
 			float deathTimeProgression = ((float) entityIn.dragonDeathTime + partialTicks) / 200.0F;
-			mesh.draw(poseStack, buffer, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, deathTimeProgression, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
-			mesh.draw(poseStack, buffer, RenderType.entityDecal(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), poses);
+			mesh.draw(poseStack, buffer, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, deathTimeProgression, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
+			mesh.draw(poseStack, buffer, RenderType.entityDecal(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), armature.getPoseMatrices());
 		} else {
-			mesh.draw(poseStack, buffer, RenderType.entityCutoutNoCull(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), poses);
+			mesh.draw(poseStack, buffer, RenderType.entityCutoutNoCull(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), armature.getPoseMatrices());
 		}
 		
 		if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {

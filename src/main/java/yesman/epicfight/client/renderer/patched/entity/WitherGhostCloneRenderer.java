@@ -14,7 +14,6 @@ import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.mesh.WitherMesh;
 import yesman.epicfight.client.renderer.entity.NoopLivingEntityRenderer;
 import yesman.epicfight.world.capabilities.entitypatch.boss.WitherGhostPatch;
@@ -31,8 +30,8 @@ public class WitherGhostCloneRenderer extends PatchedEntityRenderer<WitherGhostC
 		
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		OpenMatrix4f[] poseMatrices = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
-		mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, tranparency, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poseMatrices);
+		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, tranparency, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
 		
 		if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
 			for (Layer.Priority priority : Layer.Priority.values()) {

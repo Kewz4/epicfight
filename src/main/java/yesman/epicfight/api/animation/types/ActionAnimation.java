@@ -280,7 +280,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		}
 		
 		boolean hasNoGravity = entitypatch.getOriginal().isNoGravity();
-		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(this.getProperty(ActionAnimationProperty.COORD).isPresent());
+		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false);
 		MoveCoordGetter moveGetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.DIFF_FROM_PREV_COORD) : MoveCoordFunctions.DIFF_FROM_PREV_COORD;
 		Vec3f move = moveGetter.get(animation, entitypatch, transformSheet);
 		LivingEntity livingentity = entitypatch.getOriginal();

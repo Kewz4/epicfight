@@ -41,6 +41,7 @@ import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.physics.ClothColliderPresets;
 import yesman.epicfight.api.client.physics.ClothSimulatable;
 import yesman.epicfight.api.client.physics.ClothSimulator;
 import yesman.epicfight.api.physics.PhysicsSimulator;
@@ -68,7 +69,10 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		this.prevHeldItemOffHand = Items.AIR;
 		
 		if (this.original.isCapeLoaded() && this.original.getCloakTextureLocation() != null) {
-			this.clothSimulator.runWhenPermanent(Meshes.CAPE, () -> {
+			ClothSimulator.ClothObjectBuilder builder = ClothSimulator.ClothObjectBuilder.create();
+			builder.putAll("default".equals(this.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM);
+			
+			this.clothSimulator.runWhenPermanent(Meshes.CAPE, builder, () -> {
 				return !this.original.isInvisible() && this.original.isModelPartShown(PlayerModelPart.CAPE) && this.original.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
 			});
 		}
@@ -421,7 +425,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <SIM extends PhysicsSimulator<?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, SIM> simulationType) {
+	public <SIM extends PhysicsSimulator<?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, SIM> simulationType) {
 		if (simulationType == SimulationTypes.CLOTH) {
 			return Optional.of((SIM)this.clothSimulator);
 		}

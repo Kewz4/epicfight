@@ -20,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
@@ -108,7 +109,11 @@ public class EntityAfterImageParticle extends CustomModelParticle<AnimatedMesh> 
 				Armature armature = entitypatch.getArmature();
 				PoseStack poseStack = new PoseStack();
 				renderer.mulPoseStack(poseStack, armature, entitypatch.getOriginal(), entitypatch, 1.0F);
-				OpenMatrix4f[] matrices = renderer.getPoseMatrices(entitypatch, armature, 1.0F, true);
+				
+				Pose pose = entitypatch.getAnimator().getPose(1.0F);
+				renderer.setJointTransforms(entitypatch, armature, pose, 1.0F);
+				OpenMatrix4f[] matrices = armature.getPoseAsTransformMatrix(pose, true);
+				
 				MeshProvider<AnimatedMesh> meshProvider = ClientEngine.getInstance().renderEngine.getEntityRenderer(entitypatch.getOriginal()).getMeshProvider(entitypatch);
 				EntityAfterImageParticle particle = new EntityAfterImageParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, meshProvider, matrices, poseStack.last().pose());
 				

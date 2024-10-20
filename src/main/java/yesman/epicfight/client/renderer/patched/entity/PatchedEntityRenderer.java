@@ -48,12 +48,10 @@ public abstract class PatchedEntityRenderer<E extends LivingEntity, T extends Li
 		}
 	}
 	
-	public OpenMatrix4f[] getPoseMatrices(T entitypatch, Armature armature, float partialTicks, boolean toOrigin) {
+	public void setArmaturePoses(T entitypatch, Armature armature, float partialTicks) {
 		Pose pose = entitypatch.getAnimator().getPose(partialTicks);
         this.setJointTransforms(entitypatch, armature, pose, partialTicks);
-		OpenMatrix4f[] poseMatrices = armature.getPoseAsTransformMatrix(pose, toOrigin);
-		
-		return poseMatrices;
+        armature.setPose(pose);
 	}
 	
 	public MeshProvider<AM> getMeshProvider(T entitypatch) {
@@ -62,6 +60,10 @@ public abstract class PatchedEntityRenderer<E extends LivingEntity, T extends Li
 	
 	public abstract MeshProvider<AM> getDefaultMesh();
 	
-	protected void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
+	/**
+	 * Developers shouldn't implement any interpolations in this method
+	 * Use {@link LivingEntityPatch#poseTick} instead
+	 */
+	public void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
 	}
 }

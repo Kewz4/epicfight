@@ -24,14 +24,15 @@ public class Armature {
 	private final Int2ObjectMap<Joint> jointById;
 	private final Map<String, Joint> jointByName;
 	private final Object2IntMap<String> pathIndexMap;
-	private final int jointNumber;
+	private final int jointCount;
 	private final TransformSheet actionAnimationCoord = new TransformSheet();
+	private final OpenMatrix4f[] poseMatrices;
 	
 	public final Joint rootJoint;
 	
 	public Armature(String name, int jointNumber, Joint rootJoint, Map<String, Joint> jointMap) {
 		this.name = name;
-		this.jointNumber = jointNumber;
+		this.jointCount = jointNumber;
 		this.rootJoint = rootJoint;
 		this.jointByName = jointMap;
 		this.jointById = new Int2ObjectOpenHashMap<>();
@@ -39,6 +40,12 @@ public class Armature {
 		this.jointByName.values().forEach((joint) -> {
 			this.jointById.put(joint.getId(), joint);
 		});
+		
+		this.poseMatrices = new OpenMatrix4f[this.jointCount];
+		
+		for (int i = 0; i < this.jointCount; i++) {
+			this.poseMatrices[i] = new OpenMatrix4f();
+		}
 	}
 	
 	protected Joint getOrLogException(Map<String, Joint> jointMap, String name) {
@@ -51,11 +58,19 @@ public class Armature {
 		return jointMap.get(name);
 	}
 	
+	public void setPose(Pose pose) {
+		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, this.poseMatrices, false);
+	}
+	
+	public OpenMatrix4f[] getPoseMatrices() {
+		return this.poseMatrices;
+	}
+	
 	/**
-	 * @param applyOriginTransform if you need a final pose of the animations, give it false. 
+	 * @param applyOriginTransform if you need a final pose of the animations, give it false.
 	 */
 	public OpenMatrix4f[] getPoseAsTransformMatrix(Pose pose, boolean applyOriginTransform) {
-		OpenMatrix4f[] jointMatrices = new OpenMatrix4f[this.jointNumber];
+		OpenMatrix4f[] jointMatrices = new OpenMatrix4f[this.jointCount];
 		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, jointMatrices, applyOriginTransform);
 		return jointMatrices;
 	}
@@ -121,7 +136,7 @@ public class Armature {
 	}
 	
 	public int getJointNumber() {
-		return this.jointNumber;
+		return this.jointCount;
 	}
 
 	public Joint getRootJoint() {
@@ -144,7 +159,7 @@ public class Armature {
 		//Uses reflection to keep the type of copied armature
 		try {
 			Constructor<? extends Armature> constructor = this.getClass().getConstructor(String.class, int.class, Joint.class, Map.class);
-			newArmature = constructor.newInstance(this.name, this.jointNumber, newRoot, oldToNewJoint);
+			newArmature = constructor.newInstance(this.name, this.jointCount, newRoot, oldToNewJoint);
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new IllegalStateException("Armature copy failed! " + e);
 		}

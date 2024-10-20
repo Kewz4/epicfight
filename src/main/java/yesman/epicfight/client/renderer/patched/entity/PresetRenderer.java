@@ -102,7 +102,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		OpenMatrix4f[] poseMatrices = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
+		this.setArmaturePoses(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
 		    this.prepareVanillaModel(entity, this.presetRenderer.getModel(), this.presetRenderer, partialTicks);
@@ -112,12 +112,12 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 			PrepareModelEvent prepareModelEvent = new PrepareModelEvent(this, mesh, entitypatch, buffer, poseStack, packedLight, partialTicks);
 			
 			if (!MinecraftForge.EVENT_BUS.post(prepareModelEvent)) {
-				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, isVisibleToPlayer ? 0.15F : 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), armature, poseMatrices);
+				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, isVisibleToPlayer ? 0.15F : 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), armature, armature.getPoseMatrices());
 			}
 		}
 		
 		if (!entity.isSpectator()) {
-			this.renderLayer(this.presetRenderer, entitypatch, entity, poseMatrices, buffer, poseStack, packedLight, partialTicks);
+			this.renderLayer(this.presetRenderer, entitypatch, entity, armature.getPoseMatrices(), buffer, poseStack, packedLight, partialTicks);
 		}
 		
 		if (renderType != null) {

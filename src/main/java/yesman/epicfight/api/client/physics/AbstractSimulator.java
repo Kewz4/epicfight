@@ -8,10 +8,11 @@ import java.util.function.BooleanSupplier;
 import com.google.common.collect.Maps;
 
 import yesman.epicfight.api.physics.PhysicsSimulator;
-import yesman.epicfight.api.physics.SimulationData;
+import yesman.epicfight.api.physics.SimulationObject;
+import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
 import yesman.epicfight.api.physics.SimulationProvider;
 
-public abstract class AbstractSimulator<KEY extends SimulationProvider<O, SD>, O, SD extends SimulationData<KEY, O>> implements PhysicsSimulator<KEY, O, SD> {
+public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends SimulationProvider<O, SD, B>, O, SD extends SimulationObject<B, KEY, O>> implements PhysicsSimulator<B, KEY, O, SD> {
 	protected Map<KEY, KeyWrapper> simulationObjects = Maps.newHashMap();
 	
 	@Override
@@ -39,13 +40,13 @@ public abstract class AbstractSimulator<KEY extends SimulationProvider<O, SD>, O
 	}
 	
 	@Override
-	public void runWhen(KEY key, BooleanSupplier when) {
-		this.simulationObjects.put(key, new KeyWrapper(key, when, false));
+	public void runWhen(KEY key, B builder, BooleanSupplier when) {
+		this.simulationObjects.put(key, new KeyWrapper(key, when, false, builder));
 	}
 	
 	@Override
-	public void runWhenPermanent(KEY key, BooleanSupplier when) {
-		this.simulationObjects.put(key, new KeyWrapper(key, when, true));
+	public void runWhenPermanent(KEY key, B builder, BooleanSupplier when) {
+		this.simulationObjects.put(key, new KeyWrapper(key, when, true, builder));
 	}
 	
 	@Override
@@ -65,19 +66,21 @@ public abstract class AbstractSimulator<KEY extends SimulationProvider<O, SD>, O
 		final KEY key;
 		final BooleanSupplier runWhen;
 		final boolean permanent;
+		final B builder;
 		
 		SD simulationData;
 		boolean isRunning;
 		
-		KeyWrapper(KEY key, BooleanSupplier runWhen, boolean permanent) {
+		KeyWrapper(KEY key, BooleanSupplier runWhen, boolean permanent, B builder) {
 			this.key = key;
 			this.runWhen = runWhen;
 			this.permanent = permanent;
+			this.builder = builder;
 		}
 		
 		public void startRunning(O simObject) {
 			this.isRunning = true;
-			this.simulationData = this.key.createSimulationData(simObject);
+			this.simulationData = this.key.createSimulationData(simObject, this.builder);
 		}
 		
 		public void stopRunning() {

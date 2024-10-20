@@ -26,7 +26,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements SimulationProvider<ClothSimulatable, ClothSimulator.ClothObject> {
+public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements SimulationProvider<ClothSimulatable, ClothSimulator.ClothObject, ClothSimulator.ClothObjectBuilder> {
 	public ClothMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable ClothMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, null, properties);
 	}
@@ -62,8 +62,8 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	}
 	
 	@Override
-	public ClothSimulator.ClothObject createSimulationData(ClothSimulatable simObject) {
-		return new ClothObject(this, this.parts, this.positions);
+	public ClothSimulator.ClothObject createSimulationData(ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder builder) {
+		return new ClothObject(builder, this, this.parts, this.positions);
 	}
 	
 	@OnlyIn(Dist.CLIENT)

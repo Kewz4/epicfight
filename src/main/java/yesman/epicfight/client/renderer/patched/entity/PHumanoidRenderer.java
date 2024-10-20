@@ -39,7 +39,7 @@ public class PHumanoidRenderer<E extends LivingEntity, T extends LivingEntityPat
 	}
 	
 	@Override
-	protected void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
+	public void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
 		if (entitypatch.getOriginal().isBaby()) {
 			pose.getOrDefaultTransform("Head").frontResult(JointTransform.getScale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
 		}

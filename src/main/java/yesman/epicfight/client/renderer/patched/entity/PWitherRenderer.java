@@ -21,7 +21,6 @@ import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.mesh.WitherMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedWitherArmorLayer;
 import yesman.epicfight.mixin.MixinLivingEntityRenderer;
@@ -49,14 +48,14 @@ public class PWitherRenderer extends PatchedLivingEntityRenderer<WitherBoss, Wit
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		OpenMatrix4f[] poseMatrices = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
+		this.setArmaturePoses(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
 			int transparencyCount = entitypatch.getTransparency();
 			
 			if (transparencyCount == 0) {
 				if (!entitypatch.isGhost()) {
-					mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), entitypatch.getArmature(), poseMatrices);
+					mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), entitypatch.getArmature(), armature.getPoseMatrices());
 				}
 			} else {
 				float transparency = (Math.abs(transparencyCount) + partialTicks) / 41.0F;
@@ -65,11 +64,11 @@ public class PWitherRenderer extends PatchedLivingEntityRenderer<WitherBoss, Wit
 					transparency = 1.0F - transparency;
 				}
 				
-				mesh.draw(poseStack, buffer, RenderType.entityTranslucent(WITHER_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, transparency, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poseMatrices);
-				mesh.draw(poseStack, buffer, RenderType.entityTranslucent(WITHER_INVULNERABLE_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, Mth.sin(transparency * 3.1415F), OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poseMatrices);
+				mesh.draw(poseStack, buffer, RenderType.entityTranslucent(WITHER_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, transparency, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
+				mesh.draw(poseStack, buffer, RenderType.entityTranslucent(WITHER_INVULNERABLE_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, Mth.sin(transparency * 3.1415F), OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
 			}
 			
-			this.renderLayer(renderer, entitypatch, entity, poseMatrices, buffer, poseStack, packedLight, partialTicks);
+			this.renderLayer(renderer, entitypatch, entity, armature.getPoseMatrices(), buffer, poseStack, packedLight, partialTicks);
 		}
 		
 		if (renderType != null) {
