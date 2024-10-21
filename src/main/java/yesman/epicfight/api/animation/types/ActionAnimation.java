@@ -27,7 +27,7 @@ import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.TimePairList;
-import yesman.epicfight.api.utils.TypeFlexibleHashMap.TypeKey;
+import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
