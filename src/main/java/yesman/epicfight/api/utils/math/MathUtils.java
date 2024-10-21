@@ -102,6 +102,10 @@ public class MathUtils {
 		int index = 0;
 		
 		for (int i = 0; i < vectors.length; i++) {
+			if (vectors[i] == null) {
+				continue;
+			}
+			
 			double distSqr = from.distanceToSqr(vectors[i]);
 			
 			if (distSqr < maxLength) {

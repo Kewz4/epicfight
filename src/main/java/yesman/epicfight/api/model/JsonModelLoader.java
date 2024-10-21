@@ -369,6 +369,7 @@ public class JsonModelLoader {
 				List<int[]> constraintsList = new ArrayList<> (constraintsArray.size());
 				float[] compliances = new float[constraintsArray.size()];
 				ClothPartDefinition.ConstraintType[] constraintType = new ClothPartDefinition.ConstraintType[constraintsArray.size()];
+				boolean[] colliders = new boolean[constraintsArray.size()];
 				int i = 0;
 				
 				for (JsonElement element : constraintsArray) {
@@ -382,10 +383,11 @@ public class JsonModelLoader {
 					compliances[i] = GsonHelper.getAsFloat(asJsonObject, "compliance");
 					constraintsList.add(ParseUtil.toIntArray(asJsonObject.get("array").getAsJsonArray()));
 					element.getAsJsonObject().get("compliance");
+					colliders[i] = GsonHelper.getAsBoolean(asJsonObject, "collider");
 					i++;
 				}
 				
-				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray, colliders), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
 			}
 		}
 		

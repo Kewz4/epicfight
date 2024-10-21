@@ -153,7 +153,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 		public class Part {
 			final String name;
 			final Map<Integer, Particle> particles;
-			final List<Pair<Float, List<Constraint>>> constraints;
+			final List<ConstraintsBundle> constraints;
 			
 			final Multimap<Integer, Particle> spatialHash;
 			final int hashTableSize;
@@ -168,7 +168,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				this.particles = Maps.newLinkedHashMap();
 				
 				List<Particle> particlesList = Lists.newArrayList();
-				ImmutableList.Builder<Pair<Float, List<Constraint>>> constraintsBuilder = ImmutableList.builder();
+				ImmutableList.Builder<ConstraintsBundle> constraintsBuilder = ImmutableList.builder();
 				
 				for (int i = 0; i < clothPart.particles().length / 2; i++) {
 					int posIndex = clothPart.particles()[i * 2];
@@ -187,6 +187,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				int idx = 0;
 				
 				for (int[] constraints : clothPart.constraints()) {
+					boolean collider = clothPart.collider()[idx];
 					float compliance = clothPart.compliances()[idx];
 					ConstraintType constraintType = clothPart.constraintTypes()[idx];
 					List<Constraint> constraintList;
@@ -203,7 +204,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 							constraintList.add(new DistanceConstraint(particlesList.get(idx1), particlesList.get(idx2)));
 						}
 						
-						constraintsBuilder.add(Pair.of(compliance, constraintList));
+						constraintsBuilder.add(new ConstraintsBundle(compliance, collider, constraintList));
 					}
 					case VOLUME -> {
 						constraintList = new ArrayList<> (constraints.length / 4);
@@ -217,7 +218,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 							constraintList.add(new VolumeConstraint(particlesList.get(idx1), particlesList.get(idx2), particlesList.get(idx3), particlesList.get(idx4)));
 						}
 						
-						constraintsBuilder.add(Pair.of(compliance, constraintList));
+						constraintsBuilder.add(new ConstraintsBundle(compliance, false, constraintList));
 					}
 					}
 				}
@@ -254,7 +255,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					constraintList.add(vol5);
 				}
 				
-				constraintsBuilder.add(Pair.of(0.0F, constraintList));
+				constraintsBuilder.add(new ConstraintsBundle(0.0F, false, constraintList));
+				// Temp code ends
 				
 				this.constraints = constraintsBuilder.build();
 			}
@@ -264,7 +266,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				
 				// Apply animation transform
 				for (Particle p : this.particles.values()) {
-					//p.oPosition.set(p.position);
 					float influence = 1.0F - p.influence;
 					
 					if (influence > 0.0) {
@@ -280,19 +281,36 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					this.spatialHash.put(hash, p);
 				}
 				
-				for (Particle p : this.particles.values()) {
-					p.position.y -= GRAVITY * PARTICLE_MASS * p.influence * deltaTime;
-				}
-				
 				float subSteppingDeltaTime = deltaTime / SUB_STEPS;
 				
 				for (int i = 0; i < SUB_STEPS; i++) {
-					for (Pair<Float, List<Constraint>> pair : this.constraints) {
-						for (Constraint c : pair.getSecond()) {
-							c.solve(subSteppingDeltaTime, pair.getFirst());
-						}
+					for (Particle p : this.particles.values()) {
+						p.position.y -= GRAVITY * PARTICLE_MASS * p.influence * subSteppingDeltaTime;
 					}
 					
+					for (ConstraintsBundle constraintsBundle : this.constraints) {
+						for (Constraint c : constraintsBundle.constraints()) {
+							c.solve(subSteppingDeltaTime, constraintsBundle.compliance());
+							
+							if (constraintsBundle.useAsCollider()) {
+								if (clothColliders != null) {
+									for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : clothColliders) {
+										Particle p = ((DistanceConstraint)c).p2;
+										Particle rootP = ((DistanceConstraint)c).p1;
+										
+										if (p.influence == 0.0F) {
+											continue;
+										}
+										
+										Vec3 particlePos = p.position.toDoubleVector();
+										Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos, rootP.position.toDoubleVector());
+										p.position.set(pushedPoint);
+									}
+								}
+							}
+						}
+					}
+					/**
 					if (clothColliders != null) {
 						for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>entry : clothColliders) {
 							for (Particle p : this.particles.values()) {
@@ -301,12 +319,12 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 								}
 								
 								Vec3 particlePos = p.position.toDoubleVector();
-								Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos);
+								Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos, particlePos);
 								p.position.set(pushedPoint);
 							}
 						}
 					}
-					
+					**/
 					// Detect self collision
 					for (Particle p1 : this.particles.values()) {
 						int hash = this.getHash(p1.position.x, p1.position.y, p1.position.z);
@@ -395,6 +413,10 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			}
 			
 			@OnlyIn(Dist.CLIENT)
+			public static record ConstraintsBundle(float compliance, boolean useAsCollider, List<Constraint> constraints) {
+			}
+			
+			@OnlyIn(Dist.CLIENT)
 			abstract class Constraint {
 				abstract void solve(float deltaTime, float compliance);
 			}
@@ -415,12 +437,11 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				}
 				
 				void solve(float deltaTime, float compliance) {
-				    float alpha = compliance / (deltaTime * deltaTime);
 				    float p1Influence = this.p1.influence;
 				    float p2Influence = this.p2.influence;
 				    float influenceSum = p1Influence + p2Influence;
 				    
-				    if (influenceSum == 0.0F) {
+				    if (influenceSum < 1E-5) {
 				        return;
 				    }
 				    
@@ -433,6 +454,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				    
 				    TOWARD.scale(1.0F / distanceLength);
 				    
+				    float alpha = compliance / (deltaTime * deltaTime);
 				    float distanceGap = distanceLength - this.restLength;
 				    float force = distanceGap / (p1Influence + p2Influence + alpha);
 				    float p1Modifier = p1Influence / influenceSum;
@@ -521,11 +543,16 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class ClothOBBCollider extends OBBCollider {
-		public ClothOBBCollider(double vertexX, double vertexY, double vertexZ, double centerX, double centerY, double centerZ) {
+		// 0: right, 1: top, 2: near, 3: left, 4: bottom, 5: far
+		private final int[] allowedPlaneIds;
+		
+		public ClothOBBCollider(double vertexX, double vertexY, double vertexZ, double centerX, double centerY, double centerZ, int... allowedPlaneIds) {
 			super(vertexX, vertexY, vertexZ, centerX, centerY, centerZ);
+			
+			this.allowedPlaneIds = allowedPlaneIds;
 		}
 		
-		public Vec3 getCollidePoint(Vec3 point) {
+		public Vec3 getCollidePoint(Vec3 point, Vec3 root) {
 			Vec3 toOpponent = point.subtract(this.worldCenter);
 			Vec3 projection1 = null;
 			Vec3 projection2 = null;
@@ -533,6 +560,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			Vec3 toPlane1 = null;
 			Vec3 toPlane2 = null;
 			Vec3 toPlane3 = null;
+			
 			int order = 0;
 			
 			for (Vec3 seperateAxis : this.rotatedNormal) {
@@ -578,11 +606,14 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				order++;
 			}
 			
-			Vec3 destCandidate1 = projection1.add(projection2).add(toPlane3);
-			Vec3 destCandidate2 = projection2.add(projection3).add(toPlane1);
-			Vec3 destCandidate3 = projection3.add(projection1).add(toPlane2);
+			Vec3 destCandidate1 = this.allowedPlaneIds[2] > 0 ? projection1.add(projection2).add(toPlane3) : null;
+			Vec3 destCandidate2 = this.allowedPlaneIds[0] > 0 ? projection2.add(projection3).add(toPlane1) : null;
+			Vec3 destCandidate3 = this.allowedPlaneIds[1] > 0 ? projection3.add(projection1).add(toPlane2) : null;
+			Vec3 destCandidate4 = this.allowedPlaneIds[5] > 0 ? projection1.add(projection2).subtract(toPlane3) : null;
+			Vec3 destCandidate5 = this.allowedPlaneIds[3] > 0 ? projection2.add(projection3).subtract(toPlane1) : null;
+			Vec3 destCandidate6 = this.allowedPlaneIds[4] > 0 ? projection3.add(projection1).subtract(toPlane2) : null;
 			
-			return MathUtils.getNearestVector(Vec3.ZERO, destCandidate1, destCandidate2, destCandidate3).add(this.worldCenter);
+			return MathUtils.getNearestVector(root.subtract(this.worldCenter), destCandidate1, destCandidate2, destCandidate3, destCandidate4, destCandidate5, destCandidate6).add(this.worldCenter);
 		}
 	}
 }
