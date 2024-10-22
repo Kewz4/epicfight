@@ -120,6 +120,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  10. Fixed item capability attributes mixed for capabilities sharing the same custom weapon type
  *  
+ *  11. Added dash attack option for importing animation
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)

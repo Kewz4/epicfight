@@ -46,6 +46,7 @@ import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
 import yesman.epicfight.client.gui.datapack.widgets.Grid;
+import yesman.epicfight.client.gui.datapack.widgets.Grid.GridBuilder.RowEditButton;
 import yesman.epicfight.client.gui.datapack.widgets.InputComponentList;
 import yesman.epicfight.client.gui.datapack.widgets.ModelPreviewer;
 import yesman.epicfight.client.gui.datapack.widgets.PopupBox;
@@ -54,7 +55,6 @@ import yesman.epicfight.client.gui.datapack.widgets.ResizableEditBox;
 import yesman.epicfight.client.gui.datapack.widgets.RowSpliter;
 import yesman.epicfight.client.gui.datapack.widgets.Static;
 import yesman.epicfight.client.gui.datapack.widgets.SubScreenOpenButton;
-import yesman.epicfight.client.gui.datapack.widgets.Grid.GridBuilder.RowEditButton;
 import yesman.epicfight.gameasset.ColliderPreset;
 
 @OnlyIn(Dist.CLIENT)
@@ -92,7 +92,9 @@ public class ImportAnimationsScreen extends Screen {
 										this.inputComponentsList.importTag(this.fakeAnimations.get(rowposition));
 										this.modelPreviewer.setTrailInfo();
 										
-										if (this.fakeAnimations.get(rowposition).getAnimationClass() == FakeAnimation.AnimationType.ATTACK || this.fakeAnimations.get(rowposition).getAnimationClass() == FakeAnimation.AnimationType.BASIC_ATTACK) {
+										FakeAnimation.AnimationType animationType = this.fakeAnimations.get(rowposition).getAnimationClass();
+										
+										if (animationType == FakeAnimation.AnimationType.ATTACK || animationType == FakeAnimation.AnimationType.BASIC_ATTACK || animationType == FakeAnimation.AnimationType.DASH_ATTACK) {
 											this.inputComponentsList.getComponent(7, 1)._setActive(false);
 											this.inputComponentsList.getComponent(8, 1)._setActive(false);
 											this.inputComponentsList.getComponent(9, 1)._setActive(false);
@@ -173,7 +175,7 @@ public class ImportAnimationsScreen extends Screen {
 					
 					ImportAnimationsScreen.this.animationType._setResponder(ImportAnimationsScreen.this.responder);
 					break;
-				case ATTACK, BASIC_ATTACK:
+				case ATTACK, BASIC_ATTACK, DASH_ATTACK:
 					CompoundTag colliderTag = new CompoundTag();
 					Collider collider = (Collider)fakeAnim.getParameter("collider");
 					
@@ -339,7 +341,7 @@ public class ImportAnimationsScreen extends Screen {
 			this.inputComponentsList.addComponentCurrentRow(convertTime.relocateX(screenRect, this.inputComponentsList.nextStart(5)));
 		}
 		break;
-		case ATTACK, BASIC_ATTACK:
+		case ATTACK, BASIC_ATTACK, DASH_ATTACK:
 		{
 			this.modelPreviewer.setCollider(ColliderPreset.FIST);
 			

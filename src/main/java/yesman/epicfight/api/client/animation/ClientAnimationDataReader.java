@@ -121,24 +121,27 @@ public class ClientAnimationDataReader {
 			Layer.LayerType layerType = jsonObject.has("layer") ? Layer.LayerType.valueOf(GsonHelper.getAsString(jsonObject, "layer")) : Layer.LayerType.BASE_LAYER;
 			
 			if (jsonObject.has("masks")) {
-				builder.defaultMask(JointMaskEntry.ALL);
 				JsonArray maskArray = jsonObject.get("masks").getAsJsonArray();
 				
-				maskArray.forEach(element -> {
-					JsonObject jointMaskEntry = element.getAsJsonObject();
-					String livingMotionName = GsonHelper.getAsString(jointMaskEntry, "livingmotion");
-					String type = GsonHelper.getAsString(jointMaskEntry, "type");
+				if (!maskArray.isEmpty()) {
+					builder.defaultMask(JointMaskEntry.ALL);
 					
-					if (!type.contains(":")) {
-						type = (new StringBuilder(EpicFightMod.MODID)).append(":").append(type).toString();
-					}
-					
-					if (livingMotionName.equals("ALL")) {
-						builder.defaultMask(JointMaskReloadListener.getJointMaskEntry(type));
-					} else {
-						builder.mask((LivingMotion) LivingMotion.ENUM_MANAGER.getOrThrow(livingMotionName), JointMaskReloadListener.getJointMaskEntry(type));
-					}
-				});
+					maskArray.forEach(element -> {
+						JsonObject jointMaskEntry = element.getAsJsonObject();
+						String livingMotionName = GsonHelper.getAsString(jointMaskEntry, "livingmotion");
+						String type = GsonHelper.getAsString(jointMaskEntry, "type");
+						
+						if (!type.contains(":")) {
+							type = (new StringBuilder(EpicFightMod.MODID)).append(":").append(type).toString();
+						}
+						
+						if (livingMotionName.equals("ALL")) {
+							builder.defaultMask(JointMaskReloadListener.getJointMaskEntry(type));
+						} else {
+							builder.mask((LivingMotion) LivingMotion.ENUM_MANAGER.getOrThrow(livingMotionName), JointMaskReloadListener.getJointMaskEntry(type));
+						}
+					});
+				}
 			}
 			
 			return new LayerInfo(builder.create(), priority, (defaultLayerType == null) ? layerType : defaultLayerType);
