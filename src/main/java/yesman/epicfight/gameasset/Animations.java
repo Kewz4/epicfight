@@ -833,8 +833,7 @@ public class Animations {
 				new Phase(0.0F, 0.05F, 0.05F, 0.3F, 0.75F, Float.MAX_VALUE, InteractionHand.MAIN_HAND, AttackAnimation.JointColliderPair.of(biped.toolR, null), AttackAnimation.JointColliderPair.of(biped.toolL, null)))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD);
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null);
 		
 		UCHIGATANA_AUTO1 = new BasicAttackAnimation(0.05F, 0.15F, 0.25F, 0.3F, null, biped.toolR, "biped/combat/uchigatana_auto1", biped)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F);
@@ -1028,7 +1027,6 @@ public class Animations {
 					transformSheet.readFrom(correctedCoord);
 				})
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (0.2F > elapsedTime) {
 						if (entitypatch instanceof PlayerPatch<?> playerpatch) {
@@ -1169,7 +1167,6 @@ public class Animations {
 						transformSheet.readFrom(self.getCoord().copyAll());
 					}
 				})
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addEvents(
 					TimeStampedEvent.create(0.3F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT), TimeStampedEvent.create(1.1F, (entitypatch, animation, params) -> {
 						entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
@@ -1285,7 +1282,6 @@ public class Animations {
 		DRAGON_BACKJUMP_MOVE = new AttackAnimation(0.0F, 10.0F, 10.0F, 10.0F, 10.0F, ColliderPreset.FIST, dragon.rootJoint, "dragon/backjump_move", dragon)
 			.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 			.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-			.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 			.addEvents(TimeStampedEvent.create(1.0F, (entitypatch, animation, params) -> {
 				entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_RECOVERY);
 			}, Side.BOTH));
@@ -1387,7 +1383,6 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, (entitypatch) -> entitypatch.getLastAttackPosition())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.VEX_TRACE)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, AnimationEvent.create((entitypatch, animation, params) -> entitypatch.setLastAttackPosition(), Side.SERVER));
 		
@@ -1438,7 +1433,6 @@ public class Animations {
 						transformSheet.readFrom(self.getTransfroms().get("Root").copyAll());
 					}
 				}).addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addEvents(TimeStampedEvent.create(0.4F, (entitypatch, animation, params) -> {
 						if (entitypatch instanceof WitherPatch witherpatch) {
 							witherpatch.startCharging();
@@ -1614,7 +1608,6 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				;
 		
 		ZOMBIE_ATTACK1 = new AttackAnimation(0.1F, 0.3F, 0.4F, 0.6F, 0.85F, ColliderPreset.FIST, biped.toolR, "zombie/attack1", biped)
@@ -1684,12 +1677,12 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 		
 		STEEL_WHIRLWIND = new AttackAnimation(0.15F, "biped/skill/steel_whirlwind", biped,
-				new Phase(0.0F, 0.0F, 0.0F, 0.2F, 0.45F, 0.45F, biped.toolR, null), new Phase(0.45F, 0.45F, 0.45F, 0.65F, 1.0F, 1.0F, biped.toolR, null),
-				new Phase(1.0F, 1.0F, 1.0F, 1.2F, 2.55F, Float.MAX_VALUE, biped.toolR, null))
+				new Phase(0.0F, 0.0F, 0.0F, 0.2F, 0.45F, 0.45F, biped.rootJoint, ColliderPreset.STEEL_WHIRLWIND), new Phase(0.45F, 0.45F, 0.45F, 0.65F, 1.0F, 1.0F, biped.rootJoint, ColliderPreset.STEEL_WHIRLWIND),
+				new Phase(1.0F, 1.0F, 1.0F, 1.2F, 2.55F, Float.MAX_VALUE, biped.rootJoint, ColliderPreset.STEEL_WHIRLWIND))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 4)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (animation, entitypatch, transformSheet) -> {
-					if (entitypatch instanceof PlayerPatch<?> playerpatch) {
+					if (!animation.isLinkAnimation() && entitypatch instanceof PlayerPatch<?> playerpatch) {
 						int chargingPower = SteelWhirlwindSkill.getChargingPower(playerpatch.getSkill(SkillSlots.WEAPON_INNATE));
 						transformSheet.readFrom(animation.getCoord().copyAll().extendsZCoord(0.6666F + chargingPower / 5.0F, 0, 2));
 					} else {
@@ -1697,7 +1690,6 @@ public class Animations {
 					}
 				})
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
@@ -1722,7 +1714,6 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.addEvents(
 					TimeStampedEvent.create(0.05F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.SERVER).params(EpicFightSounds.SWORD_IN.get()),
@@ -1853,7 +1844,6 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.2F, 1.1F))
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
@@ -1879,7 +1869,6 @@ public class Animations {
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD_WITH_X_ROT)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
-				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.15F, 0.85F))
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)

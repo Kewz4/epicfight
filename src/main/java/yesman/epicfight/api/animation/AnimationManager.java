@@ -331,13 +331,19 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	
 	public void validateClientAnimationRegistry(CPCheckAnimationRegistrySync msg, ServerGamePacketListenerImpl connection) {
 		StringBuilder builder = new StringBuilder();
+		int count = 0;
+		
 		Set<String> clientAnimationRegistry = new HashSet<> (Set.of(msg.registryNames));
 		
 		for (String registryName : this.animationRegistry.keySet().stream().map((rl) -> rl.toString()).toList()) {
 			if (!clientAnimationRegistry.contains(registryName)) {
 				// Animations that don't exist in client
-				builder.append(registryName);
-				builder.append("\n");
+				if (count < 10) {
+					builder.append(registryName);
+					builder.append("\n");
+				}
+				
+				count++;
 			} else {
 				clientAnimationRegistry.remove(registryName);
 			}
@@ -349,7 +355,16 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 				continue;
 			}
 			
-			builder.append(registryName);
+			if (count < 10) {
+				builder.append(registryName);
+				builder.append("\n");
+			}
+			
+			count++;
+		}
+		
+		if (count >= 10) {
+			builder.append(Component.translatable("gui.epicfight.warn.animation_unsync.etc", (count - 9)).getString());
 			builder.append("\n");
 		}
 		

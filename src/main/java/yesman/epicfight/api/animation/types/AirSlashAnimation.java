@@ -34,7 +34,6 @@ public class AirSlashAnimation extends AttackAnimation {
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, false);
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD);
 		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.RAW_COORD);
-		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.DIFF_FROM_PREV_COORD);
 	}
 	
 	@Override

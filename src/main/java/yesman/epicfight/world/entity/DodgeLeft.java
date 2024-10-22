@@ -10,7 +10,6 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.animation.types.DodgeAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -26,12 +25,8 @@ public class DodgeLeft extends LivingEntity {
 		this(EpicFightEntities.DODGE_LEFT.get(), entitypatch.getOriginal().level());
 		
 		this.entitypatch = entitypatch;
-		Vec3 pos = entitypatch.getOriginal().position();
-		double x = pos.x;
-		double y = pos.y;
-		double z = pos.z;
 		
-		this.setPos(x, y, z);
+		this.setPos(entitypatch.getOriginal().position());
 		this.setBoundingBox(entitypatch.getOriginal().getBoundingBox().expandTowards(1.0D, 0.0D, 1.0D));
 		
 		if (this.level().isClientSide()) {

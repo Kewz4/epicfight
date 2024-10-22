@@ -715,16 +715,16 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public List<LivingEntity> getCurrenltyAttackedEntities() {
-		return this.getAnimator().getAnimationVariables(AttackAnimation.HIT_ENTITIES);
+		return this.getAnimator().getAnimationVariable(AttackAnimation.HIT_ENTITIES);
 	}
 
 	public List<LivingEntity> getCurrenltyHurtEntities() {
-		return this.getAnimator().getAnimationVariables(AttackAnimation.HURT_ENTITIES);
+		return this.getAnimator().getAnimationVariable(AttackAnimation.HURT_ENTITIES);
 	}
 
 	public void removeHurtEntities() {
-		this.getAnimator().getAnimationVariables(AttackAnimation.HIT_ENTITIES).clear();
-		this.getAnimator().getAnimationVariables(AttackAnimation.HURT_ENTITIES).clear();
+		this.getAnimator().getAnimationVariable(AttackAnimation.HIT_ENTITIES).clear();
+		this.getAnimator().getAnimationVariable(AttackAnimation.HURT_ENTITIES).clear();
 	}
 
 	@OnlyIn(Dist.CLIENT)

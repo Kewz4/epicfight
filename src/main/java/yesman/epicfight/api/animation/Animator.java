@@ -84,7 +84,7 @@ public abstract class Animator {
 		}
 	}
 	
-	public <T> T getAnimationVariables(TypeKey<T> key) {
+	public <T> T getAnimationVariable(TypeKey<T> key) {
 		return this.animationVariables.get(key);
 	}
 	

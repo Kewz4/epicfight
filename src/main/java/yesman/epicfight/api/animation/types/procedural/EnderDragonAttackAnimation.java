@@ -20,7 +20,6 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
-import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordSetter;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
@@ -88,12 +87,6 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		// Load if null
 		this.getAnimationClip();
-		
-		MoveCoordSetter actionAnimCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse((self, entitypatch$2, transformSheet) -> {
-			transformSheet.readFrom(self.getTransfroms().get("Root"));
-		});
-		
-		actionAnimCoordSetter.set(this, entitypatch, entitypatch.getArmature().getActionAnimationCoord());
 		
 		if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
 			Vec3 entitypos = enderdragonpatch.getOriginal().position();

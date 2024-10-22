@@ -73,6 +73,14 @@ public class ColliderPreset implements PreparableReloadListener {
 	public static final Collider LONGSWORD = registerCollider(new ResourceLocation(EpicFightMod.MODID, "longsword"), new MultiOBBCollider(3, 0.4D, 0.4D, 0.8D, 0D, 0D, -0.75D));
 	public static final Collider SPEAR = registerCollider(new ResourceLocation(EpicFightMod.MODID, "spear"), new MultiOBBCollider(3, 0.6D, 0.6D, 1.0D, 0D, 0D, -1.0D));
 	public static final Collider SPIDER = registerCollider(new ResourceLocation(EpicFightMod.MODID, "spider"), new OBBCollider(0.8D, 0.8D, 0.8D, 0D, 0D, -0.4D));
+	
+	public static final Collider STEEL_WHIRLWIND = registerCollider(new ResourceLocation(EpicFightMod.MODID, "steel_whirlwind"), new MultiOBBCollider(
+			new OBBCollider(1.8D, 0.6D, 1.5D, 0.0D, 1.0D, -0.5D),
+			new OBBCollider(1.8D, 0.6D, 1.5D, 0.0D, 1.0D, -0.5D),
+			new OBBCollider(1.8D, 0.6D, 1.5D, 0.0D, 1.0D, -0.5D),
+			new OBBCollider(1.8D, 0.6D, 1.5D, 0.0D, 1.0D, -0.5D)
+		));
+	
 	public static final Collider TOOLS = registerCollider(new ResourceLocation(EpicFightMod.MODID, "tools"), new MultiOBBCollider(3, 0.4D, 0.4D, 0.55D, 0D, 0.0D, -0.25D));
 	public static final Collider ENDERMAN_LIMB = registerCollider(new ResourceLocation(EpicFightMod.MODID, "enderman_limb"), new OBBCollider(0.4D, 0.8D, 0.4D, 0D, 0D, 0D));
 	public static final Collider GOLEM_SMASHDOWN = registerCollider(new ResourceLocation(EpicFightMod.MODID, "golem_smashdown"), new MultiOBBCollider(3, 0.75D, 0.5D, 0.5D, 0.6D, 0.5D, 0D));

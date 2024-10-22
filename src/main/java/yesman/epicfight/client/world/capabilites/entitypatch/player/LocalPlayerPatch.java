@@ -153,7 +153,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 				this.lockOnYRotO = this.lockOnYRot;
 			}
 			
-			if (!this.rayTarget.isAlive() || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
+			if (this.rayTarget.isRemoved() || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
 				this.rayTarget = null;
 				EpicFightNetworkManager.sendToServer(new CPSetPlayerTarget(-1));
 			}

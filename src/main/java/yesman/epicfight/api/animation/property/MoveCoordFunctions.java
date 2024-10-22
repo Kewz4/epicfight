@@ -45,18 +45,29 @@ public class MoveCoordFunctions {
 	}
 	
 	/**
-	 * DIFF_FROM_PREV_COORD (Model coordinate)
+	 * MODEL_COORD
 	 *  - Calculates the coordinate gap between previous and current elapsed time
 	 *  - the coordinate doesn't reflect the entity's rotation
 	 */
-	public static final MoveCoordGetter DIFF_FROM_PREV_COORD = (animation, entitypatch, coord) -> {
+	public static final MoveCoordGetter MODEL_COORD = (animation, entitypatch, coord) -> {
 		LivingEntity livingentity = entitypatch.getOriginal();
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation);
-		
+		JointTransform oJt = coord.getInterpolatedTransform(player.getPrevElapsedTime());
 		JointTransform jt = coord.getInterpolatedTransform(player.getElapsedTime());
-		JointTransform prevJt = coord.getInterpolatedTransform(player.getPrevElapsedTime());
+		
+		TransformSheet animCoord = animation.getCoord();
+		JointTransform oAnimJt = animCoord.getInterpolatedTransform(player.getPrevElapsedTime());
+		JointTransform animJt = animCoord.getInterpolatedTransform(player.getElapsedTime());
+		
+		Vec3f lastCoord = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.LAST_MODEL_COORD);
+		
+		if (lastCoord == null || Math.abs(animJt.translation().z - oAnimJt.translation().z) < 0.01F) {
+			lastCoord = oJt.translation();
+		}
+		
+		Vec4f prevpos = new Vec4f(lastCoord);
 		Vec4f currentpos = new Vec4f(jt.translation());
-		Vec4f prevpos = new Vec4f(prevJt.translation());
+		entitypatch.getAnimator().putAnimationVariable(ActionAnimation.LAST_MODEL_COORD, jt.translation());
 		
 		OpenMatrix4f rotationTransform = OpenMatrix4f.createRotatorDeg(-entitypatch.getYRot(), Vec3f.Y_AXIS);
 		OpenMatrix4f localTransform = entitypatch.getArmature().searchJointByName("Root").getLocalTrasnform().removeTranslation();
@@ -96,18 +107,6 @@ public class MoveCoordFunctions {
 	};
 	
 	/**
-	 * WORLD_COORD_WHEN_TARGET_ALIVE
-	 * Uses {@link MoveCoordFunctions#WORLD_COORD} when the target exists and is alive or use {@link MoveCoordFunctions#DIFF_FROM_PREV_COORD}
-	 */
-	public static final MoveCoordGetter WORLD_COORD_WHEN_TARGET_ALIVE = (animation, entitypatch, coord) -> {
-		if (entitypatch.getTarget() != null && entitypatch.getTarget().isAlive()) {
-			return WORLD_COORD.get(animation, entitypatch, coord);
-		} else {
-			return DIFF_FROM_PREV_COORD.get(animation, entitypatch, coord);
-		}
-	};
-	
-	/**
 	 * ATTACHED
 	 * Calculates the relative position of a grappling target entity.
 	 *  - especially used by {@link GrapplingAttackAnimation}
@@ -117,7 +116,7 @@ public class MoveCoordFunctions {
 		LivingEntity target = entitypatch.getGrapplingTarget();
 		
 		if (target == null) {
-			return DIFF_FROM_PREV_COORD.get(animation, entitypatch, coord);
+			return MODEL_COORD.get(animation, entitypatch, coord);
 		}
 		
 		TransformSheet rootCoord = animation.getCoord();
@@ -138,7 +137,7 @@ public class MoveCoordFunctions {
 	
 	/**
 	 * Sets a raw animation coordinate as action animation's coord
-	 *  - used with {@link MoveCoordFunctions#DIFF_FROM_PREV_COORD}
+	 *  - used with {@link MoveCoordFunctions#MODEL_COORD}
 	 */
 	public static final MoveCoordSetter RAW_COORD = (self, entitypatch, transformSheet) -> {
 		transformSheet.readFrom(self.getCoord().copyAll());
@@ -146,7 +145,7 @@ public class MoveCoordFunctions {
 	
 	/**
 	 * Sets a raw animation coordinate multiplied by entity's pitch as action animation's coord
-	 *  - used with {@link MoveCoordFunctions#DIFF_FROM_PREV_COORD}
+	 *  - used with {@link MoveCoordFunctions#MODEL_COORD}
 	 */
 	public static final MoveCoordSetter RAW_COORD_WITH_X_ROT = (self, entitypatch, transformSheet) -> {
 		float xRot = entitypatch.getOriginal().getXRot();
@@ -163,22 +162,23 @@ public class MoveCoordFunctions {
 	 * Trace the last frame location of animation relative to the target entity's position
 	 *  - zero vector is the target entity's position in animation
 	 *  - rotation is the direction toward a target entity
-	 *  - used with WORLD_COORD_WHEN_TARGET_ALIVE)
+	 *  - used with WORLD_COORD)
 	 */
 	public static final MoveCoordSetter TRACE_ORIGIN_AS_TARGET_POSITION_BEGIN = (self, entitypatch, transformSheet) -> {
 		LivingEntity attackTarget = entitypatch.getTarget();
 		TransformSheet transform = self.getCoord().copyAll();
 		Keyframe[] rootKeyframes = transform.getKeyframes();
 		
-		if (attackTarget != null && attackTarget.isAlive()) {
+		if (attackTarget != null) {
 			Vec3 start = entitypatch.getOriginal().position();
-			Vec3 toTarget = attackTarget.position().subtract(start);
+			Vec3 targetTracePosition = attackTarget.position();
+			Vec3 toTarget = targetTracePosition.subtract(start);
 			Vec3f modelDst = rootKeyframes[rootKeyframes.length - 1].transform().translation().copy().multiply(-1.0F, 1.0F, -1.0F);
 			float yRot = (float)MathUtils.getYRotOfVector(toTarget);
 			
 			modelDst.rotate(-yRot, Vec3f.Y_AXIS);
 			
-			Vec3 dst = attackTarget.position().add(modelDst.x, modelDst.y, modelDst.z);
+			Vec3 dst = targetTracePosition.add(modelDst.x, modelDst.y, modelDst.z);
 			float clampedXRot = MathUtils.rotlerp(entitypatch.getOriginal().getXRot(), (float)MathUtils.getXRotOfVector(toTarget), 20.0F);
 			float clampedYRot = MathUtils.rotlerp(entitypatch.getYRot(), yRot, entitypatch.getYRotLimit());
 			TransformSheet newTransform = transform.getCorrectedWorldCoord(entitypatch, start, dst, -clampedXRot, clampedYRot, 0, rootKeyframes.length, true);
@@ -205,21 +205,23 @@ public class MoveCoordFunctions {
 	 * Trace the last frame location of animation relative to the target entity's position
 	 *  - zero vector is the target entity's position in animation
 	 *  - rotation is the direction toward a target entity
-	 *  - used with WORLD_COORD_WHEN_TARGET_ALIVE)
+	 *  - used with WORLD_COORD)
 	 */
 	public static final MoveCoordSetter TRACE_ORIGIN_AS_TARGET_POSITION = (self, entitypatch, transformSheet) -> {
 		LivingEntity attackTarget = entitypatch.getTarget();
 		
-		if (attackTarget != null && attackTarget.isAlive()) {
+		if (attackTarget != null) {
 			TransformSheet transform = self.getCoord().copyAll();
 			Keyframe[] rootKeyframes = transform.getKeyframes();
-			Vec3 start = entitypatch.getAnimator().getAnimationVariables(ActionAnimation.BEGINNING_LOCATION);
-			Vec3 toTarget = attackTarget.position().subtract(start);
+			Vec3 start = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.BEGINNING_LOCATION);
+			Vec3 targetTracePosition = attackTarget.position();
+			
+			Vec3 toTarget = targetTracePosition.subtract(start);
 			Vec3f destInAnimation = rootKeyframes[rootKeyframes.length - 1].transform().translation().copy().multiply(1.0F, 1.0F, -1.0F);
 			float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toTarget));
 			destInAnimation.rotate(-yRot, Vec3f.Y_AXIS);
 			
-			Vec3 destInWorld = attackTarget.position().add(destInAnimation.toDoubleVector());
+			Vec3 destInWorld = targetTracePosition.add(destInAnimation.toDoubleVector());
 			float clampedXRot = (float)MathUtils.getXRotOfVector(toTarget);
 			float clampedYRot = MathUtils.rotlerp(entitypatch.getYRot(), yRot, entitypatch.getYRotLimit());
 			TransformSheet newTransform = transform.getCorrectedWorldCoord(entitypatch, start, destInWorld, -clampedXRot, clampedYRot, 0, rootKeyframes.length, true);
@@ -230,72 +232,92 @@ public class MoveCoordFunctions {
 	};
 	
 	/**
-	 * Trace the target entity's position (use it with WORLD_COORD_WHEN_TARGET_ALIVE)
+	 * Trace the target entity's position (use it with MODEL_COORD)
 	 *  - the location of the last keyfram is basis to limit maximum distance
 	 *  - rotation is where the entity is looking
 	 */
-	public static final MoveCoordSetter TRACE_TARGET_LOCATION = (self, entitypatch, transformSheet) -> {
+	public static final MoveCoordSetter TRACE_TARGET_DISTANCE = (self, entitypatch, transformSheet) -> {
 		LivingEntity attackTarget = entitypatch.getTarget();
 		
-		if (attackTarget != null && attackTarget.isAlive()) {
+		if (attackTarget != null) {
 			TransformSheet transform = self.getCoord().copyAll();
 			Keyframe[] coord = transform.getKeyframes();
 			Keyframe[] realAnimationCoord = self.getRealAnimation().getCoord().getKeyframes();
 			
-			Vec3 start = entitypatch.getAnimator().getAnimationVariables(ActionAnimation.BEGINNING_LOCATION);
+			Vec3 start = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.BEGINNING_LOCATION);
 			Vec3 toDestWorld = attackTarget.position().subtract(start);
 			Vec3f toDestAnim = realAnimationCoord[realAnimationCoord.length - 1].transform().translation();
 			
-			float worldLength = (float)toDestWorld.length();
-			float animLength = toDestAnim.length();
 			float entityRadius = (attackTarget.getBbWidth() + entitypatch.getOriginal().getBbWidth()) * 0.7F;
-			float scale = Math.min(Math.max(worldLength - entityRadius, 0.0F) / worldLength, animLength / worldLength);
+			float worldLength = Math.max((float)toDestWorld.length() - entityRadius, 0.0F);
+			float animLength = toDestAnim.length();
 			
-			if (!self.getRealAnimation().equals(self)) {
+			float dot = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.INITIAL_DOT);
+			float lookLength = Mth.lerp(dot, animLength, worldLength);
+			float scale = Math.min(lookLength / animLength, 1.0F);
+			
+			if (self.isLinkAnimation()) {
 				scale *= coord[coord.length - 1].transform().translation().length() / animLength;
 			}
 			
-			Vec3 dst = start.add(toDestWorld.x * scale, toDestWorld.y * scale, toDestWorld.z * scale);
-			TransformSheet newTransform = transform.getCorrectedWorldCoord(entitypatch, start, dst, 0.0F, entitypatch.getYRot(), 0, coord.length, false);
-			transformSheet.readFrom(newTransform);
+			int startFrame = 0; 
+			int endFrame = coord.length - 1;
+			
+			for (int i = startFrame; i <= endFrame; i++) {
+				Vec3f translation = coord[i].transform().translation();
+				
+				if (translation.z < 0.0F) {
+					translation.z *= scale;
+				}
+			}
+			
+			transformSheet.readFrom(transform);
 		} else {
 			transformSheet.readFrom(self.getCoord().copyAll());
 		}
 	};
 	
 	/**
-	 * Trace the target entity's position (use it WORLD_COORD_WHEN_TARGET_ALIVE)
-	 *  - the location of the last keyfram is basis to limit maximum distance
+	 * Trace the target entity's position (use it MODEL_COORD)
+	 *  - the location of the last keyframe is a basis to limit maximum distance
 	 *  - rotation is the direction toward a target entity
 	 */
 	public static final MoveCoordSetter TRACE_TARGET_LOCATION_ROTATION = (self, entitypatch, transformSheet) -> {
 		LivingEntity attackTarget = entitypatch.getTarget();
 		
-		if (attackTarget != null && attackTarget.isAlive()) {
+		if (attackTarget != null) {
 			TransformSheet transform = self.getCoord().copyAll();
 			Keyframe[] coord = transform.getKeyframes();
 			Keyframe[] realAnimationCoord = self.getRealAnimation().getCoord().getKeyframes();
 			
-			Vec3 start = entitypatch.getAnimator().getAnimationVariables(ActionAnimation.BEGINNING_LOCATION);
+			Vec3 start = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.BEGINNING_LOCATION);
 			Vec3 toDestWorld = attackTarget.position().subtract(start);
 			Vec3f toDestAnim = realAnimationCoord[realAnimationCoord.length - 1].transform().translation();
 			
 			float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toDestWorld));
-			float clampedXRot = (float)MathUtils.getXRotOfVector(toDestWorld);
 			float clampedYRot = MathUtils.rotlerp(entitypatch.getYRot(), yRot, entitypatch.getYRotLimit());
-			float worldLength = (float)toDestWorld.length();
-			float animLength = toDestAnim.length();
 			float entityRadius = (attackTarget.getBbWidth() + entitypatch.getOriginal().getBbWidth()) * 0.7F;
-			float scale = Math.min(Math.max(worldLength - entityRadius, 0.0F) / worldLength, animLength / worldLength);
+			float worldLength = Math.max((float)toDestWorld.length() - entityRadius, 0.0F);
+			float animLength = toDestAnim.length();
+			float scale = Math.min(worldLength / animLength, 1.0F);
 			
-			if (!self.getRealAnimation().equals(self)) {
+			if (self.isLinkAnimation()) {
 				scale *= coord[coord.length - 1].transform().translation().length() / animLength;
 			}
 			
-			Vec3 dst = start.add(toDestWorld.x * scale, toDestWorld.y * scale, toDestWorld.z * scale);
-			TransformSheet newTransform = transform.getCorrectedWorldCoord(entitypatch, start, dst, -clampedXRot, clampedYRot, 0, coord.length, false);
+			int startFrame = 0; 
+			int endFrame = coord.length - 1;
+			
+			for (int i = startFrame; i <= endFrame; i++) {
+				Vec3f translation = coord[i].transform().translation();
+				
+				if (translation.z < 0.0F) {
+					translation.z *= scale;
+				}
+			}
+			
 			entitypatch.setYRot(clampedYRot);
-			transformSheet.readFrom(newTransform);
+			transformSheet.readFrom(transform);
 		} else {
 			transformSheet.readFrom(self.getCoord().copyAll());
 		}
@@ -314,7 +336,7 @@ public class MoveCoordFunctions {
 			int startFrame = 0; 
 			int endFrame = keyframes.length - 1;
 			Vec3f keyLast = keyframes[endFrame].transform().translation();
-			Vec3 startpos = entitypatch.getAnimator().getAnimationVariables(ActionAnimation.BEGINNING_LOCATION);
+			Vec3 startpos = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.BEGINNING_LOCATION);
 			Vec3 targetpos = attackTarget.position();
 			Vec3 toTarget = targetpos.subtract(startpos);
 			Vec3 viewVec = entitypatch.getOriginal().getViewVector(1.0F);
@@ -354,7 +376,7 @@ public class MoveCoordFunctions {
 			int startFrame = 0; 
 			int endFrame = keyframes.length - 1;
 			Vec3f keyLast = keyframes[endFrame].transform().translation();
-			Vec3 startpos = entitypatch.getAnimator().getAnimationVariables(ActionAnimation.BEGINNING_LOCATION);
+			Vec3 startpos = entitypatch.getAnimator().getAnimationVariable(ActionAnimation.BEGINNING_LOCATION);
 			Vec3 targetpos = attackTarget.position();
 			Vec3 toTarget = targetpos.subtract(startpos);
 			float horizontalDistance = Math.max((float)toTarget.horizontalDistance() - (attackTarget.getBbWidth() + entitypatch.getOriginal().getBbWidth()) * 0.3333F, 0.0F);

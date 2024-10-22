@@ -157,9 +157,10 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 				
 				for (String key : attributes.getAllKeys()) {
 					Map<Attribute, AttributeModifier> attributeEntry = deserializeAttributes(attributes.getCompound(key));
+					Style style = Style.ENUM_MANAGER.getOrThrow(key);
 					
 					for (Map.Entry<Attribute, AttributeModifier> attribute : attributeEntry.entrySet()) {
-						builder.addStyleAttibutes(Style.ENUM_MANAGER.getOrThrow(key), Pair.of(attribute.getKey(), attribute.getValue()));
+						builder.addStyleAttibutes(style, Pair.of(attribute.getKey(), attribute.getValue()));
 					}
 				}
 			}

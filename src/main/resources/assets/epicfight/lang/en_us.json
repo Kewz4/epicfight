@@ -253,6 +253,7 @@
 	
 	"gui.epicfight.warn.no_target": "No targeted entity",
 	"gui.epicfight.warn.animation_unsync": "Below animations are missing or don't exist in the server\n\n%s\nPlease check the resource packs that you're missing or unload the packs that the server doesn't have",
+	"gui.epicfight.warn.animation_unsync.etc": "... and %d other animations",
 	
 	"item.epicfight.bokken": "Bokken",
 	"item.epicfight.uchigatana": "Uchigatana",
