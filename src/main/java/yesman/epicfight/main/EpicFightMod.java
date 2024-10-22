@@ -118,6 +118,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  9. Added a command for modifying, getting stamina value from player
  *  
+ *  10. Fixed item capability attributes mixed for capabilities sharing the same custom weapon type
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
