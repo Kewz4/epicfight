@@ -327,12 +327,18 @@ public class ClientAnimator extends Animator {
 	}
 	
 	public void resetCompositeMotion(boolean playIdleMotion) {
-		this.currentCompositeMotion = LivingMotions.NONE;
-		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
-		
 		if (playIdleMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
+			StaticAnimation nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
+			
+			if (nextLivingAnimation == null || nextLivingAnimation.getPriority() != this.getCompositeLivingMotion(this.currentCompositeMotion).getPriority()) {
+				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).getPriority()).off(this.entitypatch);
+			}
+			
 			this.playAnimation(this.getCompositeLivingMotion(LivingMotions.IDLE), 0.0F);
 		}
+		
+		this.currentCompositeMotion = LivingMotions.NONE;
+		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
 	}
 	
 	public void offAllLayers() {
