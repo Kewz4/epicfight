@@ -267,7 +267,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 		if (weaponTypeReceived && armorReceived && weaponReceived) {
 			CAPABILITY_ARMOR_DATA_MAP.forEach((item, tag) -> {
 				try {
-					CapabilityItem itemCap = deserializeWeapon(item, tag);
+					CapabilityItem itemCap = deserializeArmor(item, tag);
 					ItemCapabilityProvider.put(item, itemCap);
 				} catch (NoSuchElementException e) {
 					e.printStackTrace();
