@@ -20,7 +20,8 @@ public class DashAttackAnimation extends AttackAnimation {
 		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, path, armature);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
-		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.333F));
+		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.4F));
+		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.1F));
 		
 		if (directional) {
 			this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
@@ -31,15 +32,14 @@ public class DashAttackAnimation extends AttackAnimation {
 		super(convertTime, path, armature, phases);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
-		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.333F));
+		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.4F));
+		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.1F));
 	}
 	
 	@Override
 	protected void bindPhaseState(Phase phase) {
-		float preDelay = phase.preDelay;
-		
 		this.stateSpectrumBlueprint
-			.newTimePair(phase.start, preDelay)
+			.newTimePair(phase.start, phase.preDelay)
 			.addState(EntityState.PHASE_LEVEL, 1)
 			.newTimePair(phase.start, phase.contact)
 			.addState(EntityState.CAN_SKILL_EXECUTION, false)
@@ -51,12 +51,11 @@ public class DashAttackAnimation extends AttackAnimation {
 			.addState(EntityState.INACTION, true)
 			.newTimePair(phase.antic, phase.end)
 			.addState(EntityState.TURNING_LOCKED, true)
-			.newTimePair(preDelay, phase.contact)
+			.newTimePair(phase.preDelay, phase.contact)
 			.addState(EntityState.ATTACKING, true)
 			.addState(EntityState.PHASE_LEVEL, 2)
-			.newConditionalTimePair((entitypatch) -> (entitypatch.isLastAttackSuccess() ? 1 : 0), phase.contact, phase.recovery)
-			.addConditionalState(0, EntityState.CAN_BASIC_ATTACK, false)
-			.addConditionalState(1, EntityState.CAN_BASIC_ATTACK, true)
+			.newTimePair(phase.contact, phase.recovery)
+			.addState(EntityState.CAN_BASIC_ATTACK, false)
 			.newTimePair(phase.contact, phase.end)
 			.addState(EntityState.PHASE_LEVEL, 3)
 			;

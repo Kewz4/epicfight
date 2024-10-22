@@ -271,6 +271,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 					CapabilityItem itemCap = deserializeArmor(item, tag);
 					ItemCapabilityProvider.put(item, itemCap);
 				} catch (NoSuchElementException e) {
+					EpicFightMod.LOGGER.warn("Error while creating capability " + item);
 					e.printStackTrace();
 					throw e;
 				} catch (Exception e) {
