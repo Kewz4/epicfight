@@ -102,6 +102,8 @@ public class ActionAnimation extends MainFrameAnimation {
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		super.begin(entitypatch);
 		
+		entitypatch.cancelAnyAction();
+		
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
 			entitypatch.beginAction();
 			
@@ -118,7 +120,6 @@ public class ActionAnimation extends MainFrameAnimation {
 			
 			entitypatch.getAnimator().putAnimationVariable(ActionAnimation.LAST_MODEL_COORD, null);
 			entitypatch.getAnimator().putAnimationVariable(BEGINNING_LOCATION, start);
-			entitypatch.cancelAnyAction();
 			
 			if (this.getProperty(ActionAnimationProperty.STOP_MOVEMENT).orElse(false)) {
 				entitypatch.getOriginal().setDeltaMovement(0.0D, entitypatch.getOriginal().getDeltaMovement().y, 0.0D);
