@@ -108,7 +108,7 @@ dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     
     //implementation fg.deobf("local:epcfight:20.x.x")
-    compileOnly fg.deobf("curse.maven:geckolib-388172:4822252")
+    compileOnly fg.deobf("curse.maven:geckolib-388172:5675221")
     compileOnly fg.deobf("curse.maven:azurelib-817423:5500355")
     compileOnly fg.deobf("curse.maven:azurelib-armor-912767:5500370")
     
