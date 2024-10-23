@@ -83,7 +83,7 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 		}
 		
 		if (!entity.isSpectator()) {
-			renderLayer(renderer, entitypatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
+			this.renderLayer(renderer, entitypatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
 		}
 		
 		poseStack.popPose();
