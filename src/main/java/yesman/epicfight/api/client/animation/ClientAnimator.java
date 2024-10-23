@@ -329,8 +329,9 @@ public class ClientAnimator extends Animator {
 	public void resetCompositeMotion(boolean playIdleMotion) {
 		if (playIdleMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
 			StaticAnimation nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
+			StaticAnimation currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
 			
-			if (nextLivingAnimation == null || nextLivingAnimation.getPriority() != this.getCompositeLivingMotion(this.currentCompositeMotion).getPriority()) {
+			if (nextLivingAnimation == null || (currentLivingMotion != null && nextLivingAnimation.getPriority() != currentLivingMotion.getPriority())) {
 				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).getPriority()).off(this.entitypatch);
 			}
 			
