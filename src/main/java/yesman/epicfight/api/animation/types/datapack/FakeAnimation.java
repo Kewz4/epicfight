@@ -18,6 +18,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Joint;
+import yesman.epicfight.api.animation.types.AirSlashAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.BasicAttackAnimation;
 import yesman.epicfight.api.animation.types.DashAttackAnimation;
@@ -124,7 +125,7 @@ public class FakeAnimation extends StaticAnimation {
 			return String.format("(%s#F,%b#Z,%s#java.lang.String,%s#" + Armature.class.getTypeName() + ")#%s", this.constructorParams.get("convertTime"), this.constructorParams.get("isRepeat"), this.constructorParams.get("path"), this.constructorParams.get("armature"), this.animationType.animCls.getTypeName());
 		case SHORT_HIT, LONG_HIT, KNOCK_DOWN:
 			return String.format("(%s#F,%s#java.lang.String,%s#" + Armature.class.getTypeName() + ")#%s", this.constructorParams.get("convertTime"), this.constructorParams.get("path"), this.constructorParams.get("armature"), this.animationType.animCls.getTypeName());
-		case ATTACK, BASIC_ATTACK, DASH_ATTACK:
+		case ATTACK, BASIC_ATTACK, DASH_ATTACK, AIR_SLASH:
 			ListTag phasesTag = this.getParameter("phases");
 			StringBuilder sb = new StringBuilder("[");
 			float start = 0.0F;
@@ -263,6 +264,7 @@ public class FakeAnimation extends StaticAnimation {
 		PARAMETERS.put(AnimationType.ATTACK, attackAnimationParameters);
 		PARAMETERS.put(AnimationType.BASIC_ATTACK, attackAnimationParameters);
 		PARAMETERS.put(AnimationType.DASH_ATTACK, attackAnimationParameters);
+		PARAMETERS.put(AnimationType.AIR_SLASH, attackAnimationParameters);
 		PARAMETERS.put(AnimationType.SHORT_HIT, hitAnimationParameters);
 		PARAMETERS.put(AnimationType.LONG_HIT, hitAnimationParameters);
 		PARAMETERS.put(AnimationType.KNOCK_DOWN, hitAnimationParameters);
@@ -272,6 +274,7 @@ public class FakeAnimation extends StaticAnimation {
 		FAKE_ANIMATIONS.put(AnimationType.ATTACK, FakeAttackAnimation.class);
 		FAKE_ANIMATIONS.put(AnimationType.BASIC_ATTACK, FakeBasicAttackAnimation.class);
 		FAKE_ANIMATIONS.put(AnimationType.DASH_ATTACK, FakeDashAttackAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.AIR_SLASH, FakeAirSlashAnimation.class);
 		FAKE_ANIMATIONS.put(AnimationType.SHORT_HIT, FakeHitAnimation.class);
 		FAKE_ANIMATIONS.put(AnimationType.LONG_HIT, FakeLongHitAnimation.class);
 		FAKE_ANIMATIONS.put(AnimationType.KNOCK_DOWN, FakeKnockdownAnimation.class);
@@ -298,6 +301,7 @@ public class FakeAnimation extends StaticAnimation {
 		ATTACK(AttackAnimation.class),
 		BASIC_ATTACK(BasicAttackAnimation.class),
 		DASH_ATTACK(DashAttackAnimation.class),
+		AIR_SLASH(AirSlashAnimation.class),
 		SHORT_HIT(HitAnimation.class),
 		LONG_HIT(LongHitAnimation.class),
 		KNOCK_DOWN(KnockdownAnimation.class);

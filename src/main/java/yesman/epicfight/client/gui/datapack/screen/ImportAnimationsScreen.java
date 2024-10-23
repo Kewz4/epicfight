@@ -94,7 +94,7 @@ public class ImportAnimationsScreen extends Screen {
 										
 										FakeAnimation.AnimationType animationType = this.fakeAnimations.get(rowposition).getAnimationClass();
 										
-										if (animationType == FakeAnimation.AnimationType.ATTACK || animationType == FakeAnimation.AnimationType.BASIC_ATTACK || animationType == FakeAnimation.AnimationType.DASH_ATTACK) {
+										if (animationType == FakeAnimation.AnimationType.ATTACK || animationType == FakeAnimation.AnimationType.BASIC_ATTACK || animationType == FakeAnimation.AnimationType.DASH_ATTACK || animationType == FakeAnimation.AnimationType.AIR_SLASH) {
 											this.inputComponentsList.getComponent(7, 1)._setActive(false);
 											this.inputComponentsList.getComponent(8, 1)._setActive(false);
 											this.inputComponentsList.getComponent(9, 1)._setActive(false);
@@ -175,7 +175,7 @@ public class ImportAnimationsScreen extends Screen {
 					
 					ImportAnimationsScreen.this.animationType._setResponder(ImportAnimationsScreen.this.responder);
 					break;
-				case ATTACK, BASIC_ATTACK, DASH_ATTACK:
+				case ATTACK, BASIC_ATTACK, DASH_ATTACK, AIR_SLASH:
 					CompoundTag colliderTag = new CompoundTag();
 					Collider collider = (Collider)fakeAnim.getParameter("collider");
 					
@@ -341,7 +341,7 @@ public class ImportAnimationsScreen extends Screen {
 			this.inputComponentsList.addComponentCurrentRow(convertTime.relocateX(screenRect, this.inputComponentsList.nextStart(5)));
 		}
 		break;
-		case ATTACK, BASIC_ATTACK, DASH_ATTACK:
+		case ATTACK, BASIC_ATTACK, DASH_ATTACK, AIR_SLASH:
 		{
 			this.modelPreviewer.setCollider(ColliderPreset.FIST);
 			
