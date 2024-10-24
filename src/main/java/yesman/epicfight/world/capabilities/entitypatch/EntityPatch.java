@@ -16,6 +16,9 @@ public abstract class EntityPatch<T extends Entity> {
 	protected T original;
 	protected boolean initialized = false;
 	
+	public void beforeUpdate() {
+	}
+	
 	public void tick(LivingEvent.LivingTickEvent event) {
 		if (this.isLogicalClient()) {
 			this.clientTick(event);
