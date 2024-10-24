@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModList;
@@ -57,6 +58,7 @@ import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
 import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.client.model.transformer.VanillaModelTransformer.VanillaMeshPartDefinition;
 import yesman.epicfight.api.utils.ParseUtil;
+import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.api.utils.math.Vec4f;
@@ -370,6 +372,8 @@ public class JsonModelLoader {
 				float[] compliances = new float[constraintsArray.size()];
 				ClothPartDefinition.ConstraintType[] constraintType = new ClothPartDefinition.ConstraintType[constraintsArray.size()];
 				boolean[] colliders = new boolean[constraintsArray.size()];
+				float[] rootDistances = new float[particlesArray.length / 2];
+				
 				int i = 0;
 				
 				for (JsonElement element : constraintsArray) {
@@ -387,7 +391,23 @@ public class JsonModelLoader {
 					i++;
 				}
 				
-				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray, colliders), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+				List<Vec3> rootParticles = Lists.newArrayList();
+				
+				for (int j = 0; j < particlesArray.length / 2; j++) {
+					if (particlesArray[j * 2 + 1] == 0) {
+						int posId = particlesArray[j * 2];
+						rootParticles.add(new Vec3(positionArray[posId * 3 + 0], positionArray[posId * 3 + 1], positionArray[posId * 3 + 2]));
+					}
+				}
+				
+				for (int j = 0; j < particlesArray.length / 2; j++) {
+					int posId = particlesArray[j * 2];
+					Vec3 position = new Vec3(positionArray[posId * 3 + 0], positionArray[posId * 3 + 1], positionArray[posId * 3 + 2]);
+					Vec3 nearest = MathUtils.getNearestVector(position, rootParticles);
+					rootDistances[j] = (float)position.distanceTo(nearest);
+				}
+				
+				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray, rootDistances, colliders), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
 			}
 		}
 		

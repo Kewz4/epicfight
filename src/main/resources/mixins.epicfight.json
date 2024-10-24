@@ -28,6 +28,7 @@
 	"mixins": [
 		"MixinEndCrystal",
 		"MixinWitherBoss",
+		"MixinEntity",
 		"MixinLivingEntity",
 		"MixinMob",
 		"MixinPlayer",

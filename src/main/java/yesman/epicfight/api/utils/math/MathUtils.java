@@ -1,5 +1,7 @@
 package yesman.epicfight.api.utils.math;
 
+import java.util.List;
+
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -115,6 +117,10 @@ public class MathUtils {
 		}
 		
 		return vectors[index];
+	}
+	
+	public static Vec3 getNearestVector(Vec3 from, List<Vec3> vectors) {
+		return getNearestVector(from, vectors.toArray(new Vec3[0]));
 	}
 	
 	public static void translateStack(PoseStack poseStack, OpenMatrix4f mat) {

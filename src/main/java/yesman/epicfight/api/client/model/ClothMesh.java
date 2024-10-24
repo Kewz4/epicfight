@@ -38,7 +38,7 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
 			ClothPartDefinition clothDefinition = (ClothPartDefinition)partDefinition;
 			
-			parts.put(partDefinition.partName(), new ClothPart(vertexBuilder, clothDefinition.constraints(), clothDefinition.constraintTypes(), clothDefinition.compliances(), clothDefinition.particles(), clothDefinition.collider()));
+			parts.put(partDefinition.partName(), new ClothPart(vertexBuilder, clothDefinition.constraints(), clothDefinition.constraintTypes(), clothDefinition.compliances(), clothDefinition.particles(), clothDefinition.rootDistance(), clothDefinition.collider()));
 		});
 		
 		return parts;
@@ -67,9 +67,9 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public record ClothPartDefinition(String partName, List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, boolean[] collider) implements MeshPartDefinition {
-		public static ClothPartDefinition of(String partName, List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, boolean[] collider) {
-			return new ClothPartDefinition(partName, constraints, constraintTypes, compliances, particles, collider);
+	public record ClothPartDefinition(String partName, List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance, boolean[] collider) implements MeshPartDefinition {
+		public static ClothPartDefinition of(String partName, List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance, boolean[] collider) {
+			return new ClothPartDefinition(partName, constraints, constraintTypes, compliances, particles, rootDistance, collider);
 		}
 		
 		@Override
@@ -97,16 +97,19 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		final ClothPartDefinition.ConstraintType[] constraintTypes;
 		final float[] compliances;
 		final int[] particles;
+		final float[] rootDistance;
+		
 		final boolean[] collider;
 		
-		public ClothPart(List<VertexBuilder> verticies, List<int[]> constraints, ClothPartDefinition.ConstraintType[] constraintTypes, float[] compliances, int[] particles, boolean[] collider) {
+		public ClothPart(List<VertexBuilder> verticies, List<int[]> constraints, ClothPartDefinition.ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance, boolean[] collider) {
 			super(verticies, null);
 			
 			this.constraints = constraints;
 			this.constraintTypes = constraintTypes;
 			this.compliances = compliances;
 			this.particles = particles;
-			this.collider = collider;;
+			this.rootDistance = rootDistance;
+			this.collider = collider;
 		}
 		
 		public List<int[]> constraints() {
@@ -123,6 +126,10 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		
 		public int[] particles() {
 			return this.particles;
+		}
+		
+		public float[] rootDistance() {
+			return this.rootDistance;
 		}
 		
 		public boolean[] collider() {

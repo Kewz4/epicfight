@@ -183,7 +183,19 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	@Override
+	public void beforeUpdate() {
+		this.modelYRotO2 = this.modelYRotO;
+		this.xPosO2 = (float)this.original.xOld;
+		this.yPosO2 = (float)this.original.yOld;
+		this.zPosO2 = (float)this.original.zOld;
+	}
+	
+	@Override
 	protected void clientTick(LivingEvent.LivingTickEvent event) {
+		this.xCloakO2 = this.original.xCloakO;
+		this.yCloakO2 = this.original.yCloakO;
+		this.zCloakO2 = this.original.zCloakO;
+		
 		super.clientTick(event);
 		
 		if (!this.getEntityState().updateLivingMotion()) {
@@ -422,6 +434,13 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	private final ClothSimulator clothSimulator = new ClothSimulator();
+	public float modelYRotO2;
+	public double xPosO2;
+	public double yPosO2;
+	public double zPosO2;
+	public double xCloakO2;
+	public double yCloakO2;
+	public double zCloakO2;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -431,5 +450,83 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		}
 		
 		return Optional.empty();
+	}
+	
+	public Vec3 getAccurateCloakLocation(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F - partialFrame;
+			
+			double x = Mth.lerp((double)partialFrame, this.xCloakO2, this.original.xCloakO) - Mth.lerp((double)partialFrame, this.xPosO2, this.original.xo);
+            double y = Mth.lerp((double)partialFrame, this.yCloakO2, this.original.yCloakO) - Mth.lerp((double)partialFrame, this.yPosO2, this.original.yo);
+            double z = Mth.lerp((double)partialFrame, this.zCloakO2, this.original.zCloakO) - Mth.lerp((double)partialFrame, this.zPosO2, this.original.zo);
+			
+            return new Vec3(x, y, z);
+		} else {
+			double x = Mth.lerp((double)partialFrame, this.original.xCloakO, this.original.xCloak) - Mth.lerp((double)partialFrame, this.original.xo, this.original.getX());
+            double y = Mth.lerp((double)partialFrame, this.original.yCloakO, this.original.yCloak) - Mth.lerp((double)partialFrame, this.original.yo, this.original.getY());
+            double z = Mth.lerp((double)partialFrame, this.original.zCloakO, this.original.zCloak) - Mth.lerp((double)partialFrame, this.original.zo, this.original.getZ());
+			
+			return new Vec3(x, y, z);
+		}
+	}
+	
+	@Override
+	public Vec3 getAccuratePartialLocation(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+			double x = Mth.lerp((double)partialFrame, this.xPosO2, this.original.xOld);
+			double y = Mth.lerp((double)partialFrame, this.yPosO2, this.original.yOld);
+			double z = Mth.lerp((double)partialFrame, this.zPosO2, this.original.zOld);
+			
+            return new Vec3(x, y, z);
+		} else {
+			double x = Mth.lerp((double)partialFrame, this.original.xOld, this.original.getX());
+			double y = Mth.lerp((double)partialFrame, this.original.yOld, this.original.getY());
+			double z = Mth.lerp((double)partialFrame, this.original.zOld, this.original.getZ());
+			
+			return new Vec3(x, y, z);
+		}
+	}
+	
+	@Override
+	public Vec3 getObjectVelocity(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+			double x = Mth.lerp((double)partialFrame, this.xPosO2, this.original.xOld) - this.xPosO2;
+			double y = Mth.lerp((double)partialFrame, this.yPosO2, this.original.yOld) - this.yPosO2;
+			double z = Mth.lerp((double)partialFrame, this.zPosO2, this.original.zOld) - this.zPosO2;
+			
+            return new Vec3(x, y, z);
+		} else {
+			double x = Mth.lerp((double)partialFrame, this.original.xOld, this.original.getX()) - this.original.xOld;
+			double y = Mth.lerp((double)partialFrame, this.original.yOld, this.original.getY()) - this.original.yOld;
+			double z = Mth.lerp((double)partialFrame, this.original.zOld, this.original.getZ()) - this.original.zOld;
+			
+			return new Vec3(x, y, z);
+		}
+	}
+	
+	@Override
+	public float getAccurateYRot(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+            return Mth.rotLerp(partialFrame, this.modelYRotO2, this.getYRotO());
+		} else {
+			return Mth.rotLerp(partialFrame, this.getYRotO(), this.getYRot());
+		}
+	}
+	
+	@Override
+	public float getYRotDelta(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+            return Mth.rotLerp(partialFrame, this.modelYRotO2, this.getYRotO()) - this.modelYRotO2;
+		} else {
+			return Mth.rotLerp(partialFrame, this.getYRotO(), this.getYRot()) - this.getYRotO();
+		}
 	}
 }
