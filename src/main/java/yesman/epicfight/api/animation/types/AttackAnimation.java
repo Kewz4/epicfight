@@ -92,7 +92,7 @@ public class AttackAnimation extends ActionAnimation {
 	public AttackAnimation(float convertTime, String path, Armature armature, boolean noRegister, Phase... phases) {
 		super(convertTime, path, armature, noRegister);
 		
-		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null);
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
 		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
 		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.MODEL_COORD);
 		

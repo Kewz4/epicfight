@@ -32,6 +32,7 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 
 	public CustomHumanoidMobPatch(Faction faction, MobPatchReloadListener.CustomHumanoidMobPatchProvider provider) {
 		super(faction);
+		
 		this.provider = provider;
 		this.weaponLivingMotions = this.provider.getHumanoidWeaponMotions();
 		this.weaponAttackMotions = this.provider.getHumanoidCombatBehaviors();
@@ -55,13 +56,6 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 					this.original.goalSelector.addGoal(1, new TargetChasingGoal(this, this.getOriginal(), this.provider.getChasingSpeed(), true));
 				}
 			}
-		}
-	}
-	
-	@Override
-	protected void setWeaponMotions() {
-		if (this.weaponAttackMotions == null) {
-			super.setWeaponMotions();
 		}
 	}
 	

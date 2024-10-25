@@ -168,6 +168,16 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		@SuppressWarnings("rawtypes")
 		@Override
 		public EntityPatch<?> get(Entity entity) {
+			if (this.humanoidCombatBehaviors == null) {
+				EpicFightMod.LOGGER.warn("Custom humanoid mob capability undefined combat behaviors");
+				return null;
+			}
+			
+			if (this.humanoidWeaponMotions == null) {
+				EpicFightMod.LOGGER.warn("Custom humanoid mob capability undefined weapon motions");
+				return null;
+			}
+			
 			return new CustomHumanoidMobPatch(this.faction, this);
 		}
 		
@@ -195,6 +205,11 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		@Override
 		@SuppressWarnings("rawtypes")
 		public EntityPatch<?> get(Entity entity) {
+			if (this.combatBehaviorsBuilder == null) {
+				EpicFightMod.LOGGER.warn("Custom mob capability undefined combat behaviors");
+				return null;
+			}
+			
 			return new CustomMobPatch(this.faction, this);
 		}
 

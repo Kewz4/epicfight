@@ -92,8 +92,10 @@ public class ActionAnimation extends MainFrameAnimation {
 	
 	@Override
 	public void putOnPlayer(AnimationPlayer animationPlayer, LivingEntityPatch<?> entitypatch) {
-		MoveCoordSetter moveCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse(MoveCoordFunctions.RAW_COORD);
-		moveCoordSetter.set(this, entitypatch, entitypatch.getArmature().getActionAnimationCoord());
+		if (entitypatch.shouldMoveOnCurrentSide(this)) {
+			MoveCoordSetter moveCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse(MoveCoordFunctions.RAW_COORD);
+			moveCoordSetter.set(this, entitypatch, entitypatch.getArmature().getActionAnimationCoord());
+		}
 		
 		super.putOnPlayer(animationPlayer, entitypatch);
 	}
@@ -329,7 +331,7 @@ public class ActionAnimation extends MainFrameAnimation {
 			move.y = 0.0F;
 		}
 		
-		return move.toDoubleVector(); 
+		return move.toDoubleVector();
 	}
 	
 	@OnlyIn(Dist.CLIENT)
