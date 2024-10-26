@@ -1,6 +1,7 @@
 package yesman.epicfight.api.forgeevent;
 
-import java.util.Map;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -25,14 +26,21 @@ import yesman.epicfight.gameasset.Armatures.ArmatureContructor;
 
 public abstract class ModelBuildEvent<T> extends Event implements IModBusEvent {
 	protected final ResourceManager resourceManager;
+	protected final BiMap<ResourceLocation, T> oldRegistry;
 	
-	public ModelBuildEvent(ResourceManager resourceManager, Map<ResourceLocation, T> registerMap) {
+	public ModelBuildEvent(ResourceManager resourceManager, BiMap<ResourceLocation, T> oldRegistry) {
 		this.resourceManager = resourceManager;
+		this.oldRegistry = HashBiMap.create();
+		this.oldRegistry.putAll(oldRegistry);
+	}
+	
+	public BiMap<ResourceLocation, T> getOldRegistry() {
+		return this.oldRegistry;
 	}
 	
 	public static class ArmatureBuild extends ModelBuildEvent<Armature> {
-		public ArmatureBuild(ResourceManager resourceManager, Map<ResourceLocation, Armature> registerMap) {
-			super(resourceManager, registerMap);
+		public ArmatureBuild(ResourceManager resourceManager, BiMap<ResourceLocation, Armature> oldRegistry) {
+			super(resourceManager, oldRegistry);
 		}
 		
 		public <T extends Armature> T get(String modid, String path, ArmatureContructor<T> constructor) {
@@ -42,8 +50,8 @@ public abstract class ModelBuildEvent<T> extends Event implements IModBusEvent {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class MeshBuild extends ModelBuildEvent<Mesh<?, ?>> {
-		public MeshBuild(ResourceManager resourceManager, Map<ResourceLocation, Mesh<?, ?>> registerMap) {
-			super(resourceManager, registerMap);
+		public MeshBuild(ResourceManager resourceManager, BiMap<ResourceLocation, Mesh<?, ?>> oldRegistry) {
+			super(resourceManager, oldRegistry);
 		}
 		
 		public <M extends RawMesh> M getRaw(String modid, String path, MeshContructor<RawModelPart, VertexBuilder, M> constructor) {

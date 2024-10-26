@@ -14,5 +14,9 @@ public interface PhysicsSimulator<B extends SimulationBuilder, KEY extends Simul
 	
 	public void runWhenPermanent(KEY key, B builder, BooleanSupplier when);
 	
+	public void restart(KEY key, KEY newKey);
+	
+	public void stop(KEY key);
+	
 	public Optional<T> getRunningSimulationData(KEY key);
 }

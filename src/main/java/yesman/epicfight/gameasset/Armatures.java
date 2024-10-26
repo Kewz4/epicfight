@@ -57,8 +57,8 @@ public class Armatures {
 	public static WitherArmature WITHER;
 	
 	public static void build(ResourceManager resourceManager) {
-		ARMATURES.clear();
 		ModelBuildEvent.ArmatureBuild event = new ModelBuildEvent.ArmatureBuild(resourceManager, ARMATURES);
+		ARMATURES.clear();
 		
 		BIPED = event.get(EpicFightMod.MODID, "entity/biped", HumanoidArmature::new);
 		CREEPER = event.get(EpicFightMod.MODID, "entity/creeper", CreeperArmature::new);

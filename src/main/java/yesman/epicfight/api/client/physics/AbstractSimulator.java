@@ -50,6 +50,19 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends
 	}
 	
 	@Override
+	public void stop(KEY key) {
+		this.simulationObjects.remove(key);
+	}
+	
+	@Override
+	public void restart(KEY key, KEY newKey) {
+		KeyWrapper kwrap = this.simulationObjects.get(key);
+		
+		this.stop(key);
+		this.simulationObjects.put(newKey, new KeyWrapper(newKey, kwrap.runWhen, kwrap.permanent, kwrap.builder));
+	}
+	
+	@Override
 	public Optional<SD> getRunningSimulationData(KEY key) {
 		if (!this.simulationObjects.containsKey(key)) {
 			return Optional.empty();

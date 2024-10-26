@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.compress.utils.Lists;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -14,19 +15,46 @@ import org.joml.Vector4f;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.physics.ClothSimulatable;
 import yesman.epicfight.api.client.physics.ClothSimulator;
 import yesman.epicfight.api.client.physics.ClothSimulator.ClothObject;
+import yesman.epicfight.api.forgeevent.ModelBuildEvent;
+import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationProvider;
+import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements SimulationProvider<ClothSimulatable, ClothSimulator.ClothObject, ClothSimulator.ClothObjectBuilder> {
+	private static final List<Pair<ClothSimulatable, ClothMesh>> TRACKING_SIMULATORS = Lists.newArrayList();
+	
+	@SubscribeEvent
+	public static void onReload(ModelBuildEvent.MeshBuild event) {
+		for (Pair<ClothSimulatable, ClothMesh> pair : TRACKING_SIMULATORS) {
+			if (!pair.getFirst().valid()) {
+				continue;
+			}
+			
+			((SimulatableObject)pair.getFirst()).getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
+				ClothMesh newMesh = (ClothMesh)Meshes.getMeshOrNull(event.getOldRegistry().inverse().get(pair.getSecond()));
+				
+				simulator.restart(pair.getSecond(), newMesh);
+			});
+		}
+		
+		TRACKING_SIMULATORS.clear();
+	}
+	
 	public ClothMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable ClothMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, null, properties);
 	}
@@ -63,6 +91,7 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	
 	@Override
 	public ClothSimulator.ClothObject createSimulationData(ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder builder) {
+		TRACKING_SIMULATORS.add(Pair.of(simObject, this));
 		return new ClothObject(builder, this, this.parts, this.positions);
 	}
 	

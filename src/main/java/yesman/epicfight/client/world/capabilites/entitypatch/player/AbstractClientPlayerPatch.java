@@ -529,4 +529,9 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			return Mth.rotLerp(partialFrame, this.getYRotO(), this.getYRot()) - this.getYRotO();
 		}
 	}
+
+	@Override
+	public boolean valid() {
+		return !this.original.isRemoved();
+	}
 }

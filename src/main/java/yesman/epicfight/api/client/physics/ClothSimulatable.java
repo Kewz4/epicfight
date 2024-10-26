@@ -11,6 +11,7 @@ import yesman.epicfight.api.model.Armature;
 public interface ClothSimulatable {
 	@Nullable
 	Armature getArmature();
+	boolean valid();
 	
 	// Cloth object requires providing location info for 2 steps before for accurate continuous collide detection.
 	public Vec3 getAccuratePartialLocation(float partialFrame);

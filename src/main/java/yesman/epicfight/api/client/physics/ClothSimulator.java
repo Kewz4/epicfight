@@ -136,19 +136,9 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					float yRot = Mth.wrapDegrees(simulatableObj.getAccurateYRot(substepPartialTick - subSteppingDeltaTime));
 					float yRotDelta = Mth.clamp(Mth.wrapDegrees(simulatableObj.getAccurateYRot(substepPartialTick) - yRot), -0.35F, 0.35F);
 					
-					//System.out.println(yRotDelta);
-					
 					Vec3 velocity = simulatableObj.getAccuratePartialLocation(substepPartialTick).subtract(simulatableObj.getAccuratePartialLocation(substepPartialTick - subSteppingDeltaTime));
 					double yDeltaMod = yRotDelta / 0.45D * Math.max(velocity.length() / 0.0075D, 0.75D);
 					
-					/**
-					Vec3f force = Vec3f.fromDoubleVector(MathUtils.getVectorForRotation(0.0F, yRot - 180.0F)
-																  .add(MathUtils.getVectorForRotation(0.0F, yRot + (yRotDelta > 0.0F ? -90.0F : 90.0F)).scale(1.5D))
-																  .scale(Math.abs(yDeltaMod * yDeltaMod))
-																  .scale(PARTICLE_MASS)
-																  .add(velocity.scale(Math.abs(yRotDelta * 5.5D)))
-																  );
-					**/
 					
 					FORCE.add(Vec3f.fromDoubleVector(MathUtils.getVectorForRotation(0.0F, yRot - 180.0F)
 							                                       .add(MathUtils.getVectorForRotation(0.0F, yRot + (yRotDelta > 0.0F ? -90.0F : 90.0F)))
@@ -349,20 +339,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 						}
 					}
 				}
-				/**
-				if (clothColliders != null) {
-					for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : clothColliders) {
-						for (Particle p : this.particles.values()) {
-							if (p.influence == 0.0F) {
-								continue;
-							}
-							
-							Vec3 particlePos = p.position.toDoubleVector();
-							Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos, particlePos);
-							p.position.set(pushedPoint);
-						}
-					}
-				}**/
 				
 				// Detect self collision
 				for (Particle p1 : this.particles.values()) {
@@ -400,7 +376,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			}
 			
 			public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-				ModelPart<?> modelPart = ClothObject.this.provider.getPart(this.name);
+				ClothMesh originalMesh = ClothObject.this.provider;
+				ModelPart<?> modelPart = originalMesh.getPart(this.name);
 				
 				if (modelPart.isHidden()) {
 					return;
@@ -411,8 +388,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				Matrix4f matrix4f = poseStack.last().pose();
 				Matrix3f matrix3f = poseStack.last().normal();
 				
-				float[] normals = ClothObject.this.provider.normals();
-				float[] uvs = ClothObject.this.provider.uvs();
+				float[] normals = originalMesh.normals();
+				float[] uvs = originalMesh.uvs();
 				
 				for (VertexBuilder vi : modelPart.getVertices()) {
 					int norm = vi.normal * 3;

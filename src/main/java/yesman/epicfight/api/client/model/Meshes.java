@@ -83,11 +83,11 @@ public class Meshes implements PreparableReloadListener {
 	public static ClothMesh CAPE;
 	
 	public static void build(ResourceManager resourceManager) {
+		ModelBuildEvent.MeshBuild event = new ModelBuildEvent.MeshBuild(resourceManager, MESHES);
+		
 		MESHES.values().stream().filter((mesh) -> mesh instanceof AnimatedMesh).map((mesh) -> (AnimatedMesh)mesh).forEach(AnimatedMesh::destroy);
 		MESHES.clear();
 		WearableItemLayer.clearModels();
-		
-		ModelBuildEvent.MeshBuild event = new ModelBuildEvent.MeshBuild(resourceManager, MESHES);
 		
 		//Entities
 		ALEX = event.getAnimated(EpicFightMod.MODID, "entity/biped_slim_arm", HumanoidMesh::new);
