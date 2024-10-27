@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -23,9 +24,12 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.gameasset.Armatures;
+import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer>  {
+	public static final ResourceLocation DUMMY_CAPE_TEXTURE = new ResourceLocation(EpicFightMod.MODID, "textures/entity/cape.png");
+	
 	@Override
 	protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, AbstractClientPlayer entityliving, CapeLayer vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTick) {
 		entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
@@ -70,7 +74,8 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 	            
 				clothObj.tick(entitypatch, partialRootTransformProvider, partialColliderTransformProvider, poses, partialTick);
 				
-				VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(entityliving.getCloakTextureLocation())));
+				ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? DUMMY_CAPE_TEXTURE : entityliving.getCloakTextureLocation();
+				VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(capeTexture)));
 				clothObj.draw(buffer, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
 			});
 		});

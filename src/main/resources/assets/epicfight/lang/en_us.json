@@ -211,7 +211,7 @@
 	
 	"gui.epicfight.enable_dummy_cape.on": "Dummy cape: ON",
 	"gui.epicfight.enable_dummy_cape.off": "Dummy cape: OFF",
-	"gui.epicfight.enable_dummy_cape.tooltip": "Turn on the dummy cape. Rejoin the world to activate the dummy cape. (This option is only for the experimental version)",
+	"gui.epicfight.enable_dummy_cape.tooltip": "Turn on the dummy cape. (This option is only for the experimental version)",
 	
 	"gui.epicfight.auto_switching_items": "Auto Switching Items",
 	"gui.epicfight.export_custom_armor": "Export Armor Models",

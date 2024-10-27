@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -50,6 +51,7 @@ import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
+import yesman.epicfight.client.renderer.patched.layer.PatchedCapeLayer;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -68,14 +70,15 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		this.prevHeldItem = Items.AIR;
 		this.prevHeldItemOffHand = Items.AIR;
 		
-		if (this.original.isCapeLoaded() && this.original.getCloakTextureLocation() != null) {
-			ClothSimulator.ClothObjectBuilder builder = ClothSimulator.ClothObjectBuilder.create();
-			builder.putAll("default".equals(this.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM);
+		ClothSimulator.ClothObjectBuilder builder = ClothSimulator.ClothObjectBuilder.create();
+		builder.putAll("default".equals(this.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM);
+		
+		this.clothSimulator.runWhenPermanent(Meshes.CAPE, builder, () -> {
+			ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? PatchedCapeLayer.DUMMY_CAPE_TEXTURE : this.original.getCloakTextureLocation();
+			boolean isCapeLoaded = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? true : this.original.isCapeLoaded();
 			
-			this.clothSimulator.runWhenPermanent(Meshes.CAPE, builder, () -> {
-				return !this.original.isInvisible() && this.original.isModelPartShown(PlayerModelPart.CAPE) && this.original.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
-			});
-		}
+			return isCapeLoaded && capeTexture != null && !this.original.isInvisible() && this.original.isModelPartShown(PlayerModelPart.CAPE) && this.original.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
+		});
 	}
 	
 	@Override
