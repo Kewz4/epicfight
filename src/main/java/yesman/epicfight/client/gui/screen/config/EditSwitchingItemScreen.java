@@ -26,13 +26,15 @@ import yesman.epicfight.world.capabilities.provider.ItemCapabilityProvider;
 
 @OnlyIn(Dist.CLIENT)
 public class EditSwitchingItemScreen extends Screen {
+	private static final ItemStack TITLE_STACK = new ItemStack((Void)null);
+	
+	protected final Screen parentScreen;
 	private EditSwitchingItemScreen.RegisteredItemList battleAutoSwitchItems;
 	private EditSwitchingItemScreen.RegisteredItemList miningAutoSwitchItems;
-	protected final Screen parentScreen;
 	private Runnable deferredTooltip;
 	
 	public EditSwitchingItemScreen(Screen parentScreen) {
-		super( Component.translatable(EpicFightMod.MODID + ".gui.configuration.autoswitching"));
+		super(Component.translatable(EpicFightMod.MODID + ".gui.configuration.autoswitching"));
 		this.parentScreen = parentScreen;
 	}
 
@@ -139,7 +141,7 @@ public class EditSwitchingItemScreen extends Screen {
 			List<Item> list = Lists.newArrayList();
 			
 			for (ItemEntry entry : this.children()) {
-				if (!entry.itemStack.isEmpty()) {
+				if (entry.itemStack != TITLE_STACK) {
 					list.add(entry.itemStack.getItem());
 				}
 			}
@@ -177,6 +179,7 @@ public class EditSwitchingItemScreen extends Screen {
 						RegisteredItemList.this.removeEntry(this);
 						return false;
 					}
+					
 					RegisteredItemList.this.setSelected(this);
 					return true;
 				} else {
@@ -187,12 +190,12 @@ public class EditSwitchingItemScreen extends Screen {
 			@Override
 			public boolean equals(Object obj) {
 				if (obj instanceof ItemEntry && !(this instanceof ButtonInEntry)) {
-					return this.itemStack.getItem().equals(((ItemEntry)obj).itemStack.getItem());
+					return this.itemStack.equals(((ItemEntry)obj).itemStack);
 				} else {
 					return super.equals(obj);
 				}
 			}
-
+			
 			@Override
 			public Component getNarration() {
 				return  Component.translatable("narrator.select", this.itemStack.getHoverName());
@@ -206,7 +209,7 @@ public class EditSwitchingItemScreen extends Screen {
 			private final Button automaticRegisterButton;
 
 			public ButtonInEntry() {
-				super(ItemStack.EMPTY);
+				super(TITLE_STACK);
 				
 				this.addItemButton = Button.builder(Component.literal("+"), (button) -> {
 					EditSwitchingItemScreen.RegisteredItemList thisList = EditSwitchingItemScreen.RegisteredItemList.this == EditSwitchingItemScreen.this.battleAutoSwitchItems ? EditSwitchingItemScreen.this.battleAutoSwitchItems : EditSwitchingItemScreen.this.miningAutoSwitchItems;

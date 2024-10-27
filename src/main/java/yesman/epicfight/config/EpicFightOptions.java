@@ -176,6 +176,7 @@ public class EpicFightOptions {
 		this.aimHelperRealColor = ColorWidget.toColorInteger(this.aimHelperColor.getValue());
 		config.battleAutoSwitchItems.set(Lists.newArrayList(this.battleAutoSwitchItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
 		config.miningAutoSwitchItems.set(Lists.newArrayList(this.miningAutoSwitchItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
+		
 		config.staminaBarX.set(this.staminaBarX.getValue());
 		config.staminaBarY.set(this.staminaBarY.getValue());
 		config.staminaBarXBase.set(this.staminaBarXBase.getValue());

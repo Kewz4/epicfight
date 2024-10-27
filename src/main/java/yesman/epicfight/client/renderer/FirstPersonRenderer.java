@@ -62,7 +62,16 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 		
 		Matrix4f lastPose = new Matrix4f(poseStack.last().pose());
 		poseStack.setIdentity();
-		poseStack.translate(0.0F, -entity.getEyeHeight() - 0.05F, 0.0F);
+		
+		float correction = 0.0F; 
+		
+		if (entity.isVisuallySwimming()) {
+			correction = 0.25F;
+		} else if (entity.isFallFlying()) {
+			correction = 100.0F;
+		}
+		
+		poseStack.translate(0.0F, -entity.getEyeHeight() - 0.05F, correction);
 		poseStack.mulPoseMatrix(lastPose);
 		
 		HumanoidMesh mesh = this.getMeshProvider(entitypatch).get();
