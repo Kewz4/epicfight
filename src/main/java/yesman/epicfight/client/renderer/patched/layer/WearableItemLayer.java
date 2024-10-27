@@ -1,5 +1,6 @@
 package yesman.epicfight.client.renderer.patched.layer;
 
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
@@ -205,7 +206,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 		}
 	}
 	
-	private AnimatedMesh getArmorModel(HumanoidArmorLayer<E, M, M> originalRenderer, M originalModel, Model forgeModel, E entityliving, ArmorItem armorItem, ItemStack itemstack, EquipmentSlot slot) {
+	private AnimatedMesh getArmorModel(HumanoidArmorLayer<E, M, M> originalRenderer, M originalModel, Model forgeHooksArmorModel, E entityliving, ArmorItem armorItem, ItemStack itemstack, EquipmentSlot slot) {
 		ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(armorItem);
 		
 		if (ARMOR_MODELS.containsKey(registryName) && !ClientEngine.getInstance().renderEngine.shouldRenderVanillaModel()) {
@@ -219,11 +220,25 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 				JsonModelLoader modelLoader = new JsonModelLoader(resourceManager, rl);
 				animatedMesh = modelLoader.loadAnimatedMesh(AnimatedMesh::new);
 			} else {
+				Iterable<ItemStack> armorItems = entityliving.getArmorSlots();
+				ItemStack head = entityliving.getItemBySlot(EquipmentSlot.HEAD);
+				ItemStack chest = entityliving.getItemBySlot(EquipmentSlot.CHEST);
+				ItemStack legs = entityliving.getItemBySlot(EquipmentSlot.LEGS);
+				ItemStack feet = entityliving.getItemBySlot(EquipmentSlot.FEET);
+				
+				if (armorItems instanceof List) {
+					List<ItemStack> armorItemList = (List<ItemStack>) armorItems;
+					armorItemList.set(0, ItemStack.EMPTY);
+					armorItemList.set(1, ItemStack.EMPTY);
+					armorItemList.set(2, ItemStack.EMPTY);
+					armorItemList.set(3, ItemStack.EMPTY);
+					armorItemList.set(slot.getIndex(), itemstack);
+				}
+
 				PoseStack ps = new PoseStack();
 				ps.translate(0, 0, 10000);
-				boolean falsu = false;
 				
-				if (forgeHooksArmorModel instanceof HumanoidModel<?> humanoidModel && falsu) {
+				if (forgeHooksArmorModel instanceof HumanoidModel<?> humanoidModel) {
 					//Setup default visibility
 					switch (slot) {
 					case FEET -> {
