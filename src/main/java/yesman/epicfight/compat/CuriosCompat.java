@@ -27,7 +27,6 @@ import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.renderer.patched.entity.PatchedLivingEntityRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
-import yesman.epicfight.compat.curios.RelicsModelProvider;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class CuriosCompat implements ICompatModule {
