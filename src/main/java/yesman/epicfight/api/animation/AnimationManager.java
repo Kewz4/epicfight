@@ -50,6 +50,8 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	private final Map<StaticAnimation, AnimationClip> animationClips = Maps.newHashMap();
 	private final Map<ResourceLocation, StaticAnimation> animationRegistry = Maps.newHashMap();
 	private final Map<ResourceLocation, StaticAnimation> userAnimations = Maps.newHashMap();
+	private final Map<ResourceLocation, StaticAnimation> swappedOriginalAnimations = Maps.newHashMap();
+	
 	private final Map<ResourceLocation, String> userAnimationInvocationCommands = Maps.newHashMap();
 	private final Map<Integer, StaticAnimation> animationIdMap = Maps.newHashMap();
 	private String currentWorkingModid;
@@ -124,6 +126,12 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	 * Registers animations created by datapack edit screen
 	 */
 	public void registerUserAnimation(ClipHoldingAnimation animation) {
+		ResourceLocation rl = animation.getCreator().getRegistryName();
+		
+		if (this.animationRegistry.containsKey(rl)) {
+			this.swappedOriginalAnimations.put(rl, this.animationRegistry.get(rl));
+		}
+		
 		this.animationRegistry.put(animation.getCreator().getRegistryName(), animation.cast());
 	}
 	
@@ -131,7 +139,13 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	 * Remove user animations created by datapack edit screen
 	 */
 	public void removeUserAnimation(ClipHoldingAnimation animation) {
-		this.animationRegistry.remove(animation.getCreator().getRegistryName());
+		ResourceLocation rl = animation.getCreator().getRegistryName();
+		this.animationRegistry.remove(rl);
+		
+		if (this.swappedOriginalAnimations.containsKey(rl)) {
+			this.animationRegistry.put(rl, this.swappedOriginalAnimations.get(rl));
+			this.swappedOriginalAnimations.remove(rl);
+		}
 	}
 	
 	public StaticAnimation refreshAnimation(StaticAnimation staticAnimation) {
