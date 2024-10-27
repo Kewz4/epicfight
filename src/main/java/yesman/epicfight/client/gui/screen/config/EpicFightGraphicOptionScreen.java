@@ -48,6 +48,7 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		IntegerOptionHandler maxHitProjectiles = this.config.maxStuckProjectiles;
 		BooleanOptionHandler useAnimationShader = this.config.useAnimationShader;
 		BooleanOptionHandler firstPersonModel = this.config.firstPersonModel;
+		BooleanOptionHandler enableDummyCape = this.config.enableDummyCape;
 		
 		int buttonHeight = -32;
 		
@@ -142,6 +143,15 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		}
 		
 		this.optionsList.addSmall(firstPersonModelButton, useAnimationShaderButton);
+		
+		buttonHeight += 24;
+		
+		Button enableDummyCapeButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape." + (enableDummyCape.getValue() ? "on" : "off")), (button) -> {
+			enableDummyCape.setValue(!enableDummyCape.getValue());
+			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape." + (enableDummyCape.getValue() ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape.tooltip"))).build();
+		
+		this.optionsList.addSmall(enableDummyCapeButton, null);
 		
 		buttonHeight += 30;
 		

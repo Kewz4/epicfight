@@ -35,6 +35,8 @@ public class EpicFightOptions {
 	public final BooleanOptionHandler useAnimationShader;
 	public final BooleanOptionHandler firstPersonModel;
 	
+	public final BooleanOptionHandler enableDummyCape;
+	
 	public boolean shaderModeSwitchingLocked = false;
 	
 	public final Set<Item> battleAutoSwitchItems;
@@ -80,6 +82,8 @@ public class EpicFightOptions {
 		this.maxStuckProjectiles = new IntegerOptionHandler(config.maxStuckProjectiles.get(), 1, 30);
 		this.useAnimationShader = new BooleanOptionHandler(config.useAnimationShader.get());
 		this.firstPersonModel = new BooleanOptionHandler(config.firstPersonModel.get());
+		
+		this.enableDummyCape = new BooleanOptionHandler(false);
 		
 		this.battleAutoSwitchItems = config.battleAutoSwitchItems.get().stream()
 				.map(itemName -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemName)))

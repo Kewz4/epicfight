@@ -130,6 +130,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  2. Cloth simulation for cape
  *  
+ *  3. Config to enable dummy cape (experimental version only)
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)

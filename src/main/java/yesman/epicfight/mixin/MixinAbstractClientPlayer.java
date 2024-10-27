@@ -13,13 +13,17 @@ import yesman.epicfight.main.EpicFightMod;
 public abstract class MixinAbstractClientPlayer {
 	@Inject(at = @At(value = "HEAD"), method = "getCloakTextureLocation()Lnet/minecraft/resources/ResourceLocation;", cancellable = true)
 	public void getCloakTextureLocation(CallbackInfoReturnable<ResourceLocation> info) {
-		info.setReturnValue(new ResourceLocation(EpicFightMod.MODID, "textures/entity/cape.png"));
-		info.cancel();
+		if (EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue()) {
+			info.setReturnValue(new ResourceLocation(EpicFightMod.MODID, "textures/entity/cape.png"));
+			info.cancel();
+		}
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "isCapeLoaded()Z", cancellable = true)
 	public void isCapeLoaded(CallbackInfoReturnable<Boolean> info) {
-		info.setReturnValue(true);
-		info.cancel();
+		if (EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue()) {
+			info.setReturnValue(true);
+			info.cancel();
+		}
 	}
 }

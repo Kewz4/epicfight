@@ -209,6 +209,10 @@
 	"gui.epicfight.use_animation_shader.on": "Use Animation Shader: ON",
 	"gui.epicfight.use_animation_shader.off": "Use Animation Shader: OFF",
 	
+	"gui.epicfight.enable_dummy_cape.on": "Dummy cape: ON",
+	"gui.epicfight.enable_dummy_cape.off": "Dummy cape: OFF",
+	"gui.epicfight.enable_dummy_cape.tooltip": "Turn on the dummy cape. Rejoin the world to activate the dummy cape. (This option is only for the experimental version)",
+	
 	"gui.epicfight.auto_switching_items": "Auto Switching Items",
 	"gui.epicfight.export_custom_armor": "Export Armor Models",
 	"gui.epicfight.filter_animation.tooltip": "Turn on/off the Epic Fight model in Mining mode",
