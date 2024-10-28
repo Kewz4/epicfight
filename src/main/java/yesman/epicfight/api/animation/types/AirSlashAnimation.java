@@ -22,11 +22,15 @@ public class AirSlashAnimation extends AttackAnimation {
 	}
 	
 	public AirSlashAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, boolean directional, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
-		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, path, armature);
+		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
 			this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 		}
+	}
+	
+	public AirSlashAnimation(float convertTime, String path, Armature armature, Phase... phases) {
+		super(convertTime, path, armature, phases);
 		
 		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.5F));
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
