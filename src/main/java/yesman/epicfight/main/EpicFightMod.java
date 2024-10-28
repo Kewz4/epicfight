@@ -124,6 +124,12 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  11. Added dash attack, air slash option on importing animation
  *  
+ *  12. Fixed Air not registered in auto switching item list
+ *  
+ *  13. Fixed wither laser and ender dragon force field and impact guard particle invisible
+ *  
+ *  14. Wither minions won't spawn if noMobsInBossfight rule set as true
+ *  
  *  Changes from 20.9.5 -> 20.10.1
  *  
  *  1. Enhanced the accuracy of tracing ability of the player when attacking
