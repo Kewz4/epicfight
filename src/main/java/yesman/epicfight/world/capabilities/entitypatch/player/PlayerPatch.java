@@ -629,6 +629,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.modelYRot;
 	}
 	
+	@Override
 	public float getYRotO() {
 		return this.modelYRotO;
 	}

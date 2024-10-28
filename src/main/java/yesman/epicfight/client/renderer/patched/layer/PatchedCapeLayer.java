@@ -5,6 +5,8 @@ import java.util.function.Function;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -32,6 +34,11 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 	
 	@Override
 	protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch, AbstractClientPlayer entityliving, CapeLayer vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTick) {
+		// Prevent simulating cape in inventory screen
+		if (Minecraft.getInstance().screen instanceof EffectRenderingInventoryScreen && entityliving == Minecraft.getInstance().player && partialTick == 1.0F) {
+			return;
+		}
+		
 		entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
 			simulator.getRunningSimulationData(Meshes.CAPE).ifPresent((clothObj) -> {
 	            Function<Float, OpenMatrix4f> partialRootTransformProvider = (partialFrame) -> {
@@ -61,7 +68,6 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 									   .mulBack(Armatures.BIPED.chest.getLocalTrasnform())
 									   .translate(0.0F, 0.0F, 0.125F)
 									   .rotateDeg(-(6.0F + f2 / 2.0F + f1), Vec3f.X_AXIS)
-									   .rotateDeg(f3 / 2.0F, Vec3f.Z_AXIS)
 									   .rotateDeg(f3 / 2.0F, Vec3f.Y_AXIS);
 	            };
 	            
@@ -75,8 +81,11 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 				clothObj.tick(entitypatch, partialRootTransformProvider, partialColliderTransformProvider, poses, partialTick);
 				
 				ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? DUMMY_CAPE_TEXTURE : entityliving.getCloakTextureLocation();
-				VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(capeTexture)));
-				clothObj.draw(buffer, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
+				
+				if (capeTexture != null) {
+					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(capeTexture)));
+					clothObj.draw(entitypatch, buffer, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
+				}
 			});
 		});
 	}

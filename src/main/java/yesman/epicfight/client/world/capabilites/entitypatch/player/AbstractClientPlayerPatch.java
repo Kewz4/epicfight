@@ -493,22 +493,8 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	@Override
-	public Vec3 getObjectVelocity(float partialFrame) {
-		if (partialFrame < 0.0F) {
-			partialFrame = 1.0F + partialFrame;
-			
-			double x = Mth.lerp((double)partialFrame, this.xPosO2, this.original.xOld) - this.xPosO2;
-			double y = Mth.lerp((double)partialFrame, this.yPosO2, this.original.yOld) - this.yPosO2;
-			double z = Mth.lerp((double)partialFrame, this.zPosO2, this.original.zOld) - this.zPosO2;
-			
-            return new Vec3(x, y, z);
-		} else {
-			double x = Mth.lerp((double)partialFrame, this.original.xOld, this.original.getX()) - this.original.xOld;
-			double y = Mth.lerp((double)partialFrame, this.original.yOld, this.original.getY()) - this.original.yOld;
-			double z = Mth.lerp((double)partialFrame, this.original.zOld, this.original.getZ()) - this.original.zOld;
-			
-			return new Vec3(x, y, z);
-		}
+	public Vec3 getObjectVelocity() {
+		return new Vec3(this.original.getX() - this.original.xOld, this.original.getY() - this.original.yOld, this.original.getZ() - this.original.zOld);
 	}
 	
 	@Override

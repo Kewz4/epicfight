@@ -692,6 +692,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.original.getYRot();
 	}
 	
+	public float getYRotO() {
+		return this.original.yRotO;
+	}
+	
 	public void setYRot(float yRot) {
 		this.original.setYRot(yRot);
 	}
