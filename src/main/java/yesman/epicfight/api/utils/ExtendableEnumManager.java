@@ -28,7 +28,7 @@ public class ExtendableEnumManager<T extends ExtendableEnum> {
 		this.enumName = enumName;
 	}
 	
-	public void registerEnumCls(String modid, Class<?> cls) {
+	public void registerEnumCls(String modid, Class<? extends ExtendableEnum> cls) {
 		if (this.enums.containsKey(modid)) {
 			EpicFightMod.LOGGER.error(modid + " is already registered in " + this.enumName);
 		}

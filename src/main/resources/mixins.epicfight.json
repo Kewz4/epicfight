@@ -31,7 +31,8 @@
 		"MixinMob",
 		"MixinPlayer",
 		"MixinThrownTrident",
-		"MixinServerGamePacketListenerImpl"
+		"MixinServerGamePacketListenerImpl",
+		"ParCoolMixinAnimation"
 	],
 	"injector": {
 		"defaultRequire": 1

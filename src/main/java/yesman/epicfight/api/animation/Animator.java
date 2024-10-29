@@ -9,10 +9,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
+import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 import yesman.epicfight.gameasset.Animations;
@@ -42,6 +44,9 @@ public abstract class Animator {
 	
 	public void init() {
 		this.entitypatch.initAnimator(this);
+		
+		InitAnimatorEvent initAnimatorEvent = new InitAnimatorEvent(this.entitypatch, this);
+		MinecraftForge.EVENT_BUS.post(initAnimatorEvent);
 	}
 	
 	public final void playAnimation(int id, float convertTimeModifier) {

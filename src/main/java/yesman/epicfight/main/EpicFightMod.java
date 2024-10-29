@@ -59,6 +59,7 @@ import yesman.epicfight.compat.GeckolibCompat;
 import yesman.epicfight.compat.ICompatModule;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.compat.IceAndFireCompat;
+import yesman.epicfight.compat.ParCoolCompat;
 import yesman.epicfight.compat.SkinLayer3DCompat;
 import yesman.epicfight.compat.VampirismCompat;
 import yesman.epicfight.compat.WerewolvesCompat;
@@ -256,6 +257,10 @@ public class EpicFightMod {
         
         if (ModList.get().isLoaded("iceandfire")) {
 			ICompatModule.loadCompatModule(IceAndFireCompat.class);
+		}
+        
+        if (ModList.get().isLoaded("parcool")) {
+			ICompatModule.loadCompatModule(ParCoolCompat.class);
 		}
 	}
     

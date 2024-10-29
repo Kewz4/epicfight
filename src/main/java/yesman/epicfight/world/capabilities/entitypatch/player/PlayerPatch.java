@@ -130,7 +130,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		animator.addLivingAnimation(LivingMotions.SLEEP, Animations.BIPED_SLEEPING);
 		animator.addLivingAnimation(LivingMotions.CREATIVE_FLY, Animations.BIPED_CREATIVE_FLYING);
 		animator.addLivingAnimation(LivingMotions.CREATIVE_IDLE, Animations.BIPED_CREATIVE_IDLE);
-
+		
 		/* Mix Animations */
 		animator.addLivingAnimation(LivingMotions.DIGGING, Animations.BIPED_DIG);
 		animator.addLivingAnimation(LivingMotions.AIM, Animations.BIPED_BOW_AIM);

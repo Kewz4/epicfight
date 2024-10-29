@@ -143,7 +143,11 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 		}
 		
-		MinecraftForge.EVENT_BUS.post(new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion));
+		
+		UpdatePlayerMotionEvent.BaseLayer baseLayerEvent = new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion);
+		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
+		
+		this.currentLivingMotion = baseLayerEvent.getMotion();
 		CapabilityItem activeItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
 		
 		if (this.original.isUsingItem()) {
@@ -182,7 +186,10 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 		}
 		
-		MinecraftForge.EVENT_BUS.post(new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion));
+		UpdatePlayerMotionEvent.CompositeLayer compositeLayerEvent = new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion);
+		MinecraftForge.EVENT_BUS.post(compositeLayerEvent);
+		
+		this.currentCompositeMotion = compositeLayerEvent.getMotion();
 	}
 	
 	@Override

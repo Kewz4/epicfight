@@ -9,7 +9,7 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClie
 @OnlyIn(Dist.CLIENT)
 public abstract class UpdatePlayerMotionEvent extends Event {
 	private final AbstractClientPlayerPatch<?> playerpatch;
-	private final LivingMotion motion;
+	private LivingMotion motion;
 	
 	public UpdatePlayerMotionEvent(AbstractClientPlayerPatch<?> playerpatch, LivingMotion motion) {
 		this.playerpatch = playerpatch;
@@ -20,16 +20,22 @@ public abstract class UpdatePlayerMotionEvent extends Event {
 		return this.playerpatch;
 	}
 	
+	public void setMotion(LivingMotion livingmotion) {
+		this.motion = livingmotion;
+	}
+	
 	public LivingMotion getMotion() {
 		return this.motion;
 	}
 	
+	@OnlyIn(Dist.CLIENT)
 	public static class BaseLayer extends UpdatePlayerMotionEvent {
 		public BaseLayer(AbstractClientPlayerPatch<?> playerpatch, LivingMotion motion) {
 			super(playerpatch, motion);
 		}
 	}
 	
+	@OnlyIn(Dist.CLIENT)
 	public static class CompositeLayer extends UpdatePlayerMotionEvent {
 		public CompositeLayer(AbstractClientPlayerPatch<?> playerpatch, LivingMotion motion) {
 			super(playerpatch, motion);
