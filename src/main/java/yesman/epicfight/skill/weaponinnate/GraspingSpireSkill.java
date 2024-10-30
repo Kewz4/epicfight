@@ -49,6 +49,7 @@ public class GraspingSpireSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
+		container.getExecuter().getEventListener().removeListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID);
 		container.getExecuter().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_HURT, EVENT_UUID);
 	}
 	
