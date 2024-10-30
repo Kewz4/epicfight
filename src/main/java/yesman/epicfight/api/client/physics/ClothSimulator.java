@@ -21,17 +21,13 @@ import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.math.Axis;
 
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.event.ViewportEvent.ComputeCameraAngles;
 import yesman.epicfight.api.client.model.ClothMesh;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition.ConstraintType;
@@ -121,7 +117,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			float yRot = simulatableObj.getYRot();
 			float deltaYRot = Mth.clamp(yRot - yRotO, -YROT_LIMIT, YROT_LIMIT) * 0.75F * deltaFrameTime;
 			Vec3 velocity = simulatableObj.getObjectVelocity();
-			double centrifugalForce = deltaYRot * deltaYRot * Mth.clamp(velocity.length() / 0.2D, 1.0D, MAX_VELOCITY_FORCE) * PARTICLE_MASS;
+			double centrifugalForce = deltaYRot * deltaYRot * Mth.clamp(velocity.length() / 0.2D, 1.0D, MAX_VELOCITY_FORCE) * PARTICLE_MASS * (0.16F / deltaFrameTime);
 			
 			this.force.add(Vec3f.fromDoubleVector(MathUtils.getVectorForRotation(0.0F, yRotO - 180.0F)
 									                       .add(MathUtils.getVectorForRotation(0.0F, yRotO + (deltaYRot > 0.0F ? -90.0F : 90.0F)))
@@ -129,7 +125,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 														   .add(velocity.scale(centrifugalForce * deltaFrameTime))
 			));
 			
-			//if (!Minecraft.getInstance().isPaused()) {
 			float subStebInvert = 1.0F / SUB_STEPS;
 			float subSteppingDeltaTime = deltaFrameTime * subStebInvert;
 			
@@ -151,34 +146,14 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					part.tick(SCALED_FORCE, subSteppingDeltaTime, clothRootMatrix, this.clothColliders);
 				}
 			}
-			//}
 			
 			this.force.scale(1.0F - deltaFrameTime * 0.5F);
 		}
 		
-		public void draw(ClothSimulatable simulatableObj, MultiBufferSource bufferSource, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
-			Minecraft mc = Minecraft.getInstance();
-			PoseStack poseStack$2 = new PoseStack();
-			Camera camera = mc.gameRenderer.getMainCamera();
-			Camera dummy = new Camera();
-			dummy.setup(mc.level, mc.player, !mc.options.getCameraType().isFirstPerson(), mc.options.getCameraType().isMirrored(), partialTick);
-			ComputeCameraAngles cameraSetup = ForgeHooksClient.onCameraSetup(mc.gameRenderer, dummy, partialTick);
-			
-			poseStack$2.mulPose(Axis.ZP.rotationDegrees(cameraSetup.getRoll()));
-			poseStack$2.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-			poseStack$2.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
-			poseStack$2.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
-			
+		public void draw(ClothSimulatable simulatableObj, PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
 			for (Part part : this.parts.values()) {
-				part.draw(poseStack$2, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
+				part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
-			
-			/**
-			if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes() && this.clothColliders != null) {
-				for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : this.clothColliders) {
-					entry.getSecond().draw(poseStack$2, bufferSource, -1);
-				}
-			}**/
 		}
 		
 		@OnlyIn(Dist.CLIENT)

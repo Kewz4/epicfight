@@ -235,10 +235,10 @@ public abstract class PatchedLivingEntityRenderer<E extends LivingEntity, T exte
 	}
 	
 	@Override
-	public void mulPoseStack(PoseStack poseStack, Armature armature, E entityIn, T entitypatch, float partialTicks) {
-		super.mulPoseStack(poseStack, armature, entityIn, entitypatch, partialTicks);
+	public void mulPoseStack(PoseStack poseStack, Armature armature, E entity, T entitypatch, float partialTicks) {
+		super.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
         
-        if (entityIn.isCrouching()) {
+        if (entity.isCrouching()) {
 			poseStack.translate(0.0D, 0.15D, 0.0D);
 		}
 	}
