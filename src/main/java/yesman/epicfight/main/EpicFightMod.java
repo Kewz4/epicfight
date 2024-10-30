@@ -261,6 +261,8 @@ public class EpicFightMod {
         
         if (ModList.get().isLoaded("parcool")) {
 			ICompatModule.loadCompatModule(ParCoolCompat.class);
+		} else {
+			AnimationManager.addNoWarningModId("parcool");
 		}
 	}
     
