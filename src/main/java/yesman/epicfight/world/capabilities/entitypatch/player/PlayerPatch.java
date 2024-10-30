@@ -366,7 +366,10 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	public AttackResult attack(EpicFightDamageSource damageSource, Entity target, InteractionHand hand) {
 		float fallDist = this.original.fallDistance;
 		boolean onGround = this.original.onGround;
+		boolean offhandValid = this.isOffhandItemValid();
 		
+		ItemStack mainHandItem = this.getOriginal().getMainHandItem();
+		ItemStack offHandItem = this.getOriginal().getOffhandItem();
 		Collection<AttributeModifier> mainHandAttributes = CapabilityItem.getAttributeModifiers(Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND, this.original.getMainHandItem(), this);
 		Collection<AttributeModifier> offHandAttributes = this.isOffhandItemValid() ? CapabilityItem.getAttributeModifiers(Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND, this.original.getOffhandItem(), this) : Set.of();
 		
@@ -375,9 +378,9 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		this.original.attackStrengthTicker = Integer.MAX_VALUE;
 		this.original.fallDistance = 0.0F;
 		this.original.onGround = false;
-		this.setOffhandDamage(hand, mainHandAttributes, offHandAttributes);
+		this.setOffhandDamage(hand, mainHandItem, offHandItem, offhandValid, mainHandAttributes, offHandAttributes);
 		this.original.attack(target);
-		this.recoverMainhandDamage(hand, mainHandAttributes, offHandAttributes);
+		this.recoverMainhandDamage(hand, mainHandItem, offHandItem, mainHandAttributes, offHandAttributes);
 		this.epicFightDamageSource = null;
 		this.original.fallDistance = fallDist;
 		this.original.onGround = onGround;

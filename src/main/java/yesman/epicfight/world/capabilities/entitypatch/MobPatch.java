@@ -20,6 +20,7 @@ import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RangedAttackGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -167,13 +168,16 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 	
 	@Override
 	public AttackResult attack(EpicFightDamageSource damageSource, Entity target, InteractionHand hand) {
+		boolean offhandValid = this.isOffhandItemValid();
+		ItemStack mainHandItem = this.getOriginal().getMainHandItem();
+		ItemStack offHandItem = this.getOriginal().getOffhandItem();
 		Collection<AttributeModifier> mainHandAttributes = CapabilityItem.getAttributeModifiers(Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND, this.original.getMainHandItem(), this);
 		Collection<AttributeModifier> offHandAttributes = this.isOffhandItemValid() ? CapabilityItem.getAttributeModifiers(Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND, this.original.getOffhandItem(), this) : Set.of();
 		
 		this.epicFightDamageSource = damageSource;
-		this.setOffhandDamage(hand, mainHandAttributes, offHandAttributes);
+		this.setOffhandDamage(hand, mainHandItem, offHandItem, offhandValid, mainHandAttributes, offHandAttributes);
 		this.original.doHurtTarget(target);
-		this.recoverMainhandDamage(hand, mainHandAttributes, offHandAttributes);
+		this.recoverMainhandDamage(hand, mainHandItem, offHandItem, mainHandAttributes, offHandAttributes);
 		this.epicFightDamageSource = null;
 		
 		return super.attack(damageSource, target, hand);

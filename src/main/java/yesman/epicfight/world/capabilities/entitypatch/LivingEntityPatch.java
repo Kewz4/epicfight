@@ -92,16 +92,19 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public static final double WEIGHT_CORRECTION = 37.037D;
 	
-	protected ResultType lastResultType;
-	protected float lastDealDamage;
-	protected Entity lastTryHurtEntity;
-	protected LivingEntity grapplingTarget;
 	protected Armature armature;
-	protected EntityState state = EntityState.DEFAULT_STATE;
 	protected Animator animator;
+	protected EntityState state = EntityState.DEFAULT_STATE;
+	
 	protected Vec3 lastAttackPosition;
 	protected EpicFightDamageSource epicFightDamageSource;
+	
 	protected boolean isLastAttackSuccess;
+	protected float lastDealDamage;
+	protected ResultType lastAttackResultType;
+	
+	protected Entity lastTryHurtEntity;
+	protected LivingEntity grapplingTarget;
 	
 	public LivingMotion currentLivingMotion = LivingMotions.IDLE;
 	public LivingMotion currentCompositeMotion = LivingMotions.IDLE;
@@ -245,7 +248,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * Swap item and attributes of mainhand for offhand item and attributes
 	 * You must call {@link LivingEntityPatch#recoverMainhandDamage} method again after finishing the damaging process.
 	 */
-	protected void setOffhandDamage(InteractionHand hand, Collection<AttributeModifier> mainhandAttributes, Collection<AttributeModifier> offhandAttributes) {
+	protected void setOffhandDamage(InteractionHand hand, ItemStack mainhandItemStack, ItemStack offhandItemStack, boolean offhandValid, Collection<AttributeModifier> mainhandAttributes, Collection<AttributeModifier> offhandAttributes) {
 		if (hand == InteractionHand.MAIN_HAND) {
 			return;
 		}
@@ -253,10 +256,8 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		/**
 		 * Swap hand items to decrease the durability of offhand item
 		 */
-		ItemStack mainHandItem = this.getOriginal().getMainHandItem();
-		ItemStack offHandItem = this.getOriginal().getOffhandItem();
-		this.getOriginal().setItemInHand(InteractionHand.MAIN_HAND, offHandItem);
-		this.getOriginal().setItemInHand(InteractionHand.OFF_HAND, mainHandItem);
+		this.getOriginal().setItemInHand(InteractionHand.MAIN_HAND, offhandValid ? offhandItemStack : ItemStack.EMPTY);
+		this.getOriginal().setItemInHand(InteractionHand.OFF_HAND, mainhandItemStack);
 		
 		/**
 		 * Swap item's attributes before {@link LivingEntity#setItemInHand} called
@@ -269,15 +270,13 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	/**
 	 * Set mainhand item's attribute modifiers
 	 */
-	protected void recoverMainhandDamage(InteractionHand hand, Collection<AttributeModifier> mainhandAttributes, Collection<AttributeModifier> offhandAttributes) {
+	protected void recoverMainhandDamage(InteractionHand hand, ItemStack mainhandItemStack, ItemStack offhandItemStack, Collection<AttributeModifier> mainhandAttributes, Collection<AttributeModifier> offhandAttributes) {
 		if (hand == InteractionHand.MAIN_HAND) {
 			return;
 		}
 		
-		ItemStack mainHandItem = this.getOriginal().getMainHandItem();
-		ItemStack offHandItem = this.getOriginal().getOffhandItem();
-		this.getOriginal().setItemInHand(InteractionHand.MAIN_HAND, offHandItem);
-		this.getOriginal().setItemInHand(InteractionHand.OFF_HAND, mainHandItem);
+		this.getOriginal().setItemInHand(InteractionHand.MAIN_HAND, mainhandItemStack);
+		this.getOriginal().setItemInHand(InteractionHand.OFF_HAND, offhandItemStack);
 		
 		AttributeInstance damageAttributeInstance = this.original.getAttribute(Attributes.ATTACK_DAMAGE);
 		offhandAttributes.forEach(damageAttributeInstance::removeModifier);
@@ -285,7 +284,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public void setLastAttackResult(AttackResult attackResult) {
-		this.lastResultType = attackResult.resultType;
+		this.lastAttackResultType = attackResult.resultType;
 		this.lastDealDamage = attackResult.damage;
 	}
 
@@ -305,7 +304,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 
 	public AttackResult attack(EpicFightDamageSource damageSource, Entity target, InteractionHand hand) {
-		return this.checkLastAttackSuccess(target) ? new AttackResult(this.lastResultType, this.lastDealDamage) : AttackResult.missed(0.0F);
+		return this.checkLastAttackSuccess(target) ? new AttackResult(this.lastAttackResultType, this.lastDealDamage) : AttackResult.missed(0.0F);
 	}
 	
 	public float getModifiedBaseDamage(float baseDamage) {
