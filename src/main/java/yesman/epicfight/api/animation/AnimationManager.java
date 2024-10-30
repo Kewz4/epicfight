@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -373,6 +374,13 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		}
 	}
 	
+	
+	private static final Set<String> NO_WARNING_MODID = Sets.newHashSet();
+	
+	public static void addNoWarningModId(String modid) {
+		NO_WARNING_MODID.add(modid);
+	}
+	
 	/**************************************************
 	 * User-animation loader
 	 **************************************************/
@@ -381,7 +389,11 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		JsonElement constructorElement = json.get("constructor");
 		
 		if (constructorElement == null) {
-			throw new IllegalStateException("No constructor information has provided in User animation " + rl);
+			if (NO_WARNING_MODID.contains(rl.getNamespace())) {
+				return;
+			} else {
+				throw new IllegalStateException("No constructor information has provided in User animation " + rl);
+			}
 		}
 		
 		JsonObject constructorObject = constructorElement.getAsJsonObject();
