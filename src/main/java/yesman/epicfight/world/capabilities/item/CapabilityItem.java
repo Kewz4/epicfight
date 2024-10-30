@@ -295,10 +295,14 @@ public class CapabilityItem {
 	}
 	
 	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot equipmentSlot, @Nullable LivingEntityPatch<?> entitypatch) {
+		return this.getAttributeModifiers(equipmentSlot, entitypatch, false);
+    }
+	
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot equipmentSlot, @Nullable LivingEntityPatch<?> entitypatch, boolean oldStyle) {
 		Multimap<Attribute, AttributeModifier> map = HashMultimap.create();
 		
 		if (entitypatch != null) {
-			Map<Attribute, AttributeModifier> modifierMap = this.getDamageAttributesInCondition(this.getStyle(entitypatch));
+			Map<Attribute, AttributeModifier> modifierMap = this.getDamageAttributesInCondition(oldStyle ? entitypatch.getOldStyle() : this.getStyle(entitypatch));
 			
 			if (modifierMap != null) {
 				for (Entry<Attribute, AttributeModifier> entry : modifierMap.entrySet()) {
