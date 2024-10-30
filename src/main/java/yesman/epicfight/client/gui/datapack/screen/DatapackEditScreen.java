@@ -590,6 +590,10 @@ public class DatapackEditScreen extends Screen {
 					Class<? extends ClipHoldingAnimation> animationClass = FakeAnimation.switchType((Class<? extends StaticAnimation>)Class.forName(className));
 					ClipHoldingAnimation animation = InstantiateInvoker.invoke(invocationCommand, animationClass).getResult();
 					
+					if (!animation.cast().getRegistryName().equals(rl)) {
+						throw new IllegalArgumentException("Initializer registry name " + animation.cast().getRegistryName() + " is not matching with file path " + rl);
+					}
+					
 					if (streamSupplier != null) {
 						ClientAnimationDataReader.readAndApply(animation.cast(), streamSupplier.get());
 					}
@@ -597,7 +601,7 @@ public class DatapackEditScreen extends Screen {
 					JsonModelLoader modelLoader = new JsonModelLoader(jsonObject, resourceLocation);
 					animation.setAnimationClip(modelLoader.loadAnimationClip(animation.cast().getArmature()));
 					
-					this.userAnimations.put(rl, PackEntry.ofValue(animation.buildAnimation(modelLoader.getRootJson().get("animation").getAsJsonArray()), animation));
+					this.userAnimations.put(animation.cast().getRegistryName(), PackEntry.ofValue(animation.buildAnimation(modelLoader.getRootJson().get("animation").getAsJsonArray()), animation));
 					AnimationManager.getInstance().registerUserAnimation(animation);
 				} catch (Exception e) {
 					EpicFightMod.LOGGER.error("Failed to read animation " + resourceLocation);

@@ -124,7 +124,7 @@ public class ClientAnimationDataReader {
 				JsonArray maskArray = jsonObject.get("masks").getAsJsonArray();
 				
 				if (!maskArray.isEmpty()) {
-					builder.defaultMask(JointMaskEntry.ALL);
+					builder.defaultMask(JointMaskReloadListener.getNoneMask());
 					
 					maskArray.forEach(element -> {
 						JsonObject jointMaskEntry = element.getAsJsonObject();

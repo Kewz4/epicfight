@@ -26,19 +26,6 @@ public class JointMaskEntry {
 		JointMask.of("Elbow_L"), JointMask.of("Tool_L")
 	);
 	
-	public static final JointMaskSet ALL = JointMaskSet.of(
-		JointMask.of("Root"), JointMask.of("Thigh_R"),
-		JointMask.of("Leg_R"), JointMask.of("Knee_R"),
-		JointMask.of("Thigh_L"), JointMask.of("Leg_L"),
-		JointMask.of("Knee_L"), JointMask.of("Torso"),
-		JointMask.of("Chest"), JointMask.of("Head"),
-		JointMask.of("Shoulder_R"), JointMask.of("Arm_R"),
-		JointMask.of("Hand_R"), JointMask.of("Elbow_R"),
-		JointMask.of("Tool_R"), JointMask.of("Shoulder_L"),
-		JointMask.of("Arm_L"), JointMask.of("Hand_L"),
-		JointMask.of("Elbow_L"), JointMask.of("Tool_L")
-	);
-	
 	public static final JointMaskEntry BASIC_ATTACK_MASK = JointMaskEntry.builder().defaultMask(JointMaskEntry.BIPED_UPPER_JOINTS_WITH_ROOT).create();
 	
 	private final Map<LivingMotion, JointMaskSet> masks = Maps.newHashMap();
@@ -74,6 +61,21 @@ public class JointMaskEntry {
 	
 	public static JointMaskEntry.Builder builder() {
 		return new JointMaskEntry.Builder();
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		
+		for (Map.Entry<LivingMotion, JointMaskSet> entry : this.masks.entrySet()) {
+			builder.append(entry.getKey() + ": ");
+			builder.append(JointMaskReloadListener.getKey(entry.getValue()) + ", ");
+		}
+		
+		builder.append("default: ");
+		builder.append(JointMaskReloadListener.getKey(this.defaultMask));
+		
+		return builder.toString();
 	}
 	
 	@OnlyIn(Dist.CLIENT)

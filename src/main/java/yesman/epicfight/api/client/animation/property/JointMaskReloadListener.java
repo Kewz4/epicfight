@@ -20,11 +20,13 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.animation.property.JointMask.BindModifier;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
+import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class JointMaskReloadListener extends SimpleJsonResourceReloadListener {
 	private static final BiMap<ResourceLocation, JointMaskSet> JOINT_MASKS = HashBiMap.create();
 	private static final Map<String, JointMask.BindModifier> BIND_MODIFIERS = Maps.newHashMap();
+	private static final ResourceLocation NONE_MASK = new ResourceLocation(EpicFightMod.MODID, "none");
 	
 	static {
 		BIND_MODIFIERS.put("keep_child_locrot", JointMask.KEEP_CHILD_LOCROT);
@@ -32,7 +34,11 @@ public class JointMaskReloadListener extends SimpleJsonResourceReloadListener {
 	
 	public static JointMaskSet getJointMaskEntry(String type) {
 		ResourceLocation rl = new ResourceLocation(type);
-		return JOINT_MASKS.getOrDefault(rl, JointMaskEntry.ALL);
+		return JOINT_MASKS.getOrDefault(rl, JOINT_MASKS.get(NONE_MASK));
+	}
+	
+	public static JointMaskSet getNoneMask() {
+		return JOINT_MASKS.get(NONE_MASK);
 	}
 	
 	public static ResourceLocation getKey(JointMaskSet type) {
