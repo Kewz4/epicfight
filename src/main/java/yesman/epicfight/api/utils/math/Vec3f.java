@@ -199,7 +199,7 @@ public class Vec3f extends Vec2f {
 	
 	public Vec3f normalise() {
 		float norm = (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-		if (norm != 0) {
+		if (norm > 1E-5F) {
 			this.x /= norm;
 			this.y /= norm;
 			this.z /= norm;

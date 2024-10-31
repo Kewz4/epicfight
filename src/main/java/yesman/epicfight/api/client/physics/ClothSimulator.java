@@ -78,6 +78,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 	public static class ClothObject implements SimulationObject<ClothObjectBuilder, ClothMesh, ClothSimulatable> {
 		private final ClothMesh provider;
 		private final Map<String, Part> parts;
+		private final List<Map<Vec3, Vec3f>> poseNormals;
+		
 		@Nullable
 		protected List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders;
 		
@@ -85,6 +87,15 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 		private static final Vec3f TRASNFORMED = new Vec3f();
 		
 		public ClothObject(ClothObjectBuilder builder, ClothMesh provider, Map<String, ClothPart> parts, float[] positions) {
+			this.provider = provider;
+			this.clothColliders = builder.clothColliders;
+			
+			this.poseNormals = Lists.newArrayList();
+			
+			for (int i = 0; i < provider.positions().length / 3; i++) {
+				this.poseNormals.add(Maps.newHashMap());
+			}
+			
 			ImmutableMap.Builder<String, Part> partBuilder = ImmutableMap.builder();
 			
 			for (Map.Entry<String, ClothPart> entry : parts.entrySet()) {
@@ -92,8 +103,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			}
 			
 			this.parts = partBuilder.build();
-			this.provider = provider;
-			this.clothColliders = builder.clothColliders;
 		}
 		
 		@Override
@@ -151,6 +160,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 		}
 		
 		public void draw(ClothSimulatable simulatableObj, PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
+			this.poseNormals.forEach((poseNormals) -> poseNormals.values().forEach((vec3f) -> vec3f.set(0.0F, 0.0F, 0.0F)));
+			
 			for (Part part : this.parts.values()) {
 				part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
@@ -161,7 +172,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			final String name;
 			final Map<Integer, Particle> particles;
 			final List<ConstraintsBundle> constraints;
-			
 			final Multimap<Integer, Particle> spatialHash;
 			final int hashTableSize;
 			
@@ -173,6 +183,15 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			Part(String name, ClothPart clothPart, float[] positions) {
 				this.name = name;
 				this.particles = Maps.newLinkedHashMap();
+				
+				for (VertexBuilder vb : clothPart.getVertices()) {
+					Vec3 normal = provider.normalList.get(vb.normal);
+					Map<Vec3, Vec3f> positionNormals = poseNormals.get(vb.position);
+					
+					if (!positionNormals.containsKey(normal)) {
+						positionNormals.put(normal, new Vec3f());
+					}
+				}
 				
 				List<Particle> particlesList = Lists.newArrayList();
 				ImmutableList.Builder<ConstraintsBundle> constraintsBuilder = ImmutableList.builder();
@@ -357,6 +376,10 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				return Math.abs(hash) % this.hashTableSize;
 			}
 			
+			private static final Vec3f TO_P2 = new Vec3f();
+			private static final Vec3f TO_P3 = new Vec3f();
+			private static final Vec3f CROSS = new Vec3f();
+			
 			public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 				ClothMesh originalMesh = ClothObject.this.provider;
 				ModelPart<?> modelPart = originalMesh.getPart(this.name);
@@ -370,20 +393,41 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 				Matrix4f matrix4f = poseStack.last().pose();
 				Matrix3f matrix3f = poseStack.last().normal();
 				
-				float[] normals = originalMesh.normals();
 				float[] uvs = originalMesh.uvs();
 				
+				// Calculate pose normals
+				for (int i = 0; i < modelPart.getVertices().size() / 3; i++) {
+					VertexBuilder triP1 = modelPart.getVertices().get(i * 3);
+					VertexBuilder triP2 = modelPart.getVertices().get(i * 3 + 1);
+					VertexBuilder triP3 = modelPart.getVertices().get(i * 3 + 2);
+					Vec3f p1Pos = this.particles.get(triP1.position).position;
+					Vec3f p2Pos = this.particles.get(triP2.position).position;
+					Vec3f p3Pos = this.particles.get(triP3.position).position;
+					
+					Vec3f.cross(Vec3f.sub(p2Pos, p1Pos, TO_P2), Vec3f.sub(p3Pos, p1Pos, TO_P3), CROSS);
+					CROSS.normalise();
+					
+					Map<Vec3, Vec3f> triP1Normals = poseNormals.get(triP1.position);
+					Map<Vec3, Vec3f> triP2Normals = poseNormals.get(triP2.position);
+					Map<Vec3, Vec3f> triP3Normals = poseNormals.get(triP3.position);
+					
+					triP1Normals.get(provider.normalList.get(triP1.normal)).add(CROSS);
+					triP2Normals.get(provider.normalList.get(triP2.normal)).add(CROSS);
+					triP3Normals.get(provider.normalList.get(triP3.normal)).add(CROSS);
+				}
+				
 				for (VertexBuilder vi : modelPart.getVertices()) {
-					int norm = vi.normal * 3;
 					int uv = vi.uv * 2;
 					Particle particle = this.particles.get(vi.position);
+					Vec3f poseNormal = poseNormals.get(vi.position).get(provider.normalList.get(vi.normal));
+					poseNormal.normalise();
 					
 					POSITION.x = particle.position.x;
 					POSITION.y = particle.position.y;
 					POSITION.z = particle.position.z;
-					NORMAL.x = normals[norm];
-					NORMAL.y = normals[norm + 1];
-					NORMAL.z = normals[norm + 2];
+					NORMAL.x = poseNormal.x;
+					NORMAL.y = poseNormal.y;
+					NORMAL.z = poseNormal.z;
 					
 					Vector4f posVec = matrix4f.transform(POSITION);
 					Vector3f normVec = matrix3f.transform(NORMAL);
@@ -396,7 +440,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			
 			@OnlyIn(Dist.CLIENT)
 			class Particle {
-				Vec3f position;
+				final Vec3f position;
 				final Vec3f initPosition;
 				final float influence;
 				final float rootDistance;

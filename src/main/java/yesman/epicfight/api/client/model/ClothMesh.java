@@ -12,11 +12,13 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -55,8 +57,27 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		TRACKING_SIMULATORS.clear();
 	}
 	
+	public final List<Vec3> positionList;
+	public final List<Vec3> normalList;
+	
 	public ClothMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable ClothMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, null, properties);
+		
+		ImmutableList.Builder<Vec3> positionsBuilder = ImmutableList.builder();
+		
+		for (int i = 0; i < this.positions.length / 3; i++) {
+			positionsBuilder.add(new Vec3(this.positions[i * 3], this.positions[i * 3 + 1], this.positions[i * 3 + 2]));
+		}
+		
+		this.positionList = positionsBuilder.build();
+		
+		ImmutableList.Builder<Vec3> normalBuilder = ImmutableList.builder();
+		
+		for (int i = 0; i < this.normals.length / 3; i++) {
+			normalBuilder.add(new Vec3(this.normals[i * 3], this.normals[i * 3 + 1], this.normals[i * 3 + 2]));
+		}
+		
+		this.normalList = normalBuilder.build();
 	}
 	
 	@Override
@@ -112,8 +133,12 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		}
 	}
 	
+	public float[] positions() {
+		return this.positions;
+	}
+	
 	public float[] normals() {
-		return this.normals;
+		return super.normals;
 	}
 	
 	public float[] uvs() {
