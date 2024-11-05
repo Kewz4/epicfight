@@ -144,6 +144,11 @@ public abstract class AnimationProperty<T> {
 		public static final ActionAnimationProperty<Boolean> STOP_MOVEMENT = new ActionAnimationProperty<Boolean> ("stop_movements", Codec.BOOL);
 		
 		/**
+		 * This property will set the entity's delta movement to (0, 0, 0) at the beginning of an animation if true.
+		 */
+		public static final ActionAnimationProperty<Boolean> REMOVE_DELTA_MOVEMENT = new ActionAnimationProperty<Boolean> ("revmoe_delta_move", Codec.BOOL);
+		
+		/**
 		 * This property will move entity's coord also as y axis if true.
 		 * Don't recommend using this property because it's old system. Use the coord joint instead.
 		 */

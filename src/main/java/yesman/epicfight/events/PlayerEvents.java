@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -18,6 +19,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
+import yesman.epicfight.compat.ParCoolCompat;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPChangeGamerule;
@@ -148,6 +150,15 @@ public class PlayerEvents {
 			if (!event.getEntity().level().getGameRules().getBoolean(EpicFightGamerules.DO_VANILLA_ATTACK) && isLivingTarget && playerpatch.getEpicFightDamageSource() == null && !fakePlayerCheck(event.getEntity())) {
 				event.setCanceled(true);
 			}
+		}
+	}
+	
+	@SubscribeEvent
+	public static void postTick(TickEvent.PlayerTickEvent event) {
+		PlayerPatch<?> ppatch = EpicFightCapabilities.getEntityPatch(event.player, PlayerPatch.class);
+		
+		if (ppatch.getAnimator().getPlayerFor(null).getAnimation().getRealAnimation() == ParCoolCompat.BIPED_CLIMB_UP) {
+			//System.out.println(event.phase + " tick " + event.player.position());
 		}
 	}
 	

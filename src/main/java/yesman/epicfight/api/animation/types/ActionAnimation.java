@@ -135,11 +135,20 @@ public class ActionAnimation extends MainFrameAnimation {
 	@Override
 	public void tick(LivingEntityPatch<?> entitypatch) {
 		super.tick(entitypatch);
+		
+		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
+			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
+		}
+		
 		this.move(entitypatch, this);
 	}
 	
 	@Override
 	public void linkTick(LivingEntityPatch<?> entitypatch, DynamicAnimation linkAnimation) {
+		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
+			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
+		}
+		
 		this.move(entitypatch, linkAnimation);
 	}
 
@@ -313,17 +322,17 @@ public class ActionAnimation extends MainFrameAnimation {
 		Vec3f move = moveGetter.get(animation, entitypatch, transformSheet);
 		LivingEntity livingentity = entitypatch.getOriginal();
 		Vec3 motion = livingentity.getDeltaMovement();
+		double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();
 		
 		this.getProperty(ActionAnimationProperty.NO_GRAVITY_TIME).ifPresentOrElse((noGravityTime) -> {
 			if (noGravityTime.isTimeInPairs(animation.isLinkAnimation() ? 0.0F : player.getElapsedTime())) {
-				livingentity.setDeltaMovement(motion.x, 0.0D, motion.z);
+				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? gravity : 0.0D, motion.z);
 			} else {
 				move.y = 0.0F;
 			}
 		}, () -> {
 			if (moveVertical && move.y > 0.0F && !hasNoGravity) {
-				double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();
-				livingentity.setDeltaMovement(motion.x, motion.y <= 0.0F ? (motion.y + gravity) : motion.y, motion.z);
+				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? gravity : 0.0D, motion.z);
 			}
 		});
 		
