@@ -191,6 +191,14 @@ public class ActionAnimation extends MainFrameAnimation {
 	
 	@Override
 	public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
+		if (this.getProperty(ActionAnimationProperty.COORD).isEmpty()) {
+			this.correctRootJoint(animation, pose, entitypatch, time, partialTicks);
+		}
+		
+		super.modifyPose(animation, pose, entitypatch, time, partialTicks);
+	}
+	
+	public void correctRootJoint(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		JointTransform jt = pose.getOrDefaultTransform("Root");
 		Vec3f jointPosition = jt.translation();
 		OpenMatrix4f toRootTransformApplied = entitypatch.getArmature().searchJointByName("Root").getLocalTrasnform().removeTranslation();
@@ -200,11 +208,10 @@ public class ActionAnimation extends MainFrameAnimation {
 		worldPosition.y = (this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false) && worldPosition.y > 0.0F) ? 0.0F : worldPosition.y;
 		worldPosition.z = 0.0F;
 		OpenMatrix4f.transform3v(toOrigin, worldPosition, worldPosition);
+		
 		jointPosition.x = worldPosition.x;
 		jointPosition.y = worldPosition.y;
 		jointPosition.z = worldPosition.z;
-		
-		super.modifyPose(animation, pose, entitypatch, time, partialTicks);
 	}
 	
 	@Override
@@ -326,13 +333,13 @@ public class ActionAnimation extends MainFrameAnimation {
 		
 		this.getProperty(ActionAnimationProperty.NO_GRAVITY_TIME).ifPresentOrElse((noGravityTime) -> {
 			if (noGravityTime.isTimeInPairs(animation.isLinkAnimation() ? 0.0F : player.getElapsedTime())) {
-				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? gravity : 0.0D, motion.z);
+				livingentity.setDeltaMovement(motion.x, 0.0D, motion.z);
 			} else {
 				move.y = 0.0F;
 			}
 		}, () -> {
 			if (moveVertical && move.y > 0.0F && !hasNoGravity) {
-				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? gravity : 0.0D, motion.z);
+				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? motion.y + gravity : 0.0D, motion.z);
 			}
 		});
 		

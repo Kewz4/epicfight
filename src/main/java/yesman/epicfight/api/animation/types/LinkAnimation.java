@@ -10,12 +10,9 @@ import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
-import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
-import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class LinkAnimation extends DynamicAnimation {
@@ -97,19 +94,8 @@ public class LinkAnimation extends DynamicAnimation {
 	@Override
 	public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		// Bad implementation: Add root joint as coord in loading animation
-		if (this.toAnimation instanceof ActionAnimation) {
-			JointTransform jt = pose.getOrDefaultTransform("Root");
-			Vec3f jointPosition = jt.translation();
-			OpenMatrix4f toRootTransformApplied = entitypatch.getArmature().searchJointByName("Root").getLocalTrasnform().removeTranslation();
-			OpenMatrix4f toOrigin = OpenMatrix4f.invert(toRootTransformApplied, null);
-			Vec3f worldPosition = OpenMatrix4f.transform3v(toRootTransformApplied, jointPosition, null);
-			worldPosition.x = 0.0F;
-			worldPosition.y = (this.toAnimation.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false) && worldPosition.y > 0.0F) ? 0.0F : worldPosition.y;
-			worldPosition.z = 0.0F;
-			OpenMatrix4f.transform3v(toOrigin, worldPosition, worldPosition);
-			jointPosition.x = worldPosition.x;
-			jointPosition.y = worldPosition.y;
-			jointPosition.z = worldPosition.z;
+		if (this.toAnimation instanceof ActionAnimation actionAnimation) {
+			actionAnimation.correctRootJoint(this, pose, entitypatch, time, partialTicks);
 		}
 	}
 	

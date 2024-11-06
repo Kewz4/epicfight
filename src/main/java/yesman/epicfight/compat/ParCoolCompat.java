@@ -32,6 +32,7 @@ import yesman.epicfight.api.animation.property.AnimationEvent;
 import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
@@ -105,6 +106,11 @@ public class ParCoolCompat implements ICompatModule {
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
+				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION_BEGIN)
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
+				
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, AnimationEvent.create((entitypatch, animation, params) -> {
 					entitypatch.setYRot(entitypatch.getOriginal().yBodyRot);
 				}, AnimationEvent.Side.CLIENT))
@@ -153,6 +159,11 @@ public class ParCoolCompat implements ICompatModule {
 		});
 		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(ClingToCliff.class, (entitypatch) -> {
+			DynamicAnimation nowPlaying = entitypatch.getAnimator().getPlayerFor(null).getAnimation().getRealAnimation();
+			return nowPlaying == BIPED_CLIMB_UP;
+		});
+		
+		PARCOOL_ACTION_CANCEL_EVENTS.put(WallSlide.class, (entitypatch) -> {
 			DynamicAnimation nowPlaying = entitypatch.getAnimator().getPlayerFor(null).getAnimation().getRealAnimation();
 			return nowPlaying == BIPED_CLIMB_UP;
 		});
