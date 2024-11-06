@@ -207,6 +207,10 @@ public class TransformSheet {
 			}
 		}
 		
+		if (next >= this.keyframes.length) {
+			next--;
+		}
+		
 		float progression = (currentTime - this.keyframes[prev].time()) / (this.keyframes[next].time() - this.keyframes[prev].time());
 		
 		return new InterpolationInfo(prev, next, Float.isNaN(progression) ? 1.0F : progression);

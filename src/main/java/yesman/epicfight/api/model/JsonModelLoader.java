@@ -330,6 +330,11 @@ public class JsonModelLoader {
 		JsonObject normals = obj.getAsJsonObject("normals");
 		JsonObject uvs = obj.getAsJsonObject("uvs");
 		JsonObject parts = obj.getAsJsonObject("parts");
+		JsonObject cloth_info = obj.getAsJsonObject("cloth_info");
+		
+		if (cloth_info == null) {
+			throw new NoSuchElementException("Cloth information not provided");
+		}
 		
 		float[] positionArray = ParseUtil.toFloatArray(positions.get("array").getAsJsonArray());
 		
@@ -365,9 +370,11 @@ public class JsonModelLoader {
 		if (parts != null) {
 			for (Map.Entry<String, JsonElement> e : parts.entrySet()) {
 				JsonObject partObject = e.getValue().getAsJsonObject();
-				int[] particlesArray = ParseUtil.toIntArray(partObject.get("particles").getAsJsonObject().get("array").getAsJsonArray());
+				JsonObject clothObject = cloth_info.get(e.getKey()).getAsJsonObject();
 				
-				JsonArray constraintsArray = partObject.get("constraints").getAsJsonArray();
+				int[] particlesArray = ParseUtil.toIntArray(clothObject.get("particles").getAsJsonObject().get("array").getAsJsonArray());
+				
+				JsonArray constraintsArray = clothObject.get("constraints").getAsJsonArray();
 				List<int[]> constraintsList = new ArrayList<> (constraintsArray.size());
 				float[] compliances = new float[constraintsArray.size()];
 				ClothPartDefinition.ConstraintType[] constraintType = new ClothPartDefinition.ConstraintType[constraintsArray.size()];
@@ -405,7 +412,7 @@ public class JsonModelLoader {
 					rootDistances[j] = (float)position.distanceTo(nearest);
 				}
 				
-				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray, rootDistances), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+				meshMap.put(ClothPartDefinition.of(e.getKey(), constraintsList, constraintType, compliances, particlesArray, rootDistances), VertexBuilder.createVertexIndicator(ParseUtil.toIntArray(partObject.get("array").getAsJsonArray())));
 			}
 		}
 		

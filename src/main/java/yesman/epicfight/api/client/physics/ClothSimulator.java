@@ -234,12 +234,12 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					}
 					case VOLUME -> {
 						constraintList = new ArrayList<> (constraints.length / 4);
-
+						
 						for (int i = 0; i < constraints.length / 4; i++) {
-							int idx1 = constraints[i * 2];
-							int idx2 = constraints[i * 2 + 1];
-							int idx3 = constraints[i * 2 + 2];
-							int idx4 = constraints[i * 2 + 3];
+							int idx1 = constraints[i * 4];
+							int idx2 = constraints[i * 4 + 1];
+							int idx3 = constraints[i * 4 + 2];
+							int idx4 = constraints[i * 4 + 3];
 							
 							constraintList.add(new VolumeConstraint(particlesList.get(idx1), particlesList.get(idx2), particlesList.get(idx3), particlesList.get(idx4)));
 						}
@@ -248,41 +248,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 					}
 					}
 				}
-				
-				//Temporary code for creating volume constraints (11x17)
-				List<Particle> particlesCollection = List.copyOf(this.particles.values());
-				List<Constraint> constraintList = new ArrayList<> ();
-				
-				for (int i = 0; i < this.particles.size() / 2; i++) {
-					if ((i != 0 && i % 11 == 10) || (i / 11 == 16)) {
-						continue;
-					}
-					
-					Particle p1 = particlesCollection.get(i);
-					Particle p2 = particlesCollection.get(i + 1);
-					Particle p3 = particlesCollection.get(i + 11);
-					Particle p4 = particlesCollection.get(i + 12);
-					
-					Particle p5 = particlesCollection.get(i + 187);
-					Particle p6 = particlesCollection.get(i + 1 + 187);
-					Particle p7 = particlesCollection.get(i + 11 + 187);
-					Particle p8 = particlesCollection.get(i + 12 + 187);
-					
-					VolumeConstraint vol1 = new VolumeConstraint(p1, p2, p3, p5);
-					VolumeConstraint vol2 = new VolumeConstraint(p6, p2, p5, p8);
-					VolumeConstraint vol3 = new VolumeConstraint(p4, p2, p3, p8);
-					VolumeConstraint vol4 = new VolumeConstraint(p7, p3, p5, p8);
-					VolumeConstraint vol5 = new VolumeConstraint(p2, p3, p5, p8);
-					
-					constraintList.add(vol1);
-					constraintList.add(vol2);
-					constraintList.add(vol3);
-					constraintList.add(vol4);
-					constraintList.add(vol5);
-				}
-				
-				constraintsBuilder.add(new ConstraintsBundle(0.0F, constraintList));
-				// Temp code ends
 				
 				this.constraints = constraintsBuilder.build();
 			}
