@@ -16,7 +16,7 @@ import yesman.epicfight.main.EpicFightMod;
 public class IngameConfigurationScreen extends Screen {
 	protected final Screen parentScreen;
 	
-	public IngameConfigurationScreen(Minecraft mc, Screen screen) {
+	public IngameConfigurationScreen(Screen screen) {
 		super(Component.translatable("gui." + EpicFightMod.MODID + ".configurations"));
 		this.parentScreen = screen;
 	}

@@ -29,50 +29,32 @@ minecraft {
             property 'mixin.env.remapRefMap', 'true'
 			property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
 			args '-mixin.config=mixins.epicfight.json'
+			
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
     	}
     	
         client {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
 
         server {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
 		
         gameTestServer {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
 
         data {
             workingDirectory project.file('run')
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
     }
 }

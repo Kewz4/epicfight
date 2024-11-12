@@ -143,7 +143,6 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 		}
 		
-		
 		UpdatePlayerMotionEvent.BaseLayer baseLayerEvent = new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion);
 		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
 		

@@ -31,12 +31,13 @@ public class OBBCollider extends Collider {
 	protected Vec3f scale;
 	
 	/**
-	 * make 3d obb
-	 * @param pos1 left_back
-	 * @param pos2 left_front
-	 * @param pos3 right_front
-	 * @param pos4 right_back
-	 * @param modelCenter central position
+	 * 
+	 * @param vertexX - vertex vector starting from center of OBB
+	 * @param vertexY - vertex vector starting from center of OBB
+	 * @param vertexZ - vertex vector starting from center of OBB
+	 * @param centerX - center of OBB
+	 * @param centerY - center of OBB
+	 * @param centerZ - center of OBB
 	 */
 	public OBBCollider(double vertexX, double vertexY, double vertexZ, double centerX, double centerY, double centerZ) {
 		this(getInitialAABB(vertexX, vertexY, vertexZ, centerX, centerY, centerZ), vertexX, vertexY, vertexZ, centerX, centerY, centerZ);

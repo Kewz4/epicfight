@@ -23,7 +23,9 @@ import yesman.epicfight.api.animation.property.AnimationEvent.TimePeriodEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.TimeStampedEvent;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordGetter;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordSetter;
+import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.animation.types.LinkAnimation;
 import yesman.epicfight.api.utils.HitEntityList.Priority;
 import yesman.epicfight.api.utils.TimePairList;
 import yesman.epicfight.api.utils.math.ValueModifier;
@@ -213,6 +215,11 @@ public abstract class AnimationProperty<T> {
 		 * This property determines if it reset the player basic attack combo counter or not {@link BasicAttack}
 		 */
 		public static final ActionAnimationProperty<Boolean> RESET_PLAYER_COMBO_COUNTER = new ActionAnimationProperty<Boolean> ("reset_combo_attack_counter", Codec.BOOL);
+		
+		/**
+		 * Provide a destination of action animation {@link MoveCoordFunction}
+		 */
+		public static final ActionAnimationProperty<DestLocationProvider> DEST_LOCATION_PROVIDER = new ActionAnimationProperty<DestLocationProvider> ();
 	}
 	
 	public static class AttackAnimationProperty<T> extends AnimationProperty<T> {
@@ -278,6 +285,9 @@ public abstract class AnimationProperty<T> {
 		void register(Map<AnimationProperty<T>, Object> properties, AnimationProperty<T> key, T object);
 	}
 	
+	/**
+	 * Static Animation Property
+	 */
 	@FunctionalInterface
 	public interface PoseModifier {
 		void modify(DynamicAnimation self, Pose pose, LivingEntityPatch<?> entitypatch, float elapsedTime, float partialTicks);
@@ -291,5 +301,13 @@ public abstract class AnimationProperty<T> {
 	@FunctionalInterface
 	public interface PlaybackTimeModifier {
 		Pair<Float, Float> modify(DynamicAnimation self, LivingEntityPatch<?> entitypatch, float speed, float prevElapsedTime, float elapsedTime);
+	}
+	
+	/**
+	 * Action Animation Property
+	 */
+	@FunctionalInterface
+	public interface DestLocationProvider {
+		Vec3 get(DynamicAnimation self, LivingEntityPatch<?> entitypatch);
 	}
 }

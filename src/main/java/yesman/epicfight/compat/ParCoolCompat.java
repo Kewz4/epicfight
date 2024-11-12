@@ -1,7 +1,6 @@
 package yesman.epicfight.compat;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.joml.Vector3f;
@@ -10,9 +9,15 @@ import com.alrex.parcool.ParCool;
 import com.alrex.parcool.api.unstable.action.ParCoolActionEvent;
 import com.alrex.parcool.client.animation.impl.ClingToCliffAnimator;
 import com.alrex.parcool.client.animation.impl.DiveAnimationHostAnimator;
+import com.alrex.parcool.client.animation.impl.FastRunningAnimator;
+import com.alrex.parcool.client.animation.impl.HangAnimator;
+import com.alrex.parcool.client.animation.impl.HorizontalWallRunAnimator;
 import com.alrex.parcool.client.animation.impl.WallSlideAnimator;
+import com.alrex.parcool.common.action.impl.CatLeap;
 import com.alrex.parcool.common.action.impl.ClimbUp;
 import com.alrex.parcool.common.action.impl.ClingToCliff;
+import com.alrex.parcool.common.action.impl.HangDown;
+import com.alrex.parcool.common.action.impl.Vault;
 import com.alrex.parcool.common.action.impl.WallSlide;
 import com.alrex.parcool.common.capability.Parkourability;
 import com.alrex.parcool.common.capability.capabilities.Capabilities;
@@ -42,24 +47,44 @@ import yesman.epicfight.api.forgeevent.AnimationRegistryEvent;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.mixin.ParCoolMixinAnimation;
+import yesman.epicfight.mixin.ParCoolMixinHorizontalWallRunAnimator;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class ParCoolCompat implements ICompatModule {
+	@FunctionalInterface
+	public interface ActionAnimationLinker {
+		StaticAnimation getAnimation(com.alrex.parcool.common.action.Action action, Parkourability parkourability);
+	}
+	
+	@FunctionalInterface
+	public interface LifecycleAnimationLinker {
+		void accept(com.alrex.parcool.client.animation.Animator animator, Parkourability parkourability, UpdatePlayerMotionEvent.BaseLayer animationUpdateEvent);
+	}
+	
 	public static StaticAnimation BIPED_CLING_TO_CLIFF;
 	public static StaticAnimation BIPED_CLING_TO_CLIFF_LEFT;
 	public static StaticAnimation BIPED_CLING_TO_CLIFF_RIGHT;
 	public static StaticAnimation BIPED_DIVE;
 	public static StaticAnimation BIPED_WALL_SLIDE_LEFT;
 	public static StaticAnimation BIPED_WALL_SLIDE_RIGHT;
+	public static StaticAnimation BIPED_WALL_RUN_LEFT;
+	public static StaticAnimation BIPED_WALL_RUN_RIGHT;
+	public static StaticAnimation BIPED_FAST_RUN;
+	public static StaticAnimation BIPED_CAT_LEAP;
+	public static StaticAnimation BIPED_HANG_DOWN_SIDE;
+	public static StaticAnimation BIPED_HANG_DOWN_FORWARD;
 	
 	public static StaticAnimation BIPED_WALL_JUMP;
 	public static StaticAnimation BIPED_CLIMB_UP;
+	public static StaticAnimation BIPED_VAULT_FORWARD;
+	public static StaticAnimation BIPED_VAULT_LEFT;
+	public static StaticAnimation BIPED_VAULT_RIGHT;
 	
-	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, StaticAnimation> PARCOOL_ONE_SHOT_ANIMATIONS_MAPPING = Maps.newHashMap();
-	public static final Map<Class<? extends com.alrex.parcool.client.animation.Animator>, BiConsumer<Parkourability, UpdatePlayerMotionEvent.BaseLayer>> PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING = Maps.newHashMap();
+	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, ActionAnimationLinker> PARCOOL_ACTION_MAPPING = Maps.newHashMap();
+	public static final Map<Class<? extends com.alrex.parcool.client.animation.Animator>, LifecycleAnimationLinker> PARCOOL_ANIMATOR_MAPPING = Maps.newHashMap();
 	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, Function<LivingEntityPatch<?>, Boolean>> PARCOOL_ACTION_CANCEL_EVENTS = Maps.newHashMap();
 	
 	public static void registerAnimations(AnimationRegistryEvent event) {
@@ -72,9 +97,6 @@ public class ParCoolCompat implements ICompatModule {
 		BIPED_CLING_TO_CLIFF = new StaticAnimation(true, "biped/cling_to_cliff", biped);
 		BIPED_CLING_TO_CLIFF_LEFT = new StaticAnimation(true, "biped/cling_to_cliff_left", biped);
 		BIPED_CLING_TO_CLIFF_RIGHT = new StaticAnimation(true, "biped/cling_to_cliff_right", biped);
-		
-		BIPED_WALL_SLIDE_LEFT = new StaticAnimation(true, "biped/wall_slide_left", biped);
-		BIPED_WALL_SLIDE_RIGHT = new StaticAnimation(true, "biped/wall_slide_right", biped);
 		
 		BIPED_DIVE = new StaticAnimation(true, "biped/dive", biped).addProperty(StaticAnimationProperty.POSE_MODIFIER, new AnimationProperty.PoseModifier() {
 			public static final Vector3f RANDOM_AXIS = new Vector3f();
@@ -98,6 +120,20 @@ public class ParCoolCompat implements ICompatModule {
 			}
 		});
 		
+		BIPED_WALL_SLIDE_LEFT = new StaticAnimation(true, "biped/wall_slide_left", biped);
+		BIPED_WALL_SLIDE_RIGHT = new StaticAnimation(true, "biped/wall_slide_right", biped);
+		
+		BIPED_WALL_RUN_LEFT = new StaticAnimation(true, "biped/wall_run_left", biped);
+		BIPED_WALL_RUN_RIGHT = new StaticAnimation(true, "biped/wall_run_right", biped);
+		
+		BIPED_FAST_RUN = new StaticAnimation(true, "biped/fast_run", biped);
+		BIPED_CAT_LEAP = new StaticAnimation(0.05F, false, "biped/cat_leap", biped)
+				.newTimePair(0.0F, Float.MAX_VALUE)
+				.addState(EntityState.UPDATE_LIVING_MOTION, false);
+		
+		BIPED_HANG_DOWN_SIDE = new StaticAnimation(true, "biped/hang_down_side", biped);
+		BIPED_HANG_DOWN_FORWARD = new StaticAnimation(true, "biped/hang_down_forward", biped);
+		
 		BIPED_WALL_JUMP = new ActionAnimation(0.15F, 0.7F, "biped/wall_jump", biped)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.addStateRemoveOld(EntityState.TURNING_LOCKED, false);
@@ -110,19 +146,29 @@ public class ParCoolCompat implements ICompatModule {
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION_BEGIN)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
-				
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, AnimationEvent.create((entitypatch, animation, params) -> {
 					entitypatch.setYRot(entitypatch.getOriginal().yBodyRot);
 				}, AnimationEvent.Side.CLIENT))
 				;
 		
-		PARCOOL_ONE_SHOT_ANIMATIONS_MAPPING.clear();
-		PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.clear();
+		BIPED_VAULT_RIGHT = new ActionAnimation(0.15F, "biped/vault", biped)
+				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
+				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_TARGET_POSITION_BEGIN)
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
+				;
+		
+		PARCOOL_ACTION_MAPPING.clear();
+		PARCOOL_ANIMATOR_MAPPING.clear();
 		PARCOOL_ACTION_CANCEL_EVENTS.clear();
 		
-		PARCOOL_ONE_SHOT_ANIMATIONS_MAPPING.put(ClimbUp.class, BIPED_CLIMB_UP);
+		PARCOOL_ACTION_MAPPING.put(ClimbUp.class, (action, parkourability) -> BIPED_CLIMB_UP);
+		PARCOOL_ACTION_MAPPING.put(CatLeap.class, (action, parkourability) -> BIPED_CAT_LEAP);
+		PARCOOL_ACTION_MAPPING.put(Vault.class, (action, parkourability) -> {
+			return BIPED_VAULT_RIGHT;
+		});
 		
-		PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.put(ClingToCliffAnimator.class, (parkourability, livingMotionUpdateEvent) -> {
+		PARCOOL_ANIMATOR_MAPPING.put(ClingToCliffAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
 			switch (parkourability.get(ClingToCliff.class).getFacingDirection()) {
 			case ToWall -> {
 				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF);
@@ -136,11 +182,11 @@ public class ParCoolCompat implements ICompatModule {
 			}
 		});
 		
-		PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.put(DiveAnimationHostAnimator.class, (parkourability, livingMotionUpdateEvent) -> {
+		PARCOOL_ANIMATOR_MAPPING.put(DiveAnimationHostAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
 			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.DIVE);
 		});
 		
-		PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.put(WallSlideAnimator.class, (parkourability, livingMotionUpdateEvent) -> {
+		PARCOOL_ANIMATOR_MAPPING.put(WallSlideAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
 			Vec3 wall = parkourability.get(WallSlide.class).getLeanedWallDirection();
 			
 			if (wall == null) {
@@ -152,9 +198,31 @@ public class ParCoolCompat implements ICompatModule {
 			Vec3 dividedVec = new Vec3(vec.x * wall.x + vec.z * wall.z, 0, -vec.x * wall.z + vec.z * wall.x).normalize();
 			
 			if (dividedVec.z < 0) {
-				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.WALL_SLIDING_RIGH);
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.WALL_SLIDING_RIGHT);
 			} else {
 				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.WALL_SLIDING_LEFT);
+			}
+		});
+		
+		PARCOOL_ANIMATOR_MAPPING.put(HorizontalWallRunAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			if (((ParCoolMixinHorizontalWallRunAnimator)animator).getWallIsRightSide()) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.WALL_RUNNING_RIGHT);
+			} else {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.WALL_RUNNING_LEFT);
+			}
+		});
+		
+		PARCOOL_ANIMATOR_MAPPING.put(FastRunningAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.FAST_RUN);
+		});
+		
+		PARCOOL_ANIMATOR_MAPPING.put(HangAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			HangDown hangDown = parkourability.get(HangDown.class);
+			
+			if (hangDown.isOrthogonalToBar()) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.HANG_DOWN_SIDE);
+			} else {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.HANG_DOWN_FORWARD);
 			}
 		});
 		
@@ -187,7 +255,12 @@ public class ParCoolCompat implements ICompatModule {
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.CLING_TO_CLIFF_LEFT, BIPED_CLING_TO_CLIFF_LEFT);
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.DIVE, BIPED_DIVE);
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.WALL_SLIDING_LEFT, BIPED_WALL_SLIDE_LEFT);
-				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.WALL_SLIDING_RIGH, BIPED_WALL_SLIDE_RIGHT);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.WALL_SLIDING_RIGHT, BIPED_WALL_SLIDE_RIGHT);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.WALL_RUNNING_LEFT, BIPED_WALL_RUN_LEFT);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.WALL_RUNNING_RIGHT, BIPED_WALL_RUN_RIGHT);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.FAST_RUN, BIPED_FAST_RUN);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.HANG_DOWN_FORWARD, BIPED_HANG_DOWN_FORWARD);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.HANG_DOWN_SIDE, BIPED_HANG_DOWN_SIDE);
 			}
 		});
 		
@@ -204,8 +277,10 @@ public class ParCoolCompat implements ICompatModule {
 		eventBus.<ParCoolActionEvent.StartEvent>addListener((event) -> {
 			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), LivingEntityPatch.class);
 			
-			if (entitypatch != null && entitypatch.isLogicalClient() && PARCOOL_ONE_SHOT_ANIMATIONS_MAPPING.containsKey(event.getAction().getClass())) {
-				entitypatch.getAnimator().playAnimation(PARCOOL_ONE_SHOT_ANIMATIONS_MAPPING.get(event.getAction().getClass()), 0.0F);
+			if (entitypatch != null && entitypatch.isLogicalClient() && PARCOOL_ACTION_MAPPING.containsKey(event.getAction().getClass())) {
+				Parkourability parkourability = Parkourability.get(event.getPlayer());
+				StaticAnimation animation = PARCOOL_ACTION_MAPPING.get(event.getAction().getClass()).getAnimation(event.getAction(), parkourability);
+				entitypatch.getAnimator().playAnimation(animation, 0.0F);
 			}
 		});
 	}
@@ -219,20 +294,24 @@ public class ParCoolCompat implements ICompatModule {
 	@Override
 	public void onForgeEventBusClient(IEventBus eventBus) {
 		eventBus.<UpdatePlayerMotionEvent.BaseLayer>addListener((event) -> {
+			if (!event.getPlayerPatch().getEntityState().updateLivingMotion()) {
+				return;
+			}
+			
 			event.getPlayerPatch().getOriginal().getCapability(Capabilities.ANIMATION_CAPABILITY).ifPresent((animation) -> {
 				ParCoolMixinAnimation animationAccessor = (ParCoolMixinAnimation)animation;
 				com.alrex.parcool.client.animation.Animator animator = animationAccessor.getAnimator();
 				Parkourability parkourability = Parkourability.get(event.getPlayerPatch().getOriginal());
 				
-				if (parkourability != null && animator != null && PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.containsKey(animator.getClass())) {
-					PARCOOL_LIFECYCLE_ANIMATIONS_MAPPING.get(animator.getClass()).accept(parkourability, event);
+				if (parkourability != null && animator != null && PARCOOL_ANIMATOR_MAPPING.containsKey(animator.getClass())) {
+					PARCOOL_ANIMATOR_MAPPING.get(animator.getClass()).accept(animator, parkourability, event);
 				}
 			});
 		});
 	}
 	
 	public enum ParcoolLivingMotions implements LivingMotion {
-		CLING_TO_CLIFF, CLING_TO_CLIFF_LEFT, CLING_TO_CLIFF_RIGHT, DIVE, WALL_SLIDING_LEFT, WALL_SLIDING_RIGH;
+		CLING_TO_CLIFF, CLING_TO_CLIFF_LEFT, CLING_TO_CLIFF_RIGHT, DIVE, WALL_SLIDING_LEFT, WALL_SLIDING_RIGHT, WALL_RUNNING_LEFT, WALL_RUNNING_RIGHT, FAST_RUN, HANG_DOWN_FORWARD, HANG_DOWN_SIDE;
 		
 		final int id;
 		

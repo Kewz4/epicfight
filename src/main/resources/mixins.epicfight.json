@@ -32,7 +32,8 @@
 		"MixinPlayer",
 		"MixinThrownTrident",
 		"MixinServerGamePacketListenerImpl",
-		"ParCoolMixinAnimation"
+		"ParCoolMixinAnimation",
+		"ParCoolMixinHorizontalWallRunAnimator"
 	],
 	"injector": {
 		"defaultRequire": 1

@@ -96,7 +96,7 @@ public class ControllEngine {
 		}
 		
 		if (keyPressed(EpicFightKeyMappings.CONFIG, false)) {
-			Minecraft.getInstance().setScreen(new IngameConfigurationScreen(this.minecraft, null));
+			Minecraft.getInstance().setScreen(new IngameConfigurationScreen(null));
 		}
 		
 		while (keyPressed(EpicFightKeyMappings.ATTACK, true)) {
