@@ -103,33 +103,11 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
- *  Changes from 20.9.4 -> 20.9.5
+ *  Changes from 20.9.5 -> 20.9.6
  *  
- *  1. Fixed massive tracing distance when attacking
+ *  1. Fixed skill book screen not showing up when Enhanced Visuals installed
  *  
- *  2. Fixed the player not turning to the jump direction of Phantom ascent
- *  
- *  3. Fixed unsynchronized data with a dedicated server using resource pack from third party URL
- *  
- *  4. Added animation registry validation process when entering a dedicated server (player will be kicked if unsynchronized)
- *  
- *  5. Added an alert message when you trying to use blade rush without targeting an entity
- *  
- *  5. Fixed skill book screen exceeds the screen bound when it's too small
- *  
- *  8. Fixed innate skill tooltip error when sweeping edge enchantment applied
- *  
- *  9. Added a command for modifying, getting stamina value from player
- *  
- *  10. Fixed item capability attributes mixed for capabilities sharing the same custom weapon type
- *  
- *  11. Added dash attack, air slash option on importing animation
- *  
- *  12. Fixed Air not registered in auto switching item list
- *  
- *  13. Fixed wither laser and ender dragon force field and impact guard particle invisible
- *  
- *  14. Wither minions won't spawn if noMobsInBossfight rule set as true
+ *  2. Fixed witches not throwing potion
  *  
  *  Changes from 20.9.5 -> 20.10.1
  *  

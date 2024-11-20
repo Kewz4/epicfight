@@ -18,6 +18,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
+import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
@@ -53,6 +54,11 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 		for (RawModelPart part : this.parts.values()) {
 			part.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
+	}
+	
+	@Override
+	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+		throw new UnsupportedOperationException("RawMesh doesn't support skinned drawing method");
 	}
 	
 	@OnlyIn(Dist.CLIENT)

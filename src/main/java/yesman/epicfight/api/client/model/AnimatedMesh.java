@@ -175,26 +175,10 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	}
 	
 	/**
-	 * Draws the model depending on animation shader option
-	 * @param armature give this parameter as null if @param poses already bound origin translation
-	 * @param poses
-	 */
-	public void draw(PoseStack poseStack, MultiBufferSource multiBufferSource, RenderType renderType, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
-			renderType.setupRenderState();
-			AnimationShaderInstance animationShader = EpicFightRenderTypes.getAnimationShader(renderType);
-			this.drawWithShader(poseStack, animationShader, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
-			renderType.clearRenderState();
-		} else {
-			VertexConsumer vertexConsumer = multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(renderType));
-			this.drawToBuffer(poseStack, vertexConsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, r, g, b, a, overlay, armature, poses);
-		}
-	}
-	
-	/**
 	 * Draws the model to vanilla buffer
 	 */
-	public void drawToBuffer(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+	@Override
+	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 		Matrix4f matrix4f = poseStack.last().pose();
 		Matrix3f matrix3f = poseStack.last().normal();
 		
@@ -246,6 +230,23 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 					drawingFunction.draw(builder, posVec.x, posVec.y, posVec.z, normVec.x, normVec.y, normVec.z, packedLight, r, g, b, a, this.uvs[uv], this.uvs[uv + 1], overlay);
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Draws the model depending on animation shader option
+	 * @param armature give this parameter as null if @param poses already bound origin translation
+	 * @param poses
+	 */
+	public void draw(PoseStack poseStack, MultiBufferSource multiBufferSource, RenderType renderType, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
+			renderType.setupRenderState();
+			AnimationShaderInstance animationShader = EpicFightRenderTypes.getAnimationShader(renderType);
+			this.drawWithShader(poseStack, animationShader, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
+			renderType.clearRenderState();
+		} else {
+			VertexConsumer vertexConsumer = multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(renderType));
+			this.drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, r, g, b, a, overlay, armature, poses);
 		}
 	}
 	

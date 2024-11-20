@@ -12,12 +12,14 @@ import com.ibm.icu.impl.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.RegistryObject;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.StaticAnimationProvider;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationEvent.TimePeriodEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.TimeStampedEvent;
@@ -129,6 +131,16 @@ public abstract class AnimationProperty<T> {
 		 * Fix the head rotation to the player's body rotation
 		 */
 		public static final StaticAnimationProperty<Boolean> FIXED_HEAD_ROTATION = new StaticAnimationProperty<Boolean> ();
+		
+		/**
+		 * Defines static animations as link animation when the animation is followed by a specific animation
+		 */
+		public static final StaticAnimationProperty<Map<ResourceLocation, StaticAnimationProvider>> TRANSITION_ANIMATIONS_FROM = new StaticAnimationProperty<Map<ResourceLocation, StaticAnimationProvider>> ();
+		
+		/**
+		 * Defines static animations as link animation when the animation is following a specific animation
+		 */
+		public static final StaticAnimationProperty<Map<ResourceLocation, StaticAnimationProvider>> TRANSITION_ANIMATIONS_TO = new StaticAnimationProperty<Map<ResourceLocation, StaticAnimationProvider>> ();
 	}
 	
 	public static class ActionAnimationProperty<T> extends AnimationProperty<T> {

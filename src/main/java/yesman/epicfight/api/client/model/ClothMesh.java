@@ -29,6 +29,7 @@ import yesman.epicfight.api.client.physics.ClothSimulatable;
 import yesman.epicfight.api.client.physics.ClothSimulator;
 import yesman.epicfight.api.client.physics.ClothSimulator.ClothObject;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
+import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationProvider;
 import yesman.epicfight.api.physics.SimulationTypes;
@@ -98,6 +99,11 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 		for (ClothPart part : this.parts.values()) {
 			part.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
+	}
+	
+	@Override
+	public void drawPosed(PoseStack poseStack, VertexConsumer builder, DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] pose) {
+		this.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@Override

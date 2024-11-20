@@ -78,6 +78,7 @@ import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
+import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.client.particle.TrailParticle;
 import yesman.epicfight.client.renderer.EpicFightShaders;
 import yesman.epicfight.config.EpicFightOptions;
@@ -107,6 +108,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	private Collider collider;
 	private List<TrailInfo> trailInfoList = Lists.newArrayList();
 	private Item item;
+	private Vec4f backgroundClearColor;
+	private boolean enableCameraControll = true;
 	
 	public ModelPreviewer(int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Armature armature, MeshProvider<AnimatedMesh> mesh) {
 		super(x1, y1, x2, y2, Component.literal(""));
@@ -128,6 +131,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.modelRenderTarget = new ModelRenderTarget();
 		this.resize(Minecraft.getInstance().screen.getRectangle());
 		
+		// default clear color
 		this.modelRenderTarget.setClearColor(0.1552F, 0.1552F, 0.1552F, 1.0F);
 		this.modelRenderTarget.clear(Minecraft.ON_OSX);
 	}
@@ -152,6 +156,14 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	public NoEntityAnimator getAnimator() {
 		return this.animator;
+	}
+	
+	public void setCameraTransform(double zoom, float xRot, float yRot, float xMove, float yMove) {
+		this.zoom = zoom;
+		this.xRot = xRot;
+		this.yRot = yRot;
+		this.xMove = xMove;
+		this.yMove = yMove;
 	}
 	
 	public void setCollider(Collider collider) {
@@ -185,6 +197,14 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	public void setAttackTimeEnd(float attackTimeEnd) {
 		this.attackTimeEnd = attackTimeEnd;
+	}
+	
+	public void setBackgroundClearColor(Vec4f clearColor) {
+		this.backgroundClearColor = clearColor;
+	}
+	
+	public void enableCameraControll(boolean enableCameraControll) {
+		this.enableCameraControll = enableCameraControll;
 	}
 	
 	public void addAnimationToPlay(StaticAnimation animation) {
@@ -272,6 +292,10 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	@Override
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+		if (!this.enableCameraControll) {
+			return false;
+		}
+		
 		if (this.isMouseOver(mouseX, mouseY)) {
 			if (button == 0) {
 				this.xRot = (float)Mth.clamp(this.xRot + dy * 2.5D, -180.0D, 180.0D);
@@ -289,8 +313,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	@Override
 	public boolean mouseScrolled(double x, double y, double amount) {
-		this.zoom = Mth.clamp(this.zoom + amount * 0.5D, -20.0D, -0.5D);
-		return true;
+		if (this.enableCameraControll) {
+			this.zoom = Mth.clamp(this.zoom + amount * 0.5D, -20.0D, -0.5D);
+			return true;
+		}
+		
+		return false;
 	}
 	
 	@Override
@@ -310,6 +338,10 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		
 		this.modelRenderTarget.clear(true);
 		this.modelRenderTarget.bindWrite(true);
+		
+		if (this.backgroundClearColor != null) {
+			this.modelRenderTarget.setClearColor(this.backgroundClearColor.x, this.backgroundClearColor.y, this.backgroundClearColor.z, this.backgroundClearColor.w);
+		}
 		
 		if (this.animator != null) {
 			Pose pose = this.animator.getPose(partialTicks);
@@ -334,7 +366,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			Tesselator tesselator = RenderSystem.renderThreadTesselator();
 			BufferBuilder bufferbuilder = tesselator.getBuilder();
 			bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-			this.mesh.get().drawToBuffer(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_SOLID, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, -1, this.getArmature(), poseMatrices);
+			this.mesh.get().drawPosed(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_SOLID, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, -1, this.getArmature(), poseMatrices);
 			BufferUploader.drawWithShader(bufferbuilder.end());
 			
 			if (this.item != null && this.showItemCheckbox._getValue()) {

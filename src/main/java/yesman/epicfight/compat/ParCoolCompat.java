@@ -8,10 +8,12 @@ import org.joml.Vector3f;
 import com.alrex.parcool.ParCool;
 import com.alrex.parcool.api.unstable.action.ParCoolActionEvent;
 import com.alrex.parcool.client.animation.impl.ClingToCliffAnimator;
+import com.alrex.parcool.client.animation.impl.CrawlAnimator;
 import com.alrex.parcool.client.animation.impl.DiveAnimationHostAnimator;
 import com.alrex.parcool.client.animation.impl.FastRunningAnimator;
 import com.alrex.parcool.client.animation.impl.HangAnimator;
 import com.alrex.parcool.client.animation.impl.HorizontalWallRunAnimator;
+import com.alrex.parcool.client.animation.impl.SlidingAnimator;
 import com.alrex.parcool.client.animation.impl.WallSlideAnimator;
 import com.alrex.parcool.common.action.impl.CatLeap;
 import com.alrex.parcool.common.action.impl.ClimbUp;
@@ -41,6 +43,7 @@ import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
+import yesman.epicfight.api.animation.types.MovementAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 import yesman.epicfight.api.forgeevent.AnimationRegistryEvent;
@@ -76,6 +79,8 @@ public class ParCoolCompat implements ICompatModule {
 	public static StaticAnimation BIPED_CAT_LEAP;
 	public static StaticAnimation BIPED_HANG_DOWN_SIDE;
 	public static StaticAnimation BIPED_HANG_DOWN_FORWARD;
+	public static StaticAnimation BIPED_SLIDE;
+	public static StaticAnimation BIPED_CRAWL;
 	
 	public static StaticAnimation BIPED_WALL_JUMP;
 	public static StaticAnimation BIPED_CLIMB_UP;
@@ -133,6 +138,12 @@ public class ParCoolCompat implements ICompatModule {
 		
 		BIPED_HANG_DOWN_SIDE = new StaticAnimation(true, "biped/hang_down_side", biped);
 		BIPED_HANG_DOWN_FORWARD = new StaticAnimation(true, "biped/hang_down_forward", biped);
+		
+		BIPED_SLIDE = new StaticAnimation(true, "biped/slide", biped);
+		BIPED_CRAWL = new MovementAnimation(true, "biped/crawl", biped)
+				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
+					return speed;
+				});
 		
 		BIPED_WALL_JUMP = new ActionAnimation(0.15F, 0.7F, "biped/wall_jump", biped)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
@@ -226,6 +237,14 @@ public class ParCoolCompat implements ICompatModule {
 			}
 		});
 		
+		PARCOOL_ANIMATOR_MAPPING.put(SlidingAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.SLIDING);
+		});
+		
+		PARCOOL_ANIMATOR_MAPPING.put(CrawlAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CRAWL);
+		});
+		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(ClingToCliff.class, (entitypatch) -> {
 			DynamicAnimation nowPlaying = entitypatch.getAnimator().getPlayerFor(null).getAnimation().getRealAnimation();
 			return nowPlaying == BIPED_CLIMB_UP;
@@ -261,23 +280,25 @@ public class ParCoolCompat implements ICompatModule {
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.FAST_RUN, BIPED_FAST_RUN);
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.HANG_DOWN_FORWARD, BIPED_HANG_DOWN_FORWARD);
 				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.HANG_DOWN_SIDE, BIPED_HANG_DOWN_SIDE);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.SLIDING, BIPED_SLIDE);
+				event.getAnimator().addLivingAnimation(ParcoolLivingMotions.CRAWL, BIPED_CRAWL);
 			}
 		});
 		
 		eventBus.<ParCoolActionEvent.TryToStartEvent>addListener((event) -> {
 			if (PARCOOL_ACTION_CANCEL_EVENTS.containsKey(event.getAction().getClass())) {
-				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), LivingEntityPatch.class);
+				PlayerPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), PlayerPatch.class);
 				
-				if (PARCOOL_ACTION_CANCEL_EVENTS.get(event.getAction().getClass()).apply(entitypatch)) {
+				if (entitypatch != null && entitypatch.isBattleMode() && PARCOOL_ACTION_CANCEL_EVENTS.get(event.getAction().getClass()).apply(entitypatch)) {
 					event.setCanceled(true);
 				}
 			}
 		});
 		
 		eventBus.<ParCoolActionEvent.StartEvent>addListener((event) -> {
-			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), LivingEntityPatch.class);
+			PlayerPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), PlayerPatch.class);
 			
-			if (entitypatch != null && entitypatch.isLogicalClient() && PARCOOL_ACTION_MAPPING.containsKey(event.getAction().getClass())) {
+			if (entitypatch != null && entitypatch.isLogicalClient() && entitypatch.isBattleMode() && PARCOOL_ACTION_MAPPING.containsKey(event.getAction().getClass())) {
 				Parkourability parkourability = Parkourability.get(event.getPlayer());
 				StaticAnimation animation = PARCOOL_ACTION_MAPPING.get(event.getAction().getClass()).getAnimation(event.getAction(), parkourability);
 				entitypatch.getAnimator().playAnimation(animation, 0.0F);
@@ -311,7 +332,7 @@ public class ParCoolCompat implements ICompatModule {
 	}
 	
 	public enum ParcoolLivingMotions implements LivingMotion {
-		CLING_TO_CLIFF, CLING_TO_CLIFF_LEFT, CLING_TO_CLIFF_RIGHT, DIVE, WALL_SLIDING_LEFT, WALL_SLIDING_RIGHT, WALL_RUNNING_LEFT, WALL_RUNNING_RIGHT, FAST_RUN, HANG_DOWN_FORWARD, HANG_DOWN_SIDE;
+		CLING_TO_CLIFF, CLING_TO_CLIFF_LEFT, CLING_TO_CLIFF_RIGHT, DIVE, WALL_SLIDING_LEFT, WALL_SLIDING_RIGHT, WALL_RUNNING_LEFT, WALL_RUNNING_RIGHT, FAST_RUN, HANG_DOWN_FORWARD, HANG_DOWN_SIDE, SLIDING, CRAWL;
 		
 		final int id;
 		

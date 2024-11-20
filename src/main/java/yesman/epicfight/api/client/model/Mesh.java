@@ -13,6 +13,8 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class Mesh<P extends ModelPart<V>, V extends VertexBuilder> {
@@ -48,7 +50,10 @@ public abstract class Mesh<P extends ModelPart<V>, V extends VertexBuilder> {
 	
 	protected abstract Map<String, P> createModelPart(Map<MeshPartDefinition, List<V>> partBuilders);
 	protected abstract P getOrLogException(Map<String, P> parts, String name);
+	
 	public abstract void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
+	/* Draw mesh with animation information */
+	public abstract void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
 	
 	public boolean hasPart(String part) {
 		return this.parts.containsKey(part);

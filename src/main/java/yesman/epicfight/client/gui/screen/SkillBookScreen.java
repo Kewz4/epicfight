@@ -296,15 +296,19 @@ public class SkillBookScreen extends Screen {
 		Window window = Minecraft.getInstance().getWindow();
 		double originalScale = window.getGuiScale();
 		
-		window.setGuiScale(this.customScale);
+		if (originalScale != this.customScale) {
+			window.setGuiScale(this.customScale);
+			
+			//Fix: expand extra far plane distance
+			Matrix4f matrix4f = (new Matrix4f()).setOrtho(0.0F, (float)((double)window.getWidth() / window.getGuiScale()), (float)((double)window.getHeight() / window.getGuiScale()), 0.0F, 1000.0F, net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane() + 10000.0F);
+			RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
+		}
 		
-		Matrix4f matrix4f = (new Matrix4f()).setOrtho(0.0F, (float)((double)window.getWidth() / window.getGuiScale()), (float)((double)window.getHeight() / window.getGuiScale()), 0.0F, 1000.0F, net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane());
-        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
-        
 		int posX = (this.width - 284) / 2;
 		int posY = (this.height - 165) / 2;
 		
 		RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+		
 		guiGraphics.blit(SKILLBOOK_BACKGROUND, this.width / 2 - 192, this.height / 2 - 140, 384, 279, 0, 0, 256, 186, 256, 256);
 		
 		int iconStartX = 106;
@@ -322,13 +326,14 @@ public class SkillBookScreen extends Screen {
 			iconStartX += 45;
 		}
 		
+		// skill category icon left
 		guiGraphics.blit(SKILLBOOK_BACKGROUND, this.width / 2 - 160, this.height / 2 - 73, 12, 12, iconStartX, iconStartY, 9, 9, 256, 256);
 		
 		guiGraphics.pose().pushPose();
 		guiGraphics.pose().translate(this.width / 2 - 16, this.height / 2 - 73, 0.0D);
-		
 		guiGraphics.pose().scale(-1.0F, 1.0F, 1.0F);
 		RenderSystem.disableCull();
+		// skill category icon right
 		guiGraphics.blit(SKILLBOOK_BACKGROUND, 0, 0, 12, 12, iconStartX, iconStartY, 9, 9, 256, 256);
 		RenderSystem.enableCull();
 		guiGraphics.pose().popPose();
@@ -340,12 +345,12 @@ public class SkillBookScreen extends Screen {
 		String translationName = this.skill.getTranslationKey();
 		String skillName = Component.translatable(translationName).getString();
 		int width = this.font.width(skillName);
-		guiGraphics.drawString(font, skillName, posX + 56 - width / 2, posY + 75, 0, false);
+		guiGraphics.drawString(this.font, skillName, posX + 56 - width / 2, posY + 75, 0, false);
 		
 		String skillCategory = String.format("(%s)", Component.translatable("skill." + EpicFightMod.MODID + "." + this.skill.getCategory().toString().toLowerCase() + ".category").getString());
 		width = this.font.width(skillCategory);
 		
-		guiGraphics.drawString(font, skillCategory, posX + 56 - width / 2, posY + 90, 0, false);
+		guiGraphics.drawString(this.font, skillCategory, posX + 56 - width / 2, posY + 90, 0, false);
 		
 		super.render(guiGraphics, (int)(mouseX * originalScale / this.customScale), (int)(mouseY * originalScale / this.customScale), partialTicks);
 		
@@ -355,9 +360,12 @@ public class SkillBookScreen extends Screen {
 		
 		guiGraphics.pose().popPose();
 		
-		window.setGuiScale(originalScale);
-		matrix4f = (new Matrix4f()).setOrtho(0.0F, (float)((double)window.getWidth() / window.getGuiScale()), (float)((double)window.getHeight() / window.getGuiScale()), 0.0F, 1000.0F, net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane());
-        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
+		// Recover the original projection matrix
+		if (originalScale != this.customScale) {
+			window.setGuiScale(originalScale);
+			Matrix4f matrix4f = (new Matrix4f()).setOrtho(0.0F, (float)((double)window.getWidth() / window.getGuiScale()), (float)((double)window.getHeight() / window.getGuiScale()), 0.0F, 1000.0F, net.minecraftforge.client.ForgeHooksClient.getGuiFarPlane());
+	        RenderSystem.setProjectionMatrix(matrix4f, VertexSorting.ORTHOGRAPHIC_Z);
+		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)

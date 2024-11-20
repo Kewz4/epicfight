@@ -90,7 +90,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 	private void renderTrim(PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, AnimatedMesh model, Armature armature, ArmorMaterial armorMaterial, ArmorTrim armorTrim, EquipmentSlot slot, OpenMatrix4f[] poses) {
 		TextureAtlasSprite textureatlassprite = this.armorTrimAtlas.getSprite(innerModel(slot) ? armorTrim.innerTexture(armorMaterial) : armorTrim.outerTexture(armorMaterial));
 		VertexConsumer vertexConsumer = textureatlassprite.wrap(multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(Sheets.armorTrimsSheet())));
-		model.drawToBuffer(poseStack, vertexConsumer, DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, armature, poses);
+		model.drawPosed(poseStack, vertexConsumer, DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, armature, poses);
 	}
 	
 	@SuppressWarnings("unchecked")

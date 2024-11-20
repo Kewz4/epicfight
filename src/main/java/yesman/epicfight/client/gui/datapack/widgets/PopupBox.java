@@ -304,7 +304,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	@OnlyIn(Dist.CLIENT)
 	public static class MeshPopupBox extends PopupBox<MeshProvider<AnimatedMesh>> {
 		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, MeshProvider<AnimatedMesh>>> responder) {
-			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullParam(Meshes.getKey(mesh.get())), responder);
+			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullOrToString(mesh, (mp) -> ParseUtil.nullParam(Meshes.getKey(mp.get()))), responder);
 		}
 		
 		@Override
