@@ -164,6 +164,10 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 		super.updateHeldItem(fromCap, toCap, from, to, hand);
 	}
 	
+	public void modifyLivingMotionByCurrentItem() {
+		this.modifyLivingMotionByCurrentItem(false);
+	}
+	
 	/**
 	 * @param checkOldAnimations: when true, it compares the animations and send the packet if it has any changes
 	 */

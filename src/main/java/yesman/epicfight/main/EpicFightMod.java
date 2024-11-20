@@ -109,7 +109,11 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  2. Fixed witches not throwing potion
  *  
- *  Changes from 20.9.5 -> 20.10.1
+ *  3. Fixed custom armors parts invisible
+ *  
+ *  4. Fixed a crash when selecting mob capability model in datapack editor
+ *  
+ *  Changes from 20.9.6 -> 20.10.1
  *  
  *  1. Enhanced the accuracy of tracing ability of the player when attacking
  *  
