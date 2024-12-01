@@ -29,13 +29,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.client.mesh.HumanoidMesh;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class HumanoidModelBaker {
-	static final Map<ResourceLocation, AnimatedMesh> BAKED_MODELS = Maps.newHashMap();
+	static final Map<ResourceLocation, SkinnedMesh> BAKED_MODELS = Maps.newHashMap();
 	static final List<HumanoidModelTransformer> MODEL_TRANSFORMERS = Lists.newArrayList();
 	
 	static final Set<ArmorItem> EXCEPTIONAL_MODELS = Sets.newHashSet();
@@ -56,7 +56,7 @@ public class HumanoidModelBaker {
 		File zipFile = new File(resourcePackDirectory, "epicfight_custom_armors.zip");
 		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile));
 		
-		for (Map.Entry<ResourceLocation, AnimatedMesh> entry : BAKED_MODELS.entrySet()) {
+		for (Map.Entry<ResourceLocation, SkinnedMesh> entry : BAKED_MODELS.entrySet()) {
 			ZipEntry zipEntry = new ZipEntry(String.format("assets/%s/animmodels/armor/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath()));
 			Gson gson = new GsonBuilder().create();
 			out.putNextEntry(zipEntry);
@@ -78,8 +78,8 @@ public class HumanoidModelBaker {
 		out.close();
 	}
 	
-	public static AnimatedMesh bakeArmor(LivingEntity entityLiving, ItemStack itemstack, ArmorItem armorItem, EquipmentSlot slot, HumanoidModel<?> originalModel, Model forgeModel, HumanoidModel<?> entityModel, HumanoidMesh entityMesh) {
-		AnimatedMesh animatedArmorModel = null;
+	public static SkinnedMesh bakeArmor(LivingEntity entityLiving, ItemStack itemstack, ArmorItem armorItem, EquipmentSlot slot, HumanoidModel<?> originalModel, Model forgeModel, HumanoidModel<?> entityModel, HumanoidMesh entityMesh) {
+		SkinnedMesh animatedArmorModel = null;
 		
 		if (!EXCEPTIONAL_MODELS.contains(armorItem)) {
 			if (forgeModel == originalModel || !(forgeModel instanceof HumanoidModel humanoidModel)) {

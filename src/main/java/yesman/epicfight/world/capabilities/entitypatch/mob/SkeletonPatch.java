@@ -29,6 +29,7 @@ public class SkeletonPatch<T extends PathfinderMob> extends HumanoidMobPatch<T> 
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		super.commonAggresiveMobAnimatorInit(animator);
 	}
 	

@@ -16,16 +16,16 @@ import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, AnimatedMesh> {
-	private final MeshProvider<AnimatedMesh> mesh;
+public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, SkinnedMesh> {
+	private final MeshProvider<SkinnedMesh> mesh;
 	
-	public PCustomEntityRenderer(MeshProvider<AnimatedMesh> mesh, EntityRendererProvider.Context context) {
+	public PCustomEntityRenderer(MeshProvider<SkinnedMesh> mesh, EntityRendererProvider.Context context) {
 		this.mesh = mesh;
 	}
 	
@@ -43,7 +43,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 		this.setArmaturePoses(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
-		    AnimatedMesh mesh = this.mesh.get();
+		    SkinnedMesh mesh = this.mesh.get();
 			PrepareModelEvent prepareModelEvent = new PrepareModelEvent(this, mesh, entitypatch, buffer, poseStack, packedLight, partialTicks);
 			
 			if (!MinecraftForge.EVENT_BUS.post(prepareModelEvent)) {
@@ -67,7 +67,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 	}
 	
 	@Override
-	public MeshProvider<AnimatedMesh> getDefaultMesh() {
+	public MeshProvider<SkinnedMesh> getDefaultMesh() {
 		return this.mesh;
 	}
 }

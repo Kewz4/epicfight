@@ -1,4 +1,4 @@
-package yesman.epicfight.api.client.physics;
+package yesman.epicfight.api.client.physics.cloth;
 
 import javax.annotation.Nullable;
 
@@ -6,9 +6,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.physics.SimulatableObject;
 
 @OnlyIn(Dist.CLIENT)
-public interface ClothSimulatable {
+public interface ClothSimulatable extends SimulatableObject {
 	@Nullable
 	Armature getArmature();
 	boolean valid();
@@ -17,6 +18,7 @@ public interface ClothSimulatable {
 	public float getYRotO();
 	
 	// Cloth object requires providing location info for 2 steps before for accurate continuous collide detection.
+	public Vec3 getAccurateCloakLocation(float partialFrame);
 	public Vec3 getAccuratePartialLocation(float partialFrame);
 	public float getAccurateYRot(float partialFrame);
 	public float getYRotDelta(float partialFrame);

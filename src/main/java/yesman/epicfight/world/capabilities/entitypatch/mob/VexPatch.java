@@ -54,6 +54,7 @@ public class VexPatch extends MobPatch<Vex> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.VEX_IDLE);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.VEX_DEATH);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.VEX_FLIPPING);

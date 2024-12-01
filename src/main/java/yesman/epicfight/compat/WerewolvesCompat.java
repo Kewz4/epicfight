@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.CustomModelBakery;
 import yesman.epicfight.api.forgeevent.BattleModeSustainableEvent;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -72,8 +72,8 @@ public class WerewolvesCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class EpicFightHumanWerewolfLayer<A extends HumanoidModel<AbstractClientPlayer>> extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, HumanWerewolfLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>, A>> {
-		private AnimatedMesh mesh;
-		private AnimatedMesh slimMesh;
+		private SkinnedMesh mesh;
+		private SkinnedMesh slimMesh;
 		
 		@Override
 		protected void renderLayer( AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch
@@ -104,7 +104,7 @@ public class WerewolvesCompat implements ICompatModule {
 				werewolfEars.rightLeg.loadPose(werewolfEars.rightLeg.getInitialPose());
 			}
 			
-			AnimatedMesh mesh;
+			SkinnedMesh mesh;
 			
 			if ("default".equals(modelType)) {
 				if (this.mesh == null) {

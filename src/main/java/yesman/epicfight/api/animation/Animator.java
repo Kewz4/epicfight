@@ -5,12 +5,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraftforge.common.MinecraftForge;
-import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -23,12 +21,10 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public abstract class Animator {
 	protected final Map<LivingMotion, StaticAnimation> livingAnimations = Maps.newHashMap();
 	protected final TypeFlexibleHashMap<TypeKey<?>> animationVariables = new TypeFlexibleHashMap<> (false);
-	protected LivingEntityPatch<?> entitypatch;
+	protected final LivingEntityPatch<?> entitypatch;
 	
-	public Animator() {
-		// Put default variables
-		this.animationVariables.put(AttackAnimation.HIT_ENTITIES, Lists.newArrayList());
-		this.animationVariables.put(AttackAnimation.HURT_ENTITIES, Lists.newArrayList());
+	public Animator(LivingEntityPatch<?> entitypatch) {
+		this.entitypatch = entitypatch;
 	}
 	
 	public abstract void playAnimation(StaticAnimation nextAnimation, float convertTimeModifier);
@@ -42,9 +38,7 @@ public abstract class Animator {
 	public abstract <T> Pair<AnimationPlayer, T> findFor(Class<T> animationType);
 	public abstract Pose getPose(float partialTicks);
 	
-	public void init() {
-		this.entitypatch.initAnimator(this);
-		
+	public void postInit() {
 		InitAnimatorEvent initAnimatorEvent = new InitAnimatorEvent(this.entitypatch, this);
 		MinecraftForge.EVENT_BUS.post(initAnimatorEvent);
 	}
@@ -87,6 +81,10 @@ public abstract class Animator {
 		} else {
 			this.animationVariables.put(typeKey, value);
 		}
+	}
+	
+	public LivingEntityPatch<?> getEntityPatch() {
+		return this.entitypatch;
 	}
 	
 	public <T> T getAnimationVariable(TypeKey<T> key) {

@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -56,7 +56,7 @@ public class CombatBehaviorScreen extends Screen {
 	private Grid conditionGrid;
 	private Grid parameterGrid;
 	
-	protected CombatBehaviorScreen(Screen caller, CompoundTag rootTag, Armature armature, MeshProvider<AnimatedMesh> mesh, boolean isHumanoidSubTag) {
+	protected CombatBehaviorScreen(Screen caller, CompoundTag rootTag, Armature armature, MeshProvider<SkinnedMesh> mesh, boolean isHumanoidSubTag) {
 		super(Component.translatable("datapack_edit.mob_patch.combat_behavior"));
 		
 		this.isHumanoidSubTag = isHumanoidSubTag;

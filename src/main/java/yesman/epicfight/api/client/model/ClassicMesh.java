@@ -17,30 +17,30 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
+import yesman.epicfight.api.client.model.ClassicMesh.ClassicMeshPart;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshProvider<RawMesh> {
-	public RawMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, RawMesh parent, RenderProperties properties) {
+public class ClassicMesh extends StaticMesh<ClassicMeshPart, VertexBuilder> implements MeshProvider<ClassicMesh> {
+	public ClassicMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, ClassicMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 	}
 	
 	@Override
-	protected Map<String, RawModelPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
-		Map<String, RawModelPart> parts = Maps.newHashMap();
+	protected Map<String, ClassicMeshPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
+		Map<String, ClassicMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
-			parts.put(partDefinition.partName(), new RawModelPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
+			parts.put(partDefinition.partName(), new ClassicMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
 		});
 		
 		return parts;
 	}
 	
 	@Override
-	protected RawModelPart getOrLogException(Map<String, RawModelPart> parts, String name) {
+	protected ClassicMeshPart getOrLogException(Map<String, ClassicMeshPart> parts, String name) {
 		if (!parts.containsKey(name)) {
 			EpicFightMod.LOGGER.debug("Can not find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
 			return null;
@@ -51,19 +51,19 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 	
 	@Override
 	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-		for (RawModelPart part : this.parts.values()) {
+		for (ClassicMeshPart part : this.parts.values()) {
 			part.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
 	}
 	
 	@Override
 	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		throw new UnsupportedOperationException("RawMesh doesn't support skinned drawing method");
+		this.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class RawModelPart extends ModelPart<VertexBuilder> {
-		public RawModelPart(List<VertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
+	public class ClassicMeshPart extends MeshPart<VertexBuilder> {
+		public ClassicMeshPart(List<VertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
 			super(verticies, vanillaPartTracer);
 		}
 		
@@ -98,7 +98,7 @@ public class RawMesh extends Mesh<RawModelPart, VertexBuilder> implements MeshPr
 	}
 	
 	@Override
-	public RawMesh get() {
+	public ClassicMesh get() {
 		return this;
 	}
 }

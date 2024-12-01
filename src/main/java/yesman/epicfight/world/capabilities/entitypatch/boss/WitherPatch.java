@@ -109,6 +109,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.WITHER_IDLE);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.WITHER_DEATH);
 	}

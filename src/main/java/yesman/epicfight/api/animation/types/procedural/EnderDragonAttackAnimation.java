@@ -23,7 +23,7 @@ import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -47,7 +47,7 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 	@Override
 	public void loadAnimation(ResourceManager resourceManager) {
 		try {
-			JsonModelLoader modelLoader = (new JsonModelLoader(resourceManager, this.resourceLocation));
+			JsonAssetLoader modelLoader = (new JsonAssetLoader(resourceManager, this.resourceLocation));
 			AnimationManager.getInstance().loadAnimationClip(this, modelLoader::loadAllJointsClipForAnimation);
 			
 			this.tipPointTransform = Maps.newHashMap();

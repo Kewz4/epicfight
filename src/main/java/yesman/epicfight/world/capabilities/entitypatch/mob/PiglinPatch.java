@@ -38,6 +38,7 @@ public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.PIGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.FALL, Animations.BIPED_FALL);
 		animator.addLivingAnimation(LivingMotions.MOUNT, Animations.BIPED_MOUNT);

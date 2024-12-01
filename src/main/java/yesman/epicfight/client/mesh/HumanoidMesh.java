@@ -6,27 +6,27 @@ import java.util.Map;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 
 @OnlyIn(Dist.CLIENT)
-public class HumanoidMesh extends AnimatedMesh {
-	public final AnimatedModelPart head;
-	public final AnimatedModelPart torso;
-	public final AnimatedModelPart leftArm;
-	public final AnimatedModelPart rightArm;
-	public final AnimatedModelPart leftLeg;
-	public final AnimatedModelPart rightLeg;
-	public final AnimatedModelPart hat;
-	public final AnimatedModelPart jacket;
-	public final AnimatedModelPart leftSleeve;
-	public final AnimatedModelPart rightSleeve;
-	public final AnimatedModelPart leftPants;
-	public final AnimatedModelPart rightPants;
+public class HumanoidMesh extends SkinnedMesh {
+	public final SkinnedMeshPart head;
+	public final SkinnedMeshPart torso;
+	public final SkinnedMeshPart leftArm;
+	public final SkinnedMeshPart rightArm;
+	public final SkinnedMeshPart leftLeg;
+	public final SkinnedMeshPart rightLeg;
+	public final SkinnedMeshPart hat;
+	public final SkinnedMeshPart jacket;
+	public final SkinnedMeshPart leftSleeve;
+	public final SkinnedMeshPart rightSleeve;
+	public final SkinnedMeshPart leftPants;
+	public final SkinnedMeshPart rightPants;
 	
-	public HumanoidMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<AnimatedVertexBuilder>> parts, AnimatedMesh parent, RenderProperties properties) {
+	public HumanoidMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");
@@ -44,7 +44,7 @@ public class HumanoidMesh extends AnimatedMesh {
 		this.rightPants = this.getOrLogException(this.parts, "rightPants");
 	}
 	
-	public AnimatedMesh getHumanoidArmorModel(EquipmentSlot slot) {
+	public SkinnedMesh getHumanoidArmorModel(EquipmentSlot slot) {
 		switch (slot) {
 		case HEAD:
 			return Meshes.HELMET;

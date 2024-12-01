@@ -5,20 +5,20 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class WitherMesh extends AnimatedMesh implements MeshProvider<WitherMesh> {
-	public final AnimatedModelPart centerHead;
-	public final AnimatedModelPart leftHead;
-	public final AnimatedModelPart rightHead;
-	public final AnimatedModelPart ribcage;
-	public final AnimatedModelPart tail;
+public class WitherMesh extends SkinnedMesh implements MeshProvider<WitherMesh> {
+	public final SkinnedMeshPart centerHead;
+	public final SkinnedMeshPart leftHead;
+	public final SkinnedMeshPart rightHead;
+	public final SkinnedMeshPart ribcage;
+	public final SkinnedMeshPart tail;
 	
-	public WitherMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<AnimatedVertexBuilder>> parts, AnimatedMesh parent, RenderProperties properties) {
+	public WitherMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.centerHead = this.getOrLogException(this.parts, "centerHead");

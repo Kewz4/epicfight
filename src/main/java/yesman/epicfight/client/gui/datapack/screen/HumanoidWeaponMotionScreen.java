@@ -24,7 +24,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.MainFrameAnimation;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -48,7 +48,7 @@ public class HumanoidWeaponMotionScreen extends Screen {
 	private final Screen caller;
 	private final CompoundTag rootTag;
 	
-	protected HumanoidWeaponMotionScreen(Screen caller, CompoundTag rootTag, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	protected HumanoidWeaponMotionScreen(Screen caller, CompoundTag rootTag, Armature armature, MeshProvider<SkinnedMesh> mesh) {
 		super(Component.translatable("datapack_edit.mob_patch.humanoid_weapon_motions"));
 		
 		this.font = caller.getMinecraft().font;

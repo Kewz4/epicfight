@@ -33,6 +33,8 @@ public class PiglinBrutePatch extends HumanoidMobPatch<PiglinBrute> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.PIGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.PIGLIN_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.PIGLIN_WALK);

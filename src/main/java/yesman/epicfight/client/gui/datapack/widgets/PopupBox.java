@@ -37,7 +37,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.collider.Collider;
@@ -191,13 +191,13 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	@OnlyIn(Dist.CLIENT)
 	public static class AnimationPopupBox extends PopupBox<StaticAnimation> {
 		private Supplier<Armature> armature;
-		private MeshProvider<AnimatedMesh> mesh;
+		private MeshProvider<SkinnedMesh> mesh;
 		
 		public AnimationPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, StaticAnimation>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (animation) -> ParseUtil.nullOrToString(animation, (a) -> a.getRegistryName().toString()), responder);
 		}
 		
-		public void setModel(Supplier<Armature> armature, MeshProvider<AnimatedMesh> mesh) {
+		public void setModel(Supplier<Armature> armature, MeshProvider<SkinnedMesh> mesh) {
 			this.armature = armature;
 			this.mesh = mesh;
 		}
@@ -302,8 +302,8 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class MeshPopupBox extends PopupBox<MeshProvider<AnimatedMesh>> {
-		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, MeshProvider<AnimatedMesh>>> responder) {
+	public static class MeshPopupBox extends PopupBox<MeshProvider<SkinnedMesh>> {
+		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, MeshProvider<SkinnedMesh>>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullOrToString(mesh, (mp) -> ParseUtil.nullParam(Meshes.getKey(mp.get()))), responder);
 		}
 		

@@ -23,7 +23,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 import top.theillusivec4.curios.client.render.CuriosLayer;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.renderer.patched.entity.PatchedLivingEntityRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
@@ -55,7 +55,7 @@ public class CuriosCompat implements ICompatModule {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class CuriosLayerRenderer extends ModelRenderLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, CuriosLayer<LivingEntity, EntityModel<LivingEntity>>, AnimatedMesh> {
+	public static class CuriosLayerRenderer extends ModelRenderLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, CuriosLayer<LivingEntity, EntityModel<LivingEntity>>, SkinnedMesh> {
 		private static final List<Function<ItemStack, HumanoidModel<?>>> CURIO_MODEL_GETTERS = Lists.newArrayList();
 		private static final Map<String, Map<ItemStack, HumanoidModel<?>>> CURIOS_MODELS_BY_SLOTS = Maps.newHashMap();
 		

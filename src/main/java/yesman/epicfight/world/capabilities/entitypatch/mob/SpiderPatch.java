@@ -47,6 +47,7 @@ public class SpiderPatch<T extends PathfinderMob> extends MobPatch<T> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.SPIDER_DEATH);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.SPIDER_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.SPIDER_CRAWL);

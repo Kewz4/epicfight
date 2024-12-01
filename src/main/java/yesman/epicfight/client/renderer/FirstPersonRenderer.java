@@ -26,7 +26,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
+import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -78,7 +78,7 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 		this.prepareModel(mesh, entity, entitypatch, renderer);
 		
 		if (!entitypatch.getOriginal().isInvisible()) {
-			for (AnimatedModelPart p : mesh.getAllParts()) {
+			for (SkinnedMeshPart p : mesh.getAllParts()) {
 				p.setHidden(true);
 			}
 			

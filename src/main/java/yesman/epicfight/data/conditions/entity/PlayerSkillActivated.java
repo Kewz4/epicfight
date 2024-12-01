@@ -1,8 +1,10 @@
 package yesman.epicfight.data.conditions.entity;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
-import io.netty.util.internal.StringUtil;
+import com.ibm.icu.text.MessageFormat;
+
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -25,11 +27,11 @@ public class PlayerSkillActivated extends EntityPatchCondition {
 	
 	@Override
 	public PlayerSkillActivated read(CompoundTag tag) {
-		if (!tag.contains("skill") || StringUtil.isNullOrEmpty(tag.getString("skill"))) {
-			throw new IllegalArgumentException("Undefined skill");
-		}
+		String skillName = this.assertTag("skill", "string", tag, Tag.TAG_STRING, CompoundTag::getString);
 		
-		this.skill = SkillManager.getSkill(tag.getString("skill"));
+		if ((this.skill = SkillManager.getSkill(skillName)) == null) {
+			throw new NoSuchElementException(MessageFormat.format("{} condition error: Skill named {} does not exist", this.getClass().getSimpleName(), skillName));
+		}
 		
 		return this;
 	}

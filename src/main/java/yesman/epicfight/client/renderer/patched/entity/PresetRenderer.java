@@ -35,7 +35,7 @@ import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -51,13 +51,13 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
  * This class is for LivingEntity with renderer that doesn't extend LivingEntityRenderer (e.g. Geckolib renderer based entities)
  */
 @OnlyIn(Dist.CLIENT)
-public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, AnimatedMesh> implements LayerRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>> {
+public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, SkinnedMesh> implements LayerRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>> {
 	private final LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> presetRenderer;
 	protected final Map<Class<?>, PatchedLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, ? extends RenderLayer<LivingEntity, EntityModel<LivingEntity>>>> patchedLayers = Maps.newHashMap();
 	protected final List<PatchedLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, ? extends RenderLayer<LivingEntity, EntityModel<LivingEntity>>>> customLayers = Lists.newArrayList();
-	protected final MeshProvider<AnimatedMesh> mesh;
+	protected final MeshProvider<SkinnedMesh> mesh;
 	
-	public PresetRenderer(EntityRendererProvider.Context context, EntityType<?> entityType, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer, MeshProvider<AnimatedMesh> mesh) {
+	public PresetRenderer(EntityRendererProvider.Context context, EntityType<?> entityType, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer, MeshProvider<SkinnedMesh> mesh) {
 		this.presetRenderer = renderer;
 		this.mesh = mesh;
 		
@@ -106,7 +106,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 		
 		if (renderType != null) {
 		    this.prepareVanillaModel(entity, this.presetRenderer.getModel(), this.presetRenderer, partialTicks);
-			AnimatedMesh mesh = this.getMeshProvider(entitypatch).get();
+			SkinnedMesh mesh = this.getMeshProvider(entitypatch).get();
 			this.prepareModel(mesh, entity, entitypatch, this.presetRenderer);
 			
 			PrepareModelEvent prepareModelEvent = new PrepareModelEvent(this, mesh, entitypatch, buffer, poseStack, packedLight, partialTicks);
@@ -193,7 +193,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 		model.setupAnim(entityIn, f5, f8, f7, f2, f6);
 	}
 	
-	protected void prepareModel(AnimatedMesh mesh, LivingEntity entity, LivingEntityPatch<LivingEntity> entitypatch, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer) {
+	protected void prepareModel(SkinnedMesh mesh, LivingEntity entity, LivingEntityPatch<LivingEntity> entitypatch, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer) {
 		mesh.initialize();
 	}
 	
@@ -236,7 +236,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 	}
 	
 	@Override
-	public MeshProvider<AnimatedMesh> getDefaultMesh() {
+	public MeshProvider<SkinnedMesh> getDefaultMesh() {
 		return this.mesh;
 	}
 }

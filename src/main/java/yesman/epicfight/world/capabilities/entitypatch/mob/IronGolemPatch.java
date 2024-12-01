@@ -55,6 +55,7 @@ public class IronGolemPatch extends MobPatch<IronGolem> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.GOLEM_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.GOLEM_WALK);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.GOLEM_DEATH);

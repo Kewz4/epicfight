@@ -29,6 +29,7 @@ public class WitherGhostPatch extends MobPatch<WitherGhostClone> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.WITHER_IDLE);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.WITHER_IDLE);
 	}

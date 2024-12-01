@@ -11,15 +11,15 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightVertexFormat {
-	public static final VertexFormatElement ELEMENT_POSITION = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.POSITION, 3, AnimatedMesh::pointPositionsBuffer);
-	public static final VertexFormatElement ELEMENT_UV0 = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.UV, 2, AnimatedMesh::uvPositionsBuffer);
-	public static final VertexFormatElement ELEMENT_NORMAL = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.NORMAL, 3, AnimatedMesh::normalPositionsBuffer);
-	public static final VertexFormatElement ELEMENT_JOINTS = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.SHORT, VertexFormatElement.Usage.GENERIC, 3, AnimatedMesh::jointPositionsBuffer);
-	public static final VertexFormatElement ELEMENT_WEIGHTS = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.GENERIC, 3, AnimatedMesh::weightPositionsBuffer);
+	public static final VertexFormatElement ELEMENT_POSITION = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.POSITION, 3, SkinnedMesh::pointPositionsBuffer);
+	public static final VertexFormatElement ELEMENT_UV0 = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.UV, 2, SkinnedMesh::uvPositionsBuffer);
+	public static final VertexFormatElement ELEMENT_NORMAL = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.NORMAL, 3, SkinnedMesh::normalPositionsBuffer);
+	public static final VertexFormatElement ELEMENT_JOINTS = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.SHORT, VertexFormatElement.Usage.GENERIC, 3, SkinnedMesh::jointPositionsBuffer);
+	public static final VertexFormatElement ELEMENT_WEIGHTS = new EpicFightVertexFormatElement(0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.GENERIC, 3, SkinnedMesh::weightPositionsBuffer);
 	
 	private static final Set<VertexFormatElement> FILTERTED_FORMATS = ImmutableSet.of(DefaultVertexFormat.ELEMENT_COLOR, DefaultVertexFormat.ELEMENT_UV1, DefaultVertexFormat.ELEMENT_UV2);
 	

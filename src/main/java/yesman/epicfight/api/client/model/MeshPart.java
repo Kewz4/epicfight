@@ -13,12 +13,12 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class ModelPart<T extends VertexBuilder> {
+public abstract class MeshPart<T extends VertexBuilder> {
 	protected final List<T> verticies;
 	protected final Supplier<OpenMatrix4f> vanillaPartTracer;
 	protected boolean isHidden;
 	
-	public ModelPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
+	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
 		this.verticies = vertices;
 		this.vanillaPartTracer = vanillaPartTracer;
 	}

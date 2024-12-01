@@ -19,6 +19,7 @@ public class ZombifiedPiglinPatch extends HumanoidMobPatch<ZombifiedPiglin> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.PIGLIN_ZOMBIFIED_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.PIGLIN_ZOMBIFIED_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.PIGLIN_ZOMBIFIED_CHASE);

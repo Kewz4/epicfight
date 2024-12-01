@@ -19,6 +19,7 @@ public class CustomCondition<T extends LivingEntityPatch<?>> implements Conditio
 	
 	@Override
 	public CustomCondition<T> read(CompoundTag tag) {
+		// This condition doesn't support json conversion
 		return null;
 	}
 	

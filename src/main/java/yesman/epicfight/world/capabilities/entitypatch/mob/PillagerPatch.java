@@ -14,6 +14,8 @@ public class PillagerPatch extends AbstractIllagerPatch<Pillager> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.BIPED_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.BIPED_WALK);

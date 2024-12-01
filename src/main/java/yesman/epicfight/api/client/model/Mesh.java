@@ -1,11 +1,5 @@
 package yesman.epicfight.api.client.model;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -17,63 +11,13 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class Mesh<P extends ModelPart<V>, V extends VertexBuilder> {
-	protected final float[] positions;
-	protected final float[] normals;
-	protected final float[] uvs;
+public interface Mesh {
+	/* Draw classic mesh */
+	void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
+	/* Draw mesh with animation */
+	void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
 	
-	protected final int vertexCount;
-	protected final RenderProperties renderProperties;
-	protected final Map<String, P> parts;
-	
-	/**
-	 * @param arrayMap Null if parent is not null
-	 * @param partBuilders Null if parent is not null
-	 * @param parent Null if arrayMap and parts are not null
-	 * @param renderProperties
-	 */
-	public Mesh(@Nullable Map<String, float[]> arrayMap, @Nullable Map<MeshPartDefinition, List<V>> partBuilders, @Nullable Mesh<P, V> parent, RenderProperties renderProperties) {
-		this.positions = (parent == null) ? arrayMap.get("positions") : parent.positions;
-		this.normals = (parent == null) ? arrayMap.get("normals") : parent.normals;
-		this.uvs = (parent == null) ? arrayMap.get("uvs") : parent.uvs;
-		this.renderProperties = renderProperties;
-		this.parts = (parent == null) ? this.createModelPart(partBuilders) : parent.parts;
-		
-		int totalV = 0;
-		
-		for (ModelPart<V> modelpart : this.parts.values()) {
-			totalV += modelpart.getVertices().size();
-		}
-		
-		this.vertexCount = totalV;
-	}
-	
-	protected abstract Map<String, P> createModelPart(Map<MeshPartDefinition, List<V>> partBuilders);
-	protected abstract P getOrLogException(Map<String, P> parts, String name);
-	
-	public abstract void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
-	/* Draw mesh with animation information */
-	public abstract void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
-	
-	public boolean hasPart(String part) {
-		return this.parts.containsKey(part);
-	}
-	
-	public ModelPart<V> getPart(String part) {
-		return this.parts.get(part);
-	}
-	
-	public Collection<P> getAllParts() {
-		return this.parts.values();
-	}
-	
-	public RenderProperties getRenderProperty() {
-		return this.renderProperties;
-	}
-	
-	public void initialize() {
-		this.parts.values().forEach((part) -> part.setHidden(false));
-	}
+	void initialize();
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class RenderProperties {
@@ -123,6 +67,14 @@ public abstract class Mesh<P extends ModelPart<V>, V extends VertexBuilder> {
 	public interface DrawingFunction {
 		public static final DrawingFunction ENTITY_TEXTURED = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ, r, g, b, a, u, v, overlay, packedLight, normX, normY, normZ);
+		};
+		
+		public static final DrawingFunction ENTITY_TEXTURED_NO_LIGHT = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+			builder.vertex(posX, posY, posZ);
+			builder.uv(u, v);
+			builder.color(r, g, b, a);
+			builder.normal(normX, normY, normZ);
+			builder.endVertex();
 		};
 		
 		public static final DrawingFunction ENTITY_PARTICLE = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {

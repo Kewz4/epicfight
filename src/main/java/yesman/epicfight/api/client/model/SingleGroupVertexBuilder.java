@@ -76,7 +76,7 @@ public class SingleGroupVertexBuilder {
 		}
 	}
 	
-	public static AnimatedMesh loadVertexInformation(List<SingleGroupVertexBuilder> vertices, Map<MeshPartDefinition, IntList> indices) {
+	public static SkinnedMesh loadVertexInformation(List<SingleGroupVertexBuilder> vertices, Map<MeshPartDefinition, IntList> indices) {
 		FloatList positions = new FloatArrayList();
 		FloatList normals = new FloatArrayList();
 		FloatList texCoords = new FloatArrayList();
@@ -132,7 +132,7 @@ public class SingleGroupVertexBuilder {
 		float[] jointWeightList = jointWeights.toFloatArray();
 		int[] affectJointCounts = affectCountList.toIntArray();
 		Map<String, float[]> arrayMap = Maps.newHashMap();
-		Map<MeshPartDefinition, List<AnimatedVertexBuilder>> meshMap = Maps.newHashMap();
+		Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshMap = Maps.newHashMap();
 		
 		arrayMap.put("positions", positionList);
 		arrayMap.put("normals", normalList);
@@ -143,7 +143,7 @@ public class SingleGroupVertexBuilder {
 			meshMap.put(e.getKey(), VertexBuilder.createAnimated(e.getValue().toIntArray(), affectJointCounts, animationIndexList));
 		}
 		
-		return new AnimatedMesh(arrayMap, meshMap, null, Mesh.RenderProperties.create());
+		return new SkinnedMesh(arrayMap, meshMap, null, Mesh.RenderProperties.create());
 	}
 	
 	public enum State {

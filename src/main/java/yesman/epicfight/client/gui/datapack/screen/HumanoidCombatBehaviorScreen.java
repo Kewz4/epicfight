@@ -20,7 +20,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -47,7 +47,7 @@ public class HumanoidCombatBehaviorScreen extends Screen {
 	private Grid weaponCategoriesGrid;
 	private ComboBox<Style> styleCombo;
 	
-	public HumanoidCombatBehaviorScreen(Screen parentScreen, CompoundTag rootTag, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	public HumanoidCombatBehaviorScreen(Screen parentScreen, CompoundTag rootTag, Armature armature, MeshProvider<SkinnedMesh> mesh) {
 		super(Component.translatable("datapack_edit.mob_patch.humanoid_combat_behavior"));
 		
 		this.rootTag = rootTag;

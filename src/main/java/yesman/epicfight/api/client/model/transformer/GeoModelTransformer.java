@@ -36,7 +36,7 @@ import software.bernie.geckolib.core.state.BoneSnapshot;
 import software.bernie.geckolib.renderer.GeoArmorRenderer;
 import software.bernie.geckolib.util.RenderUtils;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
@@ -80,7 +80,7 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@Override
-	public AnimatedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
+	public SkinnedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
 		if (!(humanoidModel instanceof GeoArmorRenderer<?> geoModel)) {
 			return null;
 		}
@@ -157,13 +157,13 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 		boxes.add(new GeoModelPartition(LEFT_FEET, leftBootBone));
 		boxes.add(new GeoModelPartition(RIGHT_FEET, rightBootBone));
 		
-		AnimatedMesh mesh = bakeMeshFromCubes(boxes);
+		SkinnedMesh mesh = bakeMeshFromCubes(boxes);
 		Meshes.addMesh(modelLocation, mesh);
 		
 		return mesh;
 	}
 	
-	private static AnimatedMesh bakeMeshFromCubes(List<GeoModelPartition> partitions) {
+	private static SkinnedMesh bakeMeshFromCubes(List<GeoModelPartition> partitions) {
 		List<SingleGroupVertexBuilder> vertices = Lists.newArrayList();
 		Map<MeshPartDefinition, IntList> indices = Maps.newHashMap();
 		PoseStack poseStack = new PoseStack();

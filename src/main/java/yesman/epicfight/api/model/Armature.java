@@ -208,7 +208,7 @@ public class Armature {
 		OpenMatrix4f localMatrixInBlender = new OpenMatrix4f(joint.getLocalTrasnform());
 		
 		if (root) {
-			localMatrixInBlender.mulFront(OpenMatrix4f.invert(JsonModelLoader.BLENDER_TO_MINECRAFT_COORD, null));
+			localMatrixInBlender.mulFront(OpenMatrix4f.invert(JsonAssetLoader.BLENDER_TO_MINECRAFT_COORD, null));
 		}
 		
 		localMatrixInBlender.transpose();

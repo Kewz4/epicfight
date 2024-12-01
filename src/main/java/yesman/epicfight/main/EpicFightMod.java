@@ -148,6 +148,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 @Mod("epicfight")
 public class EpicFightMod {
 	public static final String MODID = "epicfight";
+	public static final String EPICSKINS_MODID = "epicskins";
+	
 	public static final String CONFIG_FILE_PATH = EpicFightMod.MODID + ".toml";
 	public static final Logger LOGGER = LogManager.getLogger(MODID);
 	public static EpicFightOptions CLIENT_CONFIGS;

@@ -20,7 +20,8 @@ public class ServerAnimator extends Animator {
 	public boolean pause = false;
 	
 	public ServerAnimator(LivingEntityPatch<?> entitypatch) {
-		this.entitypatch = entitypatch;
+		super(entitypatch);
+		
 		this.linkAnimation = new LinkAnimation();
 		this.animationPlayer = new AnimationPlayer();
 	}

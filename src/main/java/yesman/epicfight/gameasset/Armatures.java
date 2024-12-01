@@ -16,7 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.model.armature.CreeperArmature;
 import yesman.epicfight.model.armature.DragonArmature;
@@ -143,7 +143,7 @@ public class Armatures {
 	@SuppressWarnings("unchecked")
 	public static <A extends Armature> A getOrCreateArmature(ResourceManager rm, ResourceLocation rl, ArmatureContructor<A> constructor) {
 		return (A) ARMATURES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
+			JsonAssetLoader jsonModelLoader = new JsonAssetLoader(rm, wrapLocation(rl));
 			return jsonModelLoader.loadArmature(constructor);
 		});
 	}

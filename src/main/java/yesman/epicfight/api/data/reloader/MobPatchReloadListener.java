@@ -42,7 +42,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.ClientEngine;
@@ -312,7 +312,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			ResourceLocation armatureLocation = new ResourceLocation(tag.getString("armature"));
 			
 			if (EpicFightMod.isPhysicalClient()) {
-				Meshes.getOrCreateAnimatedMesh(Minecraft.getInstance().getResourceManager(), modelLocation, humanoid ? AnimatedMesh::new : HumanoidMesh::new);
+				Meshes.getOrCreateSkinnedMesh(Minecraft.getInstance().getResourceManager(), modelLocation, humanoid ? SkinnedMesh::new : HumanoidMesh::new);
 			}
 			
 			Armature armature = Armatures.getOrCreateArmature(resourceManager, armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);

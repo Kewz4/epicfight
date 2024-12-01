@@ -88,9 +88,11 @@ import yesman.epicfight.api.animation.types.datapack.ClipHoldingAnimation;
 import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
 import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.ClothMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.online.OnlineAssets;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
@@ -98,9 +100,10 @@ import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
 import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.InstantiateInvoker;
 import yesman.epicfight.api.utils.ParseUtil;
+import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ColorPreviewWidget;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -152,7 +155,7 @@ public class DatapackEditScreen extends Screen {
 		return animation;
 	}
 	
-	public static Set<Map.Entry<ResourceLocation, AnimatedMesh>> getUserMeshEntries() {
+	public static Set<Map.Entry<ResourceLocation, SkinnedMesh>> getUserMeshEntries() {
 		return workingPackScreen == null ? Set.of() : workingPackScreen.userMeshes.entrySet();
 	}
 	
@@ -166,7 +169,7 @@ public class DatapackEditScreen extends Screen {
 				WeaponCapability.Builder builder = WeaponTypeReloadListener.deserializeWeaponCapabilityBuilder(entry.getKey(), entry.getValue());
 				set.add(PackEntry.ofValue(entry.getKey(), (itemstack) -> builder));
 			} catch (Exception e) {
-				e.printStackTrace();
+				EpicFightMod.LOGGER.error("Can not deserialize weapon type " + entry.getKey());
 				return set;
 			}
 			
@@ -185,7 +188,7 @@ public class DatapackEditScreen extends Screen {
 	private final DatapackEditScreen.MobCapabilityTab mobCapabilityTab;
 	
 	private final Map<ResourceLocation, PackEntry<FakeAnimation, ClipHoldingAnimation>> userAnimations = Maps.newLinkedHashMap();
-	private final BiMap<ResourceLocation, AnimatedMesh> userMeshes = HashBiMap.create();
+	private final BiMap<ResourceLocation, SkinnedMesh> userMeshes = HashBiMap.create();
 	private final BiMap<ResourceLocation, Armature> userArmatures = HashBiMap.create();
 	
 	private final TabManager tabManager = new TabManager(this::addRenderableWidget, (p_267853_) -> {
@@ -533,12 +536,12 @@ public class DatapackEditScreen extends Screen {
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
 					
 					ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
-					JsonModelLoader modelLoader = new JsonModelLoader(jsonObject, resourceLocation);
-					AnimatedMesh mesh = null;
+					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
+					SkinnedMesh mesh = null;
 					Armature armature = null;
 					
 					try {
-						mesh = modelLoader.loadAnimatedMesh(AnimatedMesh::new);
+						mesh = modelLoader.loadSkinnedMesh(SkinnedMesh::new);
 						armature = modelLoader.loadArmature(Armature::new);
 					} catch(Exception e) {
 						e.printStackTrace();
@@ -598,7 +601,7 @@ public class DatapackEditScreen extends Screen {
 						ClientAnimationDataReader.readAndApply(animation.cast(), streamSupplier.get());
 					}
 					
-					JsonModelLoader modelLoader = new JsonModelLoader(jsonObject, resourceLocation);
+					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
 					animation.setAnimationClip(modelLoader.loadAnimationClip(animation.cast().getArmature()));
 					
 					this.userAnimations.put(animation.cast().getRegistryName(), PackEntry.ofValue(animation.buildAnimation(modelLoader.getRootJson().get("animation").getAsJsonArray()), animation));
@@ -614,7 +617,7 @@ public class DatapackEditScreen extends Screen {
 	private void exportUserData(ZipOutputStream out) throws Exception {
 		Map<ResourceLocation, JsonObject> models = Maps.newHashMap();
 		
-		for (Map.Entry<ResourceLocation, AnimatedMesh> entry : this.userMeshes.entrySet()) {
+		for (Map.Entry<ResourceLocation, SkinnedMesh> entry : this.userMeshes.entrySet()) {
 			models.put(entry.getKey(), entry.getValue().toJsonObject());
 		}
 		
@@ -683,7 +686,7 @@ public class DatapackEditScreen extends Screen {
 		WeaponTypeReloadListener.clear();
 	}
 	
-	public Map<ResourceLocation, AnimatedMesh> getUserMeshes() {
+	public Map<ResourceLocation, SkinnedMesh> getUserMeshes() {
 		return this.userMeshes;
 	}
 	
@@ -804,6 +807,10 @@ public class DatapackEditScreen extends Screen {
 			
 			this.modelPreviewer = new ModelPreviewer(9, 15, 0, 140, HorizontalSizing.LEFT_RIGHT, null, Armatures.BIPED, () -> Meshes.BIPED);
 			this.modelPreviewer.setColliderJoint(Armatures.BIPED.searchJointByName("Tool_R"));
+			
+			OnlineAssets.getInstance().getCosmeticMesh(-1, "ripped_cape.json", (mesh) -> {
+				this.modelPreviewer.initCapeInfo((ClothMesh)mesh, OnlineAssets.getInstance().registerRemoteTexture("cape.png"), Armatures.BIPED.chest, new Vec3f(0.0F, 0.0F, 0.125F));
+			});
 			
 			this.inputComponentsList = new InputComponentList<>(DatapackEditScreen.this, 0, 0, 0, 0, 30) {
 				@Override
@@ -2195,7 +2202,7 @@ public class DatapackEditScreen extends Screen {
 		
 		private final Map<String, ParameterEditor> attributeEditors = Maps.newLinkedHashMap();
 		
-		private PopupBox<MeshProvider<AnimatedMesh>> meshPopupBox;
+		private PopupBox<MeshProvider<SkinnedMesh>> meshPopupBox;
 		private PopupBox<Armature> armaturePopupBox;
 		
 		public MobCapabilityTab() {

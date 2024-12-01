@@ -144,11 +144,11 @@ public class ParCoolCompat implements ICompatModule {
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					return speed;
 				});
-		
+		/**
 		BIPED_WALL_JUMP = new ActionAnimation(0.15F, 0.7F, "biped/wall_jump", biped)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.addStateRemoveOld(EntityState.TURNING_LOCKED, false);
-		
+		**/
 		BIPED_CLIMB_UP = new ActionAnimation(0.15F, "biped/climb_up", biped)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)

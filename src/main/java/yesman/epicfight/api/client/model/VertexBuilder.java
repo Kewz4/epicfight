@@ -26,8 +26,8 @@ public class VertexBuilder {
 		return vertexIndicators;
 	}
 	
-	public static List<AnimatedVertexBuilder> createAnimated(int[] drawingIndices, int[] affectingJointCount, int[] animationIndices) {
-		List<AnimatedVertexBuilder> vertexIndicators = Lists.newArrayList();
+	public static List<SkinnedMeshVertexBuilder> createAnimated(int[] drawingIndices, int[] affectingJointCount, int[] animationIndices) {
+		List<SkinnedMeshVertexBuilder> vertexIndicators = Lists.newArrayList();
 		Vector3i[] aJointId = new Vector3i[affectingJointCount.length];
 		Vector3i[] aWeights = new Vector3i[affectingJointCount.length];
 		int[] counts = new int[affectingJointCount.length];
@@ -67,7 +67,7 @@ public class VertexBuilder {
 			int position = drawingIndices[k];
 			int uv = drawingIndices[k + 1];
 			int normal = drawingIndices[k + 2];
-			AnimatedVertexBuilder vi = new AnimatedVertexBuilder(position, uv, normal, aJointId[position], aWeights[position], counts[position]);
+			SkinnedMeshVertexBuilder vi = new SkinnedMeshVertexBuilder(position, uv, normal, aJointId[position], aWeights[position], counts[position]);
 			vertexIndicators.add(vi);
 		}
 		

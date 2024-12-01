@@ -28,7 +28,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.transformer.HumanoidModelTransformer.PartTransformer;
@@ -79,7 +79,7 @@ public class SkinLayer3DTransformer extends CustomizableCube {
 		}
 	}
 	
-	public static AnimatedMesh transformMesh(AbstractClientPlayer abstractClientPlayer, CustomModelPart skinlayerModelPart, ModelPart vanillaModelPart, PlayerModelPart modelPart, List<Cube> vanillaCubes, List<CustomizableCube> cubes) {
+	public static SkinnedMesh transformMesh(AbstractClientPlayer abstractClientPlayer, CustomModelPart skinlayerModelPart, ModelPart vanillaModelPart, PlayerModelPart modelPart, List<Cube> vanillaCubes, List<CustomizableCube> cubes) {
 		List<ModelPartition> partitions = Lists.newArrayList();
 		
 		float widthScale = SkinLayersModBase.config.baseVoxelSize;
@@ -127,7 +127,7 @@ public class SkinLayer3DTransformer extends CustomizableCube {
 		return bakeMeshFromCubes(abstractClientPlayer, partitions);
 	}
 	
-	private static AnimatedMesh bakeMeshFromCubes(AbstractClientPlayer abstractClientPlayer, List<ModelPartition> partitions) {
+	private static SkinnedMesh bakeMeshFromCubes(AbstractClientPlayer abstractClientPlayer, List<ModelPartition> partitions) {
 		List<SingleGroupVertexBuilder> vertices = Lists.newArrayList();
 		Map<MeshPartDefinition, IntList> indices = Maps.newHashMap();
 		PoseStack poseStack = new PoseStack();

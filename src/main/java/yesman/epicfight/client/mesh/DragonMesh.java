@@ -5,25 +5,25 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class DragonMesh extends AnimatedMesh implements MeshProvider<DragonMesh> {
-	public final AnimatedModelPart head;
-	public final AnimatedModelPart neck;
-	public final AnimatedModelPart torso;
-	public final AnimatedModelPart leftLegFront;
-	public final AnimatedModelPart rightLegFront;
-	public final AnimatedModelPart leftLegBack;
-	public final AnimatedModelPart rightLegBack;
-	public final AnimatedModelPart leftWing;
-	public final AnimatedModelPart rightWing;
-	public final AnimatedModelPart tail;
+public class DragonMesh extends SkinnedMesh implements MeshProvider<DragonMesh> {
+	public final SkinnedMeshPart head;
+	public final SkinnedMeshPart neck;
+	public final SkinnedMeshPart torso;
+	public final SkinnedMeshPart leftLegFront;
+	public final SkinnedMeshPart rightLegFront;
+	public final SkinnedMeshPart leftLegBack;
+	public final SkinnedMeshPart rightLegBack;
+	public final SkinnedMeshPart leftWing;
+	public final SkinnedMeshPart rightWing;
+	public final SkinnedMeshPart tail;
 	
-	public DragonMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<AnimatedVertexBuilder>> parts, AnimatedMesh parent, RenderProperties properties) {
+	public DragonMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

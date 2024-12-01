@@ -1,4 +1,4 @@
-package yesman.epicfight.api.client.physics;
+package yesman.epicfight.api.client.physics.cloth;
 
 import java.util.List;
 import java.util.function.Function;

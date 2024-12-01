@@ -14,6 +14,7 @@ public record ItemSkin(TrailInfo trailInfo, boolean forceVanillaFirstPerson) {
 		JsonObject jsonObj = element.getAsJsonObject();
 		TrailInfo trailInfo = jsonObj.has("trail") ? TrailInfo.deserialize(jsonObj.get("trail")) : null;
 		boolean forceVanillaFirstPerson = jsonObj.has("force_vanilla_first_person") ? GsonHelper.getAsBoolean(jsonObj, "force_vanilla_first_person") : false;
+		
 		return new ItemSkin(trailInfo, forceVanillaFirstPerson);
 	}
 }

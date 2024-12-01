@@ -19,10 +19,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.client.gui.datapack.widgets.Grid;
 import yesman.epicfight.client.gui.datapack.widgets.ModelPreviewer;
 import yesman.epicfight.client.gui.datapack.widgets.ResizableComponent.HorizontalSizing;
@@ -38,7 +38,7 @@ public class ImportModelScreen extends Screen {
 	private final Grid meshGrid;
 	private final Grid armatureGrid;
 	private final ModelPreviewer modelPreviewer;
-	private List<PackEntry<String, AnimatedMesh>> userMeshes;
+	private List<PackEntry<String, SkinnedMesh>> userMeshes;
 	private List<PackEntry<String, Armature>> userArmatures;
 	
 	public ImportModelScreen(SelectModelScreen caller) {
@@ -89,7 +89,7 @@ public class ImportModelScreen extends Screen {
 								})
 								.build();
 		
-		for (PackEntry<String, AnimatedMesh> entry : this.userMeshes) {
+		for (PackEntry<String, SkinnedMesh> entry : this.userMeshes) {
 			this.meshGrid.addRowWithDefaultValues("mesh_name", entry.getKey());
 		}
 		
@@ -123,7 +123,7 @@ public class ImportModelScreen extends Screen {
 		this.addRenderableWidget(this.modelPreviewer);
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_OK, (button) -> {
-			Map<ResourceLocation, AnimatedMesh> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
+			Map<ResourceLocation, SkinnedMesh> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
 			Map<ResourceLocation, Armature> userArmatures = DatapackEditScreen.getCurrentScreen().getUserArmatures();
 			
 			userMeshes.clear();
@@ -179,8 +179,8 @@ public class ImportModelScreen extends Screen {
 						stream = new FileInputStream(file);
 						
 						String modelPath = modid + ":" + file.getName().replace(".json", "");
-						JsonModelLoader jsonLoader = new JsonModelLoader(stream, new ResourceLocation(modelPath));
-						AnimatedMesh mesh = jsonLoader.loadAnimatedMesh(AnimatedMesh::new);
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, new ResourceLocation(modelPath));
+						SkinnedMesh mesh = jsonLoader.loadSkinnedMesh(SkinnedMesh::new);
 						Armature armature = jsonLoader.loadArmature(Armature::new);
 						
 						this.userMeshes.add(PackEntry.ofValue(modelPath, mesh));

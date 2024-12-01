@@ -36,9 +36,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
+import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.GLConstants;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -49,7 +49,7 @@ import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder> {
+public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBuilder> {
 	protected final float[] weights;
 	private final int maxJointCount;
 	private int arrayObjectId;
@@ -60,14 +60,14 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	private VertexBuffer<Short> jointsBuffer = new VertexBuffer<> (GLConstants.GL_SHORT, 3, false, ByteBuffer::putShort);
 	private VertexBuffer<Float> weightsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
 	
-	public AnimatedMesh(@Nullable Map<String, float[]> arrayMap, @Nullable Map<MeshPartDefinition, List<AnimatedVertexBuilder>> partBuilders, @Nullable AnimatedMesh parent, RenderProperties properties) {
+	public SkinnedMesh(@Nullable Map<String, float[]> arrayMap, @Nullable Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 		
 		this.weights = parent == null ? arrayMap.get("weights") : parent.weights;
 		int maxJointId = 0;
 		
-		for (Map.Entry<String, AnimatedModelPart> entry : this.parts.entrySet()) {
-			for (AnimatedVertexBuilder vi : entry.getValue().getVertices()) {
+		for (Map.Entry<String, SkinnedMeshPart> entry : this.parts.entrySet()) {
+			for (SkinnedMeshVertexBuilder vi : entry.getValue().getVertices()) {
 				if (maxJointId < vi.joint.x) {
 					maxJointId = vi.joint.x;
 				}
@@ -90,14 +90,14 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		List<Byte> normalList = Lists.newArrayList();
 		List<Short> jointList = Lists.newArrayList();
 		List<Float> weightList = Lists.newArrayList();
-		Map<AnimatedVertexBuilder, Integer> vertexBuilderMap = Maps.newHashMap();
+		Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap = Maps.newHashMap();
 		
 		int currentBoundVao = GlStateManager._getInteger(GLConstants.GL_VERTEX_ARRAY_BINDING);
 		int currentBoundVbo = GlStateManager._getInteger(GLConstants.GL_VERTEX_ARRAY_BUFFER_BINDING);
 		
 		GlStateManager._glBindVertexArray(this.arrayObjectId);
 		
-		for (AnimatedModelPart part : this.parts.values()) {
+		for (SkinnedMeshPart part : this.parts.values()) {
 			part.createVbo(vertexBuilderMap, this.positions, this.uvs, this.normals, this.weights, positionList, uvList, normalList, jointList, weightList);
 		}
 		
@@ -144,18 +144,18 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	}
 	
 	@Override
-	protected Map<String, AnimatedModelPart> createModelPart(Map<MeshPartDefinition, List<AnimatedVertexBuilder>> partBuilders) {
-		Map<String, AnimatedModelPart> parts = Maps.newHashMap();
+	protected Map<String, SkinnedMeshPart> createModelPart(Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders) {
+		Map<String, SkinnedMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
-			parts.put(partDefinition.partName(), new AnimatedModelPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
+			parts.put(partDefinition.partName(), new SkinnedMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
 		});
 		
 		return parts;
 	}
 	
 	@Override
-	protected AnimatedModelPart getOrLogException(Map<String, AnimatedModelPart> parts, String name) {
+	protected SkinnedMeshPart getOrLogException(Map<String, SkinnedMeshPart> parts, String name) {
 		if (!parts.containsKey(name)) {
 			EpicFightMod.LOGGER.debug("Cannot find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
 			return null;
@@ -169,7 +169,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	 */
 	@Override
 	public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-		for (AnimatedModelPart part : this.parts.values()) {
+		for (SkinnedMeshPart part : this.parts.values()) {
 			part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
 	}
@@ -182,7 +182,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		Matrix4f matrix4f = poseStack.last().pose();
 		Matrix3f matrix3f = poseStack.last().normal();
 		
-		for (AnimatedModelPart part : this.parts.values()) {
+		for (SkinnedMeshPart part : this.parts.values()) {
 			if (!part.isHidden()) {
 				OpenMatrix4f transform = part.getVanillaPartTransform();
 				OpenMatrix4f[] finalPoses = new OpenMatrix4f[poses.length];
@@ -203,7 +203,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 					normalPoses[i] = finalPose.removeTranslation();
 				}
 				
-				for (AnimatedVertexBuilder vi : part.getVertices()) {
+				for (SkinnedMeshVertexBuilder vi : part.getVertices()) {
 					int pos = vi.position * 3;
 					int norm = vi.normal * 3;
 					int uv = vi.uv * 2;
@@ -345,7 +345,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		GlStateManager._glBindVertexArray(this.arrayObjectId);
 		EpicFightVertexFormatElement.bindDrawing(this);
 		
-		for (AnimatedModelPart part : this.parts.values()) {
+		for (SkinnedMeshPart part : this.parts.values()) {
 			part.drawWithShader(animationShaderInstance, armature, poses);
 		}
 		
@@ -360,17 +360,17 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class AnimatedModelPart extends ModelPart<AnimatedVertexBuilder> {
+	public class SkinnedMeshPart extends MeshPart<SkinnedMeshVertexBuilder> {
 		private int indexBufferId;
 		
-		public AnimatedModelPart(List<AnimatedVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
+		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
 			super(animatedMeshPartList, vanillaPartTracer);
 		}
 		
-		private void createVbo(Map<AnimatedVertexBuilder, Integer> vertexBuilderMap, float positions[], float uvs[], float normals[], float weights[], List<Float> position, List<Float> uv, List<Byte> normal, List<Short> joint, List<Float> weight) {
+		private void createVbo(Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap, float positions[], float uvs[], float normals[], float weights[], List<Float> position, List<Float> uv, List<Byte> normal, List<Short> joint, List<Float> weight) {
 			ByteBuffer indicesBuffer = ByteBuffer.allocateDirect(this.getVertices().size() * 4).order(ByteOrder.nativeOrder());
 			
-			for (AnimatedVertexBuilder vb : this.getVertices()) {
+			for (SkinnedMeshVertexBuilder vb : this.getVertices()) {
 				if (vertexBuilderMap.containsKey(vb)) {
 					indicesBuffer.putInt(vertexBuilderMap.get(vb));
 				} else {
@@ -411,7 +411,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 			Matrix4f matrix4f = poseStack.last().pose();
 			Matrix3f matrix3f = poseStack.last().normal();
 			
-			for (AnimatedVertexBuilder vi : this.getVertices()) {
+			for (SkinnedMeshVertexBuilder vi : this.getVertices()) {
 				int pos = vi.position * 3;
 				int norm = vi.normal * 3;
 				int uv = vi.uv * 2;
@@ -535,7 +535,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		JsonObject vertices = new JsonObject();
 		float[] positions = this.positions.clone();
 		float[] normals = this.normals.clone();
-		OpenMatrix4f correctRevert = OpenMatrix4f.invert(JsonModelLoader.BLENDER_TO_MINECRAFT_COORD, null);
+		OpenMatrix4f correctRevert = OpenMatrix4f.invert(JsonAssetLoader.BLENDER_TO_MINECRAFT_COORD, null);
 		
 		for (int i = 0; i < positions.length / 3; i++) {
 			int k = i * 3;
@@ -558,12 +558,12 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		int[] indices = new int[this.vertexCount * 3];
 		int[] vcounts = new int[positions.length / 3];
 		IntList vIndexList = new IntArrayList();
-		Int2ObjectMap<AnimatedVertexBuilder> positionMap = new Int2ObjectOpenHashMap<>();
+		Int2ObjectMap<SkinnedMeshVertexBuilder> positionMap = new Int2ObjectOpenHashMap<>();
 		int[] vIndices;
 		int i = 0;
 		
-		for (AnimatedModelPart part : this.parts.values()) {
-			for (AnimatedVertexBuilder vertexIndicator : part.getVertices()) {
+		for (SkinnedMeshPart part : this.parts.values()) {
+			for (SkinnedMeshVertexBuilder vertexIndicator : part.getVertices()) {
 				indices[i * 3] = vertexIndicator.position;
 				indices[i * 3 + 1] = vertexIndicator.uv;
 				indices[i * 3 + 2] = vertexIndicator.normal;
@@ -574,7 +574,7 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		}
 		
 		for (i = 0; i < vcounts.length; i++) {
-			AnimatedVertexBuilder vi = positionMap.get(i);
+			SkinnedMeshVertexBuilder vi = positionMap.get(i);
 			
 			switch (vcounts[i]) {
 			case 1 -> {
@@ -606,10 +606,10 @@ public class AnimatedMesh extends Mesh<AnimatedModelPart, AnimatedVertexBuilder>
 		if (!this.parts.isEmpty()) {
 			JsonObject parts = new JsonObject();
 			
-			for (Map.Entry<String, AnimatedModelPart> partEntry : this.parts.entrySet()) {
+			for (Map.Entry<String, SkinnedMeshPart> partEntry : this.parts.entrySet()) {
 				IntList indicesArray = new IntArrayList();
 				
-				for (AnimatedVertexBuilder vertexIndicator : partEntry.getValue().getVertices()) {
+				for (SkinnedMeshVertexBuilder vertexIndicator : partEntry.getValue().getVertices()) {
 					indicesArray.add(vertexIndicator.position);
 					indicesArray.add(vertexIndicator.uv);
 					indicesArray.add(vertexIndicator.normal);

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -44,19 +45,19 @@ import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
+import yesman.epicfight.api.client.model.ClassicMesh;
 import yesman.epicfight.api.client.model.ClothMesh;
-import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition;
+import yesman.epicfight.api.client.model.CompositeMesh;
+import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.Meshes.MeshContructor;
-import yesman.epicfight.api.client.model.RawMesh;
-import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.client.model.transformer.VanillaModelTransformer.VanillaMeshPartDefinition;
+import yesman.epicfight.api.exception.MeshLoadingException;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -65,14 +66,16 @@ import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.gameasset.Armatures.ArmatureContructor;
 import yesman.epicfight.main.EpicFightMod;
 
-public class JsonModelLoader {
+public class JsonAssetLoader {
 	public static final OpenMatrix4f BLENDER_TO_MINECRAFT_COORD = OpenMatrix4f.createRotatorDeg(-90.0F, Vec3f.X_AXIS);
+	
+	private final String filehash;
+	
 	private JsonObject rootJson;
 	private ResourceManager resourceManager;
 	private ResourceLocation resourceLocation;
-	private final String filehash;
 	
-	public JsonModelLoader(ResourceManager resourceManager, ResourceLocation resourceLocation) throws IllegalStateException {
+	public JsonAssetLoader(ResourceManager resourceManager, ResourceLocation resourceLocation) throws MeshLoadingException {
 		JsonReader jsonReader = null;
 		this.resourceManager = resourceManager;
 		this.resourceLocation = resourceLocation;
@@ -92,7 +95,7 @@ public class JsonModelLoader {
 				InputStream inputStream = modClass.getResourceAsStream("/assets/" + resourceLocation.getNamespace() + "/" + resourceLocation.getPath());
 				
 				if (inputStream == null) {
-					throw new NoSuchElementException("Can't find specified file in mod resource " + resourceLocation);
+					throw new MeshLoadingException("Can't find specified file in mod resource " + resourceLocation);
 				}
 				
 				BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
@@ -103,7 +106,7 @@ public class JsonModelLoader {
 				this.rootJson = Streams.parse(jsonReader).getAsJsonObject();
 			}
 		} catch (IOException e) {
-			throw new IllegalStateException("Can't read " + resourceLocation.toString() + " because of " + e);
+			throw new MeshLoadingException("Can't read " + resourceLocation.toString() + " because of " + e);
 		} finally {
 			if (jsonReader != null) {
 				try {
@@ -140,7 +143,7 @@ public class JsonModelLoader {
     }
 	
 	@OnlyIn(Dist.CLIENT)
-	public JsonModelLoader(InputStream inputstream, ResourceLocation resourceLocation) throws IOException {
+	public JsonAssetLoader(InputStream inputstream, ResourceLocation resourceLocation) throws IOException {
 		JsonReader jsonReader = null;
 		this.resourceManager = Minecraft.getInstance().getResourceManager();
 		this.resourceLocation = resourceLocation;
@@ -154,7 +157,7 @@ public class JsonModelLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public JsonModelLoader(JsonObject rootJson, ResourceLocation rl) throws IOException {
+	public JsonAssetLoader(JsonObject rootJson, ResourceLocation rl) {
 		this.resourceManager = Minecraft.getInstance().getResourceManager();
 		this.rootJson = rootJson;
 		this.resourceLocation = rl;
@@ -162,13 +165,13 @@ public class JsonModelLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public AnimatedMesh.RenderProperties getRenderProperties() {
+	public SkinnedMesh.RenderProperties getRenderProperties() {
 		if (!this.rootJson.has("render_properties")) {
 			return null;
 		}
 		
 		JsonObject properties = this.rootJson.getAsJsonObject("render_properties");
-		AnimatedMesh.RenderProperties renderProperties = AnimatedMesh.RenderProperties.create();
+		SkinnedMesh.RenderProperties renderProperties = Mesh.RenderProperties.create();
 		
 		if (properties != null) {
 			if (properties.has("transparent")) {
@@ -197,11 +200,51 @@ public class JsonModelLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public <T extends RawMesh> T loadMesh(MeshContructor<RawModelPart, VertexBuilder, T> constructor) {
+	public Mesh loadMesh() throws MeshLoadingException {
+		if (!this.rootJson.has("mesh_loader")) {
+			throw new MeshLoadingException("Composite mesh loading exception: no mesh_loader provided");
+		}
+		
+		String loader = this.rootJson.get("mesh_loader").getAsString();
+		
+		switch (loader) {
+		case "classic_mesh" -> {
+			return this.loadClassicMesh(ClassicMesh::new);
+		}
+		case "skinned_mesh" -> {
+			return this.loadSkinnedMesh(SkinnedMesh::new);
+		}
+		case "cloth_mesh" -> {
+			return this.loadClothMesh(ClothMesh::new);
+		}
+		default -> {
+			throw new MeshLoadingException("Composite mesh loading exception: Unsupported model loader: " + loader);
+		}
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public CompositeMesh loadCompositeMesh() throws MeshLoadingException {
+		if (!this.rootJson.has("meshes")) {
+			throw new MeshLoadingException("Composite mesh loading exception: lower meshes undefined");
+		}
+		
+		ImmutableMap.Builder<String, Mesh> meshesBuilder = ImmutableMap.builder();
+		
+		for (Map.Entry<String, JsonElement> entry : this.rootJson.get("meshes").getAsJsonObject().entrySet()) {
+			JsonAssetLoader jsonLoader = new JsonAssetLoader(entry.getValue().getAsJsonObject(), null);
+			meshesBuilder.put(entry.getKey(), jsonLoader.loadMesh());
+		}
+		
+		return new CompositeMesh(meshesBuilder);
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public <T extends ClassicMesh> T loadClassicMesh(MeshContructor<ClassicMesh.ClassicMeshPart, VertexBuilder, T> constructor) {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
-			T mesh = Meshes.getOrCreateRawMesh(this.resourceManager, parent, constructor);			
+			T mesh = Meshes.getOrCreateClasicMesh(this.resourceManager, parent, constructor);			
 			return constructor.invoke(null, null, mesh, this.getRenderProperties());
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
@@ -257,11 +300,11 @@ public class JsonModelLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public <T extends AnimatedMesh> T loadAnimatedMesh(MeshContructor<AnimatedModelPart, AnimatedVertexBuilder, T> constructor) {
+	public <T extends SkinnedMesh> T loadSkinnedMesh(MeshContructor<SkinnedMesh.SkinnedMeshPart, SkinnedMeshVertexBuilder, T> constructor) {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
-			T mesh = Meshes.getOrCreateAnimatedMesh(this.resourceManager, parent, constructor);			
+			T mesh = Meshes.getOrCreateSkinnedMesh(this.resourceManager, parent, constructor);			
 			return constructor.invoke(null, null, mesh, this.getRenderProperties());
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
@@ -302,7 +345,7 @@ public class JsonModelLoader {
 			int[] vcountArray = ParseUtil.toIntArray(vcounts.get("array").getAsJsonArray());
 			
 			Map<String, float[]> arrayMap = Maps.newHashMap();
-			Map<MeshPartDefinition, List<AnimatedVertexBuilder>> meshMap = Maps.newHashMap();
+			Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshMap = Maps.newHashMap();
 			
 			arrayMap.put("positions", positionArray);
 			arrayMap.put("normals", normalArray);
@@ -324,7 +367,7 @@ public class JsonModelLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public <T extends ClothMesh> T loadClothMesh(MeshContructor<ClothPart, VertexBuilder, T> constructor) {
+	public <T extends ClothMesh> T loadClothMesh(MeshContructor<ClothMesh.ClothMeshPart, VertexBuilder, T> constructor) {
 		JsonObject obj = this.rootJson.getAsJsonObject("vertices");
 		JsonObject positions = obj.getAsJsonObject("positions");
 		JsonObject normals = obj.getAsJsonObject("normals");

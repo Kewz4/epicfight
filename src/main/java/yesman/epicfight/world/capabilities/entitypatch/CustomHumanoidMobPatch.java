@@ -71,9 +71,11 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 	}
 	
 	@Override
-	public void initAnimator(Animator clientAnimator) {
+	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		for (Pair<LivingMotion, StaticAnimation> pair : this.provider.getDefaultAnimations()) {
-			clientAnimator.addLivingAnimation(pair.getFirst(), pair.getSecond());
+			animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 		}
 	}
 	

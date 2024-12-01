@@ -1,4 +1,4 @@
-package yesman.epicfight.api.client.physics;
+package yesman.epicfight.api.client.physics.cloth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,18 +23,18 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.ClothMesh;
-import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
+import yesman.epicfight.api.client.model.ClothMesh.ClothMeshPart;
 import yesman.epicfight.api.client.model.ClothMesh.ClothPartDefinition.ConstraintType;
+import yesman.epicfight.api.client.physics.AbstractSimulator;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObjectBuilder;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.model.ModelPart;
+import yesman.epicfight.api.client.model.MeshPart;
 import yesman.epicfight.api.client.model.VertexBuilder;
-import yesman.epicfight.api.client.physics.ClothSimulator.ClothObjectBuilder;
 import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.physics.SimulationObject;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -86,7 +86,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 		//Storage vectors
 		private static final Vec3f TRASNFORMED = new Vec3f();
 		
-		public ClothObject(ClothObjectBuilder builder, ClothMesh provider, Map<String, ClothPart> parts, float[] positions) {
+		public ClothObject(ClothObjectBuilder builder, ClothMesh provider, Map<String, ClothMeshPart> parts, float[] positions) {
 			this.provider = provider;
 			this.clothColliders = builder.clothColliders;
 			
@@ -98,7 +98,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			
 			ImmutableMap.Builder<String, Part> partBuilder = ImmutableMap.builder();
 			
-			for (Map.Entry<String, ClothPart> entry : parts.entrySet()) {
+			for (Map.Entry<String, ClothMeshPart> entry : parts.entrySet()) {
 				partBuilder.put(entry.getKey(), new Part(entry.getKey(), entry.getValue(), positions));
 			}
 			
@@ -120,7 +120,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 		private static final Vec3f SCALED_FORCE = new Vec3f();
 		private final Vec3f force = new Vec3f();
 		
-		public void tick(ClothSimulatable simulatableObj, Function<Float, OpenMatrix4f> clothRootTransform, Function<Float, OpenMatrix4f> colliderTransform, @Nullable OpenMatrix4f[] poses, float partialTick) {
+		public void tick(ClothSimulatable simulatableObj, Function<Float, OpenMatrix4f> clothRootTransform, Function<Float, OpenMatrix4f> colliderTransform, float partialTick) {
 			float deltaFrameTime = Minecraft.getInstance().getDeltaFrameTime();
 			float yRotO = simulatableObj.getYRotO();
 			float yRot = simulatableObj.getYRot();
@@ -159,7 +159,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			this.force.scale(1.0F - deltaFrameTime * 0.5F);
 		}
 		
-		public void draw(ClothSimulatable simulatableObj, PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
+		public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, float partialTick) {
 			this.poseNormals.forEach((poseNormals) -> poseNormals.values().forEach((vec3f) -> vec3f.set(0.0F, 0.0F, 0.0F)));
 			
 			for (Part part : this.parts.values()) {
@@ -180,7 +180,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			private static final Vector4f POSITION = new Vector4f(0.0F, 0.0F, 0.0F, 1.0F);
 			private static final Vector3f NORMAL = new Vector3f();
 			
-			Part(String name, ClothPart clothPart, float[] positions) {
+			Part(String name, ClothMeshPart clothPart, float[] positions) {
 				this.name = name;
 				this.particles = Maps.newLinkedHashMap();
 				
@@ -347,7 +347,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, ClothM
 			
 			public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 				ClothMesh originalMesh = ClothObject.this.provider;
-				ModelPart<?> modelPart = originalMesh.getPart(this.name);
+				MeshPart<?> modelPart = originalMesh.getPart(this.name);
 				
 				if (modelPart.isHidden()) {
 					return;

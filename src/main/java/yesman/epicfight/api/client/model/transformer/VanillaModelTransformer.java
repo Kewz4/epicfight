@@ -25,7 +25,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
@@ -50,7 +50,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@Override
-	public AnimatedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
+	public SkinnedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
 		List<VanillaModelPartition> boxes = Lists.newArrayList();
 		
 		//Remove entity animation
@@ -90,13 +90,13 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			boxes.add(new VanillaModelPartition(RIGHT_LEG, humanoidModel.rightLeg, "rightLeg"));
 		}
 		
-		AnimatedMesh mesh = bakeMeshFromCubes(boxes);
+		SkinnedMesh mesh = bakeMeshFromCubes(boxes);
 		Meshes.addMesh(modelLocation, mesh);
 		
 		return mesh;
 	}
 	
-	private static AnimatedMesh bakeMeshFromCubes(List<VanillaModelPartition> partitions) {
+	private static SkinnedMesh bakeMeshFromCubes(List<VanillaModelPartition> partitions) {
 		List<SingleGroupVertexBuilder> vertices = Lists.newArrayList();
 		Map<MeshPartDefinition, IntList> indices = Maps.newHashMap();
 		PoseStack poseStack = new PoseStack();

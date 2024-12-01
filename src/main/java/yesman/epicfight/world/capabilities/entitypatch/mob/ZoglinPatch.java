@@ -31,6 +31,7 @@ public class ZoglinPatch extends MobPatch<Zoglin> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.HOGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.HOGLIN_WALK);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.HOGLIN_DEATH);

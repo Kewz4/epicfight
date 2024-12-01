@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
@@ -117,8 +118,18 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		super.onConstructed(entityIn);
 		
 		this.armature = Armatures.getArmatureFor(this);
-		this.animator = EpicFightMod.getAnimator(this);
-		this.animator.init();
+		
+		Animator animator = EpicFightMod.getAnimator(this);
+		this.animator = animator;
+		
+		this.initAnimator(animator);
+		animator.postInit();
+	}
+	
+	protected void initAnimator(Animator animator) {
+		// Put default variables
+		animator.putAnimationVariable(AttackAnimation.HIT_ENTITIES, Lists.newArrayList());
+		animator.putAnimationVariable(AttackAnimation.HURT_ENTITIES, Lists.newArrayList());
 	}
 	
 	@Override
@@ -133,7 +144,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
-	public abstract void initAnimator(Animator clientAnimator);
+	/*public abstract void initAnimator(Animator animator);*/
 	public abstract void updateMotion(boolean considerInaction);
 	
 	public Armature getArmature() {

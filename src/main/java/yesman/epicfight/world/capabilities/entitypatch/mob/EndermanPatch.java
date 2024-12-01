@@ -117,6 +117,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.ENDERMAN_DEATH);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.ENDERMAN_WALK);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.ENDERMAN_IDLE);

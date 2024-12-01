@@ -112,6 +112,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		/* Living Animations */
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.BIPED_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_WALK);

@@ -51,7 +51,8 @@ public class ClientAnimator extends Animator {
 	}
 	
 	public ClientAnimator(LivingEntityPatch<?> entitypatch, Supplier<Layer.BaseLayer> layerSupplier) {
-		this.entitypatch = entitypatch;
+		super(entitypatch);
+		
 		this.currentMotion = LivingMotions.IDLE;
 		this.currentCompositeMotion = LivingMotions.IDLE;
 		this.compositeLivingAnimations = Maps.newHashMap();
@@ -135,8 +136,8 @@ public class ClientAnimator extends Animator {
 	}
 	
 	@Override
-	public void init() {
-		super.init();
+	public void postInit() {
+		super.postInit();
 		
 		this.setCurrentMotionsAsDefault();
 		

@@ -6,12 +6,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class AnimatedVertexBuilder extends VertexBuilder {
+public class SkinnedMeshVertexBuilder extends VertexBuilder {
 	public final Vector3i joint;
 	public final Vector3i weight;
 	public final int count;
 	
-	public AnimatedVertexBuilder(int position, int uv, int normal, Vector3i joint, Vector3i weight, int count) {
+	public SkinnedMeshVertexBuilder(int position, int uv, int normal, Vector3i joint, Vector3i weight, int count) {
 		super(position, uv, normal);
 		
 		this.joint = joint;
@@ -47,7 +47,7 @@ public class AnimatedVertexBuilder extends VertexBuilder {
 	
 	@Override
 	public boolean equals(Object o) {
-		if (o instanceof AnimatedVertexBuilder vb) {
+		if (o instanceof SkinnedMeshVertexBuilder vb) {
 			return this.position == vb.position && this.uv == vb.uv && this.normal == vb.normal && this.count == vb.count && this.joint.x == vb.joint.x && this.joint.y == vb.joint.y && this.joint.z == vb.joint.z
 					&& this.weight.x == vb.weight.x && this.weight.y == vb.weight.y && this.weight.z == vb.weight.z;
 		}

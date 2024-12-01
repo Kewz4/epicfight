@@ -5,21 +5,21 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class CreeperMesh extends AnimatedMesh implements MeshProvider<CreeperMesh> {
-	public final AnimatedModelPart head;
-	public final AnimatedModelPart torso;
-	public final AnimatedModelPart legRF;
-	public final AnimatedModelPart legLF;
-	public final AnimatedModelPart legRB;
-	public final AnimatedModelPart legLB;
+public class CreeperMesh extends SkinnedMesh implements MeshProvider<CreeperMesh> {
+	public final SkinnedMeshPart head;
+	public final SkinnedMeshPart torso;
+	public final SkinnedMeshPart legRF;
+	public final SkinnedMeshPart legLF;
+	public final SkinnedMeshPart legRB;
+	public final SkinnedMeshPart legLB;
 	
-	public CreeperMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<AnimatedVertexBuilder>> parts, AnimatedMesh parent, RenderProperties properties) {
+	public CreeperMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

@@ -6,6 +6,7 @@ import io.netty.util.internal.StringUtil;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,12 +29,7 @@ public class RandomChance extends EntityPatchCondition {
 	
 	@Override
 	public RandomChance read(CompoundTag tag) {
-		this.chance = tag.getFloat("chance");
-		
-		if (!tag.contains("chance")) {
-			throw new IllegalArgumentException("Random condition error: chancec not specified!");
-		}
-		
+		this.chance = this.assertTag("chance", "decimal", tag, Tag.TAG_FLOAT, CompoundTag::getFloat);
 		return this;
 	}
 	
@@ -56,6 +52,6 @@ public class RandomChance extends EntityPatchCondition {
 		ResizableEditBox editbox = new ResizableEditBox(screen.getMinecraft().font, 0, 0, 0, 0, Component.literal("chance"), null, null);
 		editbox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Double::parseDouble));
 		
-		return List.of(ParameterEditor.of((value) -> FloatTag.valueOf(Float.valueOf(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox));
+		return List.of(ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> FloatTag.valueOf(Float.parseFloat(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox));
 	}
 }

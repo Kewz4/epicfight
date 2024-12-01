@@ -18,7 +18,7 @@ import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class CustomModelParticle<M extends Mesh<?, ?>> extends Particle {
+public abstract class CustomModelParticle<M extends Mesh> extends Particle {
 	protected final MeshProvider<M> particleMeshProvider;
 	protected float pitch;
 	protected float pitchO;

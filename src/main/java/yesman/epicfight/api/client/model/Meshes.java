@@ -18,12 +18,12 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModLoader;
-import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
-import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
+import yesman.epicfight.api.client.model.ClassicMesh.ClassicMeshPart;
+import yesman.epicfight.api.client.model.ClothMesh.ClothMeshPart;
 import yesman.epicfight.api.client.model.Mesh.RenderProperties;
-import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
+import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.client.mesh.CreeperMesh;
 import yesman.epicfight.client.mesh.DragonMesh;
 import yesman.epicfight.client.mesh.EndermanMesh;
@@ -44,11 +44,11 @@ public class Meshes implements PreparableReloadListener {
 	public static final Meshes INSTANCE = new Meshes();
 	
 	@FunctionalInterface
-	public interface MeshContructor<P extends ModelPart<V>, V extends VertexBuilder, M extends Mesh<P, V>> {
+	public interface MeshContructor<P extends MeshPart<V>, V extends VertexBuilder, M extends StaticMesh<P, V>> {
 		M invoke(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<V>> parts, M parent, RenderProperties properties);
 	}
 	
-	private static final BiMap<ResourceLocation, Mesh<?, ?>> MESHES = HashBiMap.create();
+	private static final BiMap<ResourceLocation, Mesh> MESHES = HashBiMap.create();
 	
 	public static HumanoidMesh ALEX;
 	public static HumanoidMesh BIPED;
@@ -69,23 +69,24 @@ public class Meshes implements PreparableReloadListener {
 	public static DragonMesh DRAGON;
 	public static WitherMesh WITHER;
 	
-	public static AnimatedMesh HELMET;
-	public static AnimatedMesh HELMET_PIGLIN;
-	public static AnimatedMesh HELMET_VILLAGER;
-	public static AnimatedMesh CHESTPLATE;
-	public static AnimatedMesh LEGGINS;
-	public static AnimatedMesh BOOTS;
+	public static SkinnedMesh HELMET;
+	public static SkinnedMesh HELMET_PIGLIN;
+	public static SkinnedMesh HELMET_VILLAGER;
+	public static SkinnedMesh CHESTPLATE;
+	public static SkinnedMesh LEGGINS;
+	public static SkinnedMesh BOOTS;
 	
-	public static RawMesh AIR_BURST;
-	public static RawMesh FORCE_FIELD;
-	public static RawMesh LASER;
+	public static ClassicMesh AIR_BURST;
+	public static ClassicMesh FORCE_FIELD;
+	public static ClassicMesh LASER;
 	
 	public static ClothMesh CAPE;
+	public static ClothMesh RIPPED_CAPE;
 	
 	public static void build(ResourceManager resourceManager) {
 		ModelBuildEvent.MeshBuild event = new ModelBuildEvent.MeshBuild(resourceManager, MESHES);
 		
-		MESHES.values().stream().filter((mesh) -> mesh instanceof AnimatedMesh).map((mesh) -> (AnimatedMesh)mesh).forEach(AnimatedMesh::destroy);
+		MESHES.values().stream().filter((mesh) -> mesh instanceof SkinnedMesh).map((mesh) -> (SkinnedMesh)mesh).forEach(SkinnedMesh::destroy);
 		MESHES.clear();
 		WearableItemLayer.clearModels();
 		
@@ -110,62 +111,63 @@ public class Meshes implements PreparableReloadListener {
 		WITHER = event.getAnimated(EpicFightMod.MODID, "entity/wither", WitherMesh::new);
 		
 		//Particles
-		AIR_BURST = event.getRaw(EpicFightMod.MODID, "particle/air_burst", RawMesh::new);
-		FORCE_FIELD = event.getRaw(EpicFightMod.MODID, "particle/force_field", RawMesh::new);
-		LASER = event.getRaw(EpicFightMod.MODID, "particle/laser", RawMesh::new);
+		AIR_BURST = event.getRaw(EpicFightMod.MODID, "particle/air_burst", ClassicMesh::new);
+		FORCE_FIELD = event.getRaw(EpicFightMod.MODID, "particle/force_field", ClassicMesh::new);
+		LASER = event.getRaw(EpicFightMod.MODID, "particle/laser", ClassicMesh::new);
 		
 		//Armors
-		HELMET = event.getAnimated(EpicFightMod.MODID, "armor/helmet", AnimatedMesh::new);
-		HELMET_PIGLIN = event.getAnimated(EpicFightMod.MODID, "armor/piglin_helmet", AnimatedMesh::new);
-		HELMET_VILLAGER = event.getAnimated(EpicFightMod.MODID, "armor/villager_helmet", AnimatedMesh::new);
-		CHESTPLATE = event.getAnimated(EpicFightMod.MODID, "armor/chestplate", AnimatedMesh::new);
-		LEGGINS = event.getAnimated(EpicFightMod.MODID, "armor/leggins", AnimatedMesh::new);
-		BOOTS = event.getAnimated(EpicFightMod.MODID, "armor/boots", AnimatedMesh::new);
+		HELMET = event.getAnimated(EpicFightMod.MODID, "armor/helmet", SkinnedMesh::new);
+		HELMET_PIGLIN = event.getAnimated(EpicFightMod.MODID, "armor/piglin_helmet", SkinnedMesh::new);
+		HELMET_VILLAGER = event.getAnimated(EpicFightMod.MODID, "armor/villager_helmet", SkinnedMesh::new);
+		CHESTPLATE = event.getAnimated(EpicFightMod.MODID, "armor/chestplate", SkinnedMesh::new);
+		LEGGINS = event.getAnimated(EpicFightMod.MODID, "armor/leggins", SkinnedMesh::new);
+		BOOTS = event.getAnimated(EpicFightMod.MODID, "armor/boots", SkinnedMesh::new);
 		
 		//Cloth
 		CAPE = event.getCloth(EpicFightMod.MODID, "layer/cape", ClothMesh::new);
+		RIPPED_CAPE = (ClothMesh) new JsonAssetLoader(resourceManager, wrapLocation(new ResourceLocation(EpicFightMod.MODID, "layer/ripped_cape"))).loadMesh();
 		
 		ModLoader.get().postEvent(event);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends RawMesh> M getOrCreateRawMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<RawModelPart, VertexBuilder, M> constructor) {
+	public static <M extends ClassicMesh> M getOrCreateClasicMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<ClassicMeshPart, VertexBuilder, M> constructor) {
 		return (M) MESHES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
-			return jsonModelLoader.loadMesh(constructor);
+			JsonAssetLoader jsonModelLoader = new JsonAssetLoader(rm, wrapLocation(rl));
+			return jsonModelLoader.loadClassicMesh(constructor);
 		});
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends AnimatedMesh> M getOrCreateAnimatedMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<AnimatedModelPart, AnimatedVertexBuilder, M> constructor) {
+	public static <M extends SkinnedMesh> M getOrCreateSkinnedMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<SkinnedMeshPart, SkinnedMeshVertexBuilder, M> constructor) {
 		return (M) MESHES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
-			return jsonModelLoader.loadAnimatedMesh(constructor);
+			JsonAssetLoader jsonModelLoader = new JsonAssetLoader(rm, wrapLocation(rl));
+			return jsonModelLoader.loadSkinnedMesh(constructor);
 		});
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends ClothMesh> M getOrCreateClothMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<ClothPart, VertexBuilder, M> constructor) {
+	public static <M extends ClothMesh> M getOrCreateClothMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<ClothMeshPart, VertexBuilder, M> constructor) {
 		return (M) MESHES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
+			JsonAssetLoader jsonModelLoader = new JsonAssetLoader(rm, wrapLocation(rl));
 			return jsonModelLoader.loadClothMesh(constructor);
 		});
 	}
 	
-	public static ResourceLocation getKey(Mesh<?, ?> mesh) {
+	public static ResourceLocation getKey(Mesh mesh) {
 		return MESHES.inverse().get(mesh);
 	}
 	
-	public static Mesh<?, ?> getMeshOrNull(ResourceLocation rl) {
+	public static Mesh getMeshOrNull(ResourceLocation rl) {
 		return MESHES.get(rl);
 	}
 	
-	public static void addMesh(ResourceLocation rl, Mesh<?, ?> mesh) {
+	public static void addMesh(ResourceLocation rl, Mesh mesh) {
 		MESHES.put(rl, mesh);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends Mesh<?, ?>> Set<Pair<ResourceLocation, MeshProvider<T>>> entries(Class<T> filterInstance) {
+	public static <T extends Mesh> Set<Pair<ResourceLocation, MeshProvider<T>>> entries(Class<T> filterInstance) {
 		return MESHES.entrySet().stream().filter((entry) -> filterInstance.isAssignableFrom(entry.getValue().getClass())).map((entry) -> Pair.of(entry.getKey(), (MeshProvider<T>)() -> (T)MESHES.get(entry.getKey()))).collect(Collectors.toSet());
 	}
 	

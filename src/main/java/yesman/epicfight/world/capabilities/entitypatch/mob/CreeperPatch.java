@@ -51,6 +51,7 @@ public class CreeperPatch extends MobPatch<Creeper> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.CREEPER_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.CREEPER_WALK);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.CREEPER_DEATH);

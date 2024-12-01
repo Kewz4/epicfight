@@ -45,7 +45,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.SkinLayer3DTransformer;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.ClientEngine;
@@ -126,11 +126,11 @@ public class SkinLayer3DCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class SkinLayer3DMeshes {
-		private final Map<PlayerModelPart, AnimatedMesh> partMeshes = Maps.newHashMap();
+		private final Map<PlayerModelPart, SkinnedMesh> partMeshes = Maps.newHashMap();
 		
-		public void put(PlayerModelPart playerModelPart, AnimatedMesh animatedMesh) {
+		public void put(PlayerModelPart playerModelPart, SkinnedMesh animatedMesh) {
 			if (this.partMeshes.containsKey(playerModelPart)) {
-				AnimatedMesh oldMesh = this.partMeshes.get(playerModelPart);
+				SkinnedMesh oldMesh = this.partMeshes.get(playerModelPart);
 				
 				if (oldMesh != animatedMesh) {
 					oldMesh.destroy();
@@ -222,7 +222,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 				}
 				
 				if (this.partVisibilities.get(playerModelPart).apply(player)) {
-					AnimatedMesh mesh = skin3dlayerMeshes.partMeshes.get(playerModelPart);
+					SkinnedMesh mesh = skin3dlayerMeshes.partMeshes.get(playerModelPart);
 					
 					if (mesh != null) {
 						mesh.draw(poseStack, buffer, RenderType.entityTranslucent(player.getSkinTextureLocation(), true), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, entitypatch.getArmature(), poses);
@@ -231,7 +231,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 			}
 		}
 		
-		private static AnimatedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
+		private static SkinnedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
             CustomizableCubeListBuilder builder = new CustomizableCubeListBuilder();
 			NativeImage skinImage = SkinLayer3DMixinSkinUtil.invokeGetSkinTexture(player);
             

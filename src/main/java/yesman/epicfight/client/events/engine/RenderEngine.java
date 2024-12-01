@@ -67,7 +67,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEnderDragonEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.ItemSkin;
 import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.client.model.Meshes;
@@ -267,9 +267,9 @@ public class RenderEngine {
 			this.entityRendererCache.put(entityType, this.basicHumanoidRenderer);
 		} else if ("epicfight:custom".equals(rendererName)) {
 			if (compound.getBoolean("humanoid")) {
-				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (() -> Meshes.getOrCreateAnimatedMesh(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), HumanoidMesh::new), context, entityType));
+				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (() -> Meshes.getOrCreateSkinnedMesh(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), HumanoidMesh::new), context, entityType));
 			} else {
-				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(() -> Meshes.getOrCreateAnimatedMesh(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), AnimatedMesh::new), context));
+				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(() -> Meshes.getOrCreateSkinnedMesh(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), SkinnedMesh::new), context));
 			}
 		} else {
 			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(rendererName));

@@ -24,13 +24,12 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import yesman.epicfight.api.client.model.ClothMesh.ClothPart;
-import yesman.epicfight.api.client.physics.ClothSimulatable;
-import yesman.epicfight.api.client.physics.ClothSimulator;
-import yesman.epicfight.api.client.physics.ClothSimulator.ClothObject;
+import yesman.epicfight.api.client.model.ClothMesh.ClothMeshPart;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject;
 import yesman.epicfight.api.forgeevent.ModelBuildEvent;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationProvider;
 import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -38,7 +37,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements SimulationProvider<ClothSimulatable, ClothSimulator.ClothObject, ClothSimulator.ClothObjectBuilder> {
+public class ClothMesh extends StaticMesh<ClothMeshPart, VertexBuilder> implements SimulationProvider<ClothSimulatable, ClothSimulator.ClothObject, ClothSimulator.ClothObjectBuilder> {
 	private static final List<Pair<ClothSimulatable, ClothMesh>> TRACKING_SIMULATORS = Lists.newArrayList();
 	
 	@SubscribeEvent
@@ -48,9 +47,8 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 				continue;
 			}
 			
-			((SimulatableObject)pair.getFirst()).getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
+			pair.getFirst().getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
 				ClothMesh newMesh = (ClothMesh)Meshes.getMeshOrNull(event.getOldRegistry().inverse().get(pair.getSecond()));
-				
 				simulator.restart(pair.getSecond(), newMesh);
 			});
 		}
@@ -82,13 +80,13 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	}
 	
 	@Override
-	protected Map<String, ClothPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
-		Map<String, ClothPart> parts = Maps.newHashMap();
+	protected Map<String, ClothMeshPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
+		Map<String, ClothMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
 			ClothPartDefinition clothDefinition = (ClothPartDefinition)partDefinition;
 			
-			parts.put(partDefinition.partName(), new ClothPart(vertexBuilder, clothDefinition.constraints(), clothDefinition.constraintTypes(), clothDefinition.compliances(), clothDefinition.particles(), clothDefinition.rootDistance()));
+			parts.put(partDefinition.partName(), new ClothMeshPart(vertexBuilder, clothDefinition.constraints(), clothDefinition.constraintTypes(), clothDefinition.compliances(), clothDefinition.particles(), clothDefinition.rootDistance()));
 		});
 		
 		return parts;
@@ -96,7 +94,7 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	
 	@Override
 	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-		for (ClothPart part : this.parts.values()) {
+		for (ClothMeshPart part : this.parts.values()) {
 			part.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
 	}
@@ -107,7 +105,7 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	}
 	
 	@Override
-	protected ClothPart getOrLogException(Map<String, ClothPart> parts, String name) {
+	protected ClothMeshPart getOrLogException(Map<String, ClothMeshPart> parts, String name) {
 		if (!parts.containsKey(name)) {
 			EpicFightMod.LOGGER.debug("Can not find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
 			return null;
@@ -152,14 +150,14 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class ClothPart extends ModelPart<VertexBuilder> {
+	public class ClothMeshPart extends MeshPart<VertexBuilder> {
 		final List<int[]> constraints;
 		final ClothPartDefinition.ConstraintType[] constraintTypes;
 		final float[] compliances;
 		final int[] particles;
 		final float[] rootDistance;
 		
-		public ClothPart(List<VertexBuilder> verticies, List<int[]> constraints, ClothPartDefinition.ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance) {
+		public ClothMeshPart(List<VertexBuilder> verticies, List<int[]> constraints, ClothPartDefinition.ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance) {
 			super(verticies, null);
 			
 			this.constraints = constraints;
@@ -212,7 +210,7 @@ public class ClothMesh extends Mesh<ClothPart, VertexBuilder> implements Simulat
 				Vector4f posVec = matrix4f.transform(new Vector4f(positions[pos], positions[pos + 1], positions[pos + 2], 1.0F));
 				Vector3f normVec = matrix3f.transform(new Vector3f(normals[norm], normals[norm + 1], normals[norm + 2]));
 				
-				drawingFunction.draw(builder, posVec.x(), posVec.x(), posVec.z(), normVec.x(), normVec.y(), normVec.z(), packedLight, r, g, b, a, uvs[uv], uvs[uv + 1], overlay);
+				drawingFunction.draw(builder, posVec.x(), posVec.y(), posVec.z(), normVec.x(), normVec.y(), normVec.z(), packedLight, r, g, b, a, uvs[uv], uvs[uv + 1], overlay);
 			}
 			
 			poseStack.popPose();

@@ -30,6 +30,7 @@ public class WitchPatch extends HumanoidMobPatch<Witch> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.BIPED_DEATH);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.ILLAGER_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.ILLAGER_WALK);

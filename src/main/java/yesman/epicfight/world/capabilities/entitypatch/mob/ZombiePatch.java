@@ -46,6 +46,7 @@ public class ZombiePatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.ZOMBIE_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.ZOMBIE_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.ZOMBIE_CHASE);

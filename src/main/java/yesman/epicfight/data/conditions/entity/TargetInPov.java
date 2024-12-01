@@ -30,16 +30,8 @@ public class TargetInPov extends EntityPatchCondition {
 	
 	@Override
 	public TargetInPov read(CompoundTag tag) {
-		if (!tag.contains("min")) {
-			throw new IllegalArgumentException("TargetInPov condition error: min degree not specified!");
-		}
-		
-		if (!tag.contains("max")) {
-			throw new IllegalArgumentException("TargetInPov condition error: max degree not specified!");
-		}
-		
-		this.min = tag.getDouble("min");
-		this.max = tag.getDouble("max");
+		this.min = this.assertTag("min", "decimal", tag, Tag.TAG_DOUBLE, CompoundTag::getDouble);
+		this.max = this.assertTag("max", "decimal", tag, Tag.TAG_DOUBLE, CompoundTag::getDouble);
 		
 		return this;
 	}

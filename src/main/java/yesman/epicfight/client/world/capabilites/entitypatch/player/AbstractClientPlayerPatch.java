@@ -42,11 +42,10 @@ import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 import yesman.epicfight.api.client.model.Meshes;
-import yesman.epicfight.api.client.physics.ClothColliderPresets;
-import yesman.epicfight.api.client.physics.ClothSimulatable;
-import yesman.epicfight.api.client.physics.ClothSimulator;
+import yesman.epicfight.api.client.physics.cloth.ClothColliderPresets;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.PhysicsSimulator;
-import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -59,7 +58,7 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 
 @OnlyIn(Dist.CLIENT)
-public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements SimulatableObject, ClothSimulatable {
+public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements ClothSimulatable {
 	private Item prevHeldItem;
 	private Item prevHeldItemOffHand;
 	
@@ -461,6 +460,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		return Optional.empty();
 	}
 	
+	@Override
 	public Vec3 getAccurateCloakLocation(float partialFrame) {
 		if (partialFrame < 0.0F) {
 			partialFrame = 1.0F - partialFrame;

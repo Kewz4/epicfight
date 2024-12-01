@@ -60,6 +60,8 @@ public class CustomMobPatch<T extends PathfinderMob> extends MobPatch<T> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		for (Pair<LivingMotion, StaticAnimation> pair : this.provider.getDefaultAnimations()) {
 			animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 		}

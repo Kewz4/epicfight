@@ -3,7 +3,6 @@ package yesman.epicfight.api.animation.types;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,8 +38,9 @@ import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.ItemSkin;
 import yesman.epicfight.api.client.model.ItemSkins;
+import yesman.epicfight.api.exception.MeshLoadingException;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
@@ -93,9 +93,9 @@ public class StaticAnimation extends DynamicAnimation implements AnimationProvid
 		String fileHash;
 		
 		try {
-			JsonModelLoader jsonfile = new JsonModelLoader(AnimationManager.getAnimationResourceManager(), this.resourceLocation);
+			JsonAssetLoader jsonfile = new JsonAssetLoader(AnimationManager.getAnimationResourceManager(), this.resourceLocation);
 			fileHash = jsonfile.getFileHash();
-		} catch (NoSuchElementException e) {
+		} catch (MeshLoadingException e) {
 			fileHash = StringUtil.EMPTY_STRING;
 		}
 		
@@ -122,9 +122,9 @@ public class StaticAnimation extends DynamicAnimation implements AnimationProvid
 			String fileHash;
 			
 			try {
-				JsonModelLoader jsonfile = new JsonModelLoader(AnimationManager.getAnimationResourceManager(), this.resourceLocation);
+				JsonAssetLoader jsonfile = new JsonAssetLoader(AnimationManager.getAnimationResourceManager(), this.resourceLocation);
 				fileHash = jsonfile.getFileHash();
-			} catch (NoSuchElementException e) {
+			} catch (MeshLoadingException e) {
 				fileHash = StringUtil.EMPTY_STRING;
 			}
 			
@@ -144,12 +144,12 @@ public class StaticAnimation extends DynamicAnimation implements AnimationProvid
 	}
 	
 	public static void loadClip(ResourceManager resourceManager, StaticAnimation animation) throws Exception {
-		JsonModelLoader modelLoader = (new JsonModelLoader(resourceManager, animation.resourceLocation));
+		JsonAssetLoader modelLoader = (new JsonAssetLoader(resourceManager, animation.resourceLocation));
 		AnimationManager.getInstance().loadAnimationClip(animation, modelLoader::loadClipForAnimation);
 	}
 	
 	public static void loadAllJointsClip(ResourceManager resourceManager, StaticAnimation animation) throws Exception {
-		JsonModelLoader modelLoader = (new JsonModelLoader(resourceManager, animation.resourceLocation));
+		JsonAssetLoader modelLoader = (new JsonAssetLoader(resourceManager, animation.resourceLocation));
 		AnimationManager.getInstance().loadAnimationClip(animation, modelLoader::loadAllJointsClipForAnimation);
 	}
 	

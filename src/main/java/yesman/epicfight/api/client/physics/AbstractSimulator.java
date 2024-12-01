@@ -12,12 +12,12 @@ import yesman.epicfight.api.physics.SimulationObject;
 import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
 import yesman.epicfight.api.physics.SimulationProvider;
 
-public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends SimulationProvider<O, SD, B>, O, SD extends SimulationObject<B, KEY, O>> implements PhysicsSimulator<B, KEY, O, SD> {
-	protected Map<KEY, KeyWrapper> simulationObjects = Maps.newHashMap();
+public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends SimulationProvider<O, SO, B>, O, SO extends SimulationObject<B, KEY, O>> implements PhysicsSimulator<B, KEY, O, SO> {
+	protected Map<KEY, ObjectWrapper> simulationObjects = Maps.newHashMap();
 	
 	@Override
 	public void tick(O simObject) {
-		for (KeyWrapper keyWrapper : this.simulationObjects.values()) {
+		for (ObjectWrapper keyWrapper : this.simulationObjects.values()) {
 			if (keyWrapper.isRunning()) {
 				if (!keyWrapper.runWhen.getAsBoolean()) {
 					keyWrapper.stopRunning();
@@ -41,12 +41,12 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends
 	
 	@Override
 	public void runWhen(KEY key, B builder, BooleanSupplier when) {
-		this.simulationObjects.put(key, new KeyWrapper(key, when, false, builder));
+		this.simulationObjects.put(key, new ObjectWrapper(key, when, false, builder));
 	}
 	
 	@Override
 	public void runWhenPermanent(KEY key, B builder, BooleanSupplier when) {
-		this.simulationObjects.put(key, new KeyWrapper(key, when, true, builder));
+		this.simulationObjects.put(key, new ObjectWrapper(key, when, true, builder));
 	}
 	
 	@Override
@@ -56,35 +56,35 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends
 	
 	@Override
 	public void restart(KEY key, KEY newKey) {
-		KeyWrapper kwrap = this.simulationObjects.get(key);
+		ObjectWrapper kwrap = this.simulationObjects.get(key);
 		
 		this.stop(key);
-		this.simulationObjects.put(newKey, new KeyWrapper(newKey, kwrap.runWhen, kwrap.permanent, kwrap.builder));
+		this.simulationObjects.put(newKey, new ObjectWrapper(newKey, kwrap.runWhen, kwrap.permanent, kwrap.builder));
 	}
 	
 	@Override
-	public Optional<SD> getRunningSimulationData(KEY key) {
+	public Optional<SO> getRunningSimulationData(KEY key) {
 		if (!this.simulationObjects.containsKey(key)) {
 			return Optional.empty();
 		}
 		
-		return Optional.ofNullable(this.simulationObjects.get(key).simulationData);
+		return Optional.ofNullable(this.simulationObjects.get(key).simulationObject);
 	}
 	
-	public List<SD> getRunningObjects() {
-		return this.simulationObjects.values().stream().filter((wrapper) -> wrapper.isRunning()).map((wrapper) -> wrapper.simulationData).toList();
+	public List<SO> getRunningObjects() {
+		return this.simulationObjects.values().stream().filter((wrapper) -> wrapper.isRunning()).map((wrapper) -> wrapper.simulationObject).toList();
 	}
 	
-	protected class KeyWrapper {
+	protected class ObjectWrapper {
 		final KEY key;
 		final BooleanSupplier runWhen;
 		final boolean permanent;
 		final B builder;
 		
-		SD simulationData;
+		SO simulationObject;
 		boolean isRunning;
 		
-		KeyWrapper(KEY key, BooleanSupplier runWhen, boolean permanent, B builder) {
+		ObjectWrapper(KEY key, BooleanSupplier runWhen, boolean permanent, B builder) {
 			this.key = key;
 			this.runWhen = runWhen;
 			this.permanent = permanent;
@@ -93,12 +93,12 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, KEY extends
 		
 		public void startRunning(O simObject) {
 			this.isRunning = true;
-			this.simulationData = this.key.createSimulationData(simObject, this.builder);
+			this.simulationObject = this.key.createSimulationData(simObject, this.builder);
 		}
 		
 		public void stopRunning() {
 			this.isRunning = false;
-			this.simulationData = null;
+			this.simulationObject = null;
 		}
 		
 		public boolean isRunning() {

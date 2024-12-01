@@ -103,6 +103,8 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		for (Map.Entry<LivingMotions, StaticAnimation> livingmotionEntry : this.livingMotions.entrySet()) {
 			animator.addLivingAnimation(livingmotionEntry.getKey(), livingmotionEntry.getValue());
 		}

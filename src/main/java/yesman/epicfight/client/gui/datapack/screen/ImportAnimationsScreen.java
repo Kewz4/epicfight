@@ -35,13 +35,13 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.datapack.ClipHoldingAnimation;
 import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -68,7 +68,7 @@ public class ImportAnimationsScreen extends Screen {
 	private Consumer<FakeAnimation.AnimationType> responder;
 	private Map<ResourceLocation, PackEntry<FakeAnimation, ClipHoldingAnimation>> userAnimations;
 	
-	public ImportAnimationsScreen(SelectAnimationScreen caller, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	public ImportAnimationsScreen(SelectAnimationScreen caller, Armature armature, MeshProvider<? extends Mesh> mesh) {
 		super(Component.literal("register_animation_screen"));
 		
 		this.userAnimations = DatapackEditScreen.getCurrentScreen().getUserAniamtions();
@@ -843,7 +843,7 @@ public class ImportAnimationsScreen extends Screen {
 					try {
 						File file = path.toFile();
 						stream = new FileInputStream(file);
-						JsonModelLoader jsonLoader = new JsonModelLoader(stream, new ResourceLocation(modid, file.getName()));
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, new ResourceLocation(modid, file.getName()));
 						String armatureName = this.modelPreviewer.getArmature().toString();
 						armatureName = armatureName.substring(armatureName.indexOf(":") + 1);
 						

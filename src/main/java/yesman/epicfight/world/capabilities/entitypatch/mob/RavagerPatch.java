@@ -32,6 +32,7 @@ public class RavagerPatch extends MobPatch<Ravager> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.RAVAGER_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.RAVAGER_WALK);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.RAVAGER_DEATH);

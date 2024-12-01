@@ -21,7 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -34,12 +34,12 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class EntityAfterImageParticle extends CustomModelParticle<AnimatedMesh> {
+public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	private final OpenMatrix4f[] poseMatrices;
 	private final Matrix4f modelMatrix;
 	private float alphaO;
 	
-	public EntityAfterImageParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, MeshProvider<AnimatedMesh> particleMesh, OpenMatrix4f[] matrices, Matrix4f modelMatrix) {
+	public EntityAfterImageParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, MeshProvider<SkinnedMesh> particleMesh, OpenMatrix4f[] matrices, Matrix4f modelMatrix) {
 		super(level, x, y, z, xd, yd, zd, particleMesh);
 		this.poseMatrices = matrices;
 		this.modelMatrix = modelMatrix;
@@ -114,7 +114,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<AnimatedMesh> 
 				renderer.setJointTransforms(entitypatch, armature, pose, 1.0F);
 				OpenMatrix4f[] matrices = armature.getPoseAsTransformMatrix(pose, true);
 				
-				MeshProvider<AnimatedMesh> meshProvider = ClientEngine.getInstance().renderEngine.getEntityRenderer(entitypatch.getOriginal()).getMeshProvider(entitypatch);
+				MeshProvider<SkinnedMesh> meshProvider = ClientEngine.getInstance().renderEngine.getEntityRenderer(entitypatch.getOriginal()).getMeshProvider(entitypatch);
 				EntityAfterImageParticle particle = new EntityAfterImageParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, meshProvider, matrices, poseStack.last().pose());
 				
 				return particle;

@@ -83,7 +83,7 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
 	            };
 	            
-				clothObj.tick(entitypatch, partialRootTransformProvider, partialColliderTransformProvider, poses, partialTick);
+				clothObj.tick(entitypatch, partialRootTransformProvider, partialColliderTransformProvider, partialTick);
 				
 				ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? DUMMY_CAPE_TEXTURE : entityliving.getCloakTextureLocation();
 				
@@ -105,7 +105,7 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 					poseStack.translate(-entityX, -entityY, -entityZ);
 					
 					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(capeTexture)));
-					clothObj.draw(entitypatch, poseStack, buffer, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
+					clothObj.draw(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
 					
 					poseStack.popPose();
 				}
