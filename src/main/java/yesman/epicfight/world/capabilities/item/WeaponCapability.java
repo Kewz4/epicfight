@@ -64,7 +64,7 @@ public class WeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public final List<AnimationProvider<?>> getAutoAttckMotion(PlayerPatch<?> playerpatch) {
+	public final List<AnimationProvider<?>> getAutoAttackMotion(PlayerPatch<?> playerpatch) {
 		return this.autoAttackMotions.getOrDefault(this.getStyle(playerpatch), this.autoAttackMotions.get(Styles.COMMON));
 	}
 	

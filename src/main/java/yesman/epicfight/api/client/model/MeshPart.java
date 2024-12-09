@@ -13,14 +13,16 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class MeshPart<T extends VertexBuilder> {
+public abstract class MeshPart<T extends VertexBuilder<?>> {
 	protected final List<T> verticies;
 	protected final Supplier<OpenMatrix4f> vanillaPartTracer;
+	protected final SoftBodyMesh.ClothSimulationInfo clothInfo;
 	protected boolean isHidden;
 	
-	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
+	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
 		this.verticies = vertices;
 		this.vanillaPartTracer = vanillaPartTracer;
+		this.clothInfo = clothInfo;
 	}
 	
 	public abstract void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
@@ -35,6 +37,10 @@ public abstract class MeshPart<T extends VertexBuilder> {
 	
 	public List<T> getVertices() {
 		return this.verticies;
+	}
+	
+	public SoftBodyMesh.ClothSimulationInfo getClothInfo() {
+		return this.clothInfo;
 	}
 	
 	public OpenMatrix4f getVanillaPartTransform() {

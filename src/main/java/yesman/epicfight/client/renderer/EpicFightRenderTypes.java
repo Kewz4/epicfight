@@ -44,37 +44,70 @@ import yesman.epicfight.main.EpicFightMod;
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class EpicFightRenderTypes extends RenderType {
-	private static final Function<ResourceLocation, RenderType> ENTITY_INDICATOR = Util.memoize((textureLocation) -> {
-		RenderType.CompositeState state = RenderType.CompositeState.builder()
+	private static final Function<ResourceLocation, RenderType> ENTITY_INDICATOR = Util.memoize(
+		(textureLocation) -> create( 
+			  EpicFightMod.MODID + ":entity_indicator"
+			, DefaultVertexFormat.POSITION_TEX
+			, VertexFormat.Mode.QUADS
+			, 256
+			, true
+			, false
+			, RenderType.CompositeState.builder()
 				.setShaderState(POSITION_TEX_SHADER)
 				.setTextureState(new RenderStateShard.TextureStateShard(textureLocation, false, false))
 				.setTransparencyState(NO_TRANSPARENCY)
 				.setLightmapState(NO_LIGHTMAP)
 				.setOverlayState(NO_OVERLAY)
-				.createCompositeState(true);
-		return create(EpicFightMod.MODID + ":entity_indicator", DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS, 256, true, false, state);
-	});
-	
-	private static final RenderType DEBUG_COLLIDER = create(EpicFightMod.MODID + ":debug_collider", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINE_STRIP, 256, false, false,
-			RenderType.CompositeState.builder()
-				.setShaderState(POSITION_COLOR_SHADER)
-				.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
-				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
-				.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-				.setOutputState(ITEM_ENTITY_TARGET)
-				.setWriteMaskState(COLOR_DEPTH_WRITE)
-				.setCullState(NO_CULL)
-				.createCompositeState(false)
+				.createCompositeState(true)
+		)
 	);
 	
-	private static final RenderType DEBUG_QUADS = create(EpicFightMod.MODID + ":debug_quad", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 256, false, false,
-			RenderType.CompositeState.builder()
-				.setShaderState(POSITION_COLOR_SHADER)
-				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
-				.setTransparencyState(NO_TRANSPARENCY)
-				.setWriteMaskState(COLOR_DEPTH_WRITE)
-				.setCullState(NO_CULL)
-				.createCompositeState(false)
+	private static final RenderType DEBUG_COLLIDER = create(
+		  EpicFightMod.MODID + ":debug_collider"
+		, DefaultVertexFormat.POSITION_COLOR_NORMAL
+		, VertexFormat.Mode.LINE_STRIP
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(POSITION_COLOR_SHADER)
+			.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
+			.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+			.setOutputState(ITEM_ENTITY_TARGET)
+			.setWriteMaskState(COLOR_DEPTH_WRITE)
+			.setCullState(NO_CULL)
+			.createCompositeState(false)
+	);
+	
+	private static final RenderType DEBUG_QUADS = create(
+		  EpicFightMod.MODID + ":debug_quad"
+		, DefaultVertexFormat.POSITION_COLOR
+		, VertexFormat.Mode.QUADS
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(POSITION_COLOR_SHADER)
+			.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.setTransparencyState(NO_TRANSPARENCY)
+			.setWriteMaskState(COLOR_DEPTH_WRITE)
+			.setCullState(NO_CULL)
+			.createCompositeState(false)
+	);
+	
+	private static final RenderType GUI_TRIANGLE = create(
+		  EpicFightMod.MODID + ":gui_triangle"
+		, DefaultVertexFormat.POSITION_COLOR
+		, VertexFormat.Mode.TRIANGLES
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(RENDERTYPE_GUI_SHADER)
+			.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+			.setDepthTestState(LEQUAL_DEPTH_TEST)
+			.createCompositeState(false)
 	);
 	
 	private static final Function<RenderType, RenderType> TRIANGULATED_RENDER_TYPES = Util.memoize((renderType$1) -> {
@@ -99,6 +132,10 @@ public class EpicFightRenderTypes extends RenderType {
 	
 	public static RenderType debugQuads() {
 		return DEBUG_QUADS;
+	}
+	
+	public static RenderType guiTriangle() {
+		return GUI_TRIANGLE;
 	}
 	
 	private static Map<ResourceLocation, Resource> SHADER_LIBS;

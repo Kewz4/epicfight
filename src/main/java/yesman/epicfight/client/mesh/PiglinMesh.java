@@ -13,7 +13,7 @@ import yesman.epicfight.api.client.model.Meshes;
 
 @OnlyIn(Dist.CLIENT)
 public class PiglinMesh extends HumanoidMesh {
-	public PiglinMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public PiglinMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 	}
 	

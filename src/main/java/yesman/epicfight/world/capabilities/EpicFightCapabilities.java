@@ -19,7 +19,7 @@ public class EpicFightCapabilities {
     public static final Capability<CapabilityItem> CAPABILITY_ITEM = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<ProjectilePatch> CAPABILITY_PROJECTILE = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<CapabilitySkill> CAPABILITY_SKILL = CapabilityManager.get(new CapabilityToken<>(){});
-	
+    
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.register(CapabilityItem.class);
 		event.register(EntityPatch.class);

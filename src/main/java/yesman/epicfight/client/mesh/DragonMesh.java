@@ -23,7 +23,7 @@ public class DragonMesh extends SkinnedMesh implements MeshProvider<DragonMesh> 
 	public final SkinnedMeshPart rightWing;
 	public final SkinnedMeshPart tail;
 	
-	public DragonMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public DragonMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

@@ -20,7 +20,7 @@ public class IronGolemMesh extends SkinnedMesh implements MeshProvider<IronGolem
 	public final SkinnedMeshPart leftLeg;
 	public final SkinnedMeshPart rightLeg;
 	
-	public IronGolemMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public IronGolemMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

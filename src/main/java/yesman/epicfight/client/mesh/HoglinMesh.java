@@ -19,7 +19,7 @@ public class HoglinMesh extends SkinnedMesh implements MeshProvider<HoglinMesh> 
 	public final SkinnedMeshPart leftBackLeg;
 	public final SkinnedMeshPart rightBackLeg;
 	
-	public HoglinMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public HoglinMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

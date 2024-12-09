@@ -125,25 +125,27 @@ public class SingleGroupVertexBuilder {
 			}
 		}
 		
-		float[] positionList = positions.toFloatArray();
-		float[] normalList = normals.toFloatArray();
-		float[] texCoordList = texCoords.toFloatArray();
-		int[] animationIndexList = animationIndices.toIntArray();
-		float[] jointWeightList = jointWeights.toFloatArray();
-		int[] affectJointCounts = affectCountList.toIntArray();
-		Map<String, float[]> arrayMap = Maps.newHashMap();
-		Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshMap = Maps.newHashMap();
+		Float[] positionList = positions.toArray(new Float[0]);
+		Float[] normalList = normals.toArray(new Float[0]);
+		Float[] texCoordList = texCoords.toArray(new Float[0]);
+		Integer[] affectingJointIndices = animationIndices.toArray(new Integer[0]);
+		Float[] jointWeightList = jointWeights.toArray(new Float[0]);
+		Integer[] affectJointCounts = affectCountList.toArray(new Integer[0]);
+		Map<String, Number[]> arrayMap = Maps.newHashMap();
+		Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshDefinitions = Maps.newHashMap();
 		
 		arrayMap.put("positions", positionList);
 		arrayMap.put("normals", normalList);
 		arrayMap.put("uvs", texCoordList);
 		arrayMap.put("weights", jointWeightList);
+		arrayMap.put("vcounts", affectJointCounts);
+		arrayMap.put("vindices", affectingJointIndices);
 		
 		for (Map.Entry<MeshPartDefinition, IntList> e : indices.entrySet()) {
-			meshMap.put(e.getKey(), VertexBuilder.createAnimated(e.getValue().toIntArray(), affectJointCounts, animationIndexList));
+			meshDefinitions.put(e.getKey(), SkinnedMeshVertexBuilder.create(e.getValue().toIntArray()));
 		}
 		
-		return new SkinnedMesh(arrayMap, meshMap, null, Mesh.RenderProperties.create());
+		return new SkinnedMesh(arrayMap, meshDefinitions, null, Mesh.RenderProperties.create());
 	}
 	
 	public enum State {

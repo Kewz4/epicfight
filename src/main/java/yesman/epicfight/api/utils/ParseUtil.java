@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -34,7 +35,27 @@ import net.minecraftforge.registries.IForgeRegistry;
 import yesman.epicfight.api.utils.math.Vec3f;
 
 public class ParseUtil {
-	public static int[] toIntArray(JsonArray array) {
+	public static Integer[] toIntArray(JsonArray array) {
+		List<Integer> result = Lists.newArrayList();
+		
+		for (JsonElement je : array) {
+			result.add(je.getAsInt());
+		}
+		
+		return result.toArray(new Integer[0]);
+	}
+	
+	public static Float[] toFloatArray(JsonArray array) {
+		List<Float> result = Lists.newArrayList();
+		
+		for (JsonElement je : array) {
+			result.add(je.getAsFloat());
+		}
+		
+		return result.toArray(new Float[0]);
+	}
+	
+	public static int[] toIntArrayPrimitive(JsonArray array) {
 		IntList result = new IntArrayList();
 		
 		for (JsonElement je : array) {
@@ -44,7 +65,7 @@ public class ParseUtil {
 		return result.toIntArray();
 	}
 	
-	public static float[] toFloatArray(JsonArray array) {
+	public static float[] toFloatArrayPrimitive(JsonArray array) {
 		FloatList result = new FloatArrayList();
 		
 		for (JsonElement je : array) {
@@ -54,7 +75,27 @@ public class ParseUtil {
 		return result.toFloatArray();
 	}
 	
-	public static JsonObject arrayToJsonObject(float[] array, int stride) {
+	public static int[] unwrapIntWrapperArray(Number[] wrapperArray) {
+		int[] iarray = new int[wrapperArray.length];
+		
+		for (int i = 0; i < wrapperArray.length; i++) {
+			iarray[i] = (int)wrapperArray[i];
+		}
+		
+		return iarray;
+	}
+	
+	public static float[] unwrapFloatWrapperArray(Number[] wrapperArray) {
+		float[] farray = new float[wrapperArray.length];
+		
+		for (int i = 0; i < wrapperArray.length; i++) {
+			farray[i] = (float)wrapperArray[i];
+		}
+		
+		return farray;
+	}
+	
+	public static JsonObject farrayToJsonObject(float[] array, int stride) {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("stride", stride);
 		jsonObject.addProperty("count", array.length / stride);
@@ -69,7 +110,7 @@ public class ParseUtil {
 		return jsonObject;
 	}
 	
-	public static JsonObject arrayToJsonObject(int[] array, int stride) {
+	public static JsonObject iarrayToJsonObject(int[] array, int stride) {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("stride", stride);
 		jsonObject.addProperty("count", array.length / stride);
@@ -85,7 +126,7 @@ public class ParseUtil {
 	}
 	
 	public static Vec3f toVector3f(JsonArray array) {
-		float[] result = toFloatArray(array);
+		float[] result = toFloatArrayPrimitive(array);
 		
 		if (result.length < 3) {
 			throw new IllegalArgumentException("Requires more than 3 elements to convert into 3d vector.");

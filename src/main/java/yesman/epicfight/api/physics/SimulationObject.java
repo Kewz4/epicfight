@@ -2,8 +2,8 @@ package yesman.epicfight.api.physics;
 
 import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
 
-public interface SimulationObject<B extends SimulationBuilder, SP extends SimulationProvider<O, ?, B>, O> {
-	SP getProvider();
+public interface SimulationObject<B extends SimulationBuilder, PV extends SimulationProvider<O, ?, B, PV>, O> {
+	PV getProvider();
 	void tick(O simulatable);
 	
 	public static abstract class SimulationBuilder {

@@ -22,19 +22,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
-import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer>  {
-	public static final ResourceLocation DUMMY_CAPE_TEXTURE = new ResourceLocation(EpicFightMod.MODID, "textures/entity/cape.png");
+public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer> {
+	public static final ResourceLocation DUMMY_CLOAK_TEXTURE = new ResourceLocation(EpicFightMod.MODID, "textures/entity/cloak.png");
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -45,51 +44,19 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 		}
 		
 		entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
-			simulator.getRunningSimulationData(Meshes.CAPE).ifPresent((clothObj) -> {
-	            Function<Float, OpenMatrix4f> partialRootTransformProvider = (partialFrame) -> {
-		            Vec3 pos = entitypatch.getAccuratePartialLocation(partialFrame);
-		            Vec3 cloakPos = entitypatch.getAccurateCloakLocation(partialFrame);
-		            
-		            float f = Mth.rotLerp(partialFrame, entitypatch.getYRotO(), entitypatch.getYRot());
-		            double d3 = (double)Mth.sin(f * ((float)Math.PI / 180F));
-		            double d4 = (double)(-Mth.cos(f * ((float)Math.PI / 180F)));
-		            float f1 = (float)cloakPos.y * 10.0F;
-		            f1 = Mth.clamp(f1, -6.0F, 32.0F);
-		            float f2 = (float)(cloakPos.x * d3 + cloakPos.z * d4) * 100.0F;
-		            f2 = Mth.clamp(f2, 0.0F, 150.0F);
-		            float f3 = (float)(cloakPos.x * d4 - cloakPos.z * d3) * 100.0F;
-		            f3 = Mth.clamp(f3, -20.0F, 20.0F);
-		            
-		            if (f2 < 0.0F) {
-		            	f2 = 0.0F;
-		            }
-		            
-		            float f4 = Mth.lerp(partialFrame, entitypatch.getOriginal().oBob, entitypatch.getOriginal().bob);
-		            f1 += Mth.sin(Mth.lerp(partialFrame, entitypatch.getOriginal().walkDistO, entitypatch.getOriginal().walkDist) * 6.0F) * 32.0F * f4;
-					
-					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z)
-									   .rotateDeg(180.0F - f, Vec3f.Y_AXIS)
-									   .mulBack(poses[Armatures.BIPED.chest.getId()])
-									   .mulBack(Armatures.BIPED.chest.getLocalTrasnform())
-									   .translate(0.0F, 0.0F, 0.125F)
-									   .rotateDeg(-(6.0F + f2 / 2.0F + f1), Vec3f.X_AXIS)
-									   .rotateDeg(f3 / 2.0F, Vec3f.Y_AXIS);
-	            };
-	            
+			simulator.getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent((clothObj) -> {
 	            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
 					Vec3 pos = entitypatch.getAccuratePartialLocation(partialFrame);
 					float yRotLerp = entitypatch.getAccurateYRot(partialFrame);
+					float scale = entitypatch.getScale();
 					
-					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
+					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS).scale(scale, scale, scale);
 	            };
 	            
-				clothObj.tick(entitypatch, partialRootTransformProvider, partialColliderTransformProvider, partialTick);
+				clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
+				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture() : entityliving.getCloakTextureLocation();
 				
-				ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? DUMMY_CAPE_TEXTURE : entityliving.getCloakTextureLocation();
-				
-				if (capeTexture != null) {
-					poseStack.pushPose();
-					
+				if (cloakTexture != null) {
 					double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
 					double entityY = Mth.lerp((double)partialTick, entityliving.yOld, entityliving.getY());
 					double entityZ = Mth.lerp((double)partialTick, entityliving.zOld, entityliving.getZ());
@@ -100,12 +67,19 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 					Matrix4f lastpose = posestack$2.last().pose();
 					Matrix4f inverted = posestack$2.last().pose().invert();
 					
+					poseStack.pushPose();
 					poseStack.mulPoseMatrix(inverted);
 					poseStack.translate(-lastpose.m30(), -lastpose.m31(), -lastpose.m32());
 					poseStack.translate(-entityX, -entityY, -entityZ);
 					
-					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(capeTexture)));
-					clothObj.draw(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTick);
+					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(cloakTexture)));
+					
+					if (entitypatch.isEpicSkinsLoaded()) {
+						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, entitypatch.getEpicSkinsInformation().r(), entitypatch.getEpicSkinsInformation().g(), entitypatch.getEpicSkinsInformation().b(),
+											1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+					} else {
+						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+					}
 					
 					poseStack.popPose();
 				}

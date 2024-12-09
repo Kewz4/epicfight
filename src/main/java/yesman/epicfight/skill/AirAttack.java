@@ -29,7 +29,7 @@ public class AirAttack extends Skill {
 	
 	@Override
 	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		List<AnimationProvider<?>> motions = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttckMotion(executer);
+		List<AnimationProvider<?>> motions = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(executer);
 		StaticAnimation attackMotion = motions.get(motions.size() - 1).get();
 		
 		if (attackMotion != null) {

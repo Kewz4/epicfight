@@ -14,7 +14,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
 import yesman.epicfight.client.ClientEngine;
-import yesman.epicfight.client.gui.widgets.ColorWidget;
+import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.client.gui.widgets.EpicFightOptionList;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.config.EpicFightOptions;
@@ -41,14 +41,13 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		BooleanOptionHandler showTargetIndicator = this.config.showTargetIndicator;
 		BooleanOptionHandler filterAnimation = this.config.filterAnimation;
 		BooleanOptionHandler enableAimHelper = this.config.enableAimHelperPointer;
-		OptionHandler<Double> aimHelperColor = this.config.aimHelperColor;
+		OptionHandler<Double> aimHelperColor = this.config.aimHelperWidgetPosition;
 		BooleanOptionHandler bloodEffects = this.config.bloodEffects;
 		BooleanOptionHandler aimingCorrection = this.config.aimingCorrection;
 		BooleanOptionHandler showEpicFightAttributes = this.config.showEpicFightAttributes;
 		IntegerOptionHandler maxHitProjectiles = this.config.maxStuckProjectiles;
 		BooleanOptionHandler useAnimationShader = this.config.useAnimationShader;
 		BooleanOptionHandler firstPersonModel = this.config.firstPersonModel;
-		BooleanOptionHandler enableDummyCape = this.config.enableDummyCape;
 		
 		int buttonHeight = -32;
 		
@@ -144,18 +143,11 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		this.optionsList.addSmall(firstPersonModelButton, useAnimationShaderButton);
 		
-		buttonHeight += 24;
-		
-		Button enableDummyCapeButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape." + (enableDummyCape.getValue() ? "on" : "off")), (button) -> {
-			enableDummyCape.setValue(!enableDummyCape.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape." + (enableDummyCape.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".enable_dummy_cape.tooltip"))).build();
-		
-		this.optionsList.addSmall(enableDummyCapeButton, null);
-		
 		buttonHeight += 30;
 		
-		this.optionsList.addBig(new ColorWidget(this.width / 2 - 150, this.height / 4 + buttonHeight, 300, 20, Component.translatable("gui."+EpicFightMod.MODID+".aim_helper_color"), aimHelperColor.getValue(), EpicFightMod.CLIENT_CONFIGS.aimHelperColor));
+		this.optionsList.addBig(new ColorSlider(this.font, this.width / 2 - 150, this.height / 4 + buttonHeight, 300, 20, Component.translatable("gui."+EpicFightMod.MODID+".aim_helper_color"),
+												ColorSlider.Style.CLASSIC, aimHelperColor.getValue(), (position, color) -> EpicFightMod.CLIENT_CONFIGS.aimHelperWidgetPosition.setValue(position)));
+		
 		this.addWidget(this.optionsList);
 	}
 	

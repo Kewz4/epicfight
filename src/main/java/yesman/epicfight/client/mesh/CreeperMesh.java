@@ -19,7 +19,7 @@ public class CreeperMesh extends SkinnedMesh implements MeshProvider<CreeperMesh
 	public final SkinnedMeshPart legRB;
 	public final SkinnedMeshPart legLB;
 	
-	public CreeperMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public CreeperMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

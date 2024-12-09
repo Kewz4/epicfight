@@ -34,7 +34,9 @@ import yesman.epicfight.world.level.block.FractureBlockState;
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT)
 public class ClientEvents {
 	private static final Pair<ResourceLocation, ResourceLocation> OFFHAND_TEXTURE = Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
-	private static final Minecraft minecraft = Minecraft.getInstance();
+	private static final Minecraft MINECRAFT = Minecraft.getInstance();
+	
+	private ClientEvents() {}
 	
 	@SubscribeEvent
 	public static void mouseClickEvent(ScreenEvent.MouseButtonPressed.Pre event) {
@@ -42,7 +44,7 @@ public class ClientEvents {
 			Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 			
 			if (slot != null) {
-				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(minecraft.player.containerMenu.getCarried());
+				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.containerMenu.getCarried());
 				
 				if (!cap.canBePlacedOffhand()) {
 					if (slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
@@ -59,7 +61,7 @@ public class ClientEvents {
 			Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 			
 			if (slot != null) {
-				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(minecraft.player.containerMenu.getCarried());
+				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.containerMenu.getCarried());
 				
 				if (!cap.canBePlacedOffhand()) {
 					if (slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
@@ -74,7 +76,7 @@ public class ClientEvents {
 	public static void presssKeyInGui(ScreenEvent.KeyPressed.Pre event) {
 		CapabilityItem itemCapability = CapabilityItem.EMPTY;
 		
-		if (event.getKeyCode() == minecraft.options.keySwapOffhand.getKey().getValue()) {
+		if (event.getKeyCode() == MINECRAFT.options.keySwapOffhand.getKey().getValue()) {
 			if (event.getScreen() instanceof AbstractContainerScreen) {
 				Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 				
@@ -91,7 +93,7 @@ public class ClientEvents {
 				Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 				
 				if (slot != null && slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
-					itemCapability = EpicFightCapabilities.getItemStackCapability(minecraft.player.getInventory().getItem(event.getKeyCode() - 49));
+					itemCapability = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.getInventory().getItem(event.getKeyCode() - 49));
 					
 					if (!itemCapability.canBePlacedOffhand()) {
 						event.setCanceled(true);

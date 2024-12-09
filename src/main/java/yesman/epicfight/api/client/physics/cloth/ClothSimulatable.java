@@ -22,4 +22,5 @@ public interface ClothSimulatable extends SimulatableObject {
 	public Vec3 getAccuratePartialLocation(float partialFrame);
 	public float getAccurateYRot(float partialFrame);
 	public float getYRotDelta(float partialFrame);
+	public float getScale();
 }

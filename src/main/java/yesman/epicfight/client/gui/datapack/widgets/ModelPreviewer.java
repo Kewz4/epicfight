@@ -71,9 +71,9 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.ClothMesh;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.SoftBodyMesh;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.collider.Collider;
@@ -128,10 +128,10 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	private boolean cameraRotationEnabled = true;
 	private boolean zoomingCameraEnabled = true;
 	
-	private Joint capeJoint;
-	private Vec3f capeLocation;
-	private ClothMesh capeMesh;
-	private ResourceLocation capeTexture;
+	private ClothSimulator clothSimulator;
+	private SoftBodyMesh cloakMesh;
+	private ResourceLocation cloakTexture;
+	private Vec3f cloakColor = new Vec3f(1.0F, 1.0F, 1.0F);
 	
 	public ModelPreviewer(int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Armature armature, MeshProvider<? extends Mesh> mesh) {
 		super(x1, y1, x2, y2, Component.literal(""));
@@ -166,13 +166,52 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.figureTexture = texture;
 	}
 	
-	public void initCapeInfo(ClothMesh capeMesh, ResourceLocation capeTexture, Joint capeJoint, Vec3f capeLocation) {
-		this.capeMesh = capeMesh;
-		this.capeTexture = capeTexture;
-		this.capeJoint = capeJoint;
-		this.capeLocation = capeLocation;
-		this.entitypatch.clothSimulator = new ClothSimulator();
-		this.entitypatch.clothSimulator.runWhenPermanent(capeMesh, ClothSimulator.ClothObjectBuilder.create(), () -> true);
+	public void initCloakInfo(SoftBodyMesh cloakMesh, ResourceLocation cloakTexture, ClothSimulator.ClothObjectBuilder builder) {
+		this.cloakMesh = cloakMesh;
+		this.cloakTexture = cloakTexture;
+		
+		if (builder != null) {
+			this.clothSimulator = new ClothSimulator();
+			this.clothSimulator.runWhenPermanent(ClothSimulator.MODELPREVIEWER_CLOAK, cloakMesh, builder, () -> true);
+		}
+	}
+	
+	public void removeCloak() {
+		if (this.clothSimulator != null) {
+			this.clothSimulator.stop(ClothSimulator.MODELPREVIEWER_CLOAK);
+			this.clothSimulator = null;
+		}
+		
+		this.cloakMesh = null;
+		this.cloakTexture = null;
+	}
+	
+	public void setCloakColor(int colorCode) {
+		float b = (colorCode & 255) / 255.0F;
+		float g = ((colorCode & 65280) >> 8) / 255.0F;
+		float r = ((colorCode & 16711680) >> 16) / 255.0F;
+		
+		this.cloakColor = new Vec3f(r, g, b);
+	}
+	
+	public void setCloakColor(float r, float g, float b) {
+		this.cloakColor = new Vec3f(r, g, b);
+	}
+	
+	public Vec3f getCloakColor() {
+		return this.cloakColor;
+	}
+	
+	public SoftBodyMesh getCloakMesh() {
+		return this.cloakMesh;
+	}
+	
+	public void setCloakTexture(ResourceLocation cloakTexture) {
+		this.cloakTexture = cloakTexture;
+	}
+	
+	public ResourceLocation getCloakTexture() {
+		return this.cloakTexture;
 	}
 	
 	public Armature getArmature() {
@@ -299,8 +338,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.trailParticles.forEach((trail) -> trail.tick());
 		this.trailParticles.removeIf((trail) -> !trail.isAlive());
 		
-		if (this.entitypatch != null && this.entitypatch.clothSimulator != null) {
-			this.entitypatch.clothSimulator.tick(this.entitypatch);
+		if (this.entitypatch != null && this.clothSimulator != null) {
+			this.clothSimulator.tick(this.entitypatch);
 		}
 	}
 	
@@ -344,7 +383,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		if (this.isMouseOver(mouseX, mouseY)) {
 			if (button == 0) {
 				if (this.cameraRotationEnabled) {
-					this.xRot = (float)Mth.clamp(this.xRot + dy * 2.5D, -45.0D, 80.0D);
+					this.xRot = (float)Mth.clamp(this.xRot + dy * 2.5D, -30.0D, 45.0D);
 					this.yRot += dx * 2.5D;
 				}
 			} else if (button == 2) {
@@ -487,49 +526,41 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 		}
 		
-		if (this.capeMesh != null && this.capeTexture != null) {
+		if (this.cloakMesh != null && this.cloakTexture != null) {
 			TextureManager textureManager = Minecraft.getInstance().textureManager;
-			AbstractTexture texture = textureManager.getTexture(this.capeTexture);
+			AbstractTexture texture = textureManager.getTexture(this.cloakTexture);
 			
 			if (texture != MissingTextureAtlasSprite.getTexture()) {
-				this.capeMesh.initialize();
+				this.cloakMesh.getAsMesh().initialize();
 				
-				if (this.animator != null && this.entitypatch.clothSimulator != null) {
-					
-					//System.out.println(this.entitypatch.clothSimulator.getRunningSimulationData(this.capeMesh));
-					
-					this.entitypatch.clothSimulator.getRunningSimulationData(this.capeMesh).ifPresent((clothObj) -> {
-			            Function<Float, OpenMatrix4f> partialRootTransformProvider = (partialFrame) -> {
-				            float f = Mth.rotLerp(partialFrame, this.entitypatch.getYRotO(), this.entitypatch.getYRot());
-				            OpenMatrix4f[] poses = this.getArmature().getPoseMatrices();
-				            
-							return new OpenMatrix4f()
-									   .rotateDeg(180.0F - f, Vec3f.Y_AXIS)
-									   .mulBack(poses[this.capeJoint.getId()])
-									   .mulBack(this.capeJoint.getLocalTrasnform())
-									   .translate(this.capeLocation);
-			            };
-			            
+				if (this.animator != null && this.entitypatch != null && this.clothSimulator != null) {
+					this.clothSimulator.getRunningObject(ClothSimulator.MODELPREVIEWER_CLOAK).ifPresent((clothObj) -> {
 			            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
 							Vec3 pos = this.entitypatch.getAccuratePartialLocation(partialFrame);
 							float yRotLerp = this.entitypatch.getAccurateYRot(partialFrame);
-							
 							return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
 			            };
 			            
-						clothObj.tick(this.entitypatch, partialRootTransformProvider, partialColliderTransformProvider, partialTicks);
-						
+			            Pose pose = this.animator.getPose(partialTicks);
+			            this.getArmature().setPose(pose);
+			            
+						clothObj.tick(this.entitypatch, partialColliderTransformProvider, partialTicks, this.getArmature(), this.getArmature().getPoseMatrices());
 						RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
-						RenderSystem.setShaderTexture(0, this.capeTexture);
+						RenderSystem.setShaderTexture(0, this.cloakTexture);
 						bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
-						clothObj.draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_TEXTURED, -1, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, partialTicks);
+						
+						guiGraphics.pose().pushPose();
+						guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.entitypatch.getYRot() - 180.0F));
+						clothObj.drawPosed(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_TEXTURED_NO_LIGHT, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY, this.getArmature(), this.getArmature().getPoseMatrices());
+						guiGraphics.pose().popPose();
+						
 						BufferUploader.drawWithShader(bufferbuilder.end());
 					});
 				} else {
 					RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
 					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
-					RenderSystem.setShaderTexture(0, this.capeTexture);
-					this.capeMesh.draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_TEXTURED_NO_LIGHT, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, OverlayTexture.NO_OVERLAY);
+					RenderSystem.setShaderTexture(0, this.cloakTexture);
+					this.cloakMesh.getAsMesh().draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_TEXTURED_NO_LIGHT, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY);
 					BufferUploader.drawWithShader(bufferbuilder.end());
 				}
 			}
@@ -650,8 +681,6 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	@OnlyIn(Dist.CLIENT)
 	public class FakeEntityPatch extends LivingEntityPatch<LivingEntity> implements SimulatableObject, ClothSimulatable {
-		private ClothSimulator clothSimulator;
-		
 		public FakeEntityPatch(Armature armature) {
 			this.armature = armature.deepCopy();
 		}
@@ -742,14 +771,14 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			return ModelPreviewer.this.yRotO;
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public <SIM extends PhysicsSimulator<?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, SIM> simulationType) {
-			if (simulationType == SimulationTypes.CLOTH) {
-				return Optional.of((SIM)this.clothSimulator);
-			}
-			
 			return Optional.empty();
+		}
+
+		@Override
+		public float getScale() {
+			return 1.0F;
 		}
 	}
 	

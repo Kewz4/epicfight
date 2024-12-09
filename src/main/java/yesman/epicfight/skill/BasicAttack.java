@@ -46,7 +46,7 @@ public class BasicAttack extends Skill {
 		container.getExecuter().getEventListener().addEventListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID, (event) -> {
 			if (event.getAnimation().getProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER).orElse(true)) {
 				CapabilityItem itemCapability = event.getPlayerPatch().getHoldingItemCapability(InteractionHand.MAIN_HAND);
-				Set<AnimationProvider<?>> attackMotionSet = Set.copyOf(itemCapability.getAutoAttckMotion(container.getExecuter()).stream().map(AnimationProvider::get).collect(Collectors.toSet()));
+				Set<AnimationProvider<?>> attackMotionSet = Set.copyOf(itemCapability.getAutoAttackMotion(container.getExecuter()).stream().map(AnimationProvider::get).collect(Collectors.toSet()));
 				
 				if (!attackMotionSet.contains(event.getAnimation()) && itemCapability.shouldCancelCombo(event.getPlayerPatch())) {
 					setComboCounterWithEvent(ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION, event.getPlayerPatch(), container, event.getAnimation(), 0);
@@ -101,7 +101,7 @@ public class BasicAttack extends Skill {
 				comboCounter++;
 			}
 		} else {
-			List<AnimationProvider<?>> combo = cap.getAutoAttckMotion(executer);
+			List<AnimationProvider<?>> combo = cap.getAutoAttackMotion(executer);
 			int comboSize = combo.size();
 			boolean dashAttack = player.isSprinting();
 			

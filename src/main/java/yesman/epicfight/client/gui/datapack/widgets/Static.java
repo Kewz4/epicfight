@@ -42,7 +42,6 @@ public class Static extends AbstractWidget implements ResizableComponent {
 	@Override
 	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		String correctedString = this._getMessage() == null ? "" : this.font.plainSubstrByWidth(this._getMessage().getString(), this._getWidth());
-		//16777215
 		guiGraphics.drawString(this.font, correctedString, this._getX(), this._getY() + this.height / 2 - this.font.lineHeight / 2, this.fontColor, false);
 		
 		if (this.owner == this.owner.getMinecraft().screen && this.tooltip != null) {

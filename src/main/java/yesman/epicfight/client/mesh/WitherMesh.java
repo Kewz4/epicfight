@@ -18,7 +18,7 @@ public class WitherMesh extends SkinnedMesh implements MeshProvider<WitherMesh> 
 	public final SkinnedMeshPart ribcage;
 	public final SkinnedMeshPart tail;
 	
-	public WitherMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public WitherMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.centerHead = this.getOrLogException(this.parts, "centerHead");

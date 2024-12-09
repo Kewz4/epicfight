@@ -15,7 +15,7 @@ public class VexMesh extends HumanoidMesh implements MeshProvider<VexMesh> {
 	public final SkinnedMeshPart leftWing;
 	public final SkinnedMeshPart rightWing;
 	
-	public VexMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public VexMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.leftWing = this.getOrLogException(this.parts, "leftWing");

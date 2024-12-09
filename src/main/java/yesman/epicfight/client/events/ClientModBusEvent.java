@@ -10,6 +10,11 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SoftBodyMesh;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.forgeevent.ModelBuildEvent;
+import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.particle.AirBurstParticle;
 import yesman.epicfight.client.particle.BladeRushParticle;
@@ -81,5 +86,23 @@ public class ClientModBusEvent {
 	@SubscribeEvent
 	public static void addLayersEvent(EntityRenderersEvent.AddLayers event) {
 		ClientEngine.getInstance().renderEngine.bootstrap(event.getContext());
+	}
+	
+	@SubscribeEvent
+	public static void onReload(ModelBuildEvent.MeshBuild event) {
+		for (ClothSimulatable simOwner : SoftBodyMesh.TRACKING_SIMULATABLE_OBJECTS) {
+			if (!simOwner.valid()) {
+				continue;
+			}
+			
+			simOwner.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
+				simulator.getAllRunningObjects().forEach((entry) -> {
+					SoftBodyMesh newMesh = (SoftBodyMesh)Meshes.getMeshOrNull(event.getOldRegistry().inverse().get(entry.getValue()));
+					simulator.restart(entry.getKey(), newMesh);
+				});
+			});
+		}
+		
+		SoftBodyMesh.TRACKING_SIMULATABLE_OBJECTS.clear();
 	}
 }

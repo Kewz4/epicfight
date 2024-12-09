@@ -25,10 +25,11 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SoftBodyMesh;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
@@ -614,13 +615,17 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) implements MeshPartDefinition {
+	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root, SoftBodyMesh.ClothSimulationInfo clothInfo) implements MeshPartDefinition {
 		public static MeshPartDefinition of(String partName) {
-			return new VanillaMeshPartDefinition(partName, null, null, null);
+			return new VanillaMeshPartDefinition(partName, null, null, null, null);
+		}
+		
+		public static MeshPartDefinition of(String partName, SoftBodyMesh.ClothSimulationInfo clothInfo) {
+			return new VanillaMeshPartDefinition(partName, null, null, null, clothInfo);
 		}
 		
 		public static MeshPartDefinition of(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) {
-			return new VanillaMeshPartDefinition(partName, path, invertedParentTransform, root);
+			return new VanillaMeshPartDefinition(partName, path, invertedParentTransform, root, null);
 		}
 		
 		public Supplier<OpenMatrix4f> getModelPartAnimationProvider() {

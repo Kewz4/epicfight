@@ -17,7 +17,7 @@ public class ClientConfig {
 	public final IntValue longPressCountConfig;
 	public final IntValue maxStuckProjectiles;
 	public final BooleanValue filterAnimation;
-	public final DoubleValue aimHelperColor;
+	public final DoubleValue aimHelperWidgetPosition;
 	public final BooleanValue enableAimHelper;
 	public final BooleanValue cameraAutoSwitch;
 	public final BooleanValue autoPreparation;
@@ -61,7 +61,7 @@ public class ClientConfig {
 		this.healthBarShowOption = config.defineEnum("ingame.health_bar_show_option", HealthBarShowOptions.HURT);
 		this.showTargetIndicator = config.define("ingame.show_target_indicator", () -> true);
 		this.filterAnimation = config.define("ingame.filter_animation", () -> false);
-		this.aimHelperColor = config.defineInRange("ingame.laser_pointer_color", 0.328125D, 0.0D, 1.0D);
+		this.aimHelperWidgetPosition = config.defineInRange("ingame.laser_pointer_color", 0.328125D, 0.0D, 1.0D);
 		this.enableAimHelper = config.define("ingame.enable_laser_pointer", () -> true);
 		this.cameraAutoSwitch = config.define("ingame.camera_auto_switch", () -> false);
 		this.autoPreparation = config.define("ingame.auto_preparation", () -> false);

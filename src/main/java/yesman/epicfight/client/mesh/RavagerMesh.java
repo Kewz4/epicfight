@@ -19,7 +19,7 @@ public class RavagerMesh extends SkinnedMesh implements MeshProvider<RavagerMesh
 	public final SkinnedMeshPart leftBackLeg;
 	public final SkinnedMeshPart rightBackLeg;
 	
-	public RavagerMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public RavagerMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

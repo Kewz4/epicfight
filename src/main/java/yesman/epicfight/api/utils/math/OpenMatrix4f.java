@@ -771,4 +771,14 @@ public class OpenMatrix4f {
 		mat4f.get(MATRIX_TRANSFORMER);
 		return OpenMatrix4f.load(null, MATRIX_TRANSFORMER);
 	}
+	
+	public static OpenMatrix4f[] allocateMatrix(int size) {
+		OpenMatrix4f[] matrixArray = new OpenMatrix4f[size];
+		
+		for (int i = 0; i < size; i++) {
+			matrixArray[i] = new OpenMatrix4f();
+		}
+		
+		return matrixArray;
+	}
 }

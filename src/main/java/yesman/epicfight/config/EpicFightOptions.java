@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.utils.math.Vec2i;
-import yesman.epicfight.client.gui.widgets.ColorWidget;
+import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.config.OptionHandler.BooleanOptionHandler;
 import yesman.epicfight.config.OptionHandler.DoubleOptionHandler;
 import yesman.epicfight.config.OptionHandler.IntegerOptionHandler;
@@ -23,7 +23,7 @@ public class EpicFightOptions {
 	public final BooleanOptionHandler filterAnimation;
 	public final OptionHandler<ClientConfig.HealthBarShowOptions> healthBarShowOption;
 	public final BooleanOptionHandler showTargetIndicator;
-	public final DoubleOptionHandler aimHelperColor;
+	public final DoubleOptionHandler aimHelperWidgetPosition;
 	public final BooleanOptionHandler enableAimHelperPointer;
 	public final BooleanOptionHandler cameraAutoSwitch;
 	public final BooleanOptionHandler autoPreparation;
@@ -34,8 +34,6 @@ public class EpicFightOptions {
 	public final IntegerOptionHandler maxStuckProjectiles;
 	public final BooleanOptionHandler useAnimationShader;
 	public final BooleanOptionHandler firstPersonModel;
-	
-	public final BooleanOptionHandler enableDummyCape;
 	
 	public boolean shaderModeSwitchingLocked = false;
 	
@@ -70,9 +68,9 @@ public class EpicFightOptions {
 		this.filterAnimation = new BooleanOptionHandler(config.filterAnimation.get());
 		this.healthBarShowOption = new OptionHandler<ClientConfig.HealthBarShowOptions>(config.healthBarShowOption.get());
 		this.showTargetIndicator = new BooleanOptionHandler(config.showTargetIndicator.get());
-		this.aimHelperColor = new DoubleOptionHandler(config.aimHelperColor.get(), 0.0D, 1.0D);
+		this.aimHelperWidgetPosition = new DoubleOptionHandler(config.aimHelperWidgetPosition.get(), 0.0D, 1.0D);
 		this.enableAimHelperPointer = new BooleanOptionHandler(config.enableAimHelper.get());
-		this.aimHelperRealColor = ColorWidget.toColorInteger(config.aimHelperColor.get());
+		this.aimHelperRealColor = ColorSlider.rgbColor(config.aimHelperWidgetPosition.get());
 		this.cameraAutoSwitch = new BooleanOptionHandler(config.cameraAutoSwitch.get());
 		this.autoPreparation = new BooleanOptionHandler(config.autoPreparation.get());
 		this.bloodEffects = new BooleanOptionHandler(config.bloodEffects.get());
@@ -82,8 +80,6 @@ public class EpicFightOptions {
 		this.maxStuckProjectiles = new IntegerOptionHandler(config.maxStuckProjectiles.get(), 1, 30);
 		this.useAnimationShader = new BooleanOptionHandler(config.useAnimationShader.get());
 		this.firstPersonModel = new BooleanOptionHandler(config.firstPersonModel.get());
-		
-		this.enableDummyCape = new BooleanOptionHandler(false);
 		
 		this.battleAutoSwitchItems = config.battleAutoSwitchItems.get().stream()
 				.map(itemName -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemName)))
@@ -122,7 +118,7 @@ public class EpicFightOptions {
 		this.filterAnimation.setDefaultValue();
 		this.healthBarShowOption.setDefaultValue();
 		this.showTargetIndicator.setDefaultValue();
-		this.aimHelperColor.setDefaultValue();
+		this.aimHelperWidgetPosition.setDefaultValue();
 		this.enableAimHelperPointer.setDefaultValue();
 		this.cameraAutoSwitch.setDefaultValue();
 		this.autoPreparation.setDefaultValue();
@@ -135,7 +131,7 @@ public class EpicFightOptions {
 			this.useAnimationShader.setDefaultValue();
 		}
 		
-		this.aimHelperRealColor = ColorWidget.toColorInteger(this.aimHelperColor.getValue());
+		this.aimHelperRealColor = ColorSlider.rgbColor(this.aimHelperWidgetPosition.getValue());
 		this.staminaBarX.setDefaultValue();
 		this.staminaBarY.setDefaultValue();
 		this.staminaBarXBase.setDefaultValue();
@@ -162,7 +158,7 @@ public class EpicFightOptions {
 		config.filterAnimation.set(this.filterAnimation.getValue());
 		config.healthBarShowOption.set(this.healthBarShowOption.getValue());
 		config.showTargetIndicator.set(this.showTargetIndicator.getValue());
-		config.aimHelperColor.set(this.aimHelperColor.getValue());
+		config.aimHelperWidgetPosition.set(this.aimHelperWidgetPosition.getValue());
 		config.enableAimHelper.set(this.enableAimHelperPointer.getValue());
 		config.cameraAutoSwitch.set(this.cameraAutoSwitch.getValue());
 		config.autoPreparation.set(this.autoPreparation.getValue());
@@ -173,7 +169,7 @@ public class EpicFightOptions {
 		config.useAnimationShader.set(this.useAnimationShader.getValue());
 		config.firstPersonModel.set(this.firstPersonModel.getValue());
 		
-		this.aimHelperRealColor = ColorWidget.toColorInteger(this.aimHelperColor.getValue());
+		this.aimHelperRealColor = ColorSlider.rgbColor(this.aimHelperWidgetPosition.getValue());
 		config.battleAutoSwitchItems.set(Lists.newArrayList(this.battleAutoSwitchItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
 		config.miningAutoSwitchItems.set(Lists.newArrayList(this.miningAutoSwitchItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
 		

@@ -24,7 +24,7 @@ public class SpiderMesh extends SkinnedMesh implements MeshProvider<SpiderMesh> 
 	public final SkinnedMeshPart rightLeg3;
 	public final SkinnedMeshPart rightLeg4;
 	
-	public SpiderMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public SpiderMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");

@@ -1,79 +1,16 @@
 package yesman.epicfight.api.client.model;
 
-import java.util.List;
+import javax.annotation.Nullable;
 
-import org.joml.Vector3i;
-
-import com.google.common.collect.Lists;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public class VertexBuilder {
-	public static List<VertexBuilder> createVertexIndicator(int[] drawingIndices) {
-		List<VertexBuilder> vertexIndicators = Lists.newArrayList();
-		
-		for (int i = 0; i < drawingIndices.length / 3; i++) {
-			int k = i * 3;
-			int position = drawingIndices[k];
-			int uv = drawingIndices[k + 1];
-			int normal = drawingIndices[k + 2];
-			VertexBuilder vi = new VertexBuilder(position, uv, normal);
-			vertexIndicators.add(vi);
-		}
-		
-		return vertexIndicators;
-	}
-	
-	public static List<SkinnedMeshVertexBuilder> createAnimated(int[] drawingIndices, int[] affectingJointCount, int[] animationIndices) {
-		List<SkinnedMeshVertexBuilder> vertexIndicators = Lists.newArrayList();
-		Vector3i[] aJointId = new Vector3i[affectingJointCount.length];
-		Vector3i[] aWeights = new Vector3i[affectingJointCount.length];
-		int[] counts = new int[affectingJointCount.length];
-		int indexPointer = 0;
-		
-		for (int i = 0; i < affectingJointCount.length; i++) {
-			int count = affectingJointCount[i];
-			Vector3i jointId = new Vector3i(-1, -1, -1);
-			Vector3i weights = new Vector3i(-1, -1, -1);
-			
-			for (int j = 0; j < count; j++) {
-				switch (j) {
-				case 0 -> {
-					jointId.x = animationIndices[indexPointer * 2];
-					weights.x = animationIndices[indexPointer * 2 + 1];
-				}
-				case 1 -> {
-					jointId.y = animationIndices[indexPointer * 2];
-					weights.y = animationIndices[indexPointer * 2 + 1];
-				}
-				case 2 -> {
-					jointId.z = animationIndices[indexPointer * 2];
-					weights.z = animationIndices[indexPointer * 2 + 1];
-				}
-				}
-				
-				indexPointer++;
-			}
-			
-			counts[i] = count;
-			aJointId[i] = jointId;
-			aWeights[i] = weights;
-		}
-		
-		for (int i = 0; i < drawingIndices.length / 3; i++) {
-			int k = i * 3;
-			int position = drawingIndices[k];
-			int uv = drawingIndices[k + 1];
-			int normal = drawingIndices[k + 2];
-			SkinnedMeshVertexBuilder vi = new SkinnedMeshVertexBuilder(position, uv, normal, aJointId[position], aWeights[position], counts[position]);
-			vertexIndicators.add(vi);
-		}
-		
-		return vertexIndicators;
-	}
-	
+public abstract class VertexBuilder<M extends StaticMesh<?, ?>> {
 	public final int position;
 	public final int uv;
 	public final int normal;
@@ -83,6 +20,11 @@ public class VertexBuilder {
 		this.uv = uv;
 		this.normal = normal;
 	}
+	
+	public abstract void getVertexPosition(M mesh, Vector4f dest);
+	public abstract void getVertexNormal(M mesh, Vector3f dest);
+	public abstract void getVertexPosition(M mesh, Vector4f dest, @Nullable OpenMatrix4f[] poses);
+	public abstract void getVertexNormal(M mesh, Vector3f dest, @Nullable OpenMatrix4f[] poses);
 	
 	@Override
 	public boolean equals(Object o) {

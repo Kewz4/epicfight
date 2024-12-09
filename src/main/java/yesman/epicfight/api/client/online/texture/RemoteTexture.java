@@ -30,7 +30,6 @@ public class RemoteTexture extends SimpleTexture {
 	private final String urlString;
 	@Nullable
 	private CompletableFuture<?> future;
-	private boolean uploaded;
 	
 	public RemoteTexture(String pUrlString, ResourceLocation defaultLocation) {
 		super(defaultLocation);
@@ -40,8 +39,6 @@ public class RemoteTexture extends SimpleTexture {
 	
 	private void loadCallback(NativeImage pImage) {
 		Minecraft.getInstance().execute(() -> {
-			this.uploaded = true;
-
 			if (!RenderSystem.isOnRenderThread()) {
 				RenderSystem.recordRenderCall(() -> {
 					this.upload(pImage);
@@ -58,18 +55,6 @@ public class RemoteTexture extends SimpleTexture {
 	}
 	
 	public void load(ResourceManager pResourceManager) throws IOException {
-		Minecraft.getInstance().execute(() -> {
-			if (!this.uploaded) {
-				try {
-					super.load(pResourceManager);
-				} catch (IOException ioexception) {
-					LOGGER.warn("Failed to load texture: {}", this.location, ioexception);
-				}
-
-				this.uploaded = true;
-			}
-		});
-
 		if (this.future == null) {
 			this.future = CompletableFuture.runAsync(() -> {
 				LOGGER.debug("Downloading http texture from {}", this.urlString);

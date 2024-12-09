@@ -1,45 +1,62 @@
 package yesman.epicfight.api.client.model;
 
-import java.util.Map;
+import javax.annotation.Nullable;
 
-import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObjectBuilder;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public class CompositeMesh implements Mesh, MeshProvider<CompositeMesh> {
-	private final Map<String, Mesh> meshes;
+public class CompositeMesh implements Mesh, SoftBodyMesh {
+	private final StaticMesh<?, ?> staticMesh;
+	private final SoftBodyMesh softBodyMesh;
 	
-	public CompositeMesh(ImmutableMap.Builder<String, Mesh> meshBuilder) {
-		this.meshes = meshBuilder.build();
-	}
-	
-	@Override
-	public CompositeMesh get() {
-		return this;
+	public CompositeMesh(StaticMesh<?, ?> staticMesh, SoftBodyMesh softBodyMesh) {
+		this.staticMesh = staticMesh;
+		this.softBodyMesh = softBodyMesh;
 	}
 	
 	@Override
 	public void initialize() {
-		this.meshes.values().forEach(Mesh::initialize);
+		this.staticMesh.initialize();
 	}
 	
 	@Override
 	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-		for (Mesh mesh : this.meshes.values()) {
-			mesh.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
-		}
+		this.staticMesh.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+		this.softBodyMesh.getAsMesh().draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@Override
 	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		for (Mesh mesh : this.meshes.values()) {
-			mesh.drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
-		}
+		this.staticMesh.drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+		this.softBodyMesh.getAsMesh().drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+	}
+	
+	@Override
+	public boolean canStartSoftBodySimulation() {
+		return this.softBodyMesh.canStartSoftBodySimulation();
+	}
+	
+	@Override
+	public ClothObject createSimulationData(@Nullable SoftBodyMesh provider, ClothSimulatable simOwner, ClothObjectBuilder simBuilder) {
+		return this.softBodyMesh.createSimulationData(this, simOwner, simBuilder);
+	}
+	
+	@Nullable
+	public StaticMesh<?, ?> getStaticMesh() {
+		return this.staticMesh;
+	}
+	
+	@Override
+	public StaticMesh<?, ?> getSoftBodyMesh() {
+		return (StaticMesh<?, ?>)this.softBodyMesh;
 	}
 }

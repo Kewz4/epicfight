@@ -7,14 +7,11 @@ import javax.annotation.Nonnull;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -39,10 +36,9 @@ import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
+import yesman.epicfight.api.client.epicskins.EpicSkinsInformation;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
-import yesman.epicfight.api.client.model.Meshes;
-import yesman.epicfight.api.client.physics.cloth.ClothColliderPresets;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.PhysicsSimulator;
@@ -50,7 +46,6 @@ import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.client.renderer.patched.layer.PatchedCapeLayer;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -61,23 +56,16 @@ import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements ClothSimulatable {
 	private Item prevHeldItem;
 	private Item prevHeldItemOffHand;
+	protected EpicSkinsInformation epicSkinsInformation;
 	
 	@Override
-	public void onJoinWorld(T entityIn, EntityJoinLevelEvent event) {
-		super.onJoinWorld(entityIn, event);
+	public void onJoinWorld(T entity, EntityJoinLevelEvent event) {
+		super.onJoinWorld(entity, event);
 		
 		this.prevHeldItem = Items.AIR;
 		this.prevHeldItemOffHand = Items.AIR;
 		
-		ClothSimulator.ClothObjectBuilder builder = ClothSimulator.ClothObjectBuilder.create();
-		builder.putAll("default".equals(this.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM);
-		
-		this.clothSimulator.runWhenPermanent(Meshes.CAPE, builder, () -> {
-			ResourceLocation capeTexture = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? PatchedCapeLayer.DUMMY_CAPE_TEXTURE : this.original.getCloakTextureLocation();
-			boolean isCapeLoaded = EpicFightMod.CLIENT_CONFIGS.enableDummyCape.getValue() ? true : this.original.isCapeLoaded();
-			
-			return isCapeLoaded && capeTexture != null && !this.original.isInvisible() && this.original.isModelPartShown(PlayerModelPart.CAPE) && this.original.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
-		});
+		EpicSkinsInformation.initEpicSkins(this);
 	}
 	
 	@Override
@@ -441,6 +429,18 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		return Direction.UP;
 	}
 	
+	public void setEpicSkinsInformation(EpicSkinsInformation epicSkinsInformation) {
+		this.epicSkinsInformation = epicSkinsInformation;
+	}
+	
+	public EpicSkinsInformation getEpicSkinsInformation() {
+		return this.epicSkinsInformation;
+	}
+	
+	public boolean isEpicSkinsLoaded() {
+		return this.epicSkinsInformation != null;
+	}
+	
 	private final ClothSimulator clothSimulator = new ClothSimulator();
 	public float modelYRotO2;
 	public double xPosO2;
@@ -528,5 +528,10 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	@Override
 	public boolean valid() {
 		return !this.original.isRemoved();
+	}
+
+	@Override
+	public float getScale() {
+		return PLAYER_SCALE;
 	}
 }

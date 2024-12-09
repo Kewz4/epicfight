@@ -8,8 +8,6 @@ import javax.annotation.Nullable;
 
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,17 +21,17 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class ClassicMesh extends StaticMesh<ClassicMeshPart, VertexBuilder> implements MeshProvider<ClassicMesh> {
-	public ClassicMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, ClassicMesh parent, RenderProperties properties) {
+public class ClassicMesh extends StaticMesh<ClassicMeshPart, ClassicMeshVertexBuilder> implements MeshProvider<ClassicMesh> {
+	public ClassicMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<ClassicMeshVertexBuilder>> partBuilders, ClassicMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 	}
 	
 	@Override
-	protected Map<String, ClassicMeshPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
+	protected Map<String, ClassicMeshPart> createModelPart(Map<MeshPartDefinition, List<ClassicMeshVertexBuilder>> partBuilders) {
 		Map<String, ClassicMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
-			parts.put(partDefinition.partName(), new ClassicMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
+			parts.put(partDefinition.partName(), new ClassicMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider(), partDefinition.clothInfo()));
 		});
 		
 		return parts;
@@ -62,9 +60,9 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart, VertexBuilder> impl
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class ClassicMeshPart extends MeshPart<VertexBuilder> {
-		public ClassicMeshPart(List<VertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
-			super(verticies, vanillaPartTracer);
+	public class ClassicMeshPart extends MeshPart<ClassicMeshVertexBuilder> {
+		public ClassicMeshPart(List<ClassicMeshVertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
+			super(verticies, vanillaPartTracer, clothInfo);
 		}
 		
 		@Override
@@ -83,14 +81,13 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart, VertexBuilder> impl
 			Matrix4f matrix4f = poseStack.last().pose();
 			Matrix3f matrix3f = poseStack.last().normal();
 			
-			for (VertexBuilder vi : this.getVertices()) {
-				int pos = vi.position * 3;
-				int norm = vi.normal * 3;
-				int uv = vi.uv * 2;
-				Vector4f posVec = matrix4f.transform(new Vector4f(positions[pos], positions[pos + 1], positions[pos + 2], 1.0F));
-				Vector3f normVec = matrix3f.transform(new Vector3f(normals[norm], normals[norm + 1], normals[norm + 2]));
+			for (ClassicMeshVertexBuilder vi : this.getVertices()) {
+				vi.getVertexPosition(ClassicMesh.this, POSITION);
+				vi.getVertexNormal(ClassicMesh.this, NORMAL);
+				POSITION.mul(matrix4f);
+				NORMAL.mul(matrix3f);
 				
-				drawingFunction.draw(builder, posVec.x(), posVec.y(), posVec.z(), normVec.x(), normVec.y(), normVec.z(), packedLight, r, g, b, a, uvs[uv], uvs[uv + 1], overlay);
+				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, r, g, b, a, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
 			}
 			
 			poseStack.popPose();

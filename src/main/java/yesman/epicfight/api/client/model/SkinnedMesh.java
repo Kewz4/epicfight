@@ -11,8 +11,6 @@ import javax.annotation.Nullable;
 
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -24,8 +22,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.Minecraft;
@@ -46,11 +42,16 @@ import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.EpicFightVertexFormatElement;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
+import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBuilder> {
 	protected final float[] weights;
+	protected final int[] affectingJointCounts;
+	protected final int[][] affectingWeightIndices;
+	protected final int[][] affectingJointIndices;
+	
 	private final int maxJointCount;
 	private int arrayObjectId;
 	
@@ -60,24 +61,43 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	private VertexBuffer<Short> jointsBuffer = new VertexBuffer<> (GLConstants.GL_SHORT, 3, false, ByteBuffer::putShort);
 	private VertexBuffer<Float> weightsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
 	
-	public SkinnedMesh(@Nullable Map<String, float[]> arrayMap, @Nullable Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
+	public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 		
-		this.weights = parent == null ? arrayMap.get("weights") : parent.weights;
+		this.weights = parent == null ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("weights")) : parent.weights;
+		this.affectingJointCounts = parent == null ? ParseUtil.unwrapIntWrapperArray(arrayMap.get("vcounts")) : parent.affectingJointCounts;
+		
+		if (parent != null) {
+			this.affectingJointIndices = parent.affectingJointIndices;
+			this.affectingWeightIndices = parent.affectingWeightIndices;
+		} else {
+			int[] vindices = ParseUtil.unwrapIntWrapperArray(arrayMap.get("vindices"));
+			this.affectingJointIndices = new int[this.affectingJointCounts.length][];
+			this.affectingWeightIndices = new int[this.affectingJointCounts.length][];
+			int idx = 0;
+			
+			for (int i = 0; i < this.affectingJointCounts.length; i++) {
+				int count = this.affectingJointCounts[i];
+				int[] jointId = new int[count];
+				int[] weights = new int[count];
+				
+				for (int j = 0; j < count; j++) {
+					jointId[j] = vindices[idx * 2];
+					weights[j] = vindices[idx * 2 + 1];
+					idx++;
+				}
+				
+				this.affectingJointIndices[i] = jointId;
+				this.affectingWeightIndices[i] = weights;
+			}
+		}
+		
 		int maxJointId = 0;
 		
-		for (Map.Entry<String, SkinnedMeshPart> entry : this.parts.entrySet()) {
-			for (SkinnedMeshVertexBuilder vi : entry.getValue().getVertices()) {
-				if (maxJointId < vi.joint.x) {
-					maxJointId = vi.joint.x;
-				}
-				
-				if (maxJointId < vi.joint.y) {
-					maxJointId = vi.joint.y;
-				}
-				
-				if (maxJointId < vi.joint.z) {
-					maxJointId = vi.joint.z;
+		for (int[] i : this.affectingJointIndices) {
+			for (int j : i) {
+				if (maxJointId < j) {
+					maxJointId = j;
 				}
 			}
 		}
@@ -98,7 +118,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		GlStateManager._glBindVertexArray(this.arrayObjectId);
 		
 		for (SkinnedMeshPart part : this.parts.values()) {
-			part.createVbo(vertexBuilderMap, this.positions, this.uvs, this.normals, this.weights, positionList, uvList, normalList, jointList, weightList);
+			part.createVbo(vertexBuilderMap, this.positions, this.uvs, this.normals, this.weights, this.affectingJointCounts, this.affectingJointIndices, this.affectingWeightIndices, positionList, uvList, normalList, jointList, weightList);
 		}
 		
 		this.positionsBuffer.bindVertexData(positionList);
@@ -148,7 +168,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		Map<String, SkinnedMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
-			parts.put(partDefinition.partName(), new SkinnedMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider()));
+			parts.put(partDefinition.partName(), new SkinnedMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider(), partDefinition.clothInfo()));
 		});
 		
 		return parts;
@@ -174,6 +194,9 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		}
 	}
 	
+	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrix(ShaderParser.MAX_JOINTS);
+	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrix(ShaderParser.MAX_JOINTS);
+	
 	/**
 	 * Draws the model to vanilla buffer
 	 */
@@ -185,49 +208,29 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		for (SkinnedMeshPart part : this.parts.values()) {
 			if (!part.isHidden()) {
 				OpenMatrix4f transform = part.getVanillaPartTransform();
-				OpenMatrix4f[] finalPoses = new OpenMatrix4f[poses.length];
-				OpenMatrix4f[] normalPoses = new OpenMatrix4f[poses.length];
 				
 				for (int i = 0; i < poses.length; i++) {
-					OpenMatrix4f finalPose = new OpenMatrix4f(poses[i]);
+					FINAL_POSES[i].load(poses[i]);
 					
 					if (armature != null) {
-						finalPose.mulBack(armature.searchJointById(i).getToOrigin());
+						FINAL_POSES[i].mulBack(armature.searchJointById(i).getToOrigin());
 					}
 					
 					if (transform != null) {
-						finalPose.mulBack(transform);
+						FINAL_POSES[i].mulBack(transform);
 					}
 					
-					finalPoses[i] = finalPose;
-					normalPoses[i] = finalPose.removeTranslation();
+					NORMAL_POSES[i] = FINAL_POSES[i].removeTranslation();
 				}
 				
 				for (SkinnedMeshVertexBuilder vi : part.getVertices()) {
-					int pos = vi.position * 3;
-					int norm = vi.normal * 3;
-					int uv = vi.uv * 2;
+					vi.getVertexPosition(SkinnedMesh.this, POSITION, FINAL_POSES);
+					vi.getVertexNormal(SkinnedMesh.this, NORMAL, NORMAL_POSES);
 					
-					Vec4f position = new Vec4f(this.positions[pos], this.positions[pos + 1], this.positions[pos + 2], 1.0F);
-					Vec4f normal = new Vec4f(this.normals[norm], this.normals[norm + 1], this.normals[norm + 2], 1.0F);
-					Vec4f totalPos = new Vec4f(0.0F, 0.0F, 0.0F, 0.0F);
-					Vec4f totalNorm = new Vec4f(0.0F, 0.0F, 0.0F, 0.0F);
+					POSITION.mul(matrix4f);
+					NORMAL.mul(matrix3f);
 					
-					for (int i = 0; i < vi.count; i++) {
-						int jointIndex = vi.getJointId(i);
-						int weightIndex = vi.getWeightIndex(i);
-						float weight = this.weights[weightIndex];
-						
-						Vec4f.add(OpenMatrix4f.transform(finalPoses[jointIndex], position, null).scale(weight), totalPos, totalPos);
-						Vec4f.add(OpenMatrix4f.transform(normalPoses[jointIndex], normal, null).scale(weight), totalNorm, totalNorm);
-					}
-					
-					Vector4f posVec = new Vector4f(totalPos.x, totalPos.y, totalPos.z, 1.0F);
-					Vector3f normVec = new Vector3f(totalNorm.x, totalNorm.y, totalNorm.z);
-					posVec.mul(matrix4f);
-					normVec.mul(matrix3f);
-					
-					drawingFunction.draw(builder, posVec.x, posVec.y, posVec.z, normVec.x, normVec.y, normVec.z, packedLight, r, g, b, a, this.uvs[uv], this.uvs[uv + 1], overlay);
+					drawingFunction.draw(builder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x, NORMAL.y, NORMAL.z, packedLight, r, g, b, a, this.uvs[vi.uv * 2], this.uvs[vi.uv * 2 + 1], overlay);
 				}
 			}
 		}
@@ -363,11 +366,25 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	public class SkinnedMeshPart extends MeshPart<SkinnedMeshVertexBuilder> {
 		private int indexBufferId;
 		
-		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
-			super(animatedMeshPartList, vanillaPartTracer);
+		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
+			super(animatedMeshPartList, vanillaPartTracer, clothInfo);
 		}
 		
-		private void createVbo(Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap, float positions[], float uvs[], float normals[], float weights[], List<Float> position, List<Float> uv, List<Byte> normal, List<Short> joint, List<Float> weight) {
+		private void createVbo(
+				Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap
+			  , float[] positions
+			  , float[] uvs
+			  , float[] normals
+			  , float[] weights
+			  , int[] affectingJointCounts
+			  , int[][] affectingJointIndices
+			  , int[][] affectingWeightsIndices
+			  , List<Float> position
+			  , List<Float> uv
+			  , List<Byte> normal
+			  , List<Short> joint
+			  , List<Float> weight
+		) {
 			ByteBuffer indicesBuffer = ByteBuffer.allocateDirect(this.getVertices().size() * 4).order(ByteOrder.nativeOrder());
 			
 			for (SkinnedMeshVertexBuilder vb : this.getVertices()) {
@@ -382,15 +399,15 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 					position.add(positions[vb.position * 3 + 2]);
 					uv.add(uvs[vb.uv * 2]);
 					uv.add(uvs[vb.uv * 2 + 1]);
-					normal.add(normalIntValue(normals[vb.normal * 3]));
-					normal.add(normalIntValue(normals[vb.normal * 3 + 1]));
-					normal.add(normalIntValue(normals[vb.normal * 3 + 2]));
-					joint.add((short)vb.joint.x);
-					joint.add((short)vb.joint.y);
-					joint.add((short)vb.joint.z);
-					weight.add(vb.weight.x > -1 ? weights[vb.weight.x] : 0.0F);
-					weight.add(vb.weight.y > -1 ? weights[vb.weight.y] : 0.0F);
-					weight.add(vb.weight.z > -1 ? weights[vb.weight.z] : 0.0F);
+					normal.add(packNormal(normals[vb.normal * 3]));
+					normal.add(packNormal(normals[vb.normal * 3 + 1]));
+					normal.add(packNormal(normals[vb.normal * 3 + 2]));
+					joint.add(affectingJointCounts[vb.position] > 0 ? (short)affectingJointIndices[vb.position][0] : -1);
+					joint.add(affectingJointCounts[vb.position] > 1 ? (short)affectingJointIndices[vb.position][1] : -1);
+					joint.add(affectingJointCounts[vb.position] > 2 ? (short)affectingJointIndices[vb.position][2] : -1);
+					weight.add(affectingJointCounts[vb.position] > 0 ? weights[affectingWeightsIndices[vb.position][0]] : 0.0F);
+					weight.add(affectingJointCounts[vb.position] > 1 ? weights[affectingWeightsIndices[vb.position][1]] : 0.0F);
+					weight.add(affectingJointCounts[vb.position] > 2 ? weights[affectingWeightsIndices[vb.position][2]] : 0.0F);
 				}
 			}
 			
@@ -412,13 +429,12 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			Matrix3f matrix3f = poseStack.last().normal();
 			
 			for (SkinnedMeshVertexBuilder vi : this.getVertices()) {
-				int pos = vi.position * 3;
-				int norm = vi.normal * 3;
-				int uv = vi.uv * 2;
-				Vector4f posVec = matrix4f.transform(new Vector4f(positions[pos], positions[pos + 1], positions[pos + 2], 1.0F));
-				Vector3f normVec = matrix3f.transform(new Vector3f(normals[norm], normals[norm + 1], normals[norm + 2]));
+				vi.getVertexPosition(SkinnedMesh.this, POSITION);
+				vi.getVertexNormal(SkinnedMesh.this, NORMAL);
+				POSITION.mul(matrix4f);
+				NORMAL.mul(matrix3f);
 				
-				drawingFunction.draw(builder, posVec.x(), posVec.y(), posVec.z(), normVec.x(), normVec.y(), normVec.z(), packedLight, r, g, b, a, uvs[uv], uvs[uv + 1], overlay);
+				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, r, g, b, a, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
 			}
 		}
 		
@@ -428,25 +444,22 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			}
 			
 			OpenMatrix4f transform = this.getVanillaPartTransform();
-			OpenMatrix4f[] finalPoses = new OpenMatrix4f[poses.length];
 			
 			for (int i = 0; i < poses.length; i++) {
-				OpenMatrix4f finalPose = new OpenMatrix4f(poses[i]);
+				FINAL_POSES[i].load(poses[i]);
 				
 				if (armature != null) {
-					finalPose.mulBack(armature.searchJointById(i).getToOrigin());
+					FINAL_POSES[i].mulBack(armature.searchJointById(i).getToOrigin());
 				}
 				
 				if (transform != null) {
-					finalPose.mulBack(transform);
+					FINAL_POSES[i].mulBack(transform);
 				}
-				
-				finalPoses[i] = finalPose;
 			}
 			
-			for (int i = 0; i < finalPoses.length; i++) {
+			for (int i = 0; i < FINAL_POSES.length; i++) {
 				if (animationShaderInstance.getPoses(i) != null) {
-					animationShaderInstance.getPoses(i).set(OpenMatrix4f.exportToMojangMatrix(finalPoses[i]));
+					animationShaderInstance.getPoses(i).set(OpenMatrix4f.exportToMojangMatrix(FINAL_POSES[i]));
 				}
 			}
 			
@@ -461,7 +474,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			animationShaderInstance._getVertexFormat().clearBufferState();
 		}
 		
-		static byte normalIntValue(float f) {
+		static byte packNormal(float f) {
 			return (byte)((int)(Mth.clamp(f, -1.0F, 1.0F) * 127.0F) & 255);
 		}
 	}
@@ -535,12 +548,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		JsonObject vertices = new JsonObject();
 		float[] positions = this.positions.clone();
 		float[] normals = this.normals.clone();
-		OpenMatrix4f correctRevert = OpenMatrix4f.invert(JsonAssetLoader.BLENDER_TO_MINECRAFT_COORD, null);
 		
 		for (int i = 0; i < positions.length / 3; i++) {
 			int k = i * 3;
 			Vec4f posVector = new Vec4f(positions[k], positions[k+1], positions[k+2], 1.0F);
-			posVector.transform(correctRevert);
+			posVector.transform(JsonAssetLoader.MINECRAFT_TO_BLENDER_COORD);
 			positions[k] = posVector.x;
 			positions[k+1] = posVector.y;
 			positions[k+2] = posVector.z;
@@ -549,59 +561,27 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		for (int i = 0; i < normals.length / 3; i++) {
 			int k = i * 3;
 			Vec4f normVector = new Vec4f(normals[k], normals[k+1], normals[k+2], 1.0F);
-			normVector.transform(correctRevert);
+			normVector.transform(JsonAssetLoader.MINECRAFT_TO_BLENDER_COORD);
 			normals[k] = normVector.x;
 			normals[k+1] = normVector.y;
 			normals[k+2] = normVector.z;
 		}
 		
-		int[] indices = new int[this.vertexCount * 3];
-		int[] vcounts = new int[positions.length / 3];
-		IntList vIndexList = new IntArrayList();
-		Int2ObjectMap<SkinnedMeshVertexBuilder> positionMap = new Int2ObjectOpenHashMap<>();
-		int[] vIndices;
-		int i = 0;
+		IntList affectingJointAndWeightIndices = new IntArrayList();
 		
-		for (SkinnedMeshPart part : this.parts.values()) {
-			for (SkinnedMeshVertexBuilder vertexIndicator : part.getVertices()) {
-				indices[i * 3] = vertexIndicator.position;
-				indices[i * 3 + 1] = vertexIndicator.uv;
-				indices[i * 3 + 2] = vertexIndicator.normal;
-				vcounts[vertexIndicator.position] = vertexIndicator.count;
-				positionMap.put(vertexIndicator.position, vertexIndicator);
-				i++;
+		for (int i = 0; i < this.affectingJointCounts.length; i++) {
+			for (int j = 0; j < this.affectingJointCounts[j]; j++) {
+				affectingJointAndWeightIndices.add(this.affectingJointIndices[i][j]);
+				affectingJointAndWeightIndices.add(this.affectingWeightIndices[i][j]);
 			}
 		}
 		
-		for (i = 0; i < vcounts.length; i++) {
-			SkinnedMeshVertexBuilder vi = positionMap.get(i);
-			
-			switch (vcounts[i]) {
-			case 1 -> {
-				vIndexList.add(vi.joint.x);
-				vIndexList.add(vi.weight.x);
-			}
-			case 2 -> {
-				vIndexList.add(vi.joint.x);
-				vIndexList.add(vi.weight.x);
-				vIndexList.add(vi.joint.y);
-				vIndexList.add(vi.weight.y);
-			}
-			case 3 -> {
-				vIndexList.add(vi.joint.x);
-				vIndexList.add(vi.weight.x);
-				vIndexList.add(vi.joint.y);
-				vIndexList.add(vi.weight.y);
-				vIndexList.add(vi.joint.z);
-				vIndexList.add(vi.weight.z);
-			}
-			}
-		}
-		
-		vIndices = vIndexList.toIntArray();
-		vertices.add("positions", ParseUtil.arrayToJsonObject(positions, 3));
-		vertices.add("uvs", ParseUtil.arrayToJsonObject(this.uvs, 2));
-		vertices.add("normals", ParseUtil.arrayToJsonObject(normals, 3));
+		vertices.add("positions", ParseUtil.farrayToJsonObject(positions, 3));
+		vertices.add("uvs", ParseUtil.farrayToJsonObject(this.uvs, 2));
+		vertices.add("normals", ParseUtil.farrayToJsonObject(normals, 3));
+		vertices.add("vcounts", ParseUtil.iarrayToJsonObject(this.affectingJointCounts, 1));
+		vertices.add("weights", ParseUtil.farrayToJsonObject(this.weights, 1));
+		vertices.add("vindices", ParseUtil.iarrayToJsonObject(affectingJointAndWeightIndices.toIntArray(), 1));
 		
 		if (!this.parts.isEmpty()) {
 			JsonObject parts = new JsonObject();
@@ -615,17 +595,26 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 					indicesArray.add(vertexIndicator.normal);
 				}
 				
-				parts.add(partEntry.getKey(), ParseUtil.arrayToJsonObject(indicesArray.toIntArray(), 3));
+				parts.add(partEntry.getKey(), ParseUtil.iarrayToJsonObject(indicesArray.toIntArray(), 3));
 			}
 			
 			vertices.add("parts", parts);
 		} else {
-			vertices.add("indices", ParseUtil.arrayToJsonObject(indices, 3));
+			int i = 0;
+			int[] indices = new int[this.vertexCount * 3];
+			
+			for (SkinnedMeshPart part : this.parts.values()) {
+				for (SkinnedMeshVertexBuilder vertexIndicator : part.getVertices()) {
+					indices[i * 3] = vertexIndicator.position;
+					indices[i * 3 + 1] = vertexIndicator.uv;
+					indices[i * 3 + 2] = vertexIndicator.normal;
+					i++;
+				}
+			}
+			
+			vertices.add("indices", ParseUtil.iarrayToJsonObject(indices, 3));
 		}
 		
-		vertices.add("vcounts", ParseUtil.arrayToJsonObject(vcounts, 1));
-		vertices.add("weights", ParseUtil.arrayToJsonObject(this.weights, 1));
-		vertices.add("vindices", ParseUtil.arrayToJsonObject(vIndices, 1));
 		root.add("vertices", vertices);
 		
 		if (this.renderProperties != null) {

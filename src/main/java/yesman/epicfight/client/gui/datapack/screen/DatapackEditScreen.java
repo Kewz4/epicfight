@@ -88,11 +88,9 @@ import yesman.epicfight.api.animation.types.datapack.ClipHoldingAnimation;
 import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
 import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.ClothMesh;
 import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.online.OnlineAssets;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
@@ -103,7 +101,6 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.InstantiateInvoker;
 import yesman.epicfight.api.utils.ParseUtil;
-import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ColorPreviewWidget;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -807,10 +804,6 @@ public class DatapackEditScreen extends Screen {
 			
 			this.modelPreviewer = new ModelPreviewer(9, 15, 0, 140, HorizontalSizing.LEFT_RIGHT, null, Armatures.BIPED, () -> Meshes.BIPED);
 			this.modelPreviewer.setColliderJoint(Armatures.BIPED.searchJointByName("Tool_R"));
-			
-			OnlineAssets.getInstance().getCosmeticMesh(-1, "ripped_cape.json", (mesh) -> {
-				this.modelPreviewer.initCapeInfo((ClothMesh)mesh, OnlineAssets.getInstance().registerRemoteTexture("cape.png"), Armatures.BIPED.chest, new Vec3f(0.0F, 0.0F, 0.125F));
-			});
 			
 			this.inputComponentsList = new InputComponentList<>(DatapackEditScreen.this, 0, 0, 0, 0, 30) {
 				@Override
