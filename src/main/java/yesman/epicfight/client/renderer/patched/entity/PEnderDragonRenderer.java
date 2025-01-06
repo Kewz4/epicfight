@@ -16,8 +16,8 @@ import net.minecraft.world.entity.boss.enderdragon.phases.DragonPhaseInstance;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -40,7 +40,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
         this.mulPoseStack(poseStack, armature, entityIn, entitypatch, partialTicks);
-		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
 		armature.getPoseMatrices()[0] = OpenMatrix4f.rotate(-90.0F, Vec3f.X_AXIS, armature.getPoseMatrices()[0], null);
 		
 		if (entityIn.dragonDeathTime > 0) {
@@ -57,7 +57,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 				AnimationPlayer animPlayer = layer.animationPlayer;
 				float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
 				
-				animPlayer.getAnimation().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
+				animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
 			}
 		}
 		
@@ -112,7 +112,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 	}
 	
 	@Override
-	public MeshProvider<DragonMesh> getDefaultMesh() {
+	public AssetAccessor<DragonMesh> getDefaultMesh() {
 		return Meshes.DRAGON;
 	}
 }

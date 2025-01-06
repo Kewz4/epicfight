@@ -72,7 +72,7 @@ public class AreaEffectBreath extends AreaEffectCloud {
 					}
 					
 					EpicFightDamageSources damageSources = EpicFightDamageSources.of(livingentity.level());
-					EpicFightDamageSource damageSource = damageSources.enderDragonBreath(this.getOwner(), this).setAnimation(Animations.DUMMY_ANIMATION).setStunType(StunType.SHORT);
+					EpicFightDamageSource damageSource = damageSources.enderDragonBreath(this.getOwner(), this).setAnimation(Animations.EMPTY_ANIMATION).setStunType(StunType.SHORT);
 					
 					if (livingentity.isInvulnerableTo(damageSource)) {
 						continue;

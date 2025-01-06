@@ -39,13 +39,21 @@ public class SkillContainer {
 	}
 	
 	/* Fix the mistype in the future */
-	public void setExecuter(PlayerPatch<?> executor) {
+	public void setExecutor(PlayerPatch<?> executor) {
 		this.executor = executor;
 	}
 	
 	/* Fix the mistype in the future */
-	public PlayerPatch<?> getExecuter() {
+	public PlayerPatch<?> getExecutor() {
 		return this.executor;
+	}
+	
+	public LocalPlayerPatch getClientExecutor() {
+		return (LocalPlayerPatch)this.executor;
+	}
+	
+	public ServerPlayerPatch getServerExecutor() {
+		return (ServerPlayerPatch)this.executor;
 	}
 	
 	public boolean setSkill(Skill skill) {

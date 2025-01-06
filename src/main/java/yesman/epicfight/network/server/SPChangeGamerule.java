@@ -1,70 +1,48 @@
 package yesman.epicfight.network.server;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.GameRules;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.network.NetworkEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules.ConfigurableGameRule;
 
-public class SPChangeGamerule {
-	private final SynchronizedGameRules gamerule;
-	private final int gameruleId;
-	private final Object object;
+public class SPChangeGamerule<Type, Config extends ForgeConfigSpec.ConfigValue<Type>, RuleValue extends GameRules.Value<RuleValue>> {
+	private final ConfigurableGameRule<Type, Config, RuleValue> gamerule;
+	private final Type value;
 	
 	public SPChangeGamerule() {
 		this.gamerule = null;
-		this.gameruleId = -1;
-		this.object = 0;
+		this.value = null;
 	}
 	
-	public SPChangeGamerule(SynchronizedGameRules gamerule, Object object) {
+	public SPChangeGamerule(ConfigurableGameRule<Type, Config, RuleValue> gamerule, Type object) {
 		this.gamerule = gamerule;
-		this.gameruleId = gamerule.ordinal();
-		this.object = object;
+		this.value = object;
 	}
 	
-	public static SPChangeGamerule fromBytes(FriendlyByteBuf buf) {
-		int id = buf.readInt();
-		SynchronizedGameRules gamerule = SynchronizedGameRules.values()[id];
-		Object obj = gamerule.decoder.apply(buf);
+	public static <Type, Config extends ForgeConfigSpec.ConfigValue<Type>, RuleValue extends GameRules.Value<RuleValue>> SPChangeGamerule<Type, Config, RuleValue> fromBytes(FriendlyByteBuf buf) {
+		@SuppressWarnings("unchecked")
+		ConfigurableGameRule<Type, Config, RuleValue> gamerule = (ConfigurableGameRule<Type, Config, RuleValue>)EpicFightGameRules.GAME_RULES.get(buf.readUtf());
+		Type value = gamerule.getRuleType().bufferCodec().decode(buf);
 		
-		return new SPChangeGamerule(gamerule, obj);
+		return new SPChangeGamerule<> (gamerule, value);
 	}
 
-	public static void toBytes(SPChangeGamerule msg, FriendlyByteBuf buf) {
-		buf.writeInt(msg.gameruleId);
-		msg.gamerule.encoder.accept(buf, msg.object);
+	public static <Type, Config extends ForgeConfigSpec.ConfigValue<Type>, RuleValue extends GameRules.Value<RuleValue>> void toBytes(SPChangeGamerule<Type, Config, RuleValue> msg, FriendlyByteBuf buf) {
+		buf.writeUtf(msg.gamerule.getRuleName());
+		msg.gamerule.getRuleType().bufferCodec().encode(msg.value, buf);
 	}
 	
-	public static void handle(SPChangeGamerule msg, Supplier<NetworkEvent.Context> ctx) {
-		ctx.get().enqueueWork(() -> msg.gamerule.setRule.accept(Minecraft.getInstance().level, msg.object));
+	public static <Type, Config extends ForgeConfigSpec.ConfigValue<Type>, RuleValue extends GameRules.Value<RuleValue>> void handle(SPChangeGamerule<Type, Config, RuleValue> msg, Supplier<NetworkEvent.Context> ctx) {
+		ctx.get().enqueueWork(() -> {
+			RuleValue ruleValue = Minecraft.getInstance().level.getGameRules().getRule(msg.gamerule.getRuleKey());
+			msg.gamerule.getRuleType().setRule().accept(ruleValue, msg.value);
+		});
+		
 		ctx.get().setPacketHandled(true);
-	}
-	
-	public enum SynchronizedGameRules {
-		HAS_FALL_ANIMATION((level) -> level.getGameRules().getBoolean(EpicFightGamerules.HAS_FALL_ANIMATION), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.HAS_FALL_ANIMATION).set((boolean)value, null), (buf, val) -> buf.writeBoolean((boolean)val), ByteBuf::readBoolean),
-		WEIGHT_PENALTY((level) -> level.getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.WEIGHT_PENALTY).tryDeserialize(value.toString()), (buf, val) -> buf.writeInt((int)val), ByteBuf::readInt),
-		DIABLE_ENTITY_UI((level) -> level.getGameRules().getBoolean(EpicFightGamerules.DISABLE_ENTITY_UI), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.DISABLE_ENTITY_UI).set((boolean)value, null), (buf, val) -> buf.writeBoolean((boolean)val), ByteBuf::readBoolean),
-		CAN_SWITCH_COMBAT((level) -> level.getGameRules().getBoolean(EpicFightGamerules.CAN_SWITCH_COMBAT), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.CAN_SWITCH_COMBAT).set((boolean)value, null), (buf, val) -> buf.writeBoolean((boolean)val), ByteBuf::readBoolean),
-		STIFF_COMBO_ATTACKS((level) -> level.getGameRules().getBoolean(EpicFightGamerules.STIFF_COMBO_ATTACKS), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.STIFF_COMBO_ATTACKS).set((boolean)value, null), (buf, val) -> buf.writeBoolean((boolean)val), ByteBuf::readBoolean),
-		NO_MOBS_IN_BOSSFIGHT((level) -> level.getGameRules().getBoolean(EpicFightGamerules.NO_MOBS_IN_BOSSFIGHT), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.NO_MOBS_IN_BOSSFIGHT).set((boolean)value, null), (buf, val) -> buf.writeBoolean((boolean)val), ByteBuf::readBoolean),
-		INITIAL_PLAYER_MODE((level) -> level.getGameRules().getInt(EpicFightGamerules.INITIAL_PLAYER_MODE), (level, value) -> level.getGameRules().getRule(EpicFightGamerules.INITIAL_PLAYER_MODE).tryDeserialize(value.toString()), (buf, val) -> buf.writeInt((int)val), ByteBuf::readInt);
-		
-		public Function<Level, Object> getRule;
-		public BiConsumer<Level, Object> setRule;
-		public BiConsumer<ByteBuf, Object> encoder;
-		public Function<ByteBuf, Object> decoder;
-		
-		SynchronizedGameRules(Function<Level, Object> getRule, BiConsumer<Level, Object> setRule, BiConsumer<ByteBuf, Object> encoder, Function<ByteBuf, Object > decoder) {
-			this.getRule = getRule;
-			this.setRule = setRule;
-			this.encoder = encoder;
-			this.decoder = decoder;
-		}
 	}
 }

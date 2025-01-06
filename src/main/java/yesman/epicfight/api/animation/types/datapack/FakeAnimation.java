@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.AirSlashAnimation;
@@ -36,7 +37,7 @@ import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class FakeAnimation extends StaticAnimation {
+public class FakeAnimation extends StaticAnimation implements AnimationAccessor<FakeAnimation> {
 	private AnimationType animationType;
 	private AnimationClip animationClip;
 	private Map<String, Object> constructorParams = Maps.newLinkedHashMap();
@@ -90,7 +91,7 @@ public class FakeAnimation extends StaticAnimation {
 	}
 	
 	@Override
-	public float getConvertTime() {
+	public float getTransitionTime() {
 		Object convTime = this.getParameter("convertTime");
 		return convTime == null ? 0.0F : (float)convTime;
 	}
@@ -107,7 +108,7 @@ public class FakeAnimation extends StaticAnimation {
 	
 	@Override
 	public void putOnPlayer(AnimationPlayer animationPlayer, LivingEntityPatch<?> entitypatch) {
-		animationPlayer.setPlayAnimation(this);
+		animationPlayer.setPlayAnimation(this.getAccessor());
 		animationPlayer.tick(entitypatch);
 	}
 	
@@ -320,5 +321,25 @@ public class FakeAnimation extends StaticAnimation {
 		public String toString() {
 			return ParseUtil.snakeToSpacedCamel(this.name() + "_ANIMATION");
 		}
+	}
+
+	@Override
+	public FakeAnimation get() {
+		return this;
+	}
+
+	@Override
+	public ResourceLocation registryName() {
+		return this.getRegistryName();
+	}
+
+	@Override
+	public boolean isPresent() {
+		return true;
+	}
+
+	@Override
+	public int id() {
+		return -1;
 	}
 }

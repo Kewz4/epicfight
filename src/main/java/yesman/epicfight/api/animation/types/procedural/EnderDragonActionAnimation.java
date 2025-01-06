@@ -7,24 +7,25 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.FABRIK;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.RenderingTool;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.EnderDragonPatch;
 
@@ -32,21 +33,16 @@ public class EnderDragonActionAnimation extends ActionAnimation implements Proce
 	private final IKInfo[] ikInfos;
 	private Map<String, TransformSheet> tipPointTransforms;
 	
-	public EnderDragonActionAnimation(float convertTime, String path, Armature armature, IKInfo[] ikInfos) {
-		super(convertTime, path, armature);
+	public EnderDragonActionAnimation(float convertTime, AnimationAccessor<? extends EnderDragonActionAnimation> accessor, Armature armature, IKInfo[] ikInfos) {
+		super(convertTime, accessor, armature);
 		this.ikInfos = ikInfos;
 	}
 	
 	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-		try {
-			loadAllJointsClip(resourceManager, this);
-			this.tipPointTransforms = Maps.newHashMap();
-			this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransforms, this.getArmature(), this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false), true);
-		} catch (Exception e) {
-			EpicFightMod.LOGGER.warn("Failed to load animation: " + this.resourceLocation);
-			e.printStackTrace();
-		}
+	public void loadAnimation() {
+		AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
+		this.tipPointTransforms = Maps.newHashMap();
+		this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransforms, this.getArmature(), this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false), true);
 	}
 	
 	@Override
@@ -111,7 +107,7 @@ public class EnderDragonActionAnimation extends ActionAnimation implements Proce
 		if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
 			Vec3 entitypos = enderdragonpatch.getOriginal().position();
 			OpenMatrix4f toWorld = OpenMatrix4f.mul(OpenMatrix4f.createTranslation((float)entitypos.x, (float)entitypos.y, (float)entitypos.z), enderdragonpatch.getModelMatrix(1.0F), null);
-			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this).getElapsedTime();
+			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime();
 			
 			for (IKInfo ikInfo : this.ikInfos) {
 				if (ikInfo.clipAnimation) {

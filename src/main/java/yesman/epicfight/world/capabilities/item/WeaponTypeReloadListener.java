@@ -33,7 +33,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.SkillManager;
@@ -172,10 +174,11 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		for (String key : combosTag.getAllKeys()) {
 			Style style = Style.ENUM_MANAGER.getOrThrow(key);
 			ListTag comboAnimations = combosTag.getList(key, Tag.TAG_STRING);
-			StaticAnimation[] animArray = new StaticAnimation[comboAnimations.size()];
+			@SuppressWarnings("unchecked")
+			AnimationAccessor<? extends AttackAnimation>[] animArray = new AnimationAccessor[comboAnimations.size()];
 			
 			for (int i = 0; i < comboAnimations.size(); i++) {
-				animArray[i] = AnimationManager.getInstance().byKeyOrThrow(comboAnimations.getString(i));
+				animArray[i] = AnimationManager.byKey(comboAnimations.getString(i));
 			}
 			
 			builder.newStyleCombo(style, animArray);
@@ -197,7 +200,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (String sLivingmotion : styleAnimationTag.getAllKeys()) {
 				LivingMotion livingmotion = LivingMotion.ENUM_MANAGER.getOrThrow(sLivingmotion);
-				StaticAnimation animation = AnimationManager.getInstance().byKeyOrThrow(styleAnimationTag.getString(sLivingmotion));
+				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(styleAnimationTag.getString(sLivingmotion));
 				
 				builder.livingMotionModifier(style, livingmotion, animation);
 			}

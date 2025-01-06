@@ -7,10 +7,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
@@ -19,24 +19,25 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 
 public class EviscerateSkill extends WeaponInnateSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("f082557a-b2f9-11eb-8529-0242ac130003");
-	private AnimationProvider<AttackAnimation> first;
-	private AnimationProvider<AttackAnimation> second;
+	private AnimationAccessor<? extends AttackAnimation> first;
+	private AnimationAccessor<? extends AttackAnimation> second;
 	
-	public EviscerateSkill(Builder<? extends Skill> builder) {
+	public EviscerateSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
-		this.first = () -> (AttackAnimation)Animations.EVISCERATE_FIRST;
-		this.second = () -> (AttackAnimation)Animations.EVISCERATE_SECOND;
+		
+		this.first = Animations.EVISCERATE_FIRST;
+		this.second = Animations.EVISCERATE_SECOND;
 	}
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
-		container.getExecuter().getEventListener().addEventListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
 			if (Animations.EVISCERATE_FIRST.equals(event.getAnimation())) {
 				List<LivingEntity> hurtEntities = event.getPlayerPatch().getCurrenltyHurtEntities();
 				
 				if (!hurtEntities.isEmpty() && hurtEntities.get(0).isAlive()) {
-					event.getPlayerPatch().reserveAnimation(this.second.get());
+					event.getPlayerPatch().reserveAnimation(this.second);
 					event.getPlayerPatch().getServerAnimator().getPlayerFor(null).reset();
 					event.getPlayerPatch().getCurrenltyHurtEntities().clear();
 				}
@@ -46,12 +47,13 @@ public class EviscerateSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
-		container.getExecuter().getEventListener().removeListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID);
 	}
 	
 	@Override
 	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playAnimationSynchronized(this.first.get(), 0);
+		executer.playAnimationSynchronized(this.first, 0.0F);
+		
 		super.executeOnServer(executer, args);
 	}
 	

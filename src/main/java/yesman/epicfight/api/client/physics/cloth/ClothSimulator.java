@@ -7,7 +7,6 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.compress.utils.Lists;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -16,6 +15,7 @@ import org.joml.Vector4f;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,8 +35,8 @@ import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPart;
 import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.SoftBodyMesh;
-import yesman.epicfight.api.client.model.SoftBodyMesh.ConstraintType;
+import yesman.epicfight.api.client.model.SoftBodyTranslatable;
+import yesman.epicfight.api.client.model.SoftBodyTranslatable.ConstraintType;
 import yesman.epicfight.api.client.model.StaticMesh;
 import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.client.physics.AbstractSimulator;
@@ -58,7 +58,7 @@ import yesman.epicfight.model.armature.HumanoidArmature;
  * https://www.youtube.com/@TenMinutePhysics
  **/
 @OnlyIn(Dist.CLIENT)
-public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBodyMesh, ClothSimulatable, ClothSimulator.ClothObject> {
+public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
 	public static final ResourceLocation PLAYER_CLOAK = new ResourceLocation(EpicFightMod.MODID, "ingame_cloak");
 	public static final ResourceLocation MODELPREVIEWER_CLOAK = new ResourceLocation(EpicFightMod.MODID, "previewer_cloak");
 	
@@ -87,8 +87,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class ClothObject implements SimulationObject<ClothObjectBuilder, SoftBodyMesh, ClothSimulatable>, Mesh {
-		private final SoftBodyMesh provider;
+	public static class ClothObject implements SimulationObject<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable>, Mesh {
+		private final SoftBodyTranslatable provider;
 		private final Map<String, Part> parts;
 		private final List<Map<Vec3, Vec3f>> poseNormals;
 		
@@ -98,7 +98,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		//Storage vectors
 		private static final Vec3f TRASNFORMED = new Vec3f();
 		
-		public ClothObject(ClothObjectBuilder builder, SoftBodyMesh provider, Map<String, MeshPart<?>> parts, float[] positions) {
+		public ClothObject(ClothObjectBuilder builder, SoftBodyTranslatable provider, Map<String, MeshPart<?>> parts, float[] positions) {
 			this.provider = provider;
 			this.clothColliders = builder.clothColliders;
 			
@@ -118,7 +118,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		}
 
 		@Override
-		public SoftBodyMesh getProvider() {
+		public SoftBodyTranslatable getProvider() {
 			return this.provider;
 		}
 		
@@ -132,7 +132,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		
 		
 		private static final Vec3f SCALED_FORCE = new Vec3f();
-		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrix(HumanoidArmature.JOINTS);
+		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(HumanoidArmature.JOINTS);
 		private static final OpenMatrix4f COLLIDER_TRANSFORM = new OpenMatrix4f();
 		private final Vec3f force = new Vec3f();
 		
@@ -260,7 +260,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				
 				List<Particle> particlesList = Lists.newArrayList();
 				ImmutableList.Builder<ConstraintsBundle> constraintsBuilder = ImmutableList.builder();
-				SoftBodyMesh.ClothSimulationInfo clothInfo = clothPart.getClothInfo();
+				SoftBodyTranslatable.ClothSimulationInfo clothInfo = clothPart.getClothInfo();
 				
 				for (int i = 0; i < clothInfo.particles().length / 2; i++) {
 					int posIndex = clothInfo.particles()[i * 2];
@@ -425,7 +425,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			private static final Vec3f CROSS = new Vec3f();
 			
 			public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-				SoftBodyMesh softBodyMesh = ClothObject.this.provider;
+				SoftBodyTranslatable softBodyMesh = ClothObject.this.provider;
 				MeshPart<?> modelPart = softBodyMesh.getSoftBodyMesh().getPart(this.name);
 				
 				if (modelPart.isHidden()) {

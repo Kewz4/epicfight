@@ -13,7 +13,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -26,9 +26,9 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PHumanoidRenderer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends HumanoidModel<E>, R extends LivingEntityRenderer<E, M>, AM extends HumanoidMesh> extends PatchedLivingEntityRenderer<E, T, M, R, AM> {
-	private final MeshProvider<AM> mesh;
+	private final AssetAccessor<AM> mesh;
 	
-	public PHumanoidRenderer(MeshProvider<AM> mesh, EntityRendererProvider.Context context, EntityType<?> entityType) {
+	public PHumanoidRenderer(AssetAccessor<AM> mesh, EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
 		
 		this.mesh = mesh;
@@ -41,7 +41,7 @@ public class PHumanoidRenderer<E extends LivingEntity, T extends LivingEntityPat
 	@Override
 	public void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
 		if (entitypatch.getOriginal().isBaby()) {
-			pose.getOrDefaultTransform("Head").frontResult(JointTransform.getScale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head").frontResult(JointTransform.scale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -51,7 +51,7 @@ public class PHumanoidRenderer<E extends LivingEntity, T extends LivingEntityPat
 	}
 	
 	@Override
-	public MeshProvider<AM> getDefaultMesh() {
+	public AssetAccessor<AM> getDefaultMesh() {
 		return this.mesh;
 	}
 }

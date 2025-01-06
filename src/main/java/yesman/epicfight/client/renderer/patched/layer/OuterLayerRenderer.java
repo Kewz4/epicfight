@@ -21,7 +21,7 @@ public class OuterLayerRenderer extends ModelRenderLayer<Drowned, DrownedPatch, 
 	public static final ResourceLocation DROWNED_OUTER_LAYER = new ResourceLocation("textures/entity/zombie/drowned_outer_layer.png");
 	
 	public OuterLayerRenderer() {
-		super(() -> Meshes.BIPED_OUTLAYER);
+		super(Meshes.BIPED_OUTLAYER);
 	}
 	
 	@Override

@@ -82,6 +82,7 @@
 	"epicfight.gui.attribute": "Epic Fight Attributes:",
 	
 	"epicfight.skillNotFound": "Unknown skill: %s",
+	"epicfight.animationNotFound": "Unknown animation name: %s",
 	
 	"epicfight.weapon_category.not_weapon": "Not Weapon",
 	"epicfight.weapon_category.axe": "Axe",

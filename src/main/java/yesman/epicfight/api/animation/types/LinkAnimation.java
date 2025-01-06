@@ -3,9 +3,11 @@ package yesman.epicfight.api.animation.types;
 import java.util.Map;
 import java.util.Optional;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
@@ -15,35 +17,34 @@ import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
-public class LinkAnimation extends DynamicAnimation {
-	private final AnimationClip animationClip = new AnimationClip();
-	protected DynamicAnimation fromAnimation;
-	protected StaticAnimation toAnimation;
+public class LinkAnimation extends DynamicAnimation implements AnimationAccessor<LinkAnimation> {
+	protected AnimationAccessor<? extends DynamicAnimation> fromAnimation;
+	protected AnimationAccessor<? extends StaticAnimation> toAnimation;
 	protected float nextStartTime;
 	
 	@Override
 	public void tick(LivingEntityPatch<?> entitypatch) {
-		this.toAnimation.linkTick(entitypatch, this);
+		this.toAnimation.get().linkTick(entitypatch, this);
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, DynamicAnimation nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (!isEnd) {
-			this.toAnimation.end(entitypatch, nextAnimation, isEnd);
+			this.toAnimation.get().end(entitypatch, nextAnimation, isEnd);
 		} else {
 			if (this.nextStartTime > 0.0F) {
 				entitypatch.getAnimator().getPlayerFor(this).setElapsedTime(this.nextStartTime);
-				entitypatch.getAnimator().getPlayerFor(this).markToDoNotReset();
+				entitypatch.getAnimator().getPlayerFor(this).markDoNotResetTime();
 			}
 		}
 	}
 	
 	@Override
 	public TypeFlexibleHashMap<StateFactor<?>> getStatesMap(LivingEntityPatch<?> entitypatch, float time) {
-		TypeFlexibleHashMap<StateFactor<?>> map = this.toAnimation.getStatesMap(entitypatch, Math.max(time - this.getTotalTime(), 0.0F));
+		TypeFlexibleHashMap<StateFactor<?>> map = this.toAnimation.get().getStatesMap(entitypatch, Math.max(this.nextStartTime + (time - this.getTotalTime()), this.nextStartTime));
 		
 		for (Map.Entry<StateFactor<?>, Object> entry : map.entrySet()) {
-			Object val = this.toAnimation.getModifiedLinkState(entry.getKey(), entry.getValue(), entitypatch, time);
+			Object val = this.toAnimation.get().getModifiedLinkState(entry.getKey(), entry.getValue(), entitypatch, time);
 			map.put(entry.getKey(), val);
 		}
 		
@@ -52,11 +53,11 @@ public class LinkAnimation extends DynamicAnimation {
 	
 	@Override
 	public EntityState getState(LivingEntityPatch<?> entitypatch, float time) {
-		EntityState state = this.toAnimation.getState(entitypatch, Math.max(time - this.getTotalTime(), 0.0F));
+		EntityState state = this.toAnimation.get().getState(entitypatch, Math.max(this.nextStartTime + time - this.getTotalTime(), this.nextStartTime));
 		TypeFlexibleHashMap<StateFactor<?>> map = state.getStateMap();
 		
 		for (Map.Entry<StateFactor<?>, Object> entry : map.entrySet()) {
-			Object val = this.toAnimation.getModifiedLinkState(entry.getKey(), entry.getValue(), entitypatch, time);
+			Object val = this.toAnimation.get().getModifiedLinkState(entry.getKey(), entry.getValue(), entitypatch, time);
 			map.put(entry.getKey(), val);
 		}
 		
@@ -66,14 +67,14 @@ public class LinkAnimation extends DynamicAnimation {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getState(StateFactor<T> stateFactor, LivingEntityPatch<?> entitypatch, float time) {
-		T state = this.toAnimation.getState(stateFactor, entitypatch, Math.max(time - this.getTotalTime(), 0.0F));
+		T state = this.toAnimation.get().getState(stateFactor, entitypatch, Math.max(this.nextStartTime + time - this.getTotalTime(), this.nextStartTime));
 		
-		return (T)this.toAnimation.getModifiedLinkState(stateFactor, state, entitypatch, time);
+		return (T)this.toAnimation.get().getModifiedLinkState(stateFactor, state, entitypatch, time);
 	}
 	
 	@Override
 	public Pose getPoseByTime(LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
-		Pose nextStartingPose = this.toAnimation.getPoseByTime(entitypatch, this.nextStartTime, 1.0F);
+		Pose nextStartingPose = this.toAnimation.get().getPoseByTime(entitypatch, this.nextStartTime, 1.0F);
 		
 		/**
 		 * Update dest pose
@@ -95,52 +96,70 @@ public class LinkAnimation extends DynamicAnimation {
 	public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		// Bad implementation: Add root joint as coord in loading animation
 		if (this.toAnimation instanceof ActionAnimation actionAnimation) {
-			actionAnimation.correctRootJoint(this, pose, entitypatch, time, partialTicks);
+			if (!this.getTransfroms().containsKey("Coord")) {
+				actionAnimation.correctRootJoint(this, pose, entitypatch, time, partialTicks);
+			}
 		}
 	}
 	
 	@Override
 	public float getPlaySpeed(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
-		return this.toAnimation.getPlaySpeed(entitypatch, animation);
+		return this.toAnimation.get().getPlaySpeed(entitypatch, animation);
 	}
 	
-	public void setConnectedAnimations(DynamicAnimation from, StaticAnimation to) {
-		this.fromAnimation = from.getRealAnimation();
+	public void setConnectedAnimations(AnimationAccessor<? extends DynamicAnimation> from, AnimationAccessor<? extends StaticAnimation> to) {
+		this.fromAnimation = from.get().getRealAnimation();
 		this.toAnimation = to;
 	}
 	
-	public DynamicAnimation getNextAnimation() {
+	public AnimationAccessor<? extends StaticAnimation> getNextAnimation() {
 		return this.toAnimation;
+	}
+	
+	@Override
+	public TransformSheet getCoord() {
+		if (this.getTransfroms().containsKey("Coord")) {
+			return this.getTransfroms().get("Coord");
+		} else if (this.getTransfroms().containsKey("Root")) {
+			return this.getTransfroms().get("Root");
+		}
+		
+		return TransformSheet.EMPTY_SHEET;
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public Optional<JointMaskEntry> getJointMaskEntry(LivingEntityPatch<?> entitypatch, boolean useCurrentMotion) {
-		return useCurrentMotion ? this.toAnimation.getJointMaskEntry(entitypatch, true) : this.fromAnimation.getJointMaskEntry(entitypatch, false);
+		return useCurrentMotion ? this.toAnimation.get().getJointMaskEntry(entitypatch, true) : this.fromAnimation.get().getJointMaskEntry(entitypatch, false);
 	}
 	
 	@Override
 	public boolean isMainFrameAnimation() {
-		return this.toAnimation.isMainFrameAnimation();
+		return this.toAnimation.get().isMainFrameAnimation();
 	}
 	
 	@Override
 	public boolean isReboundAnimation() {
-		return this.toAnimation.isReboundAnimation();
+		return this.toAnimation.get().isReboundAnimation();
 	}
 	
 	@Override
 	public boolean doesHeadRotFollowEntityHead() {
-		return this.fromAnimation.doesHeadRotFollowEntityHead() && this.toAnimation.doesHeadRotFollowEntityHead();
+		return this.fromAnimation.get().doesHeadRotFollowEntityHead() && this.toAnimation.get().doesHeadRotFollowEntityHead();
 	}
 	
 	@Override
-	public DynamicAnimation getRealAnimation() {
+	public AnimationAccessor<? extends StaticAnimation> getRealAnimation() {
 		return this.toAnimation;
 	}
 		
-	public DynamicAnimation getFromAnimation() {
+	public AnimationAccessor<? extends DynamicAnimation> getFromAnimation() {
 		return this.fromAnimation;
 	} 
+	
+	@Override
+	public AnimationAccessor<? extends DynamicAnimation> getAccessor() {
+		return this;
+	}
 	
 	public void copyTo(LinkAnimation dest) {
 		dest.setConnectedAnimations(this.fromAnimation, this.toAnimation);
@@ -176,5 +195,25 @@ public class LinkAnimation extends DynamicAnimation {
 	@Override
 	public AnimationClip getAnimationClip() {
 		return this.animationClip;
+	}
+	
+	@Override
+	public LinkAnimation get() {
+		return this;
+	}
+
+	@Override
+	public ResourceLocation registryName() {
+		return null;
+	}
+
+	@Override
+	public boolean isPresent() {
+		return true;
+	}
+
+	@Override
+	public int id() {
+		return -1;
 	}
 }

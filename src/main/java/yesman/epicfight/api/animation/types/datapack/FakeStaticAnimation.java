@@ -57,7 +57,7 @@ public class FakeStaticAnimation extends StaticAnimation implements ClipHoldingA
 	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
 		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
 		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.STATIC);
-		fakeAnimation.setParameter("convertTime", this.convertTime);
+		fakeAnimation.setParameter("convertTime", this.transitionTime);
 		fakeAnimation.setParameter("isRepeat", this.isRepeat());
 		fakeAnimation.setParameter("path", this.registryName.toString());
 		fakeAnimation.setParameter("armature", this.armature);

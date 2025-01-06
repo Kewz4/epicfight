@@ -31,6 +31,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
+import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
 import yesman.epicfight.api.client.model.SkinnedMesh;
@@ -127,7 +129,7 @@ public abstract class PatchedLivingEntityRenderer<E extends LivingEntity, T exte
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
 		this.prepareVanillaModel(entity, renderer.getModel(), renderer, partialTicks);
-		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
 			AM mesh = this.getMeshProvider(entitypatch).get();
@@ -142,6 +144,16 @@ public abstract class PatchedLivingEntityRenderer<E extends LivingEntity, T exte
 		
 		if (!entity.isSpectator()) {
 			this.renderLayer(renderer, entitypatch, entity, armature.getPoseMatrices(), buffer, poseStack, packedLight, partialTicks);
+		}
+		
+		if (renderType != null) {
+			if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
+				for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
+					AnimationPlayer animPlayer = layer.animationPlayer;
+					float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
+					animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
+				}
+			}
 		}
 		
 		poseStack.popPose();

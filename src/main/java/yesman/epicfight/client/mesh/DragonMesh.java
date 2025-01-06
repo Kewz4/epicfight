@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class DragonMesh extends SkinnedMesh implements MeshProvider<DragonMesh> {
+public class DragonMesh extends SkinnedMesh {
 	public final SkinnedMeshPart head;
 	public final SkinnedMeshPart neck;
 	public final SkinnedMeshPart torso;
@@ -36,10 +35,5 @@ public class DragonMesh extends SkinnedMesh implements MeshProvider<DragonMesh> 
 		this.leftWing = this.getOrLogException(this.parts, "leftWing");
 		this.rightWing = this.getOrLogException(this.parts, "rightWing");
 		this.tail = this.getOrLogException(this.parts, "tail");
-	}
-
-	@Override
-	public DragonMesh get() {
-		return this;
 	}
 }

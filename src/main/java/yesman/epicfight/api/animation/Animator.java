@@ -9,32 +9,63 @@ import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraftforge.common.MinecraftForge;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public abstract class Animator {
-	protected final Map<LivingMotion, StaticAnimation> livingAnimations = Maps.newHashMap();
-	protected final TypeFlexibleHashMap<TypeKey<?>> animationVariables = new TypeFlexibleHashMap<> (false);
+	protected final Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> livingAnimations = Maps.newHashMap();
+	protected final AnimationVariables animationVariables = new AnimationVariables(this);
 	protected final LivingEntityPatch<?> entitypatch;
 	
 	public Animator(LivingEntityPatch<?> entitypatch) {
 		this.entitypatch = entitypatch;
 	}
 	
-	public abstract void playAnimation(StaticAnimation nextAnimation, float convertTimeModifier);
-	public abstract void playAnimationInstantly(StaticAnimation nextAnimation);
+	/**
+	 * Play an animation
+	 * 
+	 * @param nextAnimation
+	 * @param transitionTimeModifier extends the transition time if positive value provided, or starts in time as an amount of time (e.g. -0.1F starts in 0.1F frame time)
+	 */
+	public abstract void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier);
+	
+	public final void playAnimation(int id, float transitionTimeModifier) {
+		this.playAnimation(AnimationManager.byId(id), transitionTimeModifier);
+	}
+	
+	/**
+	 * Play a given animation without transition animation.
+	 * @param nextAnimation
+	 */
+	public abstract void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> nextAnimation);
+	
+	public final void playAnimationInstantly(int id) {
+		this.playAnimationInstantly(AnimationManager.byId(id));
+	}
+	
+	/**
+	 * Reserve a given animation until the current animation ends.
+	 * If the given animation has a higher priority than current animation, it terminates the current animation by force and play the next animation
+	 * @param nextAnimation
+	 */
+	public abstract void reserveAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation);
+	
+	public final void reserveAnimation(int id) {
+		this.reserveAnimation(AnimationManager.byId(id));
+	}
+	
+	public abstract void setSoftPause(boolean paused);
+	public abstract void setHardPause(boolean paused);
 	public abstract void tick();
-	/** Standby until the current animation is completely end. Mostly used for link two animations having the same last & first keyframe pose on {@link DynamicAnimation#end(LivingEntityPatch, boolean)} **/
-	public abstract void reserveAnimation(StaticAnimation nextAnimation);
+	
 	public abstract EntityState getEntityState();
 	/** Give a null value as a parameter to get an animation that is highest priority on client **/
-	public abstract AnimationPlayer getPlayerFor(@Nullable DynamicAnimation playingAnimation);
+	public abstract AnimationPlayer getPlayerFor(@Nullable AnimationAccessor<? extends DynamicAnimation> playingAnimation);
 	public abstract <T> Pair<AnimationPlayer, T> findFor(Class<T> animationType);
 	public abstract Pose getPose(float partialTicks);
 	
@@ -43,52 +74,28 @@ public abstract class Animator {
 		MinecraftForge.EVENT_BUS.post(initAnimatorEvent);
 	}
 	
-	public final void playAnimation(int id, float convertTimeModifier) {
-		this.playAnimation(AnimationManager.getInstance().byId(id), convertTimeModifier);
-	}
-	
-	public final void playAnimationInstantly(int id) {
-		this.playAnimationInstantly(AnimationManager.getInstance().byId(id));
-	}
-	
-	public boolean isReverse() {
-		return false;
-	}
-	
 	public void playDeathAnimation() {
 		this.playAnimation(this.livingAnimations.getOrDefault(LivingMotions.DEATH, Animations.BIPED_DEATH), 0);
 	}
 	
-	public void addLivingAnimation(LivingMotion livingMotion, StaticAnimation animation) {
+	public void addLivingAnimation(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) {
 		this.livingAnimations.put(livingMotion, animation);
 	}
 	
-	public StaticAnimation getLivingAnimation(LivingMotion livingMotion, StaticAnimation defaultGetter) {
+	public AnimationAccessor<? extends StaticAnimation> getLivingAnimation(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> defaultGetter) {
 		return this.livingAnimations.getOrDefault(livingMotion, defaultGetter);
 	}
 	
-	public Map<LivingMotion, StaticAnimation> getLivingAnimations() {
+	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingAnimations() {
 		return ImmutableMap.copyOf(this.livingAnimations);
 	}
 	
-	public void removeAnimationVariables(TypeKey<?> typeKey) {
-		this.animationVariables.remove(typeKey);
-	}
-	
-	public <T> void putAnimationVariable(TypeKey<T> typeKey, T value) {
-		if (this.animationVariables.containsKey(typeKey)) {
-			this.animationVariables.replace(typeKey, value);
-		} else {
-			this.animationVariables.put(typeKey, value);
-		}
+	public AnimationVariables getVariables() {
+		return this.animationVariables;
 	}
 	
 	public LivingEntityPatch<?> getEntityPatch() {
 		return this.entitypatch;
-	}
-	
-	public <T> T getAnimationVariable(TypeKey<T> key) {
-		return this.animationVariables.get(key);
 	}
 	
 	public void resetLivingAnimations() {

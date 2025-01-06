@@ -22,25 +22,27 @@ public class AnimatedAttackGoal<T extends MobPatch<?>> extends Goal {
 	
 	@Override
 	public void tick() {
-		if (this.mobpatch.getTarget() != null) {
-			EntityState state = this.mobpatch.getEntityState();
-			this.combatBehaviors.tick();
-			
-			if (this.combatBehaviors.hasActivatedMove()) {
-				if (state.canBasicAttack()) {
-					CombatBehaviors.Behavior<T> result = this.combatBehaviors.tryProceed();
-					
-					if (result != null) {
-						result.execute(this.mobpatch);
-					}
+		if (this.mobpatch.getTarget() == null) {
+			return;	
+		}
+		
+		EntityState state = this.mobpatch.getEntityState();
+		this.combatBehaviors.tick();
+		
+		if (this.combatBehaviors.hasActivatedMove()) {
+			if (state.canBasicAttack()) {
+				CombatBehaviors.Behavior<T> result = this.combatBehaviors.tryProceed();
+				
+				if (result != null) {
+					result.execute(this.mobpatch);
 				}
-			} else {
-				if (!state.inaction()) {
-					CombatBehaviors.Behavior<T> result = this.combatBehaviors.selectRandomBehaviorSeries();
-					
-					if (result != null) {
-						result.execute(this.mobpatch);
-					}
+			}
+		} else {
+			if (!state.inaction()) {
+				CombatBehaviors.Behavior<T> result = this.combatBehaviors.selectRandomBehaviorSeries();
+				
+				if (result != null) {
+					result.execute(this.mobpatch);
 				}
 			}
 		}
@@ -54,7 +56,7 @@ public class AnimatedAttackGoal<T extends MobPatch<?>> extends Goal {
 		} else if (!livingentity.isAlive()) {
 			return false;
 		} else {
-			return !(livingentity instanceof Player) || !livingentity.isSpectator() && !((Player) livingentity).isCreative();
+			return !(livingentity instanceof Player player) || !livingentity.isSpectator() && !player.isCreative();
 		}
 	}
 }

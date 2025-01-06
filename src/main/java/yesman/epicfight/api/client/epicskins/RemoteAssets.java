@@ -22,15 +22,16 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.client.online.texture.RemoteTexture;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class RemoteAssets {
-	private static final String SERVER_URL = "https://43.200.213.47:8080";
+	public static final String SERVER_URL = "https://epic-fight.com";
+	
 	private static final RemoteAssets INSTANCE = new RemoteAssets();
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 															.connectTimeout(Duration.ofMillis(60000))
@@ -48,7 +49,7 @@ public class RemoteAssets {
 	
 	private final Map<Integer, CachedMeshProvider> cachedMeshes = Maps.newConcurrentMap();
 	
-	public synchronized MeshProvider<Mesh> getRemoteMesh(int seq, String path, @Nullable Consumer<Mesh> callback) {
+	public synchronized AssetAccessor<Mesh> getRemoteMesh(int seq, String path, @Nullable Consumer<Mesh> callback) {
 		if (this.cachedMeshes.containsKey(seq)) {
 			CachedMeshProvider cachedMesh = this.cachedMeshes.get(seq);
 			
@@ -107,7 +108,7 @@ public class RemoteAssets {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private class CachedMeshProvider implements MeshProvider<Mesh> {
+	private class CachedMeshProvider implements AssetAccessor<Mesh> {
 		private Queue<Consumer<Mesh>> callback = Queues.newArrayDeque();
 		private Mesh mesh;
 		
@@ -125,6 +126,16 @@ public class RemoteAssets {
 		@Override
 		public Mesh get() {
 			return this.mesh;
+		}
+		
+		@Override
+		public ResourceLocation registryName() {
+			return null;
+		}
+		
+		@Override
+		public boolean isPresent() {
+			return this.mesh != null;
 		}
 	}
 }

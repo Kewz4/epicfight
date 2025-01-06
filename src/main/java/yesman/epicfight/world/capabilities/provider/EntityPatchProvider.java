@@ -68,7 +68,7 @@ import yesman.epicfight.world.capabilities.projectile.ProjectilePatch;
 import yesman.epicfight.world.capabilities.projectile.ThrownTridentPatch;
 import yesman.epicfight.world.capabilities.projectile.WitherSkullPatch;
 import yesman.epicfight.world.entity.EpicFightEntities;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier<EntityPatch<?>> {
 	private static final Map<EntityType<?>, Function<Entity, Supplier<EntityPatch<?>>>> CAPABILITIES = Maps.newHashMap();
@@ -169,7 +169,7 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 		
 		if (provider != null) {
 			this.capability = provider.apply(entity).get();
-		} else if (entity instanceof Mob && entity.level().getGameRules().getRule(EpicFightGamerules.GLOBAL_STUN).get()) {
+		} else if (entity instanceof Mob && EpicFightGameRules.GLOBAL_STUN.getRuleValue(entity.level())) {
 			this.capability = new GlobalMobPatch();
 		}
 	}

@@ -2,21 +2,18 @@ package yesman.epicfight.gameasset;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.Joint;
-import yesman.epicfight.api.forgeevent.ModelBuildEvent;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.model.armature.CreeperArmature;
 import yesman.epicfight.model.armature.DragonArmature;
@@ -34,45 +31,30 @@ import yesman.epicfight.world.entity.EpicFightEntities;
 
 public class Armatures {
 	public static final Armatures INSTANCE = new Armatures();
+	private static ResourceManager resourceManager = null;
 	
 	@FunctionalInterface
 	public interface ArmatureContructor<T extends Armature> {
 		T invoke(String name, int jointNumber, Joint joint, Map<String, Joint> jointMap);
 	}
 	
-	private static final BiMap<ResourceLocation, Armature> ARMATURES = HashBiMap.create();
-	private static final Map<EntityType<?>, Function<EntityPatch<?>, Armature>> ENTITY_TYPE_ARMATURE = Maps.newHashMap();
+	private static final Map<AssetAccessor<? extends Armature>, Armature> ARMATURES = Maps.newHashMap();
+	private static final Map<EntityType<?>, AssetAccessor<? extends Armature>> ENTITY_TYPE_ARMATURE_MAPPER = Maps.newHashMap();
 	
-	public static HumanoidArmature BIPED;
-	public static CreeperArmature CREEPER;
-	public static EndermanArmature ENDERMAN;
-	public static HumanoidArmature SKELETON;
-	public static SpiderArmature SPIDER;
-	public static IronGolemArmature IRON_GOLEM;
-	public static RavagerArmature RAVAGER;
-	public static VexArmature VEX;
-	public static PiglinArmature PIGLIN;
-	public static HoglinArmature HOGLIN;
-	public static DragonArmature DRAGON;
-	public static WitherArmature WITHER;
+	public static final AssetAccessor<HumanoidArmature> BIPED = ArmatureAccessor.create(EpicFightMod.MODID, "entity/biped", HumanoidArmature::new);
+	public static final AssetAccessor<CreeperArmature> CREEPER = ArmatureAccessor.create(EpicFightMod.MODID, "entity/creeper", CreeperArmature::new);
+	public static final AssetAccessor<EndermanArmature> ENDERMAN = ArmatureAccessor.create(EpicFightMod.MODID, "entity/enderman", EndermanArmature::new);
+	public static final AssetAccessor<HumanoidArmature> SKELETON = ArmatureAccessor.create(EpicFightMod.MODID, "entity/skeleton", HumanoidArmature::new);
+	public static final AssetAccessor<SpiderArmature> SPIDER = ArmatureAccessor.create(EpicFightMod.MODID, "entity/spider", SpiderArmature::new);
+	public static final AssetAccessor<IronGolemArmature> IRON_GOLEM = ArmatureAccessor.create(EpicFightMod.MODID, "entity/iron_golem", IronGolemArmature::new);
+	public static final AssetAccessor<RavagerArmature> RAVAGER = ArmatureAccessor.create(EpicFightMod.MODID, "entity/ravager", RavagerArmature::new);
+	public static final AssetAccessor<VexArmature> VEX = ArmatureAccessor.create(EpicFightMod.MODID, "entity/vex", VexArmature::new);
+	public static final AssetAccessor<PiglinArmature> PIGLIN = ArmatureAccessor.create(EpicFightMod.MODID, "entity/piglin", PiglinArmature::new);
+	public static final AssetAccessor<HoglinArmature> HOGLIN = ArmatureAccessor.create(EpicFightMod.MODID, "entity/hoglin", HoglinArmature::new);
+	public static final AssetAccessor<DragonArmature> DRAGON = ArmatureAccessor.create(EpicFightMod.MODID, "entity/dragon", DragonArmature::new);
+	public static final AssetAccessor<WitherArmature> WITHER = ArmatureAccessor.create(EpicFightMod.MODID, "entity/wither", WitherArmature::new);
 	
-	public static void build(ResourceManager resourceManager) {
-		ModelBuildEvent.ArmatureBuild event = new ModelBuildEvent.ArmatureBuild(resourceManager, ARMATURES);
-		ARMATURES.clear();
-		
-		BIPED = event.get(EpicFightMod.MODID, "entity/biped", HumanoidArmature::new);
-		CREEPER = event.get(EpicFightMod.MODID, "entity/creeper", CreeperArmature::new);
-		ENDERMAN = event.get(EpicFightMod.MODID, "entity/enderman", EndermanArmature::new);
-		SKELETON = event.get(EpicFightMod.MODID, "entity/skeleton", HumanoidArmature::new);
-		SPIDER = event.get(EpicFightMod.MODID, "entity/spider", SpiderArmature::new);
-		IRON_GOLEM = event.get(EpicFightMod.MODID, "entity/iron_golem", IronGolemArmature::new);
-		RAVAGER = event.get(EpicFightMod.MODID, "entity/ravager", RavagerArmature::new);
-		VEX = event.get(EpicFightMod.MODID, "entity/vex", VexArmature::new);
-		PIGLIN = event.get(EpicFightMod.MODID, "entity/piglin", PiglinArmature::new);
-		HOGLIN = event.get(EpicFightMod.MODID, "entity/hoglin", HoglinArmature::new);
-		DRAGON = event.get(EpicFightMod.MODID, "entity/dragon", DragonArmature::new);
-		WITHER = event.get(EpicFightMod.MODID, "entity/wither", WitherArmature::new);
-		
+	static {
 		registerEntityTypeArmature(EntityType.CAVE_SPIDER, SPIDER);
 		registerEntityTypeArmature(EntityType.CREEPER, CREEPER);
 		registerEntityTypeArmature(EntityType.DROWNED, BIPED);
@@ -101,58 +83,95 @@ public class Armatures {
 		registerEntityTypeArmature(EntityType.WITHER, WITHER);
 		registerEntityTypeArmature(EpicFightEntities.WITHER_SKELETON_MINION.get(), SKELETON);
 		registerEntityTypeArmature(EpicFightEntities.WITHER_GHOST_CLONE.get(), WITHER);
-		
-		ModLoader.get().postEvent(event);
 	}
 	
-	public static void registerEntityTypeArmature(EntityType<?> entityType, Armature armature) {
-		ENTITY_TYPE_ARMATURE.put(entityType, (entitypatch) -> armature.deepCopy());
+	public static void reload(ResourceManager resourceManager) {
+		Armatures.resourceManager = resourceManager;
+		ARMATURES.clear();
 	}
 	
-	//For preset
-	public static void registerEntityTypeArmature(EntityType<?> entityType, String presetName) {
-		EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(presetName));
-		ENTITY_TYPE_ARMATURE.put(entityType, ENTITY_TYPE_ARMATURE.get(presetEntityType));
+	public static void registerEntityTypeArmature(EntityType<?> entityType, AssetAccessor<? extends Armature> armatureAccessor) {
+		ENTITY_TYPE_ARMATURE_MAPPER.put(entityType, armatureAccessor);
 	}
 	
-	public static void registerEntityTypeArmature(EntityType<?> entityType, Function<EntityPatch<?>, Armature> armatureGetFunction) {
-		ENTITY_TYPE_ARMATURE.put(entityType, armatureGetFunction);
+	//For presets
+	public static void registerEntityTypeArmatureByPreset(EntityType<?> entityType, String presetName) {
+		EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(presetName));
+		ENTITY_TYPE_ARMATURE_MAPPER.put(entityType, ENTITY_TYPE_ARMATURE_MAPPER.get(presetEntityType));
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static <A extends Armature> A getArmatureFor(EntityPatch<?> entitypatch) {
-		return (A)ENTITY_TYPE_ARMATURE.get(entitypatch.getOriginal().getType()).apply(entitypatch).deepCopy();
+		return (A)ENTITY_TYPE_ARMATURE_MAPPER.get(entitypatch.getOriginal().getType()).get().deepCopy();
 	}
 	
-	public static ResourceLocation getKey(Armature armature) {
-		return ARMATURES.inverse().get(armature);
-	}
-	
-	public static Armature getArmatureOrNull(ResourceLocation rl) {
-		return ARMATURES.get(rl);
-	}
-	
-	public static void addArmature(ResourceLocation rl, Armature armature) {
-		ARMATURES.put(rl, armature);
-	}
-	
-	public static Function<EntityPatch<?>, Armature> getRegistry(EntityType<?> entityType) {
-		return ENTITY_TYPE_ARMATURE.get(entityType);
+	public static <A extends Armature> AssetAccessor<A> getOrCreate(ResourceLocation id, ArmatureContructor<A> armatureConstructor) {
+		return ArmatureAccessor.create(id, armatureConstructor);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <A extends Armature> A getOrCreateArmature(ResourceManager rm, ResourceLocation rl, ArmatureContructor<A> constructor) {
-		return (A) ARMATURES.computeIfAbsent(rl, (key) -> {
-			JsonAssetLoader jsonModelLoader = new JsonAssetLoader(rm, wrapLocation(rl));
-			return jsonModelLoader.loadArmature(constructor);
-		});
-	}
-	
-	public static Set<Map.Entry<ResourceLocation, Armature>> entries() {
-		return ARMATURES.entrySet();
+	public static <A extends Armature> Set<AssetAccessor<A>> entry() {
+		Set<AssetAccessor<A>> newset = Sets.newHashSet();
+		
+		for (AssetAccessor<? extends Armature> accessor : ARMATURES.keySet()) {
+			try {
+				AssetAccessor<A> casted = (AssetAccessor<A>)accessor;
+				newset.add(casted);
+			} catch(ClassCastException e) {
+			}
+		}
+		
+		return newset;
 	}
 	
 	public static ResourceLocation wrapLocation(ResourceLocation rl) {
 		return rl.getPath().matches("animmodels/.*\\.json") ? rl : new ResourceLocation(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+	}
+	
+	public static record ArmatureAccessor<A extends Armature> (ResourceLocation registryName, ArmatureContructor<A> armatureConstructor) implements AssetAccessor<A> {
+		public static <A extends Armature> AssetAccessor<A> create(String namespaceId, String path, ArmatureContructor<A> armatureConstructor) {
+			return create(new ResourceLocation(namespaceId, path), armatureConstructor);
+		}
+		
+		public static <A extends Armature> ArmatureAccessor<A> create(ResourceLocation id, ArmatureContructor<A> armatureConstructor) {
+			return new ArmatureAccessor<A> (id, armatureConstructor);
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public A get() {
+			if (ARMATURES.get(this) == null) {
+				JsonAssetLoader jsonAssetLoader = new JsonAssetLoader(resourceManager, wrapLocation(this.registryName()));
+				ARMATURES.put(this, jsonAssetLoader.loadArmature(this.armatureConstructor));
+			}
+			
+			return (A)ARMATURES.get(this);
+		}
+		
+		public boolean isPresent() {
+			return true;
+		}
+		
+		public String toString() {
+			return this.registryName.toString();
+		}
+		
+		public int hashCode() {
+			return this.registryName.hashCode();
+		}
+		
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof ArmatureAccessor armatureAccessor) {
+				return this.registryName.equals(armatureAccessor.registryName());
+			} else if (obj instanceof ResourceLocation rl) {
+				return this.registryName.equals(rl);
+			} else if (obj instanceof String name) {
+				return this.registryName.toString().equals(name);
+			} else {
+				return false;
+			}
+		}
 	}
 }

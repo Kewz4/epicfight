@@ -34,14 +34,14 @@ import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.datapack.ClipHoldingAnimation;
 import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -68,7 +68,7 @@ public class ImportAnimationsScreen extends Screen {
 	private Consumer<FakeAnimation.AnimationType> responder;
 	private Map<ResourceLocation, PackEntry<FakeAnimation, ClipHoldingAnimation>> userAnimations;
 	
-	public ImportAnimationsScreen(SelectAnimationScreen caller, Armature armature, MeshProvider<? extends Mesh> mesh) {
+	public ImportAnimationsScreen(SelectAnimationScreen caller, Armature armature, AssetAccessor<? extends Mesh> mesh) {
 		super(Component.literal("register_animation_screen"));
 		
 		this.userAnimations = DatapackEditScreen.getCurrentScreen().getUserAniamtions();
@@ -366,7 +366,7 @@ public class ImportAnimationsScreen extends Screen {
 			final ResizableEditBox colliderSizeZ = new ResizableEditBox(this.font, 0, 35, 0, 15, Component.translatable("datapack_edit.collider.size.z"), HorizontalSizing.LEFT_WIDTH, null);
 			
 			final ComboBox<Joint> colliderJoint = new ComboBox<>(this, this.font, 0, 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8, Component.translatable("datapack_edit.import_animation.joint"),
-																	this.modelPreviewer.getArmature().getRootJoint().getAllJoints(), Joint::getName, null);
+																	this.modelPreviewer.getArmature().rootJoint.getAllJoints(), Joint::getName, null);
 			final ComboBox<InteractionHand> interactionHand = new ComboBox<>(this, this.font, 0, 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8, Component.translatable("datapack_edit.import_animation.hand"),
 																				List.of(InteractionHand.MAIN_HAND, InteractionHand.OFF_HAND), ParseUtil::snakeToSpacedCamel, null);
 			final PopupBox.ColliderPopupBox colliderPopup = new PopupBox.ColliderPopupBox(this, font, 0, 30, 130, 15, HorizontalSizing.LEFT_RIGHT, null, Component.translatable("datapack_edit.collider"), null);

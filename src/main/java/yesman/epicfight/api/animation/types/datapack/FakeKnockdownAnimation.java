@@ -41,7 +41,7 @@ public class FakeKnockdownAnimation extends KnockdownAnimation implements ClipHo
 	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
 		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
 		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.KNOCK_DOWN);
-		fakeAnimation.setParameter("convertTime", this.convertTime);
+		fakeAnimation.setParameter("convertTime", this.transitionTime);
 		fakeAnimation.setParameter("path", this.registryName.toString());
 		fakeAnimation.setParameter("armature", this.armature);
 		

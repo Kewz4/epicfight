@@ -1,5 +1,5 @@
 {
-	"required": true,
+	"required": false,
 	"minVersion": "0.8",
 	"compatibilityLevel": "JAVA_17",
 	"package": "yesman.epicfight.mixin",
@@ -21,7 +21,10 @@
 		"SkinLayer3DMixinCustomModelPart",
 		"SkinLayer3DMixinCustomizableCubeWrapper$SkinLayer3DMixinCustomModelCube",
 		"VampirismMixinVampirePlayerHeadLayer",
-		"WerewolvesMixinHumanWerewolfLayer"
+		"WerewolvesMixinHumanWerewolfLayer",
+		"ParCoolMixinKongVaultAnimator",
+		"ParCoolMixinSpeedVaultAnimator",
+		"ParCoolMixinHorizontalWallRunAnimator"
 	],
 	"mixins": [
 		"MixinEndCrystal",
@@ -33,7 +36,8 @@
 		"MixinThrownTrident",
 		"MixinServerGamePacketListenerImpl",
 		"ParCoolMixinAnimation",
-		"ParCoolMixinHorizontalWallRunAnimator"
+		"ParCoolMixinClingToCliff",
+		"ParCoolMixinClingToCliffAccessor"
 	],
 	"injector": {
 		"defaultRequire": 1

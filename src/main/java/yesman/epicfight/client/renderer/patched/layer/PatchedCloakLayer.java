@@ -54,7 +54,7 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 	            };
 	            
 				clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
-				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture() : entityliving.getCloakTextureLocation();
+				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
 				
 				if (cloakTexture != null) {
 					double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
@@ -75,10 +75,10 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(cloakTexture)));
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
-						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, entitypatch.getEpicSkinsInformation().r(), entitypatch.getEpicSkinsInformation().g(), entitypatch.getEpicSkinsInformation().b(),
+						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, entitypatch.getEpicSkinsInformation().r(), entitypatch.getEpicSkinsInformation().g(), entitypatch.getEpicSkinsInformation().b(),
 											1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					} else {
-						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					}
 					
 					poseStack.popPose();

@@ -31,6 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.Pose;
@@ -50,14 +51,14 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class TrailParticle extends TextureSheetParticle {
 	protected final Joint joint;
 	protected final TrailInfo trailInfo;
-	protected final StaticAnimation animation;
+	protected final AnimationAccessor<? extends StaticAnimation> animation;
 	protected final LivingEntityPatch<?> entitypatch;
 	protected final List<TrailEdge> invisibleTrailEdges;
 	protected final List<TrailEdge> visibleTrailEdges;
 	protected boolean animationEnd;
 	protected float startEdgeCorrection = 0.0F;
 	
-	protected TrailParticle(ClientLevel level, LivingEntityPatch<?> entitypatch, Joint joint, StaticAnimation animation, TrailInfo trailInfo, SpriteSet spriteSet) {
+	protected TrailParticle(ClientLevel level, LivingEntityPatch<?> entitypatch, Joint joint, AnimationAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo, SpriteSet spriteSet) {
 		super(level, 0, 0, 0);
 		
 		this.joint = joint;
@@ -122,7 +123,7 @@ public class TrailParticle extends TextureSheetParticle {
 	}
 	
 	@Deprecated /** This constructor is only for {@link ModelPreviewer} **/
-	protected TrailParticle(Armature armature, LivingEntityPatch<?> entitypatch, Joint joint, StaticAnimation animation, TrailInfo trailInfo) {
+	protected TrailParticle(Armature armature, LivingEntityPatch<?> entitypatch, Joint joint, AnimationAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo) {
 		super(null, 0, 0, 0);
 		
 		this.entitypatch = entitypatch;
@@ -179,7 +180,7 @@ public class TrailParticle extends TextureSheetParticle {
 				this.remove();
 			}
 		} else {
-			if (!this.entitypatch.getOriginal().isAlive() || this.animation != animPlayer.getAnimation().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime) {
+			if (!this.entitypatch.getOriginal().isAlive() || this.animation != animPlayer.getAnimation().get().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime) {
 				this.animationEnd = true;
 				this.lifetime = this.trailInfo.trailLifetime;
 			}
@@ -195,7 +196,7 @@ public class TrailParticle extends TextureSheetParticle {
 		float move = (float)Math.sqrt(xd + yd + zd) * 2.0F;
 		this.setSize(this.bbWidth + move, this.bbHeight + move);
 		
-		boolean isTrailInvisible = animPlayer.getAnimation().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime;
+		boolean isTrailInvisible = animPlayer.getAnimation().get().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime;
 		boolean isFirstTrail = this.visibleTrailEdges.isEmpty();
 		boolean needCorrection = (!isTrailInvisible && isFirstTrail);
 
@@ -384,8 +385,8 @@ public class TrailParticle extends TextureSheetParticle {
 			
 			if (entity != null) {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
-				StaticAnimation animation = AnimationManager.getInstance().byId(animid);
-				Optional<List<TrailInfo>> trailInfo = animation.getProperty(ClientAnimationProperties.TRAIL_EFFECT);
+				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byId(animid);
+				Optional<List<TrailInfo>> trailInfo = animation.get().getProperty(ClientAnimationProperties.TRAIL_EFFECT);
 				TrailInfo result = trailInfo.get().get(idx);
 				
 				if (result.hand != null) {

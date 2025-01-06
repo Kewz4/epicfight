@@ -7,7 +7,8 @@ import javax.annotation.Nullable;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.ColliderPreset;
@@ -20,8 +21,8 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class TridentCapability extends RangedWeaponCapability {
-	private List<AnimationProvider<?>> attackMotion;
-	private List<AnimationProvider<?>> mountAttackMotion;
+	private List<AnimationAccessor<? extends AttackAnimation>> attackMotion;
+	private List<AnimationAccessor<? extends AttackAnimation>> mountAttackMotion;
 	
 	public TridentCapability(CapabilityItem.Builder builder) {
 		super(builder);
@@ -51,12 +52,12 @@ public class TridentCapability extends RangedWeaponCapability {
 	}
 	
 	@Override
-	public List<AnimationProvider<?>> getAutoAttackMotion(PlayerPatch<?> playerpatch) {
+	public List<AnimationAccessor<? extends AttackAnimation>> getAutoAttackMotion(PlayerPatch<?> playerpatch) {
 		return this.attackMotion;
 	}
 	
 	@Override
-	public List<AnimationProvider<?>> getMountAttackMotion() {
+	public List<AnimationAccessor<? extends AttackAnimation>> getMountAttackMotion() {
 		return this.mountAttackMotion;
 	}
 	

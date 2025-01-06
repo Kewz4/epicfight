@@ -14,18 +14,18 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, SkinnedMesh> {
-	private final MeshProvider<SkinnedMesh> mesh;
+	private final AssetAccessor<SkinnedMesh> mesh;
 	
-	public PCustomEntityRenderer(MeshProvider<SkinnedMesh> mesh, EntityRendererProvider.Context context) {
+	public PCustomEntityRenderer(AssetAccessor<SkinnedMesh> mesh, EntityRendererProvider.Context context) {
 		this.mesh = mesh;
 	}
 	
@@ -40,7 +40,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
 		    SkinnedMesh mesh = this.mesh.get();
@@ -55,7 +55,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 			for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
 				AnimationPlayer animPlayer = layer.animationPlayer;
 				float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-				animPlayer.getAnimation().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
+				animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
 			}
 		}
 		
@@ -67,7 +67,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 	}
 	
 	@Override
-	public MeshProvider<SkinnedMesh> getDefaultMesh() {
+	public AssetAccessor<SkinnedMesh> getDefaultMesh() {
 		return this.mesh;
 	}
 }

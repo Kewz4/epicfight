@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -22,7 +21,6 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class RenderItemBase {
 	protected final OpenMatrix4f mainhandcorrectionMatrix;
 	protected final OpenMatrix4f offhandCorrectionMatrix;
-	protected static final OpenMatrix4f BACK_COORECTION = new OpenMatrix4f().translate(0.5F, 0.85F, 0.15F).rotateDeg(125.0F, Vec3f.Z_AXIS).rotateDeg(100.0F, Vec3f.Y_AXIS);
 	public static RenderEngine renderEngine;
 	
 	public RenderItemBase() {
@@ -46,16 +44,6 @@ public class RenderItemBase {
 		Minecraft mc = Minecraft.getInstance();
 		mc.gameRenderer.itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, transformType, !isInMainhand, poseStack, buffer, packedLight);
 		poseStack.popPose();
-	}
-	
-	public void renderUnusableItemMount(ItemStack stack, LivingEntityPatch<?> entitypatch, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		OpenMatrix4f modelMatrix = new OpenMatrix4f(BACK_COORECTION);
-		modelMatrix.mulFront(poses[entitypatch.getArmature().getRootJoint().getId()]);
-		
-		poseStack.pushPose();
-		this.mulPoseStack(poseStack, modelMatrix);
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffer, null, 0);
-        poseStack.popPose();
 	}
 	
 	protected void mulPoseStack(PoseStack poseStack, OpenMatrix4f pose) {

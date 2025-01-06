@@ -6,46 +6,27 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.StaticAnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.EntityState;
+import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.client.CPExecuteSkill;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
-import yesman.epicfight.skill.SkillCategory;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 public class DodgeSkill extends Skill {
-	public static class Builder extends Skill.Builder<DodgeSkill> {
-		protected StaticAnimationProvider[] animations;
+	public static class Builder extends SkillBuilder<DodgeSkill> {
+		protected AnimationAccessor<? extends StaticAnimation>[] animations;
 		
-		public Builder setCategory(SkillCategory category) {
-			this.category = category;
-			return this;
-		}
-		
-		public Builder setActivateType(ActivateType activateType) {
-			this.activateType = activateType;
-			return this;
-		}
-		
-		public Builder setResource(Resource resource) {
-			this.resource = resource;
-			return this;
-		}
-		
-		public Builder setCreativeTab(CreativeModeTab tab) {
-			this.tab = tab;
-			return this;
-		}
-		
-		public Builder setAnimations(StaticAnimationProvider... animations) {
+		@SafeVarargs
+		public final Builder setAnimations(AnimationAccessor<? extends StaticAnimation>... animations) {
 			this.animations = animations;
 			return this;
 		}
@@ -55,7 +36,7 @@ public class DodgeSkill extends Skill {
 		return (new Builder()).setCategory(SkillCategories.DODGE).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.STAMINA);
 	}
 	
-	protected final StaticAnimationProvider[] animations;
+	protected final AnimationAccessor<? extends StaticAnimation>[] animations;
 	
 	public DodgeSkill(Builder builder) {
 		super(builder);
@@ -98,7 +79,7 @@ public class DodgeSkill extends Skill {
 		int i = args.readInt();
 		float yRot = args.readFloat();
 		
-		executer.playAnimationSynchronized(this.animations[i].get(), 0);
+		executer.playAnimationSynchronized(this.animations[i], 0);
 		executer.setModelYRot(yRot, true);
 	}
 	

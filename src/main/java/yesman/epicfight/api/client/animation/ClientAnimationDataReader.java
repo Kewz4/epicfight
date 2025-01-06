@@ -26,6 +26,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.animation.types.DirectStaticAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
@@ -73,7 +74,7 @@ public class ClientAnimationDataReader {
         }
 		
 		if (this.multilayerInfo != null) {
-			StaticAnimation multilayerAnimation = new StaticAnimation(animation.getLocation(), animation.getConvertTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_multilayer", animation.getArmature(), true);
+			DirectStaticAnimation multilayerAnimation = new DirectStaticAnimation(animation.getLocation(), animation.getTransitionTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_multilayer", animation.getArmature());
 			
 			if (this.multilayerInfo.jointMaskEntry.isValid()) {
 				multilayerAnimation.addProperty(ClientAnimationProperties.JOINT_MASK, this.multilayerInfo.jointMaskEntry);
@@ -84,11 +85,11 @@ public class ClientAnimationDataReader {
 			multilayerAnimation.addProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 				Layer baseLayer = entitypatch.getClientAnimator().baseLayer;
 				
-				if (baseLayer.animationPlayer.getAnimation().getRealAnimation() != animation) {
+				if (baseLayer.animationPlayer.getAnimation().get().getRealAnimation() != animation) {
 					return Pair.of(prevElapsedTime, elapsedTime);
 				}
 				
-				if (!self.isStaticAnimation() && baseLayer.animationPlayer.getAnimation().isStaticAnimation()) {
+				if (!self.isStaticAnimation() && baseLayer.animationPlayer.getAnimation().get().isStaticAnimation()) {
 					return Pair.of(prevElapsedTime + speed, elapsedTime + speed);
 				}
 				

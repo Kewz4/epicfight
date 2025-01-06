@@ -11,6 +11,7 @@ import net.minecraft.world.item.UseAnim;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
@@ -74,7 +75,7 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 	public void initAnimator(Animator animator) {
 		super.initAnimator(animator);
 		
-		for (Pair<LivingMotion, StaticAnimation> pair : this.provider.getDefaultAnimations()) {
+		for (Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>> pair : this.provider.getDefaultAnimations()) {
 			animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 		}
 	}
@@ -102,7 +103,7 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 		} else {
 			if (CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 			else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
 				currentCompositeMotion = LivingMotions.DIGGING;
@@ -116,7 +117,7 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return this.provider.getStunAnimations().get(stunType);
 	}
 	

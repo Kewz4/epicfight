@@ -20,16 +20,14 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.SoftBodyMesh;
+import yesman.epicfight.api.client.model.SoftBodyTranslatable;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
@@ -51,7 +49,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@Override
-	public SkinnedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
+	public SkinnedMesh transformArmorModel(HumanoidModel<?> humanoidModel) {
 		List<VanillaModelPartition> boxes = Lists.newArrayList();
 		
 		//Remove entity animation
@@ -91,10 +89,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			boxes.add(new VanillaModelPartition(RIGHT_LEG, humanoidModel.rightLeg, "rightLeg"));
 		}
 		
-		SkinnedMesh mesh = bakeMeshFromCubes(boxes);
-		Meshes.addMesh(modelLocation, mesh);
-		
-		return mesh;
+		return bakeMeshFromCubes(boxes);
 	}
 	
 	private static SkinnedMesh bakeMeshFromCubes(List<VanillaModelPartition> partitions) {
@@ -615,12 +610,12 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root, SoftBodyMesh.ClothSimulationInfo clothInfo) implements MeshPartDefinition {
+	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root, SoftBodyTranslatable.ClothSimulationInfo clothInfo) implements MeshPartDefinition {
 		public static MeshPartDefinition of(String partName) {
 			return new VanillaMeshPartDefinition(partName, null, null, null, null);
 		}
 		
-		public static MeshPartDefinition of(String partName, SoftBodyMesh.ClothSimulationInfo clothInfo) {
+		public static MeshPartDefinition of(String partName, SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
 			return new VanillaMeshPartDefinition(partName, null, null, null, clothInfo);
 		}
 		

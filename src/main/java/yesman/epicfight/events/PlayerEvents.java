@@ -19,8 +19,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPChangeGamerule;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -29,7 +27,7 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.eventlistener.ItemUseEndEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.RightClickItemEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class PlayerEvents {
@@ -49,7 +47,7 @@ public class PlayerEvents {
 		File file = new File(event.getPlayerDirectory(), event.getPlayerUUID() +".dat");
 		
 		if (!file.exists()) {
-			int initialMode = Math.min(event.getEntity().level().getGameRules().getInt(EpicFightGamerules.INITIAL_PLAYER_MODE), PlayerPatch.PlayerMode.values().length - 1);
+			int initialMode = Math.min(EpicFightGameRules.INITIAL_PLAYER_MODE.getRuleValue(event.getEntity().level()), PlayerPatch.PlayerMode.values().length - 1);
 			playerpatch.toMode(PlayerPatch.PlayerMode.values()[initialMode], true);
 		}
 	}
@@ -104,7 +102,7 @@ public class PlayerEvents {
 		if (oldCap != null) {
 			ServerPlayerPatch newCap = EpicFightCapabilities.getEntityPatch(event.getEntity(), ServerPlayerPatch.class);
 			
-			if ((!event.isWasDeath() || event.getOriginal().level().getGameRules().getBoolean(EpicFightGamerules.KEEP_SKILLS))) {
+			if ((!event.isWasDeath() || EpicFightGameRules.KEEP_SKILLS.getRuleValue(event.getOriginal().level()))) {
 				newCap.copySkillsFrom(oldCap);
 			}
 			
@@ -121,8 +119,8 @@ public class PlayerEvents {
 		playerpatch.getAnimator().resetLivingAnimations();
 		playerpatch.modifyLivingMotionByCurrentItem(true);
 		
-		EpicFightNetworkManager.sendToPlayer(new SPChangeGamerule(SPChangeGamerule.SynchronizedGameRules.WEIGHT_PENALTY, player.level().getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY)), (ServerPlayer)player);
-		EpicFightNetworkManager.sendToPlayer(new SPChangeGamerule(SPChangeGamerule.SynchronizedGameRules.DIABLE_ENTITY_UI, player.level().getGameRules().getBoolean(EpicFightGamerules.DISABLE_ENTITY_UI)), (ServerPlayer)player);
+		EpicFightGameRules.WEIGHT_PENALTY.synchronizeTo(playerpatch.getOriginal());
+		EpicFightGameRules.DISABLE_ENTITY_UI.synchronizeTo(playerpatch.getOriginal());
 	}
 	
 	@SubscribeEvent
@@ -145,7 +143,7 @@ public class PlayerEvents {
 		PlayerPatch<?> playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), PlayerPatch.class);
 
 		if (playerpatch != null) {
-			if (!event.getEntity().level().getGameRules().getBoolean(EpicFightGamerules.DO_VANILLA_ATTACK) && isLivingTarget && playerpatch.getEpicFightDamageSource() == null && !fakePlayerCheck(event.getEntity())) {
+			if (!EpicFightGameRules.DO_VANILLA_ATTACK.getRuleValue(event.getEntity().level()) && isLivingTarget && playerpatch.getEpicFightDamageSource() == null && !fakePlayerCheck(event.getEntity())) {
 				event.setCanceled(true);
 			}
 		}

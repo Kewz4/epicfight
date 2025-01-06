@@ -7,22 +7,23 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.types.ActionAnimation;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.RenderingTool;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.EnderDragonPatch;
 
@@ -30,20 +31,15 @@ public class EnderDragonDynamicActionAnimation extends ActionAnimation implement
 	private final IKInfo[] ikInfos;
 	private Map<String, TransformSheet> tipPointTransform = Maps.newHashMap();
 	
-	public EnderDragonDynamicActionAnimation(float convertTime, String path, Armature armature, IKInfo[] ikInfos) {
-		super(convertTime, path, armature);
+	public EnderDragonDynamicActionAnimation(float transitionTime, AnimationAccessor<? extends EnderDragonDynamicActionAnimation> accessor, Armature armature, IKInfo[] ikInfos) {
+		super(transitionTime, accessor, armature);
 		this.ikInfos = ikInfos;
 	}
 	
 	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-		try {
-			loadAllJointsClip(resourceManager, this);
-			this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransform, this.getArmature(), true, true);
-		} catch (Exception e) {
-			EpicFightMod.LOGGER.warn("Failed to load animation: " + this.resourceLocation);
-			e.printStackTrace();
-		}
+	public void loadAnimation() {
+		AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
+		this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransform, this.getArmature(), true, true);
 	}
 	
 	@Override
@@ -78,7 +74,7 @@ public class EnderDragonDynamicActionAnimation extends ActionAnimation implement
 		if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
 			Vec3 entitypos = enderdragonpatch.getOriginal().position();
 			OpenMatrix4f toWorld = OpenMatrix4f.mul(OpenMatrix4f.createTranslation((float)entitypos.x, (float)entitypos.y, (float)entitypos.z), enderdragonpatch.getModelMatrix(1.0F), null);
-			TransformSheet movementAnimation = enderdragonpatch.getArmature().getActionAnimationCoord();
+			TransformSheet movementAnimation = enderdragonpatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD);
 			
 			for (IKInfo ikInfo : this.ikInfos) {
 				TransformSheet tipAnim = this.clipAnimation(this.tipPointTransform.get(ikInfo.endJoint.getName()), ikInfo);
@@ -112,7 +108,7 @@ public class EnderDragonDynamicActionAnimation extends ActionAnimation implement
 		super.tick(entitypatch);
 		
 		if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
-			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this).getElapsedTime();
+			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime();
 			
 			for (IKInfo ikSetter : this.ikInfos) {
 				if (ikSetter.clipAnimation) {

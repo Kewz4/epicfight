@@ -83,14 +83,12 @@ public class HumanoidModelBaker {
 		
 		if (!EXCEPTIONAL_MODELS.contains(armorItem)) {
 			if (forgeModel == originalModel || !(forgeModel instanceof HumanoidModel humanoidModel)) {
-				return entityMesh.getHumanoidArmorModel(slot);
+				return entityMesh.getHumanoidArmorModel(slot).get();
 			}
-			
-			ResourceLocation modelName = new ResourceLocation(ForgeRegistries.ITEMS.getKey(armorItem).getNamespace(), "armor/" + ForgeRegistries.ITEMS.getKey(armorItem).getPath());
 			
 			for (HumanoidModelTransformer modelTransformer : MODEL_TRANSFORMERS) {
 				try {
-					animatedArmorModel = modelTransformer.transformArmorModel(modelName, humanoidModel);
+					animatedArmorModel = modelTransformer.transformArmorModel(humanoidModel);
 				} catch (Exception e) {
 					EpicFightMod.LOGGER.warn("Can't transform the model of " + ForgeRegistries.ITEMS.getKey(armorItem) + " because of :");
 					e.printStackTrace();
@@ -103,7 +101,7 @@ public class HumanoidModelBaker {
 			}
 			
 			if (animatedArmorModel == null) {
-				animatedArmorModel = VANILLA_TRANSFORMER.transformArmorModel(modelName, humanoidModel);
+				animatedArmorModel = VANILLA_TRANSFORMER.transformArmorModel(humanoidModel);
 			}
 		}
 		

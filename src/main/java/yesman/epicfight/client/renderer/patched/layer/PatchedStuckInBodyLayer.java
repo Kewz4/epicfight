@@ -36,7 +36,7 @@ public abstract class PatchedStuckInBodyLayer<E extends LivingEntity, T extends 
 				OpenMatrix4f transpose = OpenMatrix4f.transpose(modelMatrix, null);
 				MathUtils.translateStack(poseStack, modelMatrix);
 				MathUtils.rotateStack(poseStack, transpose);
-	            Vec3f vec = entitypatch.getArmature().searchJointById(randomJoint).getLocalTrasnform().toTranslationVector();
+	            Vec3f vec = entitypatch.getArmature().searchJointById(randomJoint).getLocalTransform().toTranslationVector();
 	            
 				float f = randomsource.nextFloat();
 				float f1 = randomsource.nextFloat();

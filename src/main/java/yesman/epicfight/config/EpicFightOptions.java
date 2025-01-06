@@ -17,7 +17,7 @@ import yesman.epicfight.config.OptionHandler.IntegerOptionHandler;
 
 public class EpicFightOptions {
 	public static final float A_TICK = 0.05F;
-	public static final float GENERAL_ANIMATION_CONVERT_TIME = 0.15F;
+	public static final float GENERAL_ANIMATION_TRANSITION_TIME = 0.15F;
 	
 	public final IntegerOptionHandler longPressCount;
 	public final BooleanOptionHandler filterAnimation;

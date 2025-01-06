@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
@@ -59,7 +60,7 @@ public class SpiderPatch<T extends PathfinderMob> extends MobPatch<T> {
 	}
 
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		switch(stunType) {
 		case SHORT:
 			return Animations.SPIDER_HIT;

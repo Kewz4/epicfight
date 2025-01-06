@@ -3,14 +3,13 @@ package yesman.epicfight.api.animation.types;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Mth;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.model.Armature;
@@ -18,23 +17,25 @@ import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.config.EpicFightOptions;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AimAnimation extends StaticAnimation {
+	public StaticAnimation lookForward;
 	public StaticAnimation lookUp;
 	public StaticAnimation lookDown;
 	public StaticAnimation lying;
 	
-	public AimAnimation(float convertTime, boolean repeatPlay, String path1, String path2, String path3, String path4, Armature armature) {
-		super(convertTime, repeatPlay, path1, armature);
-		this.lookUp = new StaticAnimation(convertTime, repeatPlay, path2, armature, true);
-		this.lookDown = new StaticAnimation(convertTime, repeatPlay, path3, armature, true);
-		this.lying = new StaticAnimation(convertTime, repeatPlay, path4, armature, true);
+	public AimAnimation(boolean repeatPlay, AnimationAccessor<? extends AimAnimation> animationAccessor, String path1, String path2, String path3, String path4, Armature armature) {
+		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, animationAccessor, path1, path2, path3, path4, armature);
 	}
 	
-	public AimAnimation(boolean repeatPlay, String path1, String path2, String path3, String path4, Armature armature) {
-		this(EpicFightOptions.GENERAL_ANIMATION_CONVERT_TIME, repeatPlay, path1, path2, path3, path4, armature);
+	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> animationAccessor, String path1, String path2, String path3, String path4, Armature armature) {
+		super(transitionTime, repeatPlay, path1, armature);
+		
+		this.lookForward = new StaticAnimation(transitionTime, repeatPlay, path1, armature);
+		this.lookUp = new StaticAnimation(transitionTime, repeatPlay, path2, armature);
+		this.lookDown = new StaticAnimation(transitionTime, repeatPlay, path3, armature);
+		this.lying = new StaticAnimation(transitionTime, repeatPlay, path4, armature);
 	}
 	
 	@Override
@@ -73,7 +74,7 @@ public class AimAnimation extends StaticAnimation {
 			}
 		}
 		
-		return super.getPoseByTime(entitypatch, time, partialTicks);
+		return this.lookForward.getPoseByTime(entitypatch, time, partialTicks);
 	}
 	
 	@Override
@@ -88,36 +89,13 @@ public class AimAnimation extends StaticAnimation {
 			float yRotHead = entitypatch.getOriginal().yHeadRotO;
 			float yRot = entitypatch.getOriginal().getVehicle() != null ? yRotHead : entitypatch.getYRot();
 			MathUtils.mulQuaternion(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRot - yRotHead) * ratio), head.rotation(), head.rotation());
-			chest.frontResult(JointTransform.getRotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRotHead - yRot) * ratio)), OpenMatrix4f::mulAsOriginInverse);
+			chest.frontResult(JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRotHead - yRot) * ratio)), OpenMatrix4f::mulAsOriginInverse);
 		}
 	}
 	
 	@Override
-	public <V> StaticAnimation addProperty(StaticAnimationProperty<V> propertyType, V value) {
-		super.addProperty(propertyType, value);
-		this.lookDown.addProperty(propertyType, value);
-		this.lookUp.addProperty(propertyType, value);
-		this.lying.addProperty(propertyType, value);
-		
-		return this;
-	}
-	
-	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-		try {
-			loadClip(resourceManager, this);
-			loadClip(resourceManager, this.lookUp);
-			loadClip(resourceManager, this.lookDown);
-			loadClip(resourceManager, this.lying);
-		} catch (Exception e) {
-			EpicFightMod.LOGGER.warn("Failed to load animation: " + this.resourceLocation);
-			e.printStackTrace();
-		}
-	}
-	
-	@Override
-	public List<StaticAnimation> getClipHolders() {
-		return List.of(this, this.lookUp, this.lookDown, this.lying);
+	public List<StaticAnimation> getSubAnimations() {
+		return List.of(this.lookForward, this.lookUp, this.lookDown, this.lying);
 	}
 	
 	@Override

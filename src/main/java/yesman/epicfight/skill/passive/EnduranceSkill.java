@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
@@ -22,7 +23,7 @@ public class EnduranceSkill extends PassiveSkill {
 	
 	private float staminaRatio;
 	
-	public EnduranceSkill(Builder<? extends Skill> builder) {
+	public EnduranceSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	
@@ -37,16 +38,16 @@ public class EnduranceSkill extends PassiveSkill {
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		PlayerEventListener listener = container.getExecuter().getEventListener();
+		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.HURT_EVENT_PRE, EVENT_UUID, (event) -> {
-			if (container.getStack() > 0 && container.getExecuter().getEntityState().getLevel() == 1 && !container.getExecuter().isLogicalClient()) {
-				float staminaConsume = Math.max(container.getExecuter().getStamina() * this.staminaRatio, 1.5F);
+			if (container.getStack() > 0 && container.getExecutor().getEntityState().getLevel() == 1 && !container.getExecutor().isLogicalClient()) {
+				float staminaConsume = Math.max(container.getExecutor().getStamina() * this.staminaRatio, 1.5F);
 				
-				if (container.getExecuter().consumeForSkill(this, Skill.Resource.STAMINA, staminaConsume)) {
+				if (container.getExecutor().consumeForSkill(this, Skill.Resource.STAMINA, staminaConsume)) {
 					FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 					buf.writeFloat(staminaConsume);
-					this.executeOnServer((ServerPlayerPatch)container.getExecuter(), buf);
+					this.executeOnServer((ServerPlayerPatch)container.getExecutor(), buf);
 				}
 			}
 		});
@@ -65,7 +66,7 @@ public class EnduranceSkill extends PassiveSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID);
 	}
 	
 	@Override

@@ -28,7 +28,7 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.particle.HitParticleType;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -42,7 +42,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("244c57c0-a837-11eb-bcbc-0242ac130002");
 	private int returnDuration;
 	
-	public LiechtenauerSkill(Builder<? extends Skill> builder) {
+	public LiechtenauerSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
 	}
 	
@@ -54,7 +54,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
-		container.getExecuter().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
 			if (container.isActivated() && !container.isDisabled()) {
 				if (event.getAttackDamage() > event.getTarget().getHealth()) {
 					this.setDurationSynchronize(event.getPlayerPatch(), Math.min(this.maxDuration, container.getRemainDuration() + this.returnDuration));
@@ -62,7 +62,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 			}
 		});
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.HURT_EVENT_PRE, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.HURT_EVENT_PRE, EVENT_UUID, (event) -> {
 			int phaseLevel = event.getPlayerPatch().getEntityState().getLevel();
 			
 			if (event.getAmount() > 0.0F && container.isActivated() && !container.isDisabled() && phaseLevel > 0 && phaseLevel < 3 && 
@@ -108,7 +108,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 			}
 		}, 0);
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
 			SkillContainer skillContainer = event.getPlayerPatch().getSkill(this);
 			
 			if (skillContainer.isActivated()) {
@@ -123,9 +123,9 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
-		container.getExecuter().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID, 0);
-		container.getExecuter().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
-		container.getExecuter().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID, 0);
+		container.getExecutor().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
 	}
 	
 	@Override

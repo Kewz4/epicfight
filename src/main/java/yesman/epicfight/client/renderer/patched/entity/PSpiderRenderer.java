@@ -9,7 +9,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Spider;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.client.mesh.SpiderMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedEyesLayer;
@@ -21,11 +21,11 @@ public class PSpiderRenderer extends PatchedLivingEntityRenderer<Spider, SpiderP
 	
 	public PSpiderRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
-		this.addPatchedLayer(SpiderEyesLayer.class, new PatchedEyesLayer<>(SPIDER_EYE_TEXTURE, () -> Meshes.SPIDER));
+		this.addPatchedLayer(SpiderEyesLayer.class, new PatchedEyesLayer<>(SPIDER_EYE_TEXTURE, Meshes.SPIDER));
 	}
 	
 	@Override
-	public MeshProvider<SpiderMesh> getDefaultMesh() {
+	public AssetAccessor<SpiderMesh> getDefaultMesh() {
 		return Meshes.SPIDER;
 	}
 }

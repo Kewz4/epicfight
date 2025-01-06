@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class EndermanMesh extends SkinnedMesh implements MeshProvider<EndermanMesh> {
+public class EndermanMesh extends SkinnedMesh {
 	public final SkinnedMeshPart headTop;
 	public final SkinnedMeshPart headBottom;
 	public final SkinnedMeshPart torso;
@@ -30,10 +29,5 @@ public class EndermanMesh extends SkinnedMesh implements MeshProvider<EndermanMe
 		this.rightArm = this.getOrLogException(this.parts, "rightArm");
 		this.leftLeg = this.getOrLogException(this.parts, "leftLeg");
 		this.rightLeg = this.getOrLogException(this.parts, "rightLeg");
-	}
-	
-	@Override
-	public EndermanMesh get() {
-		return this;
 	}
 }

@@ -27,6 +27,10 @@ public class Vec3f extends Vec2f {
 		this((float)x, (float)y, (float)z);
 	}
 	
+	public Vec3f(Vec3 mojangVec) {
+		this((float)mojangVec.x, (float)mojangVec.y, (float)mojangVec.z);
+	}
+	
 	public void set(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
@@ -54,6 +58,10 @@ public class Vec3f extends Vec2f {
 	
 	public Vec3f add(Vec3f vec) {
 		return this.add(vec.x, vec.y, vec.z);
+	}
+	
+	public Vec3f add(Vec3 vec) {
+		return this.add((float)vec.x, (float)vec.y, (float)vec.z);
 	}
 	
 	public Vec3f sub(float x, float y, float z) {
@@ -142,6 +150,14 @@ public class Vec3f extends Vec2f {
 		return (float)(Math.pow(this.x - opponent.x, 2) + Math.pow(this.y - opponent.y, 2) + Math.pow(this.z - opponent.z, 2));
 	}
 	
+	public float horizontalDistance() {
+		return (float)Math.sqrt(this.x * this.x + this.z * this.z);
+	}
+
+	public float horizontalDistanceSqr() {
+		return this.x * this.x + this.z * this.z;
+	}
+
 	public void rotate(float degree, Vec3f axis) {
 		rotate(degree, axis, this, this);
 	}
@@ -187,7 +203,7 @@ public class Vec3f extends Vec2f {
 		return QuaternionUtils.rotation(axis.toMojangVector(), radian);
 	}
 	
-	public static void interpolate(Vec3f from, Vec3f to, float interpolation, Vec3f dest) {
+	public static Vec3f interpolate(Vec3f from, Vec3f to, float interpolation, Vec3f dest) {
 		if (dest == null) {
 			dest = new Vec3f();
 		}
@@ -195,6 +211,8 @@ public class Vec3f extends Vec2f {
 		dest.x = from.x + (to.x - from.x) * interpolation;
 		dest.y = from.y + (to.y - from.y) * interpolation;
 		dest.z = from.z + (to.z - from.z) * interpolation;
+		
+		return dest;
 	}
 	
 	public Vec3f normalise() {

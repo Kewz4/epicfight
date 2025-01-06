@@ -1,9 +1,10 @@
 package yesman.epicfight.skill.identity;
 
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 
 public class AssassinationSkill extends Skill {
-	public AssassinationSkill(Builder<? extends Skill> builder) {
+	public AssassinationSkill(SkillBuilder<? extends Skill> builder) {
 		super(builder);
 	}
 }

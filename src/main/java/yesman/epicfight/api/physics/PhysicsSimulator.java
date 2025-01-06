@@ -15,7 +15,7 @@ public interface PhysicsSimulator<B extends SimulationBuilder, PV extends Simula
 	
 	public void runWhenPermanent(ResourceLocation key,PV provider, B builder, BooleanSupplier when);
 	
-	public void restart(ResourceLocation key, PV newProvider);
+	public void restart(ResourceLocation key);
 	
 	public void stop(ResourceLocation key);
 	

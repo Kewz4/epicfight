@@ -12,8 +12,8 @@ import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event.Result;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -48,17 +48,17 @@ public abstract class PatchedEntityRenderer<E extends LivingEntity, T extends Li
 		}
 	}
 	
-	public void setArmaturePoses(T entitypatch, Armature armature, float partialTicks) {
+	public void setArmaturePose(T entitypatch, Armature armature, float partialTicks) {
 		Pose pose = entitypatch.getAnimator().getPose(partialTicks);
         this.setJointTransforms(entitypatch, armature, pose, partialTicks);
         armature.setPose(pose);
 	}
 	
-	public MeshProvider<AM> getMeshProvider(T entitypatch) {
+	public AssetAccessor<AM> getMeshProvider(T entitypatch) {
 		return this.getDefaultMesh();
 	}
 	
-	public abstract MeshProvider<AM> getDefaultMesh();
+	public abstract AssetAccessor<AM> getDefaultMesh();
 	
 	/**
 	 * Developers shouldn't implement any interpolations in this method

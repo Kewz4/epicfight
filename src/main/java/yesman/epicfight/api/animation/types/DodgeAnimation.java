@@ -6,7 +6,9 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityDimensions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationEvent;
+import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.model.Armature;
@@ -26,12 +28,12 @@ public class DodgeAnimation extends ActionAnimation {
 		return AttackResult.ResultType.SUCCESS;
 	};
 	
-	public DodgeAnimation(float convertTime, String path, float width, float height, Armature armature) {
-		this(convertTime, 10.0F, path, width, height, armature);
+	public DodgeAnimation(float convertTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, Armature armature) {
+		this(convertTime, 10.0F, accessor, width, height, armature);
 	}
 	
-	public DodgeAnimation(float convertTime, float delayTime, String path, float width, float height, Armature armature) {
-		super(convertTime, delayTime, path, armature);
+	public DodgeAnimation(float convertTime, float delayTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, Armature armature) {
+		super(convertTime, delayTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, delayTime)
@@ -45,8 +47,8 @@ public class DodgeAnimation extends ActionAnimation {
 			.addState(EntityState.ATTACK_RESULT, DODGEABLE_SOURCE_VALIDATOR);
 		
 		this.addProperty(ActionAnimationProperty.AFFECT_SPEED, true);
-		this.addEvents(StaticAnimationProperty.ON_END_EVENTS, AnimationEvent.create(Animations.ReusableSources.RESTORE_BOUNDING_BOX, AnimationEvent.Side.BOTH));
-		this.addEvents(StaticAnimationProperty.EVENTS, AnimationEvent.create(Animations.ReusableSources.RESIZE_BOUNDING_BOX, AnimationEvent.Side.BOTH).params(EntityDimensions.scalable(width, height)));
+		this.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.RESTORE_BOUNDING_BOX, AnimationEvent.Side.BOTH));
+		this.addEvents(StaticAnimationProperty.TICK_EVENTS, SimpleEvent.create(Animations.ReusableSources.RESIZE_BOUNDING_BOX, AnimationEvent.Side.BOTH).params(EntityDimensions.scalable(width, height)));
 	}
 	
 	@Override

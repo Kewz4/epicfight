@@ -47,7 +47,7 @@ public interface ProceduralAnimation {
 				}
 				
 				OpenMatrix4f bindedTransform = armature.getBindedTransformFor(pose, ikInfo.endJoint);
-				JointTransform bindedJointTransform = JointTransform.fromMatrixNoScale(bindedTransform);
+				JointTransform bindedJointTransform = JointTransform.fromMatrixWithoutScale(bindedTransform);
 				bindedposKeyframes[i] = new Keyframe(kf);
 				JointTransform tipTransform = bindedposKeyframes[i].transform();
 				tipTransform.copyFrom(bindedJointTransform);
@@ -110,7 +110,7 @@ public interface ProceduralAnimation {
 		Quaternionf quat = QuaternionUtils.ZP.rotationDegrees(zRoot);
 		quat.mul(QuaternionUtils.XP.rotationDegrees(-xRoot));
 
-		rootTransform.frontResult(JointTransform.getRotation(quat), OpenMatrix4f::mulAsOriginInverse);
+		rootTransform.frontResult(JointTransform.rotation(quat), OpenMatrix4f::mulAsOriginInverse);
 	}
 	
 	default void applyFabrikToJoint(Vec3f recalculatedPosition, Pose pose, Armature armature, Joint startJoint, Joint endJoint, Quaternionf tipRotation) {
@@ -119,7 +119,7 @@ public interface ProceduralAnimation {
     	OpenMatrix4f tipRotationMatrix = OpenMatrix4f.fromQuaternion(tipRotation);
     	OpenMatrix4f animRotation = armature.getBindedTransformFor(pose, endJoint).removeTranslation();
     	OpenMatrix4f animToTipRotation = OpenMatrix4f.mul(OpenMatrix4f.invert(animRotation, null), tipRotationMatrix, null);
-    	pose.getOrDefaultTransform(endJoint.getName()).overwriteRotation(JointTransform.fromMatrixNoScale(animToTipRotation));
+    	pose.getOrDefaultTransform(endJoint.getName()).overwriteRotation(JointTransform.fromMatrixWithoutScale(animToTipRotation));
 	}
 	
 	default void startPartAnimation(IKInfo ikInfo, TipPointAnimation tipAnim, TransformSheet partAnimation, Vec3f targetpos) {

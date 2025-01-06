@@ -2,6 +2,7 @@ package yesman.epicfight.api.animation.types;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
@@ -11,12 +12,12 @@ import yesman.epicfight.world.entity.eventlistener.ActionEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 public class MainFrameAnimation extends StaticAnimation {
-	public MainFrameAnimation(float convertTime, String path, Armature armature) {
-		super(convertTime, false, path, armature);
+	public MainFrameAnimation(float convertTime, AnimationAccessor<? extends MainFrameAnimation> accessor, Armature armature) {
+		super(convertTime, false, accessor, armature);
 	}
 	
-	public MainFrameAnimation(float convertTime, String path, Armature armature, boolean noRegister) {
-		super(convertTime, false, path, armature, noRegister);
+	public MainFrameAnimation(float convertTime, String path, Armature armature) {
+		super(convertTime, false, path, armature);
 	}
 	
 	@Override
@@ -28,16 +29,16 @@ public class MainFrameAnimation extends StaticAnimation {
 		if (entitypatch.isLogicalClient()) {
 			entitypatch.getClientAnimator().resetMotion(false);
 			entitypatch.getClientAnimator().resetCompositeMotion(false);
-			entitypatch.getClientAnimator().getPlayerFor(this).setReversed(false);
+			entitypatch.getClientAnimator().getPlayerFor(this.getAccessor()).setReversed(false);
 		}
 		
 		if (entitypatch instanceof PlayerPatch<?> playerpatch) {
 			if (playerpatch.isLogicalClient()) {
 				if (playerpatch.getOriginal().isLocalPlayer()) {
-					playerpatch.getEventListener().triggerEvents(EventType.ACTION_EVENT_CLIENT, new ActionEvent<>(playerpatch, this));
+					playerpatch.getEventListener().triggerEvents(EventType.ACTION_EVENT_CLIENT, new ActionEvent<>(playerpatch, this.getAccessor()));
 				}
 			} else {
-				playerpatch.getEventListener().triggerEvents(EventType.ACTION_EVENT_SERVER, new ActionEvent<>(playerpatch, this));
+				playerpatch.getEventListener().triggerEvents(EventType.ACTION_EVENT_SERVER, new ActionEvent<>(playerpatch, this.getAccessor()));
 			}
 		}
 	}

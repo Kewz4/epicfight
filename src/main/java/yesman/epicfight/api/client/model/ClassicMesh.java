@@ -21,7 +21,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class ClassicMesh extends StaticMesh<ClassicMeshPart, ClassicMeshVertexBuilder> implements MeshProvider<ClassicMesh> {
+public class ClassicMesh extends StaticMesh<ClassicMeshPart, ClassicMeshVertexBuilder> {
 	public ClassicMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<ClassicMeshVertexBuilder>> partBuilders, ClassicMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 	}
@@ -61,7 +61,7 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart, ClassicMeshVertexBu
 	
 	@OnlyIn(Dist.CLIENT)
 	public class ClassicMeshPart extends MeshPart<ClassicMeshVertexBuilder> {
-		public ClassicMeshPart(List<ClassicMeshVertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
+		public ClassicMeshPart(List<ClassicMeshVertexBuilder> verticies, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
 			super(verticies, vanillaPartTracer, clothInfo);
 		}
 		
@@ -92,10 +92,5 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart, ClassicMeshVertexBu
 			
 			poseStack.popPose();
 		}
-	}
-	
-	@Override
-	public ClassicMesh get() {
-		return this;
 	}
 }

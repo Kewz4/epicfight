@@ -34,6 +34,7 @@ import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -57,7 +58,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	public static EnderDragonPatch INSTANCE_CLIENT;
 	public static EnderDragonPatch INSTANCE_SERVER;
 	private final Map<String, TipPointAnimation> tipPointAnimations = Maps.newHashMap();
-	private final Map<LivingMotions, StaticAnimation> livingMotions = Maps.newHashMap();
+	private final Map<LivingMotions, AnimationAccessor<? extends StaticAnimation>> livingMotions = Maps.newHashMap();
 	private final Object2IntMap<Player> contributors = new Object2IntOpenHashMap<>();
 	private boolean groundPhase;
 	public float xRoot;
@@ -105,7 +106,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	public void initAnimator(Animator animator) {
 		super.initAnimator(animator);
 		
-		for (Map.Entry<LivingMotions, StaticAnimation> livingmotionEntry : this.livingMotions.entrySet()) {
+		for (Map.Entry<LivingMotions, AnimationAccessor<? extends StaticAnimation>> livingmotionEntry : this.livingMotions.entrySet()) {
 			animator.addLivingAnimation(livingmotionEntry.getKey(), livingmotionEntry.getValue());
 		}
 	}
@@ -319,7 +320,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 	

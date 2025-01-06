@@ -12,6 +12,7 @@ import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -95,7 +96,7 @@ public class CreeperPatch extends MobPatch<Creeper> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		if (stunType == StunType.LONG) {
 			return Animations.CREEPER_HIT_LONG;
 		} else {

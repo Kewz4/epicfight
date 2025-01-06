@@ -7,15 +7,16 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.BattleModeGui;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
 import yesman.epicfight.skill.SkillContainer;
 
 public abstract class PassiveSkill extends Skill {
-	public static Skill.Builder<PassiveSkill> createPassiveBuilder() {
-		return (new Skill.Builder<PassiveSkill>()).setCategory(SkillCategories.PASSIVE).setResource(Resource.NONE);
+	public static SkillBuilder<PassiveSkill> createPassiveBuilder() {
+		return (new SkillBuilder<PassiveSkill>()).setCategory(SkillCategories.PASSIVE).setResource(Resource.NONE);
 	}
 	
-	public PassiveSkill(Builder<? extends Skill> builder) {
+	public PassiveSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	

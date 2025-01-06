@@ -18,8 +18,6 @@ import yesman.epicfight.data.loot.EpicFightLootTables;
 import yesman.epicfight.data.loot.SkillBookLootModifier;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPChangeGamerule;
-import yesman.epicfight.network.server.SPChangeGamerule.SynchronizedGameRules;
 import yesman.epicfight.network.server.SPDatapackSync;
 import yesman.epicfight.network.server.SPDatapackSyncSkill;
 import yesman.epicfight.skill.SkillCategory;
@@ -28,6 +26,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.WeaponTypeReloadListener;
 import yesman.epicfight.world.capabilities.skill.CapabilitySkill;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class WorldEvents {
@@ -40,9 +39,9 @@ public class WorldEvents {
 	@SubscribeEvent
 	public static void onDatapackSync(final OnDatapackSyncEvent event) {
 		if (event.getPlayer() != null) {
-			for (SynchronizedGameRules syncRule : SPChangeGamerule.SynchronizedGameRules.values()) {
-				EpicFightNetworkManager.sendToPlayer(new SPChangeGamerule(syncRule, syncRule.getRule.apply(event.getPlayer().level())), event.getPlayer());
-			}
+			EpicFightGameRules.GAME_RULES.values().forEach((gamerule) -> {
+				gamerule.synchronizeTo(event.getPlayer());
+			});
 			
 			if (!event.getPlayer().getServer().isSingleplayerOwner(event.getPlayer().getGameProfile())) {
 				synchronizeWorldData(event.getPlayer());

@@ -12,6 +12,7 @@ import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
@@ -77,7 +78,7 @@ public class IronGolemPatch extends MobPatch<IronGolem> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 }

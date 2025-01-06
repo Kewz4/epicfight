@@ -24,7 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -45,7 +45,7 @@ import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
 import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
 
 public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch<T> {
-	protected Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, StaticAnimation>>>> weaponLivingMotions;
+	protected Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>>> weaponLivingMotions;
 	protected Map<WeaponCategory, Map<Style, CombatBehaviors.Builder<HumanoidMobPatch<?>>>> weaponAttackMotions;
 	
 	public HumanoidMobPatch(Faction faction) {
@@ -187,21 +187,21 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 		CapabilityItem mainhandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		CapabilityItem offhandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
 		
-		Map<LivingMotion, AnimationProvider<?>> motionModifier = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> motionModifier = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
 		motionModifier.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
 		
-		for (Map.Entry<LivingMotion, AnimationProvider<?>> entry : motionModifier.entrySet()) {
-			this.getAnimator().addLivingAnimation(entry.getKey(), entry.getValue().get());
+		for (Map.Entry<LivingMotion, AnimationAccessor<? extends StaticAnimation>> entry : motionModifier.entrySet()) {
+			this.getAnimator().addLivingAnimation(entry.getKey(), entry.getValue());
 		}
 		
 		if (this.weaponLivingMotions != null && this.weaponLivingMotions.containsKey(mainhandCap.getWeaponCategory())) {
-			Map<Style, Set<Pair<LivingMotion, StaticAnimation>>> mapByStyle = this.weaponLivingMotions.get(mainhandCap.getWeaponCategory());
+			Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>> mapByStyle = this.weaponLivingMotions.get(mainhandCap.getWeaponCategory());
 			Style style = mainhandCap.getStyle(this);
 			
 			if (mapByStyle.containsKey(style) || mapByStyle.containsKey(CapabilityItem.Styles.COMMON)) {
-				Set<Pair<LivingMotion, StaticAnimation>> animModifierSet = mapByStyle.getOrDefault(style, mapByStyle.get(CapabilityItem.Styles.COMMON));
+				Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> animModifierSet = mapByStyle.getOrDefault(style, mapByStyle.get(CapabilityItem.Styles.COMMON));
 				
-				for (Pair<LivingMotion, StaticAnimation> pair : animModifierSet) {
+				for (Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>> pair : animModifierSet) {
 					this.animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 				}
 			}
@@ -237,7 +237,7 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		if (this.original.getVehicle() != null) {
 			return Animations.BIPED_HIT_ON_MOUNT;
 		} else {

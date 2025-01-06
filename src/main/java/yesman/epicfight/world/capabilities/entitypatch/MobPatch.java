@@ -129,7 +129,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 			else
 				currentCompositeMotion = LivingMotions.AIM;
 		} else {
-			if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 		}
 		

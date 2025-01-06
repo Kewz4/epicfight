@@ -42,7 +42,7 @@ public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.PIGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.FALL, Animations.BIPED_FALL);
 		animator.addLivingAnimation(LivingMotions.MOUNT, Animations.BIPED_MOUNT);
-		animator.addLivingAnimation(LivingMotions.CELEBRATE, AnimationManager.getInstance().byId(Animations.PIGLIN_CELEBRATE1.getId() + this.original.getRandom().nextInt(3)));
+		animator.addLivingAnimation(LivingMotions.CELEBRATE, AnimationManager.byId(Animations.PIGLIN_CELEBRATE1.id() + this.original.getRandom().nextInt(3)));
 		animator.addLivingAnimation(LivingMotions.ADMIRE, Animations.PIGLIN_ADMIRE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.PIGLIN_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.PIGLIN_WALK);

@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class SpiderMesh extends SkinnedMesh implements MeshProvider<SpiderMesh> {
+public class SpiderMesh extends SkinnedMesh {
 	public final SkinnedMeshPart head;
 	public final SkinnedMeshPart middleStomach;
 	public final SkinnedMeshPart bottomStomach;
@@ -38,10 +37,5 @@ public class SpiderMesh extends SkinnedMesh implements MeshProvider<SpiderMesh> 
 		this.rightLeg2 = this.getOrLogException(this.parts, "rightLeg2");
 		this.rightLeg3 = this.getOrLogException(this.parts, "rightLeg3");
 		this.rightLeg4 = this.getOrLogException(this.parts, "rightLeg4");
-	}
-	
-	@Override
-	public SpiderMesh get() {
-		return this;
 	}
 }

@@ -65,11 +65,11 @@ public interface Mesh {
 	@OnlyIn(Dist.CLIENT)
 	@FunctionalInterface
 	public interface DrawingFunction {
-		public static final DrawingFunction ENTITY_TEXTURED = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction NEW_ENTITY = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ, r, g, b, a, u, v, overlay, packedLight, normX, normY, normZ);
 		};
 		
-		public static final DrawingFunction ENTITY_TEXTURED_NO_LIGHT = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction POSITION_TEX_COLOR_NORMAL = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.uv(u, v);
 			builder.color(r, g, b, a);
@@ -77,21 +77,29 @@ public interface Mesh {
 			builder.endVertex();
 		};
 		
-		public static final DrawingFunction ENTITY_PARTICLE = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction POSITION_COLOR_LIGHTMAP = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.color(r, g, b, a);
 			builder.uv2(packedLight);
 			builder.endVertex();
 		};
 		
-		public static final DrawingFunction ENTITY_SOLID = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction POSITION_COLOR_TEXTURE_LIGHTMAP = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+			builder.vertex(posX, posY, posZ);
+			builder.color(r, g, b, a);
+			builder.uv(u, v);
+			builder.uv2(packedLight);
+			builder.endVertex();
+		};
+		
+		public static final DrawingFunction POSITION_COLOR_NORMAL = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.color(r, g, b, a);
 			builder.normal(normX, normY, normZ);
 			builder.endVertex();
 		};
 		
-		public static final DrawingFunction PARTICLE_3D = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+		public static final DrawingFunction POSITION_COLOR_TEX_LIGHTMAP = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.color(r, g, b, a);
 			builder.uv(u, v);

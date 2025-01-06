@@ -35,7 +35,7 @@ import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.entity.eventlistener.MovementInputEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.SkillExecuteEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @OnlyIn(Dist.CLIENT)
 public class ControllEngine {
@@ -186,7 +186,7 @@ public class ControllEngine {
 		}
 		
 		while (keyPressed(EpicFightKeyMappings.SWITCH_MODE, false)) {
-			if (this.playerpatch.getOriginal().level().getGameRules().getBoolean(EpicFightGamerules.CAN_SWITCH_COMBAT)) {
+			if (EpicFightGameRules.CAN_SWITCH_PLAYER_MODE.getRuleValue(this.playerpatch.getOriginal().level())) {
 				this.playerpatch.toggleMode();
 			}
 		}

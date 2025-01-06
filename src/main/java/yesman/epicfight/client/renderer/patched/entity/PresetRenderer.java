@@ -33,10 +33,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -55,9 +55,9 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 	private final LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> presetRenderer;
 	protected final Map<Class<?>, PatchedLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, ? extends RenderLayer<LivingEntity, EntityModel<LivingEntity>>>> patchedLayers = Maps.newHashMap();
 	protected final List<PatchedLayer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityModel<LivingEntity>, ? extends RenderLayer<LivingEntity, EntityModel<LivingEntity>>>> customLayers = Lists.newArrayList();
-	protected final MeshProvider<SkinnedMesh> mesh;
+	protected final AssetAccessor<SkinnedMesh> mesh;
 	
-	public PresetRenderer(EntityRendererProvider.Context context, EntityType<?> entityType, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer, MeshProvider<SkinnedMesh> mesh) {
+	public PresetRenderer(EntityRendererProvider.Context context, EntityType<?> entityType, LivingEntityRenderer<LivingEntity, EntityModel<LivingEntity>> renderer, AssetAccessor<SkinnedMesh> mesh) {
 		this.presetRenderer = renderer;
 		this.mesh = mesh;
 		
@@ -102,7 +102,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		this.setArmaturePoses(entitypatch, armature, partialTicks);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
 		    this.prepareVanillaModel(entity, this.presetRenderer.getModel(), this.presetRenderer, partialTicks);
@@ -125,7 +125,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 				for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
 					AnimationPlayer animPlayer = layer.animationPlayer;
 					float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-					animPlayer.getAnimation().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
+					animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
 				}
 			}
 		}
@@ -236,7 +236,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 	}
 	
 	@Override
-	public MeshProvider<SkinnedMesh> getDefaultMesh() {
+	public AssetAccessor<SkinnedMesh> getDefaultMesh() {
 		return this.mesh;
 	}
 }

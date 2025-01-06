@@ -27,6 +27,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -49,7 +50,7 @@ import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
 import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
 import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class EndermanPatch extends MobPatch<EnderMan> {
 	private static final UUID SPEED_MODIFIER_RAGE_UUID = UUID.fromString("dc362d1a-8424-11ec-a8a3-0242ac120002");
@@ -68,7 +69,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	@Override
 	public void onJoinWorld(EnderMan enderman, EntityJoinLevelEvent event) {
 		if (enderman.level().dimension() == Level.END) {
-			if (enderman.level().getGameRules().getBoolean(EpicFightGamerules.NO_MOBS_IN_BOSSFIGHT) && enderman.position().horizontalDistanceSqr() < 40000) {
+			if (EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(enderman.level()) && enderman.position().horizontalDistanceSqr() < 40000) {
 				event.setCanceled(true);
 			}
 		}
@@ -153,7 +154,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 		super.poseTick(animation, pose, elapsedTime, partialTicks);
 		
 		if (this.isRaging() && pose.getJointTransformData().containsKey("Head_Top")) {
-			pose.getOrDefaultTransform("Head_Top").frontResult(JointTransform.getTranslation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head_Top").frontResult(JointTransform.translation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -256,7 +257,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		switch(stunType) {
 		case SHORT:
 			return Animations.ENDERMAN_HIT_SHORT;

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.client.mesh.EndermanMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedEyesLayer;
@@ -22,11 +22,11 @@ public class PEndermanRenderer extends PatchedLivingEntityRenderer<EnderMan, End
 	public PEndermanRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
 		
-		this.addPatchedLayer(EnderEyesLayer.class, new PatchedEyesLayer<>(ENDERMAN_EYE_TEXTURE, () -> Meshes.ENDERMAN));
+		this.addPatchedLayer(EnderEyesLayer.class, new PatchedEyesLayer<>(ENDERMAN_EYE_TEXTURE, Meshes.ENDERMAN));
 	}
 	
 	@Override
-	public MeshProvider<EndermanMesh> getDefaultMesh() {
+	public AssetAccessor<EndermanMesh> getDefaultMesh() {
 		return Meshes.ENDERMAN;
 	}
 }

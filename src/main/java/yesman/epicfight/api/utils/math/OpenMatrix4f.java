@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -12,45 +11,11 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.api.animation.JointTransform;
 
 public class OpenMatrix4f {
-	public static class AnimationTransformEntry {
-		private static final String[] BINDING_PRIORITY = {JointTransform.PARENT, JointTransform.JOINT_LOCAL_TRANSFORM, JointTransform.ANIMATION_TRANSFORM, JointTransform.RESULT1, JointTransform.RESULT2};
-		private final Map<String, Pair<OpenMatrix4f, MatrixOperation>> matrices = Maps.newHashMap();
-		
-		public void put(String entryPosition, OpenMatrix4f matrix) {
-			this.put(entryPosition, matrix, OpenMatrix4f::mul);
-		}
-		
-		public void put(String entryPosition, OpenMatrix4f matrix, MatrixOperation operation) {
-			if (this.matrices.containsKey(entryPosition)) {
-				Pair<OpenMatrix4f, MatrixOperation> appliedTransform = this.matrices.get(entryPosition);
-				OpenMatrix4f result = appliedTransform.getSecond().mul(appliedTransform.getFirst(), matrix, null);
-				this.matrices.put(entryPosition, Pair.of(result, operation));
-			} else {
-				this.matrices.put(entryPosition, Pair.of(new OpenMatrix4f(matrix), operation));
-			}
-		}
-		
-		public OpenMatrix4f getResult() {
-			OpenMatrix4f result = new OpenMatrix4f();
-			
-			for (String entryName : BINDING_PRIORITY) {
-				if (this.matrices.containsKey(entryName)) {
-					Pair<OpenMatrix4f, MatrixOperation> pair = this.matrices.get(entryName);
-					pair.getSecond().mul(result, pair.getFirst(), result);
-				}
-			}
-			
-			return result;
-		}
-	}
-
 	private static final FloatBuffer MATRIX_TRANSFORMER = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
 	private static final Vec3f VEC3_STORAGE = new Vec3f();
 	private static final Vec4f VEC4_STORAGE = new Vec4f();
@@ -64,16 +29,50 @@ public class OpenMatrix4f {
 	 */
 	public float m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33;
 	
+	private final boolean immutable;
+	
 	public OpenMatrix4f() {
 		this.setIdentity();
+		this.immutable = false;
 	}
 	
 	public OpenMatrix4f(final OpenMatrix4f src) {
+		this(src, false);
+	}
+	
+	public OpenMatrix4f(final OpenMatrix4f src, boolean immutable) {
 		load(src);
+		this.immutable = immutable;
 	}
 	
 	public OpenMatrix4f(final JointTransform jointTransform) {
 		load(OpenMatrix4f.fromQuaternion(jointTransform.rotation()).translate(jointTransform.translation()).scale(jointTransform.scale()));
+		this.immutable = false;
+	}
+	
+	public OpenMatrix4f(
+		  float m00, float m01, float m02, float m03
+		, float m10, float m11, float m12, float m13
+		, float m20, float m21, float m22, float m23
+		, float m30, float m31, float m32, float m33
+	) {
+		this.m00 = m00;
+		this.m01 = m01;
+		this.m02 = m02;
+		this.m03 = m03;
+		this.m10 = m10;
+		this.m11 = m11;
+		this.m12 = m12;
+		this.m13 = m13;
+		this.m20 = m20;
+		this.m21 = m21;
+		this.m22 = m22;
+		this.m23 = m23;
+		this.m30 = m30;
+		this.m31 = m31;
+		this.m32 = m32;
+		this.m33 = m33;
+		this.immutable = false;
 	}
 	
 	public OpenMatrix4f setIdentity() {
@@ -86,6 +85,10 @@ public class OpenMatrix4f {
 	 * @return m
 	 */
 	public static OpenMatrix4f setIdentity(OpenMatrix4f m) {
+		if (m.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
 		m.m00 = 1.0f;
 		m.m01 = 0.0f;
 		m.m02 = 0.0f;
@@ -102,6 +105,7 @@ public class OpenMatrix4f {
 		m.m31 = 0.0f;
 		m.m32 = 0.0f;
 		m.m33 = 1.0f;
+		
 		return m;
 	}
 	
@@ -112,6 +116,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f load(OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		dest.m00 = src.m00;
@@ -134,55 +140,66 @@ public class OpenMatrix4f {
 		return dest;
 	}
 	
-	public static OpenMatrix4f load(OpenMatrix4f mat, float[] elements) {
-		if (mat == null) mat = new OpenMatrix4f();
+	public static OpenMatrix4f load(@Nullable OpenMatrix4f dest, float[] elements) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
 		
-		mat.m00 = elements[0];
-		mat.m01 = elements[1];
-		mat.m02 = elements[2];
-		mat.m03 = elements[3];
-		mat.m10 = elements[4];
-		mat.m11 = elements[5];
-		mat.m12 = elements[6];
-		mat.m13 = elements[7];
-		mat.m20 = elements[8];
-		mat.m21 = elements[9];
-		mat.m22 = elements[10];
-		mat.m23 = elements[11];
-		mat.m30 = elements[12];
-		mat.m31 = elements[13];
-		mat.m32 = elements[14];
-		mat.m33 = elements[15];
+		dest.m00 = elements[0];
+		dest.m01 = elements[1];
+		dest.m02 = elements[2];
+		dest.m03 = elements[3];
+		dest.m10 = elements[4];
+		dest.m11 = elements[5];
+		dest.m12 = elements[6];
+		dest.m13 = elements[7];
+		dest.m20 = elements[8];
+		dest.m21 = elements[9];
+		dest.m22 = elements[10];
+		dest.m23 = elements[11];
+		dest.m30 = elements[12];
+		dest.m31 = elements[13];
+		dest.m32 = elements[14];
+		dest.m33 = elements[15];
 		
-		return mat;
+		return dest;
 	}
 	
-	public static OpenMatrix4f load(OpenMatrix4f mat, FloatBuffer buf) {
-		if (mat == null) mat = new OpenMatrix4f();
+	public static OpenMatrix4f load(@Nullable OpenMatrix4f dest, FloatBuffer buf) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
 		buf.position(0);
-		mat.m00 = buf.get();
-		mat.m01 = buf.get();
-		mat.m02 = buf.get();
-		mat.m03 = buf.get();
-		mat.m10 = buf.get();
-		mat.m11 = buf.get();
-		mat.m12 = buf.get();
-		mat.m13 = buf.get();
-		mat.m20 = buf.get();
-		mat.m21 = buf.get();
-		mat.m22 = buf.get();
-		mat.m23 = buf.get();
-		mat.m30 = buf.get();
-		mat.m31 = buf.get();
-		mat.m32 = buf.get();
-		mat.m33 = buf.get();
-		return mat;
+		
+		dest.m00 = buf.get();
+		dest.m01 = buf.get();
+		dest.m02 = buf.get();
+		dest.m03 = buf.get();
+		dest.m10 = buf.get();
+		dest.m11 = buf.get();
+		dest.m12 = buf.get();
+		dest.m13 = buf.get();
+		dest.m20 = buf.get();
+		dest.m21 = buf.get();
+		dest.m22 = buf.get();
+		dest.m23 = buf.get();
+		dest.m30 = buf.get();
+		dest.m31 = buf.get();
+		dest.m32 = buf.get();
+		dest.m33 = buf.get();
+		
+		return dest;
 	}
 
 	public OpenMatrix4f load(FloatBuffer buf) {
 		return OpenMatrix4f.load(this, buf);
 	}
-
+	
 	public OpenMatrix4f store(FloatBuffer buf) {
 		buf.put(m00);
 		buf.put(m01);
@@ -200,9 +217,10 @@ public class OpenMatrix4f {
 		buf.put(m31);
 		buf.put(m32);
 		buf.put(m33);
+		
 		return this;
 	}
-
+	
 	public List<Float> toList() {
 		List<Float> elements = Lists.newArrayList();
 		
@@ -226,9 +244,15 @@ public class OpenMatrix4f {
 		return elements;
 	}
 	
+	public OpenMatrix4f unmodifiable() {
+		return new OpenMatrix4f(this, true);
+	}
+	
 	public static OpenMatrix4f add(OpenMatrix4f left, OpenMatrix4f right, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 
 		dest.m00 = left.m00 + right.m00;
@@ -262,6 +286,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f mul(OpenMatrix4f left, OpenMatrix4f right, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		float m00 = left.m00 * right.m00 + left.m10 * right.m01 + left.m20 * right.m02 + left.m30 * right.m03;
@@ -280,6 +306,7 @@ public class OpenMatrix4f {
 		float m31 = left.m01 * right.m30 + left.m11 * right.m31 + left.m21 * right.m32 + left.m31 * right.m33;
 		float m32 = left.m02 * right.m30 + left.m12 * right.m31 + left.m22 * right.m32 + left.m32 * right.m33;
 		float m33 = left.m03 * right.m30 + left.m13 * right.m31 + left.m23 * right.m32 + left.m33 * right.m33;
+		
 		dest.m00 = m00;
 		dest.m01 = m01;
 		dest.m02 = m02;
@@ -296,23 +323,25 @@ public class OpenMatrix4f {
 		dest.m31 = m31;
 		dest.m32 = m32;
 		dest.m33 = m33;
+		
 		return dest;
 	}
 	
 	public static OpenMatrix4f mulMatrices(OpenMatrix4f... srcs) {
-		OpenMatrix4f dest = new OpenMatrix4f();
+		OpenMatrix4f result = new OpenMatrix4f();
 		
 		for (OpenMatrix4f src : srcs) {
-			dest.mulBack(src);
+			result.mulBack(src);
 		}
 		
-		return dest;
+		return result;
 	}
 	
 	public static OpenMatrix4f mulAsOrigin(OpenMatrix4f left, OpenMatrix4f right, OpenMatrix4f dest) {
 		float x = right.m30;
 		float y = right.m31;
 		float z = right.m32;
+		
 		OpenMatrix4f result = mul(left, right, dest);
 		result.m30 = x;
 		result.m31 = y;
@@ -377,6 +406,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f transpose(OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 		   dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		float m00 = src.m00;
@@ -436,9 +467,11 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f invert(OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		float determinant = src.determinant();
 		
-		if (determinant != 0) {
+		if (determinant != 0.0F) {
 			if (dest == null) {
 				dest = new OpenMatrix4f();
+			} else if (dest.immutable) {
+				throw new UnsupportedOperationException("Can't modify immutable matrix");
 			}
 			
 			float determinant_inv = 1.0F / determinant;
@@ -460,23 +493,24 @@ public class OpenMatrix4f {
 			float t32 = -determinant3x3(src.m00, src.m01, src.m03, src.m10, src.m11, src.m13, src.m20, src.m21, src.m23);
 			float t33 =  determinant3x3(src.m00, src.m01, src.m02, src.m10, src.m11, src.m12, src.m20, src.m21, src.m22);
 
-			dest.m00 = t00*determinant_inv;
-			dest.m11 = t11*determinant_inv;
-			dest.m22 = t22*determinant_inv;
-			dest.m33 = t33*determinant_inv;
-			dest.m01 = t10*determinant_inv;
-			dest.m10 = t01*determinant_inv;
-			dest.m20 = t02*determinant_inv;
-			dest.m02 = t20*determinant_inv;
-			dest.m12 = t21*determinant_inv;
-			dest.m21 = t12*determinant_inv;
-			dest.m03 = t30*determinant_inv;
-			dest.m30 = t03*determinant_inv;
-			dest.m13 = t31*determinant_inv;
-			dest.m31 = t13*determinant_inv;
-			dest.m32 = t23*determinant_inv;
-			dest.m23 = t32*determinant_inv;
-			return dest;
+			dest.m00 = t00 * determinant_inv;
+			dest.m11 = t11 * determinant_inv;
+			dest.m22 = t22 * determinant_inv;
+			dest.m33 = t33 * determinant_inv;
+			dest.m01 = t10 * determinant_inv;
+			dest.m10 = t01 * determinant_inv;
+			dest.m20 = t02 * determinant_inv;
+			dest.m02 = t20 * determinant_inv;
+			dest.m12 = t21 * determinant_inv;
+			dest.m21 = t12 * determinant_inv;
+			dest.m03 = t30 * determinant_inv;
+			dest.m30 = t03 * determinant_inv;
+			dest.m13 = t31 * determinant_inv;
+			dest.m31 = t13 * determinant_inv;
+			dest.m32 = t23 * determinant_inv;
+			dest.m23 = t32 * determinant_inv;
+			
+			return dest; 
 		} else {
 			return null;
 		}
@@ -498,6 +532,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f translate(Vec3f vec, OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		dest.m30 += src.m00 * vec.x + src.m10 * vec.y + src.m20 * vec.z;
@@ -537,6 +573,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f rotate(float angle, Vec3f axis, OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		float c = (float) Math.cos(angle);
@@ -569,6 +607,7 @@ public class OpenMatrix4f {
 		float t11 = src.m01 * f10 + src.m11 * f11 + src.m21 * f12;
 		float t12 = src.m02 * f10 + src.m12 * f11 + src.m22 * f12;
 		float t13 = src.m03 * f10 + src.m13 * f11 + src.m23 * f12;
+		
 		dest.m20 = src.m00 * f20 + src.m10 * f21 + src.m20 * f22;
 		dest.m21 = src.m01 * f20 + src.m11 * f21 + src.m21 * f22;
 		dest.m22 = src.m02 * f20 + src.m12 * f21 + src.m22 * f22;
@@ -673,6 +712,8 @@ public class OpenMatrix4f {
 	public static OpenMatrix4f scale(Vec3f vec, OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
 		if (dest == null) {
 			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
 		dest.m00 = src.m00 * vec.x;
@@ -705,34 +746,35 @@ public class OpenMatrix4f {
 	}
 	
 	public OpenMatrix4f removeTranslation() {
-		return removeTranslation(this);
+		return removeTranslation(this, null);
 	}
 	
-	public static OpenMatrix4f removeTranslation(OpenMatrix4f src) {
-		OpenMatrix4f copy = new OpenMatrix4f(src);
-		copy.m30 = 0.0F;
-		copy.m31 = 0.0F;
-		copy.m32 = 0.0F;
+	public static OpenMatrix4f removeTranslation(OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
 		
-		return copy;
+		dest.load(src);
+		dest.m30 = 0.0F;
+		dest.m31 = 0.0F;
+		dest.m32 = 0.0F;
+		
+		return dest;
 	}
 	
 	public OpenMatrix4f removeScale() {
-		VEC3_STORAGE.set(this.m00, this.m01, this.m02);
-		float xScale = VEC3_STORAGE.length();
-		
-		VEC3_STORAGE.set(this.m10, this.m11, this.m12);
-		float yScale = VEC3_STORAGE.length();
-		
-		VEC3_STORAGE.set(this.m20, this.m21, this.m22);
-		float zScale = VEC3_STORAGE.length();
-		
-		this.scale(1 / xScale, 1 / yScale, 1 / zScale);
-		
-		return this;
+		return removeScale(this, null);
 	}
 	
-	public static OpenMatrix4f removeScale(OpenMatrix4f src) {
+	public static OpenMatrix4f removeScale(OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
 		VEC3_STORAGE.set(src.m00, src.m01, src.m02);
 		float xScale = VEC3_STORAGE.length();
 		
@@ -742,37 +784,38 @@ public class OpenMatrix4f {
 		VEC3_STORAGE.set(src.m20, src.m21, src.m22);
 		float zScale = VEC3_STORAGE.length();
 		
-		OpenMatrix4f copy = new OpenMatrix4f(src);
-		copy.scale(1 / xScale, 1 / yScale, 1 / zScale);
+		dest.load(src);
+		dest.scale(1.0F / xScale, 1.0F / yScale, 1.0F / zScale);
 		
-		return copy;
+		return dest;
 	}
 	
 	@Override
 	public String toString() {
-		String buf = String.valueOf("\n" +
-				m00 + " " + m10 + " " + m20 + " " + m30 + "\n" +
-				m01 + " " + m11 + " " + m21 + " " + m31 + "\n" +
-				m02 + " " + m12 + " " + m22 + " " + m32 + "\n" +
-				m03 + " " + m13 + " " + m23 + " " + m33) + "\n";
-		
-		return buf;
+		return "\n" +
+				m00 + " " + m01 + " " + m02 + " " + m03 + "\n" +
+				m10 + " " + m11 + " " + m12 + " " + m13 + "\n" +
+				m20 + " " + m21 + " " + m22 + " " + m23 + "\n" +
+				m30 + " " + m31 + " " + m32 + " " + m33 + "\n"
+				;
 	}
 	
-	public static Matrix4f exportToMojangMatrix(OpenMatrix4f visibleMat) {
+	public static Matrix4f exportToMojangMatrix(OpenMatrix4f src) {
 		MATRIX_TRANSFORMER.position(0);
-		visibleMat.store(MATRIX_TRANSFORMER);
+		src.store(MATRIX_TRANSFORMER);
 		MATRIX_TRANSFORMER.position(0);
+		
 		return new Matrix4f(MATRIX_TRANSFORMER);
 	}
 	
-	public static OpenMatrix4f importFromMojangMatrix(Matrix4f mat4f) {
+	public static OpenMatrix4f importFromMojangMatrix(Matrix4f src) {
 		MATRIX_TRANSFORMER.position(0);
-		mat4f.get(MATRIX_TRANSFORMER);
+		src.get(MATRIX_TRANSFORMER);
+		
 		return OpenMatrix4f.load(null, MATRIX_TRANSFORMER);
 	}
 	
-	public static OpenMatrix4f[] allocateMatrix(int size) {
+	public static OpenMatrix4f[] allocateMatrixArray(int size) {
 		OpenMatrix4f[] matrixArray = new OpenMatrix4f[size];
 		
 		for (int i = 0; i < size; i++) {

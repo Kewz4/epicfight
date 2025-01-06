@@ -2,6 +2,7 @@ package yesman.epicfight.api.animation;
 
 import com.mojang.datafixers.util.Pair;
 
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.LinkAnimation;
@@ -14,10 +15,12 @@ public class ServerAnimator extends Animator {
 		return new ServerAnimator(entitypatch);
 	}
 	
-	public final AnimationPlayer animationPlayer;
-	protected DynamicAnimation nextPlaying;
 	private final LinkAnimation linkAnimation;
-	public boolean pause = false;
+	public final AnimationPlayer animationPlayer;
+	
+	protected AnimationAccessor<? extends DynamicAnimation> nextAnimation;
+	public boolean hardPaused = false;
+	public boolean softPaused = false;
 	
 	public ServerAnimator(LivingEntityPatch<?> entitypatch) {
 		super(entitypatch);
@@ -28,38 +31,52 @@ public class ServerAnimator extends Animator {
 	
 	/** Play an animation by animation instance **/
 	@Override
-	public void playAnimation(StaticAnimation nextAnimation, float modifyTime) {
-		this.pause = false;
-		Pose lastPose = this.animationPlayer.getAnimation().getPoseByTime(this.entitypatch, 0.0F, 0.0F);
-		this.animationPlayer.getAnimation().end(this.entitypatch, nextAnimation, this.animationPlayer.isEnd());
-		nextAnimation.begin(this.entitypatch);
+	public void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier) {
+		this.softPaused = false;
+		Pose lastPose = this.animationPlayer.getAnimation().get().getPoseByTime(this.entitypatch, 0.0F, 0.0F);
 		
-		if (!nextAnimation.isMetaAnimation()) {
-			nextAnimation.setLinkAnimation(this.animationPlayer.getAnimation(), lastPose, true, modifyTime, this.entitypatch, this.linkAnimation);
+		if (!this.animationPlayer.isEnd()) {
+			this.animationPlayer.getAnimation().get().end(this.entitypatch, nextAnimation, false);
+		}
+		
+		nextAnimation.get().begin(this.entitypatch);
+		
+		if (!nextAnimation.get().isMetaAnimation()) {
+			nextAnimation.get().setLinkAnimation(this.animationPlayer.getAnimation(), lastPose, true, transitionTimeModifier, this.entitypatch, this.linkAnimation);
 			this.linkAnimation.putOnPlayer(this.animationPlayer, this.entitypatch);
 			this.entitypatch.updateEntityState();
-			this.nextPlaying = nextAnimation;
+			this.nextAnimation = nextAnimation;
 		}
 	}
 	
 	@Override
-	public void playAnimationInstantly(StaticAnimation nextAnimation) {
-		this.pause = false;
-		this.animationPlayer.getAnimation().end(this.entitypatch, nextAnimation, this.animationPlayer.isEnd());
-		nextAnimation.begin(this.entitypatch);
+	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+		this.softPaused = false;
+		
+		if (!this.animationPlayer.isEnd()) {
+			this.animationPlayer.getAnimation().get().end(this.entitypatch, nextAnimation, false);
+		}
+		
+		nextAnimation.get().begin(this.entitypatch);
 		nextAnimation.putOnPlayer(this.animationPlayer, this.entitypatch);
 		this.entitypatch.updateEntityState();
 	}
 	
 	@Override
-	public void reserveAnimation(StaticAnimation nextAnimation) {
-		this.pause = false;
-		this.nextPlaying = nextAnimation;
+	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+		this.softPaused = false;
+		
+		if (!this.animationPlayer.isEnd && this.animationPlayer.getAnimation() != null) {
+			this.animationPlayer.getAnimation().get().end(this.entitypatch, nextAnimation, false);
+		}
+		
+		this.nextAnimation = nextAnimation;
+		this.animationPlayer.terminate();
 	}
 	
 	@Override
 	public void tick() {
-		if (this.pause) {
+		if (this.hardPaused || this.softPaused) {
 			this.entitypatch.updateEntityState();
 			return;
 		}
@@ -68,22 +85,19 @@ public class ServerAnimator extends Animator {
 		this.entitypatch.updateEntityState();
 		
 		if (this.animationPlayer.isEnd()) {
-			DynamicAnimation nextAnimation = this.nextPlaying == null ? Animations.DUMMY_ANIMATION : this.nextPlaying;
-			this.animationPlayer.getAnimation().end(this.entitypatch, nextAnimation, true);
-			
-			if (this.nextPlaying == null) {
-				Animations.DUMMY_ANIMATION.putOnPlayer(this.animationPlayer, this.entitypatch);
-				this.pause = true;
+			if (this.nextAnimation == null) {
+				Animations.EMPTY_ANIMATION.putOnPlayer(this.animationPlayer, this.entitypatch);
+				this.softPaused = true;
 			} else {
-				if (!this.animationPlayer.getAnimation().isLinkAnimation() && !this.nextPlaying.isLinkAnimation()) {
-					this.nextPlaying.begin(this.entitypatch);
+				if (!this.animationPlayer.getAnimation().get().isLinkAnimation() && !this.nextAnimation.get().isLinkAnimation()) {
+					this.nextAnimation.get().begin(this.entitypatch);
 				}
 				
-				this.nextPlaying.putOnPlayer(this.animationPlayer, this.entitypatch);
-				this.nextPlaying = null;
+				this.nextAnimation.putOnPlayer(this.animationPlayer, this.entitypatch);
+				this.nextAnimation = null;
 			}
 		} else {
-			this.animationPlayer.getAnimation().tick(this.entitypatch);
+			this.animationPlayer.getAnimation().get().tick(this.entitypatch);
 		}
 	}
 	
@@ -93,7 +107,7 @@ public class ServerAnimator extends Animator {
 	}
 	
 	@Override
-	public AnimationPlayer getPlayerFor(DynamicAnimation playingAnimation) {
+	public AnimationPlayer getPlayerFor(AnimationAccessor<? extends DynamicAnimation> playingAnimation) {
 		return this.animationPlayer;
 	}
 	
@@ -105,6 +119,16 @@ public class ServerAnimator extends Animator {
 	
 	@Override
 	public EntityState getEntityState() {
-		return this.animationPlayer.getAnimation().getState(this.entitypatch, this.animationPlayer.getElapsedTime());
+		return this.animationPlayer.getAnimation().get().getState(this.entitypatch, this.animationPlayer.getElapsedTime());
+	}
+	
+	@Override
+	public void setSoftPause(boolean paused) {
+		this.softPaused = paused;
+	}
+
+	@Override
+	public void setHardPause(boolean paused) {
+		this.hardPaused = paused;
 	}
 }

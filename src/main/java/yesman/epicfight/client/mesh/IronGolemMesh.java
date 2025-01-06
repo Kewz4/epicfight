@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class IronGolemMesh extends SkinnedMesh implements MeshProvider<IronGolemMesh> {
+public class IronGolemMesh extends SkinnedMesh {
 	public final SkinnedMeshPart head;
 	public final SkinnedMeshPart chest;
 	public final SkinnedMeshPart core;
@@ -30,10 +29,5 @@ public class IronGolemMesh extends SkinnedMesh implements MeshProvider<IronGolem
 		this.rightArm = this.getOrLogException(this.parts, "rightArm");
 		this.leftLeg = this.getOrLogException(this.parts, "leftLeg");
 		this.rightLeg = this.getOrLogException(this.parts, "rightLeg");
-	}
-
-	@Override
-	public IronGolemMesh get() {
-		return this;
 	}
 }

@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -16,16 +17,16 @@ public class SPMoveAndPlayAnimation extends SPPlayAnimationAndSetTarget {
 	protected double posZ;
 	protected float yRot;
 	
-	public SPMoveAndPlayAnimation(int animation, int entityId, float modifyTime, int targetId, double posX, double posY, double posZ, float yRot) {
-		super(animation, entityId, modifyTime, targetId);
+	public SPMoveAndPlayAnimation(Action action, int animation, int entityId, float modifyTime, boolean pause, int targetId, double posX, double posY, double posZ, float yRot) {
+		super(action, animation, entityId, modifyTime, pause, targetId);
 		this.posX = posX;
 		this.posY = posY;
 		this.posZ = posZ;
 		this.yRot = yRot;
 	}
 	
-	public SPMoveAndPlayAnimation(StaticAnimation animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
-		super(animation, modifyTime, entitypatch);
+	public SPMoveAndPlayAnimation(Action action, AnimationAccessor<? extends StaticAnimation> animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
+		super(action, animation, modifyTime, entitypatch);
 		
 		Vec3 position = entitypatch.getOriginal().position();
 		this.posX = position.x;
@@ -51,13 +52,13 @@ public class SPMoveAndPlayAnimation extends SPPlayAnimationAndSetTarget {
 	}
 	
 	public static SPMoveAndPlayAnimation fromBytes(FriendlyByteBuf buf) {
-		return new SPMoveAndPlayAnimation(buf.readInt(), buf.readInt(), buf.readFloat(), buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat());
+		return new SPMoveAndPlayAnimation(buf.readEnum(Action.class), buf.readInt(), buf.readInt(), buf.readFloat(), buf.readBoolean(), buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat());
 	}
 	
 	public static void toBytes(SPMoveAndPlayAnimation msg, FriendlyByteBuf buf) {
 		buf.writeInt(msg.animationId);
 		buf.writeInt(msg.entityId);
-		buf.writeFloat(msg.convertTimeModifier);
+		buf.writeFloat(msg.transitionTimeModifier);
 		buf.writeInt(msg.targetId);
 		buf.writeDouble(msg.posX);
 		buf.writeDouble(msg.posY);

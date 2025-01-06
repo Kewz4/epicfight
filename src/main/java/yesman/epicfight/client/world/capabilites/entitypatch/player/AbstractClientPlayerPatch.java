@@ -31,9 +31,9 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
-import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.epicskins.EpicSkinsInformation;
@@ -130,7 +130,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 		}
 		
-		UpdatePlayerMotionEvent.BaseLayer baseLayerEvent = new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion);
+		UpdatePlayerMotionEvent.BaseLayer baseLayerEvent = new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion, !this.state.updateLivingMotion() && considerInaction);
 		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
 		
 		this.currentLivingMotion = baseLayerEvent.getMotion();
@@ -160,7 +160,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		} else {
 			if (this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 			else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
 				currentCompositeMotion = LivingMotions.DIGGING;
@@ -227,15 +227,11 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
 		this.cancelAnyAction();
-	}
-	
-	@Override
-	public void reserveAnimation(StaticAnimation animation) {
-		this.animator.reserveAnimation(animation);
-	}
-	
-	@Override
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
+		
+		this.getClientAnimator().getAllLayers().forEach((layer) -> layer.animationPlayer.getAnimation().get().getRealAnimation().get().getProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT).ifPresent((event) -> {
+			event.params(mainHandCap, offHandCap);
+			event.execute(this, layer.animationPlayer.getAnimation().get().getRealAnimation(), layer.animationPlayer.getPrevElapsedTime(), layer.animationPlayer.getElapsedTime());
+		}));
 	}
 	
 	@Override

@@ -68,7 +68,7 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, PV extends 
 	 * Restart with the same condition but with another provider
 	 */
 	@Override
-	public void restart(ResourceLocation key, PV newProvider) {
+	public void restart(ResourceLocation key) {
 		ObjectWrapper kwrap = this.simulationObjects.get(key);
 		
 		if (kwrap != null) {
@@ -112,8 +112,11 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, PV extends 
 		}
 		
 		public void startRunning(O simObject) {
-			this.isRunning = true;
 			this.simulationObject = this.provider.createSimulationData(this.provider, simObject, this.builder);
+			
+			if (this.simulationObject != null) {
+				this.isRunning = true;
+			}
 		}
 		
 		public void stopRunning() {

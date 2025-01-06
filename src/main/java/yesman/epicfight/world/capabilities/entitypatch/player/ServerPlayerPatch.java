@@ -21,7 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.AttackResult;
@@ -31,7 +31,6 @@ import yesman.epicfight.network.server.SPAddOrRemoveSkillData;
 import yesman.epicfight.network.server.SPChangeLivingMotion;
 import yesman.epicfight.network.server.SPChangeSkill;
 import yesman.epicfight.network.server.SPModifyPlayerData;
-import yesman.epicfight.network.server.SPPlayAnimation;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.skill.ChargeableSkill;
 import yesman.epicfight.skill.Skill;
@@ -176,17 +175,17 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 			return;
 		}
 		
-		Map<LivingMotion, StaticAnimation> oldLivingAnimations = this.getAnimator().getLivingAnimations();
-		Map<LivingMotion, StaticAnimation> newLivingAnimations = Maps.newHashMap();
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
 		
 		CapabilityItem mainhandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		CapabilityItem offhandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
 		
-		Map<LivingMotion, AnimationProvider<?>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
 		livingMotionModifiers.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
 		
-		for (Map.Entry<LivingMotion, AnimationProvider<?>> entry : livingMotionModifiers.entrySet()) {
-			StaticAnimation aniamtion = entry.getValue().get();
+		for (Map.Entry<LivingMotion, AnimationAccessor<? extends StaticAnimation>> entry : livingMotionModifiers.entrySet()) {
+			AnimationAccessor<? extends StaticAnimation> aniamtion = entry.getValue();
 			
 			if (!oldLivingAnimations.containsKey(entry.getKey())) {
 				this.updatedMotionCurrentTick = true;
@@ -216,15 +215,8 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
-		super.playAnimationSynchronized(animation, convertTimeModifier, packetProvider);
-		EpicFightNetworkManager.sendToPlayer(packetProvider.get(animation, convertTimeModifier, this), this.original);
-	}
-	
-	@Override
-	public void reserveAnimation(StaticAnimation animation) {
-		super.reserveAnimation(animation);
-		EpicFightNetworkManager.sendToPlayer(new SPPlayAnimation(animation, this.original.getId(), 0.0F), this.original);
+	public void sendToAllPlayerTrackingMe(Object packet) {
+		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(packet, this.original);
 	}
 	
 	@Override

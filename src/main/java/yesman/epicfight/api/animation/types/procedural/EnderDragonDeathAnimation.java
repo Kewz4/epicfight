@@ -1,26 +1,22 @@
 package yesman.epicfight.api.animation.types.procedural;
 
-import net.minecraft.server.packs.resources.ResourceManager;
+import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LongHitAnimation;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class EnderDragonDeathAnimation extends LongHitAnimation {
-	public EnderDragonDeathAnimation(float convertTime, String path, Armature armature) {
-		super(convertTime, path, armature);
+	public EnderDragonDeathAnimation(float convertTime, AnimationAccessor<? extends EnderDragonDeathAnimation> accessor, Armature armature) {
+		super(convertTime, accessor, armature);
 	}
 	
 	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-		try {
-			loadAllJointsClip(resourceManager, this);
-		} catch (Exception e) {
-			EpicFightMod.LOGGER.warn("Failed to load animation: " + this.resourceLocation);
-			e.printStackTrace();
-		}
+	public void loadAnimation() {
+		AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
 	}
 	
 	@Override

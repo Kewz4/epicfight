@@ -11,7 +11,7 @@ public interface MeshPartDefinition {
 	String partName();
 	Supplier<OpenMatrix4f> getModelPartAnimationProvider();
 	
-	default SoftBodyMesh.ClothSimulationInfo clothInfo() {
+	default SoftBodyTranslatable.ClothSimulationInfo clothInfo() {
 		return null;
 	}
 }

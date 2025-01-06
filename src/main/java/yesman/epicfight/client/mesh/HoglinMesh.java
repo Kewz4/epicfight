@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class HoglinMesh extends SkinnedMesh implements MeshProvider<HoglinMesh> {
+public class HoglinMesh extends SkinnedMesh {
 	public final SkinnedMeshPart head;
 	public final SkinnedMeshPart body;
 	public final SkinnedMeshPart leftFrontLeg;
@@ -28,10 +27,5 @@ public class HoglinMesh extends SkinnedMesh implements MeshProvider<HoglinMesh> 
 		this.rightFrontLeg = this.getOrLogException(this.parts, "rightFrontLeg");
 		this.leftBackLeg = this.getOrLogException(this.parts, "leftBackLeg");
 		this.rightBackLeg = this.getOrLogException(this.parts, "rightBackLeg");
-	}
-
-	@Override
-	public HoglinMesh get() {
-		return this;
 	}
 }

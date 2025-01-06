@@ -14,11 +14,11 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public class CompositeMesh implements Mesh, SoftBodyMesh {
+public class CompositeMesh implements Mesh, SoftBodyTranslatable {
 	private final StaticMesh<?, ?> staticMesh;
-	private final SoftBodyMesh softBodyMesh;
+	private final SoftBodyTranslatable softBodyMesh;
 	
-	public CompositeMesh(StaticMesh<?, ?> staticMesh, SoftBodyMesh softBodyMesh) {
+	public CompositeMesh(StaticMesh<?, ?> staticMesh, SoftBodyTranslatable softBodyMesh) {
 		this.staticMesh = staticMesh;
 		this.softBodyMesh = softBodyMesh;
 	}
@@ -46,7 +46,7 @@ public class CompositeMesh implements Mesh, SoftBodyMesh {
 	}
 	
 	@Override
-	public ClothObject createSimulationData(@Nullable SoftBodyMesh provider, ClothSimulatable simOwner, ClothObjectBuilder simBuilder) {
+	public ClothObject createSimulationData(@Nullable SoftBodyTranslatable provider, ClothSimulatable simOwner, ClothObjectBuilder simBuilder) {
 		return this.softBodyMesh.createSimulationData(this, simOwner, simBuilder);
 	}
 	

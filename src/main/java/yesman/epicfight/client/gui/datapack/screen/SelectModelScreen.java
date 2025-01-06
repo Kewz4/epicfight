@@ -1,5 +1,6 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import javax.annotation.Nullable;
@@ -17,9 +18,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.client.gui.datapack.widgets.ModelPreviewer;
 
 @OnlyIn(Dist.CLIENT)
@@ -28,10 +29,10 @@ public class SelectModelScreen extends Screen {
 	private final ModelList modelList;
 	private final ModelPreviewer modelPreviewer;
 	private final EditBox searchBox;
-	private final BiConsumer<String, MeshProvider<SkinnedMesh>> selectCallback;
-	private final BiConsumer<String, MeshProvider<SkinnedMesh>> cancelCallback;
+	private final BiConsumer<String, AssetAccessor<SkinnedMesh>> selectCallback;
+	private final BiConsumer<String, AssetAccessor<SkinnedMesh>> cancelCallback;
 	
-	public SelectModelScreen(Screen parentScreen, BiConsumer<String, MeshProvider<SkinnedMesh>> selectCallback, BiConsumer<String, MeshProvider<SkinnedMesh>> cancelCallback) {
+	public SelectModelScreen(Screen parentScreen, BiConsumer<String, AssetAccessor<SkinnedMesh>> selectCallback, BiConsumer<String, AssetAccessor<SkinnedMesh>> cancelCallback) {
 		super(Component.translatable("gui.epicfight.select.models"));
 		
 		this.modelPreviewer = new ModelPreviewer(10, 20, 36, 60, null, null, null, null);
@@ -146,16 +147,18 @@ public class SelectModelScreen extends Screen {
 			this.setScrollAmount(0.0D);
 			this.children().clear();
 			
-			Meshes.entries(SkinnedMesh.class).stream().filter((entry) -> StringUtil.isNullOrEmpty(keyward) ? true : entry.getFirst().toString().contains(keyward)).map((entry) -> new ModelEntry(entry.getFirst().toString(), entry.getSecond()))
+			Set<AssetAccessor<SkinnedMesh>> skinnedMeshes = Meshes.entry();
+			
+			skinnedMeshes.stream().filter((accessor) -> StringUtil.isNullOrEmpty(keyward) ? true : accessor.registryName().toString().contains(keyward)).map((accessor) -> new ModelEntry(accessor.registryName().toString(), accessor))
 														.sorted((entry$1, entry$2) -> entry$1.registryName.compareTo(entry$2.registryName)).forEach(this::addEntry);
 		}
 		
 		@OnlyIn(Dist.CLIENT)
 		class ModelEntry extends ObjectSelectionList.Entry<ModelList.ModelEntry> {
 			private final String registryName;
-			private final MeshProvider<SkinnedMesh> mesh;
+			private final AssetAccessor<SkinnedMesh> mesh;
 			
-			public ModelEntry(String registryName, MeshProvider<SkinnedMesh> mesh) {
+			public ModelEntry(String registryName, AssetAccessor<SkinnedMesh> mesh) {
 				this.registryName = registryName;
 				this.mesh = mesh;
 			}

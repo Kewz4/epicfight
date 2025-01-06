@@ -23,9 +23,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.forgeevent.RegisterResourceLayersEvent;
-import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.LayerRenderer;
 import yesman.epicfight.data.conditions.Condition.EntityPatchCondition;
@@ -111,8 +112,12 @@ public class LayerUtil {
 				} else {
 					renderer.addCustomLayer(patchedLayer);
 				}
-			} catch (NoSuchElementException | ClassNotFoundException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {
-				EpicFightMod.LOGGER.error("Couldn't read layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
+			} catch (ClassNotFoundException e) {
+				if (EpicFightMod.warnAssetExceptions()) {
+					EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
+				}
+			} catch (NoSuchElementException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {
+				EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
 			}
 		}
 	}
@@ -135,9 +140,9 @@ public class LayerUtil {
 		}
 		
 		ResourceLocation textureLocation = new ResourceLocation(properties.get("texture").getAsString());
-		SkinnedMesh mesh = Meshes.getOrCreateSkinnedMesh(Minecraft.getInstance().getResourceManager(), new ResourceLocation(properties.get("model").getAsString()), SkinnedMesh::new);
+		AssetAccessor<SkinnedMesh> mesh = Meshes.getOrCreate(Minecraft.getInstance().getResourceManager(), new ResourceLocation(properties.get("model").getAsString()), jsonAssetLoader -> jsonAssetLoader.loadSkinnedMesh(SkinnedMesh::new));
 		
-		return new PatchedEyesLayer<> (textureLocation, () -> mesh);
+		return new PatchedEyesLayer<> (textureLocation, mesh);
 	}
 	
 	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getOriginalModelLayer(JsonObject properties) {

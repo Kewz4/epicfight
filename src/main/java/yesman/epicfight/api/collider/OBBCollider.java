@@ -327,7 +327,7 @@ public class OBBCollider extends Collider {
 			jt.rotation().z = 0.0F;
 			jt.rotation().w = 1.0F;
 			
-			poseMatrix = jt.getAnimationBindedMatrix(armature.rootJoint, new OpenMatrix4f()).removeTranslation();
+			poseMatrix = jt.getAnimationBoundMatrix(armature.rootJoint, new OpenMatrix4f()).removeTranslation();
 		} else {
 			poseMatrix = armature.getBindedTransformFor(interpolatedPose, joint);
 		}

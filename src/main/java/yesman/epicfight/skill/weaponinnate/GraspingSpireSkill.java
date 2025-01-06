@@ -6,10 +6,10 @@ import java.util.UUID;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -20,27 +20,27 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 public class GraspingSpireSkill extends WeaponInnateSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("3fa26bbc-d14e-11ed-afa1-0242ac120002");
 	
-	private AnimationProvider<AttackAnimation> first;
-	private AnimationProvider<AttackAnimation> second;
+	private AnimationAccessor<? extends AttackAnimation> first;
+	private AnimationAccessor<? extends AttackAnimation> second;
 	
-	public GraspingSpireSkill(Builder<? extends Skill> builder) {
+	public GraspingSpireSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
-		this.first = () -> (AttackAnimation)Animations.GRASPING_SPIRAL_FIRST;
-		this.second = () -> (AttackAnimation)Animations.GRASPING_SPIRAL_SECOND;
+		this.first = Animations.GRASPING_SPIRAL_FIRST;
+		this.second = Animations.GRASPING_SPIRAL_SECOND;
 	}
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
-			if (this.first.get().equals(event.getAnimation())) {
+		container.getExecutor().getEventListener().addEventListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
+			if (this.first.equals(event.getAnimation())) {
 				container.getDataManager().setDataSync(SkillDataKeys.LAST_HIT_COUNT.get(), event.getPlayerPatch().getCurrenltyHurtEntities().size(), event.getPlayerPatch().getOriginal());
 			}
 		});
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_HURT, EVENT_UUID, (event) -> {
-			if (this.second.get().equals(event.getDamageSource().getAnimation())) {
+		container.getExecutor().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_HURT, EVENT_UUID, (event) -> {
+			if (this.second.equals(event.getDamageSource().getAnimation())) {
 				float impact = event.getDamageSource().getImpact();
 				event.getDamageSource().setImpact(impact + container.getDataManager().getDataValue(SkillDataKeys.LAST_HIT_COUNT.get()) * 0.4F);
 			}
@@ -49,13 +49,13 @@ public class GraspingSpireSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
-		container.getExecuter().getEventListener().removeListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID);
-		container.getExecuter().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_HURT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.ATTACK_ANIMATION_END_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_HURT, EVENT_UUID);
 	}
 	
 	@Override
 	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playAnimationSynchronized(this.first.get(), 0.0F);
+		executer.playAnimationSynchronized(this.first, 0.0F);
 		super.executeOnServer(executer, args);
 	}
 	

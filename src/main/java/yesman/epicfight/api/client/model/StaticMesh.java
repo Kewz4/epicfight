@@ -20,7 +20,7 @@ import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject;
 import yesman.epicfight.api.utils.ParseUtil;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<?>> implements Mesh, SoftBodyMesh {
+public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<?>> implements Mesh, SoftBodyTranslatable {
 	protected static final Vector4f POSITION = new Vector4f();
 	protected static final Vector3f NORMAL = new Vector3f();
 	
@@ -121,7 +121,7 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ClothSimulator.ClothObject createSimulationData(@Nullable SoftBodyMesh provider, ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder simBuilder) {
+	public ClothSimulator.ClothObject createSimulationData(@Nullable SoftBodyTranslatable provider, ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder simBuilder) {
 		return new ClothObject(simBuilder, provider == null ? this : provider, (Map<String, MeshPart<?>>)this.parts, this.positions);
 	}
 }

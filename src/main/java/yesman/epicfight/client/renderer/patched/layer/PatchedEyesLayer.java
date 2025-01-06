@@ -11,8 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -20,7 +20,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class PatchedEyesLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, AM extends SkinnedMesh> extends ModelRenderLayer<E, T, M, EyesLayer<E, M>, AM> {
 	private final RenderType renderType;
 	
-	public PatchedEyesLayer(ResourceLocation eyeTexture, MeshProvider<AM> mesh) {
+	public PatchedEyesLayer(ResourceLocation eyeTexture, AssetAccessor<AM> mesh) {
 		super(mesh);
 		this.renderType = RenderType.eyes(eyeTexture);
 	}

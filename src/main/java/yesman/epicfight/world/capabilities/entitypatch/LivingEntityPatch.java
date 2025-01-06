@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
@@ -36,6 +35,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
@@ -60,7 +60,9 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerP
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPPlayAnimation;
+import yesman.epicfight.network.client.CPAnimatorControl;
+import yesman.epicfight.network.common.AnimatorControlPacket;
+import yesman.epicfight.network.server.SPAnimatorControl;
 import yesman.epicfight.particle.HitParticleType;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -127,9 +129,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	protected void initAnimator(Animator animator) {
-		// Put default variables
-		animator.putAnimationVariable(AttackAnimation.HIT_ENTITIES, Lists.newArrayList());
-		animator.putAnimationVariable(AttackAnimation.HURT_ENTITIES, Lists.newArrayList());
+		//Do init animator
+		animator.getVariables().putSharedVariable(AttackAnimation.HIT_ENTITIES);
+		animator.getVariables().putSharedVariable(AttackAnimation.HURT_ENTITIES);
+		animator.getVariables().putSharedVariable(ActionAnimation.ACTION_ANIMATION_COORD);
 	}
 	
 	@Override
@@ -194,7 +197,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void onFall(LivingFallEvent event) {
 		if (!this.getOriginal().level().isClientSide() && this.isAirborneState()) {
-			StaticAnimation fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
+			AnimationAccessor<? extends StaticAnimation> fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
 			
 			if (fallAnimation != null) {
 				this.playAnimationSynchronized(fallAnimation, 0);
@@ -234,7 +237,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
-	public EpicFightDamageSource getDamageSource(StaticAnimation animation, InteractionHand hand) {
+	public EpicFightDamageSource getDamageSource(AnimationAccessor<? extends StaticAnimation> animation, InteractionHand hand) {
 		EpicFightDamageSources damageSources = EpicFightDamageSources.of(this.original.level());
 		EpicFightDamageSource damagesource = damageSources.mobAttack(this.original).setAnimation(animation);
 		damagesource.setImpact(this.getImpact(hand));
@@ -428,23 +431,170 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, yRotO, yRot, partialTicks, scale, scale, scale);
 	}
 	
-	public void reserveAnimation(StaticAnimation animation) {
-		this.animator.reserveAnimation(animation);
-		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPPlayAnimation(animation, this.original.getId(), 0.0F), this.original);
+	/**
+	 * Play an animation after the current animation is finished
+	 * @param animation
+	 */
+	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.reserveAnimation(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, SPAnimatorControl::new);
+		}
 	}
 	
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier) {
-		this.playAnimationSynchronized(animation, convertTimeModifier, SPPlayAnimation::new);
+	/**
+	 * Play an animation after the current animation is finished
+	 * @param animation
+	 * @param packetProvider
+	 */
+	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, packetProvider);
 	}
 	
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
-		this.animator.playAnimation(animation, convertTimeModifier);
-		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(packetProvider.get(animation, convertTimeModifier, this), this.original);
+	/**
+	 * Play an animation without convert time
+	 * @param animation
+	 */
+	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimationInstantly(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation without convert time
+	 * @param animation
+	 * @param packetProvider
+	 */
+	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, packetProvider);
+	}
+	
+	/**
+	 * Play an animation
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimation(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation with custom packet
+	 * @param animation
+	 * @param transitionTimeModifier
+	 * @param packetProvider
+	 */
+	public void playAnimation(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
+	}
+	
+	/**
+	 * Play an animation ensuring synchronization between client-server
+	 * Plays animation when getting response from server if it called in client side.
+	 * 
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimationSynchronized(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation ensuring synchronization between client-server
+	 * Plays animation when getting response from server if it called in client side.
+	 * 
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimationSynchronized(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
+	}
+	
+	/**
+	 * Play an animation only in client side, including all clients tracking this entity
+	 * @param animation
+	 * @param convertTimeModifier
+	 */
+	public void playAnimationInClientSide(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, true, false));
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, this.original.getId(), transitionTimeModifier, false));
+		}
+	}
+	
+	/**
+	 * Play an animation with custom packet
+	 * @param animation
+	 * @param transitionTimeModifier
+	 * @param packetProvider
+	 */
+	private void handleAnimationPacket(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		if (this.isLogicalClient()) {
+			throw new IllegalStateException("Cannot send animation play packet in client side.");
+		}
+		
+		switch (action) {
+		case PLAY -> {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+		}
+		case PLAY_INSTANTLY -> {
+			this.animator.playAnimationInstantly(animation);
+		}
+		case RESERVE -> {
+			this.animator.reserveAnimation(animation);
+		}
+		default -> {
+			throw new UnsupportedOperationException("Only PLAY, PLAY_INSTANTLY and RESERVE are allowed");
+		}
+		}
+		
+		this.sendToAllPlayerTrackingMe(packetProvider.get(action, animation, transitionTimeModifier, this));
+	}
+	
+	public void pauseAnimator(AnimatorControlPacket.Action action, boolean pause) {
+		switch (action) {
+		case SOFT_PAUSE -> {
+			this.animator.setSoftPause(pause);
+		}
+		case HARD_PAUSE -> {
+			this.animator.setHardPause(pause);
+		}
+		default -> {
+			throw new UnsupportedOperationException("Only SOFT_PAUSE and HARD_PAUSE are allowed");
+		}
+		}
+		
+		if (this.isLogicalClient()) {
+			this.sendToAllPlayerTrackingMe(new CPAnimatorControl(action, -1, 0.0F, pause, false, true));
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(action, -1, this.original.getId(), 0.0F, pause));
+		}
+	}
+	
+	public void sendToAllPlayerTrackingMe(Object packet) {
+		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(packet, this.original);
 	}
 	
 	@FunctionalInterface
-	public interface AnimationPacketProvider {
-		SPPlayAnimation get(StaticAnimation animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
+	public interface ServerAnimationPacketProvider {
+		SPAnimatorControl get(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
 	}
 	
 	protected void playReboundAnimation() {
@@ -480,7 +630,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.original.setDeltaMovement(0.0D, 0.0D, 0.0D);
 		this.cancelKnockback = true;
 		
-		StaticAnimation hitAnimation = this.getHitAnimation(stunType);
+		AnimationAccessor<? extends StaticAnimation> hitAnimation = this.getHitAnimation(stunType);
 		
 		if (hitAnimation != null) {
 			this.playAnimationSynchronized(hitAnimation, stunType.hasFixedStunTime() ? 0.0F : stunTime);
@@ -530,7 +680,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.getAnimator();
 	}
 	
-	public abstract StaticAnimation getHitAnimation(StunType stunType);
+	public abstract AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType);
 	public void aboutToDeath() {}
 	
 	public SoundEvent getWeaponHitSound(InteractionHand hand) {
@@ -738,16 +888,16 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public List<LivingEntity> getCurrenltyAttackedEntities() {
-		return this.getAnimator().getAnimationVariable(AttackAnimation.HIT_ENTITIES);
+		return this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HIT_ENTITIES);
 	}
 
 	public List<LivingEntity> getCurrenltyHurtEntities() {
-		return this.getAnimator().getAnimationVariable(AttackAnimation.HURT_ENTITIES);
+		return this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HURT_ENTITIES);
 	}
 
 	public void removeHurtEntities() {
-		this.getAnimator().getAnimationVariable(AttackAnimation.HIT_ENTITIES).clear();
-		this.getAnimator().getAnimationVariable(AttackAnimation.HURT_ENTITIES).clear();
+		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HIT_ENTITIES).clear();
+		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HURT_ENTITIES).clear();
 	}
 
 	@OnlyIn(Dist.CLIENT)

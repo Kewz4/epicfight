@@ -3,7 +3,7 @@ package yesman.epicfight.world.capabilities.item;
 import java.util.Map;
 
 import net.minecraft.world.InteractionHand;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -16,10 +16,10 @@ public class MapCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public Map<LivingMotion, AnimationProvider<?>> getLivingMotionModifier(LivingEntityPatch<?> playerpatch, InteractionHand hand) {
-		Map<LivingMotion, AnimationProvider<?>> livingModifier = super.getLivingMotionModifier(playerpatch, hand);
-		StaticAnimation holdAnimation;
-		StaticAnimation holdMoveAnimation;
+	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingMotionModifier(LivingEntityPatch<?> playerpatch, InteractionHand hand) {
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> livingModifier = super.getLivingMotionModifier(playerpatch, hand);
+		AnimationAccessor<? extends StaticAnimation> holdAnimation;
+		AnimationAccessor<? extends StaticAnimation> holdMoveAnimation;
 		
 		if (hand == InteractionHand.MAIN_HAND) {
 			if (playerpatch.getOriginal().getOffhandItem().isEmpty()) {

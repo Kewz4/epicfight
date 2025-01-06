@@ -5,13 +5,12 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
-import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
 
 @OnlyIn(Dist.CLIENT)
-public class VexMesh extends HumanoidMesh implements MeshProvider<VexMesh> {
+public class VexMesh extends HumanoidMesh {
 	public final SkinnedMeshPart leftWing;
 	public final SkinnedMeshPart rightWing;
 	
@@ -20,10 +19,5 @@ public class VexMesh extends HumanoidMesh implements MeshProvider<VexMesh> {
 		
 		this.leftWing = this.getOrLogException(this.parts, "leftWing");
 		this.rightWing = this.getOrLogException(this.parts, "rightWing");
-	}
-
-	@Override
-	public VexMesh get() {
-		return this;
 	}
 }

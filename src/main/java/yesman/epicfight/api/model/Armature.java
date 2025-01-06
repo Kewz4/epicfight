@@ -15,7 +15,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 
@@ -25,7 +25,6 @@ public class Armature {
 	private final Map<String, Joint> jointByName;
 	private final Object2IntMap<String> pathIndexMap;
 	private final int jointCount;
-	private final TransformSheet actionAnimationCoord = new TransformSheet();
 	private final OpenMatrix4f[] poseMatrices;
 	
 	public final Joint rootJoint;
@@ -37,6 +36,7 @@ public class Armature {
 		this.jointByName = jointMap;
 		this.jointById = new Int2ObjectOpenHashMap<>();
 		this.pathIndexMap = new Object2IntOpenHashMap<>();
+		
 		this.jointByName.values().forEach((joint) -> {
 			this.jointById.put(joint.getId(), joint);
 		});
@@ -50,7 +50,9 @@ public class Armature {
 	
 	protected Joint getOrLogException(Map<String, Joint> jointMap, String name) {
 		if (!jointMap.containsKey(name)) {
-			EpicFightMod.LOGGER.debug("Cannot find the joint named " + name + " in " + this.getClass().getCanonicalName());
+			if (EpicFightMod.warnAssetExceptions()) {
+				EpicFightMod.LOGGER.debug("Cannot find the joint named " + name + " in " + this.getClass().getCanonicalName());
+			}
 			
 			return Joint.EMPTY;
 		}
@@ -60,6 +62,10 @@ public class Armature {
 	
 	public void setPose(Pose pose) {
 		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, this.poseMatrices, false);
+	}
+	
+	public void bakeOriginMatrices() {
+		this.rootJoint.initOriginTransform(new OpenMatrix4f());
 	}
 	
 	public OpenMatrix4f[] getPoseMatrices() {
@@ -76,7 +82,7 @@ public class Armature {
 	}
 	
 	private void getPoseTransform(Joint joint, OpenMatrix4f parentTransform, Pose pose, OpenMatrix4f[] jointMatrices, boolean applyOriginTransform) {
-		OpenMatrix4f result = pose.getOrDefaultTransform(joint.getName()).getAnimationBindedMatrix(joint, parentTransform);
+		OpenMatrix4f result = pose.getOrDefaultTransform(joint.getName()).getAnimationBoundMatrix(joint, parentTransform);
 		jointMatrices[joint.getId()] = result;
 		
 		for (Joint joints : joint.getSubJoints()) {
@@ -99,7 +105,7 @@ public class Armature {
 	
 	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, int pathIndex) {
 		JointTransform jt = pose.getOrDefaultTransform(joint.getName());
-		OpenMatrix4f result = jt.getAnimationBindedMatrix(joint, parentTransform);
+		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
 		int nextIndex = pathIndex % 10;
 		
 		return nextIndex > 0 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoints().get(nextIndex - 1), result, pathIndex / 10) : result;
@@ -130,17 +136,9 @@ public class Armature {
 			return pathIndex2Int;
 		}
 	}
-	
-	public TransformSheet getActionAnimationCoord() {
-		return this.actionAnimationCoord;
-	}
-	
+		
 	public int getJointNumber() {
 		return this.jointCount;
-	}
-
-	public Joint getRootJoint() {
-		return this.rootJoint;
 	}
 	
 	@Override
@@ -172,11 +170,11 @@ public class Armature {
 			return Joint.EMPTY;
 		}
 		
-		Joint newJoint = new Joint(joint.getName(), joint.getId(), joint.getLocalTrasnform());
+		Joint newJoint = new Joint(joint.getName(), joint.getId(), joint.getLocalTransform());
 		oldToNewJoint.put(joint.getName(), newJoint);
 		
 		for (Joint subJoint : joint.getSubJoints()) {
-			newJoint.addSubJoint(this.copyHierarchy(subJoint, oldToNewJoint));
+			newJoint.addSubJoints(this.copyHierarchy(subJoint, oldToNewJoint));
 		}
 		
 		return newJoint;
@@ -205,7 +203,7 @@ public class Armature {
 		jointJson.addProperty("name", joint.getName());
 		
 		JsonArray transformMatrix = new JsonArray();
-		OpenMatrix4f localMatrixInBlender = new OpenMatrix4f(joint.getLocalTrasnform());
+		OpenMatrix4f localMatrixInBlender = new OpenMatrix4f(joint.getLocalTransform());
 		
 		if (root) {
 			localMatrixInBlender.mulFront(OpenMatrix4f.invert(JsonAssetLoader.BLENDER_TO_MINECRAFT_COORD, null));

@@ -11,8 +11,9 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.player.Player;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -26,27 +27,27 @@ import yesman.epicfight.world.entity.eventlistener.SkillConsumeEvent;
 public class BasicAttack extends Skill {
 	private static final UUID EVENT_UUID = UUID.fromString("a42e0198-fdbc-11eb-9a03-0242ac130003");
 	
-	public static Skill.Builder<BasicAttack> createBasicAttackBuilder() {
-		return (new Builder<BasicAttack>()).setCategory(SkillCategories.BASIC_ATTACK).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.NONE);
+	public static SkillBuilder<BasicAttack> createBasicAttackBuilder() {
+		return new SkillBuilder<BasicAttack>().setCategory(SkillCategories.BASIC_ATTACK).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.NONE);
 	}
 	
-	public static void setComboCounterWithEvent(ComboCounterHandleEvent.Causal reason, ServerPlayerPatch playerpatch, SkillContainer container, StaticAnimation causalAnimation, int value) {
+	public static void setComboCounterWithEvent(ComboCounterHandleEvent.Causal reason, ServerPlayerPatch playerpatch, SkillContainer container, AnimationAccessor<? extends StaticAnimation> causalAnimation, int value) {
 		int prevValue = container.getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get());
 		ComboCounterHandleEvent comboResetEvent = new ComboCounterHandleEvent(reason, playerpatch, causalAnimation, prevValue, value);
-		container.getExecuter().getEventListener().triggerEvents(EventType.COMBO_COUNTER_HANDLE_EVENT, comboResetEvent);
+		container.getExecutor().getEventListener().triggerEvents(EventType.COMBO_COUNTER_HANDLE_EVENT, comboResetEvent);
 		container.getDataManager().setData(SkillDataKeys.COMBO_COUNTER.get(), comboResetEvent.getNextValue());
 	}
 	
-	public BasicAttack(Builder<? extends Skill> builder) {
+	public BasicAttack(SkillBuilder<? extends BasicAttack> builder) {
 		super(builder);
 	}
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
-		container.getExecuter().getEventListener().addEventListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID, (event) -> {
-			if (event.getAnimation().getProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER).orElse(true)) {
+		container.getExecutor().getEventListener().addEventListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID, (event) -> {
+			if (event.getAnimation().get().getProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER).orElse(true)) {
 				CapabilityItem itemCapability = event.getPlayerPatch().getHoldingItemCapability(InteractionHand.MAIN_HAND);
-				Set<AnimationProvider<?>> attackMotionSet = Set.copyOf(itemCapability.getAutoAttackMotion(container.getExecuter()).stream().map(AnimationProvider::get).collect(Collectors.toSet()));
+				Set<AnimationAccessor<? extends AttackAnimation>> attackMotionSet = Set.copyOf(itemCapability.getAutoAttackMotion(container.getExecutor()).stream().collect(Collectors.toSet()));
 				
 				if (!attackMotionSet.contains(event.getAnimation()) && itemCapability.shouldCancelCombo(event.getPlayerPatch())) {
 					setComboCounterWithEvent(ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION, event.getPlayerPatch(), container, event.getAnimation(), 0);
@@ -54,14 +55,14 @@ public class BasicAttack extends Skill {
 			}
 		});
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
 			container.getDataManager().setData(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get(), false);
 		});
 	}
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
-		container.getExecuter().getEventListener().removeListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID);
 	}
 	
 	@Override
@@ -86,7 +87,7 @@ public class BasicAttack extends Skill {
 		}
 		
 		CapabilityItem cap = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND);
-		StaticAnimation attackMotion = null;
+		AnimationAccessor<? extends AttackAnimation> attackMotion = null;
 		ServerPlayer player = executer.getOriginal();
 		SkillContainer skillContainer = executer.getSkill(this);
 		SkillDataManager dataManager = skillContainer.getDataManager();
@@ -97,11 +98,11 @@ public class BasicAttack extends Skill {
 			
 			if ((entity instanceof PlayerRideableJumping ridable && ridable.canJump()) && cap.availableOnHorse() && cap.getMountAttackMotion() != null) {
 				comboCounter %= cap.getMountAttackMotion().size();
-				attackMotion = cap.getMountAttackMotion().get(comboCounter).get();
+				attackMotion = cap.getMountAttackMotion().get(comboCounter);
 				comboCounter++;
 			}
 		} else {
-			List<AnimationProvider<?>> combo = cap.getAutoAttackMotion(executer);
+			List<AnimationAccessor<? extends AttackAnimation>> combo = cap.getAutoAttackMotion(executer);
 			int comboSize = combo.size();
 			boolean dashAttack = player.isSprinting();
 			
@@ -111,14 +112,14 @@ public class BasicAttack extends Skill {
 				comboCounter %= comboSize - 2;
 			}
 			
-			attackMotion = combo.get(comboCounter).get();
+			attackMotion = combo.get(comboCounter);
 			comboCounter = dashAttack ? 0 : comboCounter + 1;
 		}
 		
 		setComboCounterWithEvent(ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION, executer, skillContainer, attackMotion, comboCounter);
 		
 		if (attackMotion != null) {
-			executer.playAnimationSynchronized(attackMotion, 0);
+			executer.playAnimationSynchronized(attackMotion, 0.0F);
 			dataManager.setData(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get(), true);
 		}
 		
@@ -127,8 +128,8 @@ public class BasicAttack extends Skill {
 	
 	@Override
 	public void updateContainer(SkillContainer container) {
-		if (!container.getExecuter().isLogicalClient() && container.getExecuter().getTickSinceLastAction() > 16 && container.getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get()) > 0) {
-			setComboCounterWithEvent(ComboCounterHandleEvent.Causal.TIME_EXPIRED, (ServerPlayerPatch)container.getExecuter(), container, null, 0);
+		if (!container.getExecutor().isLogicalClient() && container.getExecutor().getTickSinceLastAction() > 16 && container.getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get()) > 0) {
+			setComboCounterWithEvent(ComboCounterHandleEvent.Causal.TIME_EXPIRED, container.getServerExecutor(), container, null, 0);
 		}
 	}
 }

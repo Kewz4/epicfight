@@ -14,9 +14,9 @@ public class BattojutsuSkill extends ConditionalWeaponInnateSkill {
 		boolean isSheathed = executer.getSkill(SkillSlots.WEAPON_PASSIVE).getDataManager().getDataValue(SkillDataKeys.SHEATH.get());
 		
 		if (isSheathed) {
-			executer.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executer)].get(), -0.65F);
+			executer.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executer)], -0.65F);
 		} else {
-			executer.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executer)].get(), 0);
+			executer.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executer)], 0);
 		}
 	}
 }

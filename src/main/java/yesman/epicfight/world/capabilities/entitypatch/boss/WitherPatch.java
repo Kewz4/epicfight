@@ -39,6 +39,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -58,7 +59,7 @@ import yesman.epicfight.world.entity.DroppedNetherStar;
 import yesman.epicfight.world.entity.WitherGhostClone;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class WitherPatch extends MobPatch<WitherBoss> {
 	private static final EntityDataAccessor<Boolean> DATA_ARMOR_ACTIVED = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.BOOLEAN);
@@ -153,21 +154,21 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 			float headRot = this.original.yBodyRot - this.original.yHeadRot;
 			float partialHeadRot = MathUtils.lerpBetween(headRotO, headRot, partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), Vec3f.X_AXIS).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, Vec3f.Y_AXIS)).toQuaternion();
-			pose.getOrDefaultTransform("Head_M").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head_M").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 		
 		if (pose.getJointTransformData().containsKey("Head_R")) {
 			float rightHeadYRot = MathUtils.lerpBetween(this.original.yBodyRotO, this.original.yBodyRot, partialTicks) - MathUtils.lerpBetween(this.original.yRotOHeads[1], this.original.yRotHeads[1], partialTicks);
 			float rightHeadXRot = MathUtils.lerpBetween(this.original.xRotOHeads[1], this.original.xRotHeads[1], partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(rightHeadYRot, Vec3f.Y_AXIS).rotateDeg(-rightHeadXRot, Vec3f.X_AXIS).toQuaternion();
-			pose.getOrDefaultTransform("Head_R").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head_R").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 		
 		if (pose.getJointTransformData().containsKey("Head_L")) {
 			float leftHeadYRot = MathUtils.lerpBetween(this.original.yBodyRotO, this.original.yBodyRot, partialTicks) - MathUtils.lerpBetween(this.original.yRotOHeads[0], this.original.yRotHeads[0], partialTicks);
 			float leftHeadXRot = MathUtils.lerpBetween(this.original.xRotOHeads[0], this.original.xRotHeads[0], partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(leftHeadYRot, Vec3f.Y_AXIS).rotateDeg(-leftHeadXRot, Vec3f.X_AXIS).toQuaternion();
-			pose.getOrDefaultTransform("Head_L").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head_L").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -277,7 +278,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public AttackResult tryHurt(DamageSource damageSource, float amount) {
-		DynamicAnimation animation = this.getAnimator().getPlayerFor(null).getAnimation();
+		AnimationAccessor<? extends DynamicAnimation> animation = this.getAnimator().getPlayerFor(null).getAnimation();
 		
 		if (animation.equals(Animations.WITHER_CHARGE) || animation.equals(Animations.WITHER_BLOCKED)) {
 			Entity entity = damageSource.getDirectEntity();
@@ -294,7 +295,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	public void onDeath(LivingDeathEvent event) {
 		super.onDeath(event);
 		
-		if (!this.isLogicalClient() && this.original.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT) && this.original.level().getGameRules().getBoolean(EpicFightGamerules.EPIC_DROP)) {
+		if (!this.isLogicalClient() && this.original.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT) && EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
 			Vec3 startMovement = this.original.getLookAngle().scale(0.4D).add(0.0D, 0.63D, 0.0D);
 			ItemEntity itemEntity = new DroppedNetherStar(this.original.level(), this.original.position().add(0.0D, this.original.getBbHeight() * 0.5D, 0.0D), startMovement);
 			this.original.level().addFreshEntity(itemEntity);
@@ -303,7 +304,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public boolean onDrop(LivingDropsEvent event) {
-		if (this.original.level().getGameRules().getBoolean(EpicFightGamerules.EPIC_DROP)) {
+		if (EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
 			event.getDrops().removeIf((itemEntity) -> itemEntity.getItem().is(Items.NETHER_STAR));
 		}
 		
@@ -327,7 +328,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 	
@@ -512,7 +513,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 					Vec3 vec31 = new Vec3(entity.getX() - witherBoss.getX(), 0.0D, entity.getZ() - witherBoss.getZ());
 					double d0 = vec3.y;
 					
-					if (witherBoss.getY() < entity.getY() || !witherBoss.isPowered() && witherBoss.getY() < entity.getY() + 5.0D && !WitherPatch.this.getAnimator().getPlayerFor(null).getAnimation().getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false)) {
+					if (witherBoss.getY() < entity.getY() || !witherBoss.isPowered() && witherBoss.getY() < entity.getY() + 5.0D && !WitherPatch.this.getAnimator().getPlayerFor(null).getAnimation().get().getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false)) {
 						d0 = Math.max(0.0D, d0);
 						d0 = d0 + (0.3D - d0 * (double) 0.6F);
 					}

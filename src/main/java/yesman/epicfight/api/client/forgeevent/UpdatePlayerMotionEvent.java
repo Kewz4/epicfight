@@ -30,8 +30,16 @@ public abstract class UpdatePlayerMotionEvent extends Event {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class BaseLayer extends UpdatePlayerMotionEvent {
-		public BaseLayer(AbstractClientPlayerPatch<?> playerpatch, LivingMotion motion) {
+		private final boolean inaction;
+		
+		public BaseLayer(AbstractClientPlayerPatch<?> playerpatch, LivingMotion motion, boolean inaction) {
 			super(playerpatch, motion);
+			
+			this.inaction = inaction;
+		}
+		
+		public boolean inaction() {
+			return this.inaction;
 		}
 	}
 	

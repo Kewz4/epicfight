@@ -114,7 +114,7 @@ public class CapabilitySkill {
 			nbt.put("learned:" + entry.getKey().toString().toLowerCase(Locale.ROOT), learnedNBT);
 		}
 		
-		nbt.putString("playerMode", this.skillContainers[0].getExecuter().getPlayerMode().toString());
+		nbt.putString("playerMode", this.skillContainers[0].getExecutor().getPlayerMode().toString());
 		
 		return nbt;
 	}
@@ -148,9 +148,9 @@ public class CapabilitySkill {
 		}
 		
 		if (nbt.contains("playerMode")) {
-			this.skillContainers[0].getExecuter().toMode(PlayerPatch.PlayerMode.valueOf(nbt.getString("playerMode").toUpperCase(Locale.ROOT)), true);
+			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(nbt.getString("playerMode").toUpperCase(Locale.ROOT)), true);
 		} else {
-			this.skillContainers[0].getExecuter().toMiningMode(true);
+			this.skillContainers[0].getExecutor().toMiningMode(true);
 		}
 	}
 }

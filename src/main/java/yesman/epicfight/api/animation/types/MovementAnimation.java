@@ -1,20 +1,24 @@
 package yesman.epicfight.api.animation.types;
 
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class MovementAnimation extends StaticAnimation {
-	public MovementAnimation(boolean isRepeat, String path, Armature armature) {
-		super(EpicFightOptions.GENERAL_ANIMATION_CONVERT_TIME, isRepeat, path, armature);
+	public MovementAnimation(boolean isRepeat, AnimationAccessor<? extends MovementAnimation> accessor, Armature armature) {
+		super(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
 	}
 	
+	public MovementAnimation(float convertTime, boolean isRepeat, AnimationAccessor<? extends MovementAnimation> accessor, Armature armature) {
+		super(convertTime, isRepeat, accessor, armature);
+	}
+	
+	/**
+	 * For internal use
+	 */
 	public MovementAnimation(float convertTime, boolean isRepeat, String path, Armature armature) {
 		super(convertTime, isRepeat, path, armature);
-	}
-	
-	public MovementAnimation(float convertTime, boolean isRepeat, String path, Armature armature, boolean noRegister) {
-		super(convertTime, isRepeat, path, armature, noRegister);
 	}
 	
 	@Override

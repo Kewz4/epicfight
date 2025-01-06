@@ -26,7 +26,7 @@ public class FakeBasicAttackAnimation extends FakeAttackAnimation {
 	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
 		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
 		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.BASIC_ATTACK);
-		fakeAnimation.setParameter("convertTime", this.convertTime);
+		fakeAnimation.setParameter("convertTime", this.transitionTime);
 		fakeAnimation.setParameter("path", this.registryName.toString());
 		fakeAnimation.setParameter("armature", this.armature);
 		

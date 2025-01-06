@@ -23,6 +23,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -39,6 +40,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.ServerAnimator;
+import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.model.ItemSkins;
@@ -57,6 +59,7 @@ import yesman.epicfight.compat.GeckolibCompat;
 import yesman.epicfight.compat.ICompatModule;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.compat.IceAndFireCompat;
+import yesman.epicfight.compat.ParCoolClientCompat;
 import yesman.epicfight.compat.ParCoolCompat;
 import yesman.epicfight.compat.SkinLayer3DCompat;
 import yesman.epicfight.compat.VampirismCompat;
@@ -70,6 +73,7 @@ import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.network.EpicFightDataSerializers;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.particle.EpicFightParticles;
+import yesman.epicfight.server.commands.AnimatorCommand;
 import yesman.epicfight.server.commands.PlayerModeCommand;
 import yesman.epicfight.server.commands.PlayerSkillCommand;
 import yesman.epicfight.server.commands.PlayerStaminaCommand;
@@ -93,7 +97,7 @@ import yesman.epicfight.world.effect.EpicFightPotions;
 import yesman.epicfight.world.entity.EpicFightEntities;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.decoration.EpicFightPaintingVariants;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 import yesman.epicfight.world.item.EpicFightCreativeTabs;
 import yesman.epicfight.world.item.EpicFightItems;
 import yesman.epicfight.world.item.SkillBookItem;
@@ -152,9 +156,18 @@ public class EpicFightMod {
 	public static final Logger LOGGER = LogManager.getLogger(MODID);
 	public static EpicFightOptions CLIENT_CONFIGS;
 	private static EpicFightMod instance;
+	private static boolean warnAssetExceptions = false;
 	
 	public static EpicFightMod getInstance() {
 		return instance;
+	}
+	
+	public static void setWarnAssetExceptions(boolean b) {
+		warnAssetExceptions = b;
+	}
+	
+	public static boolean warnAssetExceptions() {
+		return warnAssetExceptions;
 	}
 	
 	private Function<LivingEntityPatch<?>, Animator> animatorProvider;
@@ -197,6 +210,7 @@ public class EpicFightMod {
 		EpicFightDataSerializers.ENTITY_DATA_SERIALIZER.register(bus);
 		EpicFightConditions.CONDITIONS.register(bus);
 		SkillDataKeys.DATA_KEYS.register(bus);
+		SynchedAnimationVariableKeys.SYNCHED_ANIMATION_VARIABLE_KEYS.register(bus);
 		EpicFightPaintingVariants.PAINTING_VARIANTS.register(bus);
 		EpicFightCommandArgumentTypes.COMMAND_ARGUMENT_TYPES.register(bus);
         
@@ -246,6 +260,12 @@ public class EpicFightMod {
 		} else {
 			AnimationManager.addNoWarningModId("parcool");
 		}
+        
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        	if (ModList.get().isLoaded("parcool")) {
+        		ICompatModule.loadCompatModule(ParCoolClientCompat.class);
+        	}
+        });
 	}
     
     /**
@@ -260,12 +280,14 @@ public class EpicFightMod {
     }
     
 	private void doCommonStuff(final FMLCommonSetupEvent event) {
+		System.out.println("Do Common Stuff");
+		
 		event.enqueueWork(EpicFightCommandArgumentTypes::registerArgumentTypes);
 		event.enqueueWork(EpicFightPotions::addRecipes);
 		event.enqueueWork(EpicFightNetworkManager::registerPackets);
 		event.enqueueWork(ItemCapabilityProvider::registerWeaponTypesByClass);
 		event.enqueueWork(EntityPatchProvider::registerEntityPatches);
-		event.enqueueWork(EpicFightGamerules::registerRules);
+		event.enqueueWork(EpicFightGameRules::registerGameRules);
 		event.enqueueWork(WeaponTypeReloadListener::registerDefaultWeaponTypes);
 		event.enqueueWork(EpicFightMobEffects::addOffhandModifier);
 		event.enqueueWork(EpicFightLootTables::registerLootItemFunctionType);
@@ -278,6 +300,7 @@ public class EpicFightMod {
 		PlayerModeCommand.register(event.getDispatcher());
 		PlayerSkillCommand.register(event.getDispatcher());
 		PlayerStaminaCommand.register(event.getDispatcher());
+		AnimatorCommand.register(event.getDispatcher());
     }
 	
 	public void addPackFindersEvent(AddPackFindersEvent event) {

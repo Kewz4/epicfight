@@ -2,6 +2,7 @@ package yesman.epicfight.api.animation.types;
 
 import javax.annotation.Nullable;
 
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
@@ -12,20 +13,20 @@ import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.gameasset.Animations;
 
 public class DashAttackAnimation extends AttackAnimation {
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
-		this(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, path, armature, false);
+	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature) {
+		this(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature, false);
 	}
 	
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature, boolean directional) {
-		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
+	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature, boolean directional) {
+		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
 			this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 		}
 	}
 	
-	public DashAttackAnimation(float convertTime, String path, Armature armature, Phase... phases) {
-		super(convertTime, path, armature, phases);
+	public DashAttackAnimation(float convertTime, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature, Phase... phases) {
+		super(convertTime, accessor, armature, phases);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
 		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.4F));

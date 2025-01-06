@@ -45,6 +45,7 @@ import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.event.entity.player.PlayerFlyableFallEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.AttackResult;
@@ -52,7 +53,6 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.client.CPPlayAnimation;
 import yesman.epicfight.network.server.SPPotion;
 import yesman.epicfight.network.server.SPPotion.Action;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -76,7 +76,7 @@ import yesman.epicfight.world.entity.eventlistener.DealtDamageEvent;
 import yesman.epicfight.world.entity.eventlistener.HurtEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.ProjectileHitEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @Mod.EventBusSubscriber(modid=EpicFightMod.MODID)
 public class EntityEvents {
@@ -277,11 +277,11 @@ public class EntityEvents {
 				}
 			}
 		} else {
-			if (event.getSource().is(DamageTypes.FALL) && event.getAmount() > 1.0F && event.getEntity().level().getGameRules().getBoolean(EpicFightGamerules.HAS_FALL_ANIMATION)) {
+			if (event.getSource().is(DamageTypes.FALL) && event.getAmount() > 1.0F && EpicFightGameRules.HAS_FALL_ANIMATION.getRuleValue(event.getEntity().level())) {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 				
 				if (entitypatch != null && !entitypatch.getEntityState().inaction()) {
-					StaticAnimation fallAnimation = entitypatch.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, entitypatch.getHitAnimation(StunType.FALL));
+					AnimationAccessor<? extends StaticAnimation> fallAnimation = entitypatch.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, entitypatch.getHitAnimation(StunType.FALL));
 					
 					if (fallAnimation != null) {
 						entitypatch.playAnimationSynchronized(fallAnimation, 0);
@@ -546,9 +546,8 @@ public class EntityEvents {
 		
 		if (entitypatch != null && entitypatch.isLogicalClient()) {
 			if (!entitypatch.getEntityState().inaction() && !event.getEntity().isInWater()) {
-				StaticAnimation jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
-				entitypatch.getAnimator().playAnimation(jumpAnimation, 0);
-				EpicFightNetworkManager.sendToServer(new CPPlayAnimation(jumpAnimation.getId(), 0, true, false));
+				AnimationAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
+				entitypatch.playAnimationInClientSide(jumpAnimation, 0.0F);
 			}
 		}
 	}

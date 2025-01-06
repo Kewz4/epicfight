@@ -118,7 +118,7 @@ dependencies {
     compileOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5633453")
     compileOnly fg.deobf("curse.maven:citadel-331936:5559513")
     
-    compileOnly fg.deobf("curse.maven:parcool-482378:5849584")
+    compileOnly fg.deobf("curse.maven:parcool-482378:6035545")
     
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

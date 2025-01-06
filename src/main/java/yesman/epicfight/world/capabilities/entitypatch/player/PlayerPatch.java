@@ -24,6 +24,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.forgeevent.BattleModeSustainableEvent;
@@ -54,7 +55,7 @@ import yesman.epicfight.world.entity.eventlistener.ModifyBaseDamageEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.SkillConsumeEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T> {
 	public static EntityDataAccessor<Float> STAMINA;
@@ -148,7 +149,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		int i = 0;
 		
 		for (SkillContainer container : newSkill.skillContainers) {
-			container.setExecuter(this);
+			container.setExecutor(this);
 			Skill oldone = oldSkill.skillContainers[i].getSkill();
 			
 			if (oldone != null && oldone.getCategory().learnable()) {
@@ -323,7 +324,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		float weight = this.getWeight();
 		
 		if (weight > 40.0F) {
-			float attenuation = Mth.clamp(this.getOriginal().level().getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY), 0, 100) / 100.0F;
+			float attenuation = Mth.clamp(EpicFightGameRules.WEIGHT_PENALTY.getRuleValue(this.getOriginal().level()), 0, 100) / 100.0F;
 			return event.getAttackSpeed() + (-0.1F * (weight / 40.0F) * Math.max(event.getAttackSpeed() - 0.8F, 0.0F) * attenuation);
 		} else {
 			return event.getAttackSpeed();
@@ -391,7 +392,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public EpicFightDamageSource getDamageSource(StaticAnimation animation, InteractionHand hand) {
+	public EpicFightDamageSource getDamageSource(AnimationAccessor<? extends StaticAnimation> animation, InteractionHand hand) {
 		EpicFightDamageSources damageSources = EpicFightDamageSources.of(this.original.level());
 		EpicFightDamageSource damagesource = damageSources.playerAttack(this.original).setAnimation(animation);
 		damagesource.setImpact(this.getImpact(hand));
@@ -418,7 +419,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	public float getModifiedStaminaConsume(float amount) {
-		float attenuation = Mth.clamp(this.original.level().getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY), 0, 100) / 100.0F;
+		float attenuation = Mth.clamp(EpicFightGameRules.WEIGHT_PENALTY.getRuleValue(this.getOriginal().level()), 0, 100) / 100.0F;
 		float weight = this.getWeight();
 
 		return ((weight / 40.0F - 1.0F) * attenuation + 1.0F) * amount;
@@ -650,7 +651,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		if (this.original.getVehicle() != null) {
 			return Animations.BIPED_HIT_ON_MOUNT;
 		} else {

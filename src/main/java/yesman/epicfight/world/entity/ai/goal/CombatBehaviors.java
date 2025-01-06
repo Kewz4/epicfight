@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.data.conditions.Condition;
 import yesman.epicfight.data.conditions.entity.CustomCondition;
@@ -18,8 +19,8 @@ import yesman.epicfight.data.conditions.entity.RandomChance;
 import yesman.epicfight.data.conditions.entity.TargetInDistance;
 import yesman.epicfight.data.conditions.entity.TargetInEyeHeight;
 import yesman.epicfight.data.conditions.entity.TargetInPov;
-import yesman.epicfight.network.server.SPPlayAnimation;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.AnimationPacketProvider;
+import yesman.epicfight.network.server.SPAnimatorControl;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.ServerAnimationPacketProvider;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
 
 public class CombatBehaviors<T extends MobPatch<?>> {
@@ -310,7 +311,7 @@ public class CombatBehaviors<T extends MobPatch<?>> {
 		public static class Builder<T extends MobPatch<?>> {
 			private Consumer<T> behavior;
 			private final List<Condition<T>> conditions = Lists.newArrayList();
-			private AnimationPacketProvider packetProvider = SPPlayAnimation::new;
+			private ServerAnimationPacketProvider packetProvider = SPAnimatorControl::new;
 			
 			public Behavior.Builder<T> behavior(Consumer<T> behavior) {
 				this.behavior = behavior;
@@ -322,7 +323,7 @@ public class CombatBehaviors<T extends MobPatch<?>> {
 				return this;
 			}
 			
-			public Behavior.Builder<T> animationBehavior(StaticAnimation motion) {
+			public Behavior.Builder<T> animationBehavior(AnimationAccessor<? extends StaticAnimation> motion) {
 				this.behavior = (mobpatch) -> {
 					mobpatch.playAnimationSynchronized(motion, 0.0F, this.packetProvider);
 				};
@@ -375,7 +376,7 @@ public class CombatBehaviors<T extends MobPatch<?>> {
 				return this;
 			}
 			
-			public Behavior.Builder<T> packetProvider(AnimationPacketProvider packetProvider) {
+			public Behavior.Builder<T> packetProvider(ServerAnimationPacketProvider packetProvider) {
 				this.packetProvider = packetProvider;
 				return this;
 			}

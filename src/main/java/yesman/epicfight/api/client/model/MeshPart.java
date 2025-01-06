@@ -16,10 +16,10 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 public abstract class MeshPart<T extends VertexBuilder<?>> {
 	protected final List<T> verticies;
 	protected final Supplier<OpenMatrix4f> vanillaPartTracer;
-	protected final SoftBodyMesh.ClothSimulationInfo clothInfo;
+	protected final SoftBodyTranslatable.ClothSimulationInfo clothInfo;
 	protected boolean isHidden;
 	
-	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
+	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
 		this.verticies = vertices;
 		this.vanillaPartTracer = vanillaPartTracer;
 		this.clothInfo = clothInfo;
@@ -39,7 +39,7 @@ public abstract class MeshPart<T extends VertexBuilder<?>> {
 		return this.verticies;
 	}
 	
-	public SoftBodyMesh.ClothSimulationInfo getClothInfo() {
+	public SoftBodyTranslatable.ClothSimulationInfo getClothInfo() {
 		return this.clothInfo;
 	}
 	

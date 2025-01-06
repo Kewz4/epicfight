@@ -40,10 +40,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.mesh.HumanoidMesh;
@@ -51,6 +53,7 @@ import yesman.epicfight.data.conditions.Condition;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.data.conditions.entity.HasCustomTag;
 import yesman.epicfight.gameasset.Armatures;
+import yesman.epicfight.gameasset.Armatures.ArmatureAccessor;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.model.armature.HumanoidArmature;
@@ -163,7 +166,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	
 	public static class CustomHumanoidMobPatchProvider extends CustomMobPatchProvider {
 		protected Map<WeaponCategory, Map<Style, CombatBehaviors.Builder<HumanoidMobPatch<?>>>> humanoidCombatBehaviors;
-		protected Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, StaticAnimation>>>> humanoidWeaponMotions;
+		protected Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>>> humanoidWeaponMotions;
 		
 		@SuppressWarnings("rawtypes")
 		@Override
@@ -181,7 +184,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			return new CustomHumanoidMobPatch(this.faction, this);
 		}
 		
-		public Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, StaticAnimation>>>> getHumanoidWeaponMotions() {
+		public Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>>> getHumanoidWeaponMotions() {
 			return this.humanoidWeaponMotions;
 		}
 		
@@ -192,8 +195,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 	
 	public static class CustomMobPatchProvider extends AbstractMobPatchProvider {
 		protected CombatBehaviors.Builder<?> combatBehaviorsBuilder;
-		protected List<Pair<LivingMotion, StaticAnimation>> defaultAnimations;
-		protected Map<StunType, StaticAnimation> stunAnimations;
+		protected List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> defaultAnimations;
+		protected Map<StunType, AnimationAccessor<? extends StaticAnimation>> stunAnimations;
 		protected Object2DoubleMap<Attribute> attributeValues;
 		protected Faction faction;
 		protected double chasingSpeed = 1.0D;
@@ -217,11 +220,11 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			return this.combatBehaviorsBuilder;
 		}
 		
-		public List<Pair<LivingMotion, StaticAnimation>> getDefaultAnimations() {
+		public List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> getDefaultAnimations() {
 			return this.defaultAnimations;
 		}
 
-		public Map<StunType, StaticAnimation> getStunAnimations() {
+		public Map<StunType, AnimationAccessor<? extends StaticAnimation>> getStunAnimations() {
 			return this.stunAnimations;
 		}
 
@@ -297,10 +300,12 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		} else if (tag.contains("preset")) {
 			String presetName = tag.getString("preset");
 			Function<Entity, Supplier<EntityPatch<?>>> preset = EntityPatchProvider.get(presetName);
+			
+			ResourceLocation presetId = new ResourceLocation(presetName);
 			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(presetName));
+			ResourceLocation armatureId = new ResourceLocation(presetId.getNamespace(), "entity/" + EntityType.getKey(presetEntityType).getPath());
 			
-			Armatures.registerEntityTypeArmature(entityType, Armatures.getRegistry(presetEntityType));
-			
+			Armatures.registerEntityTypeArmature(entityType, ArmatureAccessor.create(armatureId, Armature::new));
 			MobPatchPresetProvider provider = new MobPatchPresetProvider(preset);
 			
 			return provider;
@@ -309,14 +314,13 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			CustomMobPatchProvider provider = humanoid ? new CustomHumanoidMobPatchProvider() : new CustomMobPatchProvider();
 			provider.attributeValues = deserializeAttributes(tag.getCompound("attributes"));
 			ResourceLocation modelLocation = new ResourceLocation(tag.getString("model"));
-			ResourceLocation armatureLocation = new ResourceLocation(tag.getString("armature"));
+			ResourceLocation armatureId = new ResourceLocation(tag.getString("armature"));
 			
 			if (EpicFightMod.isPhysicalClient()) {
-				Meshes.getOrCreateSkinnedMesh(Minecraft.getInstance().getResourceManager(), modelLocation, humanoid ? SkinnedMesh::new : HumanoidMesh::new);
+				Meshes.getOrCreate(Minecraft.getInstance().getResourceManager(), modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
 			}
 			
-			Armature armature = Armatures.getOrCreateArmature(resourceManager, armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
-			Armatures.registerEntityTypeArmature(entityType, armature);
+			Armatures.registerEntityTypeArmature(entityType, ArmatureAccessor.create(armatureId, Armature::new));
 			
 			provider.defaultAnimations = deserializeDefaultAnimations(tag.getCompound("default_livingmotions"));
 			provider.faction = Faction.valueOf(tag.getString("faction").toUpperCase(Locale.ROOT));
@@ -373,25 +377,25 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		return combatBehaviorsMapBuilder;
 	}
 	
-	public static List<Pair<LivingMotion, StaticAnimation>> deserializeDefaultAnimations(CompoundTag defaultLivingmotions) {
-		List<Pair<LivingMotion, StaticAnimation>> defaultAnimations = Lists.newArrayList();
+	public static List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> deserializeDefaultAnimations(CompoundTag defaultLivingmotions) {
+		List<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> defaultAnimations = Lists.newArrayList();
 		
 		for (String key : defaultLivingmotions.getAllKeys()) {
 			String animation = defaultLivingmotions.getString(key);
-			defaultAnimations.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.getInstance().byKeyOrThrow(animation)));
+			defaultAnimations.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.byKey(animation)));
 		}
 		
 		return defaultAnimations;
 	}
 	
-	public static Map<StunType, StaticAnimation> deserializeStunAnimations(CompoundTag tag) {
-		Map<StunType, StaticAnimation> stunAnimations = Maps.newHashMap();
+	public static Map<StunType, AnimationAccessor<? extends StaticAnimation>> deserializeStunAnimations(CompoundTag tag) {
+		Map<StunType, AnimationAccessor<? extends StaticAnimation>> stunAnimations = Maps.newHashMap();
 		
 		for (StunType stunType : StunType.values()) {
 			String lowerCaseName = tag.getString(stunType.name().toLowerCase(Locale.ROOT));
 			
 			if (!StringUtil.isNullOrEmpty(lowerCaseName)) {
-				stunAnimations.put(stunType, AnimationManager.getInstance().byKeyOrThrow(lowerCaseName));
+				stunAnimations.put(stunType, AnimationManager.byKey(lowerCaseName));
 			}
 		}
 		
@@ -412,17 +416,17 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		return attributes;
 	}
 	
-	public static Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, StaticAnimation>>>> deserializeHumanoidWeaponMotions(ListTag tag) {
-		Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, StaticAnimation>>>> map = Maps.newHashMap();
+	public static Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>>> deserializeHumanoidWeaponMotions(ListTag tag) {
+		Map<WeaponCategory, Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>>> map = Maps.newHashMap();
 		
 		for (int i = 0; i < tag.size(); i++) {
-			ImmutableSet.Builder<Pair<LivingMotion, StaticAnimation>> motions = ImmutableSet.builder();
+			ImmutableSet.Builder<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> motions = ImmutableSet.builder();
 			CompoundTag weaponMotionTag = tag.getCompound(i);
 			Style style = Style.ENUM_MANAGER.getOrThrow(weaponMotionTag.getString("style"));
 			CompoundTag motionsTag = weaponMotionTag.getCompound("livingmotions");
 			
 			for (String key : motionsTag.getAllKeys()) {
-				motions.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.getInstance().byKeyOrThrow(motionsTag.getString(key))));
+				motions.add(Pair.of(LivingMotion.ENUM_MANAGER.getOrThrow(key), AnimationManager.byKey(motionsTag.getString(key))));
 			}
 			
 			Tag weponTypeTag = weaponMotionTag.get("weapon_categories");
@@ -465,7 +469,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			for (int j = 0; j < behaviorList.size(); j++) {
 				Behavior.Builder<T> behaviorBuilder = Behavior.builder();
 				CompoundTag behavior = behaviorList.getCompound(j);
-				StaticAnimation animation = AnimationManager.getInstance().byKeyOrThrow(behavior.getString("animation"));
+				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(behavior.getString("animation"));
 				ListTag conditionList = behavior.getList("conditions", 10);
 				behaviorBuilder.animationBehavior(animation);
 				
@@ -564,12 +568,14 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			
 			if (!disabled) {
 				if (tag.contains("preset")) {
-					Armatures.registerEntityTypeArmature(entityType, tag.getString("preset"));
+					ResourceLocation presetId = new ResourceLocation(tag.getString("preset"));
+					ResourceLocation armatureId = new ResourceLocation(presetId.getNamespace(), "entity/" + presetId.getPath());
+					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureId, Armature::new);
+					Armatures.registerEntityTypeArmature(entityType, armature);
 				} else {
-					Minecraft mc = Minecraft.getInstance();
 					ResourceLocation armatureLocation = new ResourceLocation(tag.getString("armature"));
 					boolean humanoid = tag.getBoolean("isHumanoid");
-					Armature armature = Armatures.getOrCreateArmature(mc.getResourceManager(), armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
+					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
 					Armatures.registerEntityTypeArmature(entityType, armature);
 				}
 				

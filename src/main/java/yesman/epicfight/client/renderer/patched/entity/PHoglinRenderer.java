@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -27,12 +27,12 @@ public class PHoglinRenderer<E extends Mob & HoglinBase, T extends MobPatch<E>> 
 	@Override
 	public void setJointTransforms(T entitypatch, Armature armature, Pose pose, float partialTicks) {
 		if (entitypatch.getOriginal().isBaby()) {
-			pose.getOrDefaultTransform("Head").frontResult(JointTransform.getScale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
+			pose.getOrDefaultTransform("Head").frontResult(JointTransform.scale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
 		}
 	}
 	
 	@Override
-	public MeshProvider<HoglinMesh> getDefaultMesh() {
+	public AssetAccessor<HoglinMesh> getDefaultMesh() {
 		return Meshes.HOGLIN;
 	}
 }

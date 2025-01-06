@@ -21,7 +21,6 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -36,10 +35,9 @@ import software.bernie.geckolib.core.state.BoneSnapshot;
 import software.bernie.geckolib.renderer.GeoArmorRenderer;
 import software.bernie.geckolib.util.RenderUtils;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
-import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -80,7 +78,7 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@Override
-	public SkinnedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
+	public SkinnedMesh transformArmorModel(HumanoidModel<?> humanoidModel) {
 		if (!(humanoidModel instanceof GeoArmorRenderer<?> geoModel)) {
 			return null;
 		}
@@ -157,10 +155,7 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 		boxes.add(new GeoModelPartition(LEFT_FEET, leftBootBone));
 		boxes.add(new GeoModelPartition(RIGHT_FEET, rightBootBone));
 		
-		SkinnedMesh mesh = bakeMeshFromCubes(boxes);
-		Meshes.addMesh(modelLocation, mesh);
-		
-		return mesh;
+		return bakeMeshFromCubes(boxes);
 	}
 	
 	private static SkinnedMesh bakeMeshFromCubes(List<GeoModelPartition> partitions) {

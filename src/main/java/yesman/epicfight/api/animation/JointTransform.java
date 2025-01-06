@@ -7,6 +7,7 @@ import org.joml.Quaternionf;
 import com.google.common.collect.Maps;
 
 import net.minecraft.util.Mth;
+import yesman.epicfight.api.utils.math.AnimationTransformEntry;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.MatrixOperation;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -98,15 +99,15 @@ public class JointTransform {
 		return transform;
 	}
 	
-	public OpenMatrix4f getAnimationBindedMatrix(Joint joint, OpenMatrix4f parentTransform) {
-		OpenMatrix4f.AnimationTransformEntry animationTransformEntry = new OpenMatrix4f.AnimationTransformEntry();
+	public OpenMatrix4f getAnimationBoundMatrix(Joint joint, OpenMatrix4f parentTransform) {
+		AnimationTransformEntry animationTransformEntry = new AnimationTransformEntry();
 		
 		for (Map.Entry<String, TransformEntry> entry : this.entries.entrySet()) {
 			animationTransformEntry.put(entry.getKey(), entry.getValue().transform.toMatrix(), entry.getValue().multiplyFunction);
 		}
 		
 		animationTransformEntry.put(ANIMATION_TRANSFORM, this.toMatrix(), OpenMatrix4f::mul);
-		animationTransformEntry.put(JOINT_LOCAL_TRANSFORM, joint.getLocalTrasnform());
+		animationTransformEntry.put(JOINT_LOCAL_TRANSFORM, joint.getLocalTransform());
 		animationTransformEntry.put(PARENT, parentTransform);
 		
 		return animationTransformEntry.getResult();
@@ -149,19 +150,19 @@ public class JointTransform {
 		return interpolated;
 	}
 	
-	public static JointTransform fromMatrixNoScale(OpenMatrix4f matrix) {
+	public static JointTransform fromMatrixWithoutScale(OpenMatrix4f matrix) {
 		return new JointTransform(matrix.toTranslationVector(), matrix.toQuaternion(), new Vec3f(1.0F, 1.0F, 1.0F));
 	}
 	
-	public static JointTransform getTranslation(Vec3f vec) {
+	public static JointTransform translation(Vec3f vec) {
 		return JointTransform.translationRotation(vec, new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F));
 	}
 	
-	public static JointTransform getRotation(Quaternionf quat) {
+	public static JointTransform rotation(Quaternionf quat) {
 		return JointTransform.translationRotation(new Vec3f(0.0F, 0.0F, 0.0F), quat);
 	}
 	
-	public static JointTransform getScale(Vec3f vec) {
+	public static JointTransform scale(Vec3f vec) {
 		return new JointTransform(new Vec3f(0.0F, 0.0F, 0.0F), new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F), vec);
 	}
 	

@@ -26,9 +26,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.mesh.HumanoidMesh;
@@ -46,7 +46,7 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 		
 		this.addPatchedLayer(ElytraLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(PlayerItemInHandLayer.class, new PatchedItemInHandLayer<>());
-		this.addPatchedLayer(HumanoidArmorLayer.class, new WearableItemLayer<>(() -> Meshes.BIPED, true, context.getModelManager()));
+		this.addPatchedLayer(HumanoidArmorLayer.class, new WearableItemLayer<>(Meshes.BIPED, true, context.getModelManager()));
 		this.addPatchedLayer(CustomHeadLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(ArrowLayer.class, new EmptyLayer<>());
 		this.addPatchedLayer(BeeStingerLayer.class, new EmptyLayer<>());
@@ -123,13 +123,13 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 	}
 	
 	@Override
-	public MeshProvider<HumanoidMesh> getMeshProvider(LocalPlayerPatch entitypatch) {
-		return entitypatch.getOriginal().getModelName().equals("slim") ? () -> Meshes.ALEX : () -> Meshes.BIPED;
+	public AssetAccessor<HumanoidMesh> getMeshProvider(LocalPlayerPatch entitypatch) {
+		return entitypatch.getOriginal().getModelName().equals("slim") ? Meshes.ALEX : Meshes.BIPED;
 	}
 	
 	@Override
-	public MeshProvider<HumanoidMesh> getDefaultMesh() {
-		return () -> Meshes.BIPED;
+	public AssetAccessor<HumanoidMesh> getDefaultMesh() {
+		return Meshes.BIPED;
 	}
 	
 	@Override

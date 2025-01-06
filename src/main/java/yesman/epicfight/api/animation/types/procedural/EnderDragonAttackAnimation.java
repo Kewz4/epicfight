@@ -7,12 +7,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
@@ -21,14 +21,13 @@ import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.RenderingTool;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.EnderDragonPatch;
 
@@ -36,8 +35,8 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 	private final IKInfo[] ikInfos;
 	private Map<String, TransformSheet> tipPointTransform;
 	
-	public EnderDragonAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, Collider collider, Joint colliderJoint, String path, Armature armature, IKInfo[] ikInfos) {
-		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, path, armature);
+	public EnderDragonAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, Collider collider, Joint colliderJoint, AnimationAccessor<? extends EnderDragonAttackAnimation> accessor, Armature armature, IKInfo[] ikInfos) {
+		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature);
 		this.ikInfos = ikInfos;
 		
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD);
@@ -45,17 +44,10 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 	}
 	
 	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-		try {
-			JsonAssetLoader modelLoader = (new JsonAssetLoader(resourceManager, this.resourceLocation));
-			AnimationManager.getInstance().loadAnimationClip(this, modelLoader::loadAllJointsClipForAnimation);
-			
-			this.tipPointTransform = Maps.newHashMap();
-			this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransform, this.getArmature(), false, true);
-		} catch (Exception e) {
-			EpicFightMod.LOGGER.warn("Failed to load animation: " + this.resourceLocation);
-			e.printStackTrace();
-		}
+	public void loadAnimation() {
+		AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
+		this.tipPointTransform = Maps.newHashMap();
+		this.setIKInfo(this.ikInfos, this.getTransfroms(), this.tipPointTransform, this.getArmature(), false, true);
 	}
 	
 	@Override
@@ -127,7 +119,7 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 		if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
 			Vec3 entitypos = enderdragonpatch.getOriginal().position();
 			OpenMatrix4f toWorld = OpenMatrix4f.mul(OpenMatrix4f.createTranslation((float)entitypos.x, (float)entitypos.y, (float)entitypos.z), enderdragonpatch.getModelMatrix(1.0F), null);
-			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this).getElapsedTime();
+			float elapsedTime = entitypatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime();
 			
 			for (IKInfo ikInfo : this.ikInfos) {
 				if (ikInfo.clipAnimation) {

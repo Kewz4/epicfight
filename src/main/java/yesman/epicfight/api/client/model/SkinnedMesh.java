@@ -32,9 +32,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.GLConstants;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -177,7 +177,10 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	@Override
 	protected SkinnedMeshPart getOrLogException(Map<String, SkinnedMeshPart> parts, String name) {
 		if (!parts.containsKey(name)) {
-			EpicFightMod.LOGGER.debug("Cannot find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
+			if (EpicFightMod.warnAssetExceptions()) {
+				EpicFightMod.LOGGER.debug("Cannot find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
+			}
+			
 			return null;
 		}
 		
@@ -194,8 +197,8 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		}
 	}
 	
-	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrix(ShaderParser.MAX_JOINTS);
-	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrix(ShaderParser.MAX_JOINTS);
+	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
+	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
 	
 	/**
 	 * Draws the model to vanilla buffer
@@ -249,7 +252,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			renderType.clearRenderState();
 		} else {
 			VertexConsumer vertexConsumer = multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(renderType));
-			this.drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.ENTITY_TEXTURED, packedLight, r, g, b, a, overlay, armature, poses);
+			this.drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, r, g, b, a, overlay, armature, poses);
 		}
 	}
 	
@@ -366,7 +369,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	public class SkinnedMeshPart extends MeshPart<SkinnedMeshVertexBuilder> {
 		private int indexBufferId;
 		
-		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyMesh.ClothSimulationInfo clothInfo) {
+		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
 			super(animatedMeshPartList, vanillaPartTracer, clothInfo);
 		}
 		

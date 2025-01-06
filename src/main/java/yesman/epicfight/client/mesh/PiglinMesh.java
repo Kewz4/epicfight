@@ -8,6 +8,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 
@@ -18,7 +19,7 @@ public class PiglinMesh extends HumanoidMesh {
 	}
 	
 	@Override
-	public SkinnedMesh getHumanoidArmorModel(EquipmentSlot slot) {
+	public AssetAccessor<? extends SkinnedMesh> getHumanoidArmorModel(EquipmentSlot slot) {
 		switch (slot) {
 		case HEAD:
 			return Meshes.HELMET_PIGLIN;

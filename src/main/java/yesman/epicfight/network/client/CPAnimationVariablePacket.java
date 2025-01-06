@@ -1,0 +1,56 @@
+package yesman.epicfight.network.client;
+
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.network.NetworkEvent;
+import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.SynchedAnimationVariableKey;
+import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.network.EpicFightNetworkManager;
+import yesman.epicfight.network.common.AnimationVariablePacket;
+import yesman.epicfight.network.server.SPAnimationVariablePacket;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
+
+public class CPAnimationVariablePacket<T> extends AnimationVariablePacket<T> {
+	public CPAnimationVariablePacket(SynchedAnimationVariableKey<T> animationVariableKey, @Nullable AnimationAccessor<? extends StaticAnimation> animation, T value, AnimationVariablePacket.Action action) {
+		super(animationVariableKey, animation, value, action);
+	}
+	
+	public static <T> CPAnimationVariablePacket<T> fromBytes(FriendlyByteBuf buf) {
+		SynchedAnimationVariableKey<T> variableKey = SynchedAnimationVariableKey.byId(buf.readInt());
+		AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byId(buf.readInt());
+		AnimationVariablePacket.Action action = AnimationVariablePacket.Action.values()[buf.readInt()];
+		
+		return new CPAnimationVariablePacket<> (variableKey, animation, action == AnimationVariablePacket.Action.PUT ? variableKey.getPacketBufferCodec().decode(buf) : null, action);
+	}
+	
+	public static <T> void toBytes(CPAnimationVariablePacket<T> msg, FriendlyByteBuf buf) {
+		buf.writeInt(msg.animationVariableKey.getId());
+		buf.writeInt(msg.animation.id());
+		buf.writeInt(msg.action.ordinal());
+		
+		if (msg.action == AnimationVariablePacket.Action.PUT) {
+			msg.animationVariableKey.getPacketBufferCodec().encode(msg.value, buf);
+		}
+	}
+	
+	public static <T> void handle(CPAnimationVariablePacket<T> msg, Supplier<NetworkEvent.Context> ctx) {
+		ctx.get().enqueueWork(()-> {
+			ServerPlayer serverPlayer = ctx.get().getSender();
+			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(serverPlayer, ServerPlayerPatch.class);
+			
+			if (playerpatch != null) {
+				msg.process(playerpatch);
+			}
+			
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimationVariablePacket<>(playerpatch, msg.animationVariableKey, msg.animation, msg.value, msg.action), serverPlayer);
+		});
+		ctx.get().setPacketHandled(true);
+	}
+}

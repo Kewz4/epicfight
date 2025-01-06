@@ -15,14 +15,16 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
@@ -30,16 +32,19 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
+import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
+	public static final ResourceLocation WHITE = new ResourceLocation(EpicFightMod.MODID, "textures/particle/white.png");
+	
 	private final OpenMatrix4f[] poseMatrices;
 	private final Matrix4f modelMatrix;
 	private float alphaO;
 	
-	public EntityAfterImageParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, MeshProvider<SkinnedMesh> particleMesh, OpenMatrix4f[] matrices, Matrix4f modelMatrix) {
+	public EntityAfterImageParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, AssetAccessor<SkinnedMesh> particleMesh, OpenMatrix4f[] matrices, Matrix4f modelMatrix) {
 		super(level, x, y, z, xd, yd, zd, particleMesh);
 		this.poseMatrices = matrices;
 		this.modelMatrix = modelMatrix;
@@ -61,13 +66,23 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	@Override
 	public void render(VertexConsumer vertexConsumer, Camera camera, float partialTicks) {
 		PoseStack poseStack = new PoseStack();
-		poseStack.mulPoseMatrix(RenderSystem.getModelViewMatrix());
+		
+		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
+			poseStack.mulPoseMatrix(RenderSystem.getModelViewMatrix());
+		}
+		
 		this.setupPoseStack(poseStack, camera, partialTicks);
 		poseStack.mulPoseMatrix(this.modelMatrix);
-		float alpha = this.alphaO + (this.alpha - this.alphaO) * partialTicks;
+		float alpha = (this.alphaO + (this.alpha - this.alphaO) * partialTicks);
 		
-		AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getPositionColorLightmapShader());
-		this.particleMeshProvider.get().drawWithShader(poseStack, animShader, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
+		RenderSystem.setShaderTexture(0, WHITE);
+		
+		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
+			AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getPositionColorLightmapShader());
+			this.particleMeshProvider.get().drawWithShader(poseStack, animShader, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
+		} else {
+			this.particleMeshProvider.get().drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.POSITION_COLOR_LIGHTMAP, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
+		}
 	}
 	
 	@Override
@@ -114,7 +129,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 				renderer.setJointTransforms(entitypatch, armature, pose, 1.0F);
 				OpenMatrix4f[] matrices = armature.getPoseAsTransformMatrix(pose, true);
 				
-				MeshProvider<SkinnedMesh> meshProvider = ClientEngine.getInstance().renderEngine.getEntityRenderer(entitypatch.getOriginal()).getMeshProvider(entitypatch);
+				AssetAccessor<SkinnedMesh> meshProvider = ClientEngine.getInstance().renderEngine.getEntityRenderer(entitypatch.getOriginal()).getMeshProvider(entitypatch);
 				EntityAfterImageParticle particle = new EntityAfterImageParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, meshProvider, matrices, poseStack.last().pose());
 				
 				return particle;

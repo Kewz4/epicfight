@@ -35,7 +35,7 @@ public class FABRIK {
 	private void addChainInternal(Pose pose, OpenMatrix4f parentTransform, Joint joint, int pathIndex) {
 		Joint nextJoint = joint.getSubJoints().get((pathIndex % 10) - 1);
 		JointTransform jt = pose.getOrDefaultTransform(nextJoint.getName());
-		OpenMatrix4f result = jt.getAnimationBindedMatrix(nextJoint, parentTransform);
+		OpenMatrix4f result = jt.getAnimationBoundMatrix(nextJoint, parentTransform);
 		this.chains.add(new Chain(joint.getName(), parentTransform.toTranslationVector(), result.toTranslationVector()));
 		int remainPath = pathIndex / 10;
 		
@@ -65,7 +65,7 @@ public class FABRIK {
 			parentQuaternion = QuaternionUtils.rotation(axis.scale(-1.0F).toMojangVector(), radian);
 			
 			JointTransform jt = this.pose.getOrDefaultTransform(chain.jointName);
-			jt.frontResult(JointTransform.getRotation(rotationQuat), OpenMatrix4f::mulAsOriginInverse);
+			jt.frontResult(JointTransform.rotation(rotationQuat), OpenMatrix4f::mulAsOriginInverse);
 		}
 	}
 	

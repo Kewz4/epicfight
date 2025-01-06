@@ -3,9 +3,11 @@ package yesman.epicfight.api.animation.types;
 import java.util.Optional;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.client.animation.Layer.Priority;
@@ -14,9 +16,8 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class LayerOffAnimation extends DynamicAnimation {
-	private final AnimationClip animationClip = new AnimationClip();
-	private DynamicAnimation lastAnimation;
+public class LayerOffAnimation extends DynamicAnimation implements AnimationAccessor<LayerOffAnimation> {
+	private AnimationAccessor<? extends DynamicAnimation> lastAnimation;
 	private Pose lastPose;
 	private final Priority layerPriority;
 	
@@ -29,7 +30,7 @@ public class LayerOffAnimation extends DynamicAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, DynamicAnimation nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (entitypatch.isLogicalClient() && isEnd) {
 			entitypatch.getClientAnimator().baseLayer.disableLayer(this.layerPriority);
 		}
@@ -46,26 +47,26 @@ public class LayerOffAnimation extends DynamicAnimation {
 	
 	@Override
 	public Optional<JointMaskEntry> getJointMaskEntry(LivingEntityPatch<?> entitypatch, boolean useCurrentMotion) {
-		return this.lastAnimation.getJointMaskEntry(entitypatch, useCurrentMotion);
+		return this.lastAnimation.get().getJointMaskEntry(entitypatch, useCurrentMotion);
 	}
 	
 	@Override
 	public <V> Optional<V> getProperty(AnimationProperty<V> propertyType) {
-		return this.lastAnimation.getProperty(propertyType);
+		return this.lastAnimation.get().getProperty(propertyType);
 	}
 	
-	public void setLastAnimation(DynamicAnimation animation) {
+	public void setLastAnimation(AnimationAccessor<? extends DynamicAnimation> animation) {
 		this.lastAnimation = animation;
 	}
 	
 	@Override
 	public boolean doesHeadRotFollowEntityHead() {
-		return this.lastAnimation.doesHeadRotFollowEntityHead();
+		return this.lastAnimation.get().doesHeadRotFollowEntityHead();
 	}
 	
 	@Override
-	public DynamicAnimation getRealAnimation() {
-		return Animations.DUMMY_ANIMATION;
+	public AnimationAccessor<? extends StaticAnimation> getRealAnimation() {
+		return Animations.EMPTY_ANIMATION;
 	}
 
 	@Override
@@ -81,5 +82,30 @@ public class LayerOffAnimation extends DynamicAnimation {
 	@Override
 	public boolean isLinkAnimation() {
 		return true;
+	}
+	
+	@Override
+	public LayerOffAnimation get() {
+		return this;
+	}
+
+	@Override
+	public ResourceLocation registryName() {
+		return null;
+	}
+
+	@Override
+	public boolean isPresent() {
+		return true;
+	}
+
+	@Override
+	public int id() {
+		return -1;
+	}
+	
+	@Override
+	public AnimationAccessor<? extends LayerOffAnimation> getAccessor() {
+		return this;
 	}
 }

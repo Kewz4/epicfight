@@ -14,7 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.mesh.IronGolemMesh;
 import yesman.epicfight.world.capabilities.entitypatch.mob.IronGolemPatch;
@@ -26,7 +26,7 @@ public class PatchedGolemCrackLayer extends ModelRenderLayer<IronGolem, IronGole
 			IronGolem.Crackiness.MEDIUM, new ResourceLocation("textures/entity/iron_golem/iron_golem_crackiness_medium.png"),
 			IronGolem.Crackiness.HIGH, new ResourceLocation("textures/entity/iron_golem/iron_golem_crackiness_high.png"));
 	
-	public PatchedGolemCrackLayer(MeshProvider<IronGolemMesh> mesh) {
+	public PatchedGolemCrackLayer(AssetAccessor<IronGolemMesh> mesh) {
 		super(mesh);
 	}
 	

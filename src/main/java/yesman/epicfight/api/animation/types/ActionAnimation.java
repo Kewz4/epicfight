@@ -1,7 +1,6 @@
 package yesman.epicfight.api.animation.types;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,7 +11,11 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeMod;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.animation.AnimationVariables;
+import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
+import yesman.epicfight.api.animation.AnimationVariables.SharedAnimationVariableKey;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
@@ -28,7 +31,6 @@ import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.TimePairList;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -37,40 +39,17 @@ import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class ActionAnimation extends MainFrameAnimation {
-	public static final TransformSheet EMPTY_SHEET = new TransformSheet(List.of(new Keyframe(0.0F, JointTransform.empty()), new Keyframe(Float.MAX_VALUE, JointTransform.empty())));
+	public static final SharedAnimationVariableKey<TransformSheet> ACTION_ANIMATION_COORD = AnimationVariables.shared(TransformSheet::new, false);
+	public static final IndependentAnimationVariableKey<Vec3> BEGINNING_LOCATION = AnimationVariables.independent(() -> (Vec3)null, true);
+	public static final IndependentAnimationVariableKey<Vec3f> LAST_MODEL_COORD = AnimationVariables.independent(() -> (Vec3f)null, true);
+	public static final IndependentAnimationVariableKey<Float> INITIAL_LOOK_VEC_DOT = AnimationVariables.independent(() -> (Float)null, true);
 	
-	public static final TypeKey<Vec3> BEGINNING_LOCATION = new TypeKey<>() {
-		public Vec3 defaultValue() {
-			return null;
-		}
-	};
-	
-	public static final TypeKey<Float> INITIAL_DOT = new TypeKey<>() {
-		public Float defaultValue() {
-			return null;
-		}
-	};
-	
-	public static final TypeKey<Vec3f> LAST_MODEL_COORD = new TypeKey<>() {
-		public Vec3f defaultValue() {
-			return null;
-		}
-	};
-	
-	public ActionAnimation(float convertTime, String path, Armature armature) {
-		this(convertTime, Float.MAX_VALUE, path, armature);
+	public ActionAnimation(float convertTime, AnimationAccessor<? extends ActionAnimation> accessor, Armature armature) {
+		this(convertTime, Float.MAX_VALUE, accessor, armature);
 	}
 	
-	public ActionAnimation(float convertTime, String path, Armature armature, boolean noRegister) {
-		this(convertTime, Float.MAX_VALUE, path, armature, noRegister);
-	}
-	
-	public ActionAnimation(float convertTime, float postDelay, String path, Armature armature) {
-		this(convertTime, postDelay, path, armature, false);
-	}
-	
-	public ActionAnimation(float convertTime, float postDelay, String path, Armature armature, boolean noRegister) {
-		super(convertTime, path, armature, noRegister);
+	public ActionAnimation(float convertTime, float postDelay, AnimationAccessor<? extends ActionAnimation> accessor, Armature armature) {
+		super(convertTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, postDelay)
@@ -85,16 +64,31 @@ public class ActionAnimation extends MainFrameAnimation {
 		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);
 	}
 	
-	public <V> ActionAnimation addProperty(ActionAnimationProperty<V> propertyType, V value) {
-		this.properties.put(propertyType, value);
-		return this;
+	/**
+	 * For internal use
+	 */
+	public ActionAnimation(float convertTime, float postDelay, String path, Armature armature) {
+		super(convertTime, path, armature);
+		
+		this.stateSpectrumBlueprint.clear()
+			.newTimePair(0.0F, postDelay)
+			.addState(EntityState.MOVEMENT_LOCKED, true)
+			.addState(EntityState.UPDATE_LIVING_MOTION, false)
+			.addState(EntityState.CAN_BASIC_ATTACK, false)
+			.addState(EntityState.CAN_SKILL_EXECUTION, false)
+			.newTimePair(0.01F, postDelay)
+			.addState(EntityState.TURNING_LOCKED, true)
+			.newTimePair(0.0F, Float.MAX_VALUE)
+			.addState(EntityState.INACTION, true);
+		
+		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);
 	}
 	
 	@Override
 	public void putOnPlayer(AnimationPlayer animationPlayer, LivingEntityPatch<?> entitypatch) {
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
 			MoveCoordSetter moveCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse(MoveCoordFunctions.RAW_COORD);
-			moveCoordSetter.set(this, entitypatch, entitypatch.getArmature().getActionAnimationCoord());
+			moveCoordSetter.set(this, entitypatch, entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD));
 		}
 		
 		super.putOnPlayer(animationPlayer, entitypatch);
@@ -112,16 +106,16 @@ public class ActionAnimation extends MainFrameAnimation {
 			Vec3 start = entitypatch.getOriginal().position();
 			
 			if (entitypatch.getTarget() == null) {
-				entitypatch.getAnimator().putAnimationVariable(ActionAnimation.INITIAL_DOT, 1.0F);
+				entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), 1.0F);
 			} else {
 				Vec3 targetTracePosition = entitypatch.getTarget().position();
 				Vec3 toDestWorld = targetTracePosition.subtract(start);
 				float dot = Mth.clamp((float)toDestWorld.normalize().dot(MathUtils.getVectorForRotation(0.0F, entitypatch.getYRot())), 0.0F, 1.0F);
-				entitypatch.getAnimator().putAnimationVariable(ActionAnimation.INITIAL_DOT, dot);
+				
+				entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), dot);
 			}
 			
-			entitypatch.getAnimator().putAnimationVariable(ActionAnimation.LAST_MODEL_COORD, null);
-			entitypatch.getAnimator().putAnimationVariable(BEGINNING_LOCATION, start);
+			entitypatch.getAnimator().getVariables().put(BEGINNING_LOCATION, this.getAccessor(), start);
 			
 			if (this.getProperty(ActionAnimationProperty.STOP_MOVEMENT).orElse(false)) {
 				entitypatch.getOriginal().setDeltaMovement(0.0D, entitypatch.getOriginal().getDeltaMovement().y, 0.0D);
@@ -140,11 +134,11 @@ public class ActionAnimation extends MainFrameAnimation {
 			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
 		}
 		
-		this.move(entitypatch, this);
+		this.move(entitypatch, this.getAccessor());
 	}
 	
 	@Override
-	public void linkTick(LivingEntityPatch<?> entitypatch, DynamicAnimation linkAnimation) {
+	public void linkTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> linkAnimation) {
 		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
 			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
 		}
@@ -152,24 +146,24 @@ public class ActionAnimation extends MainFrameAnimation {
 		this.move(entitypatch, linkAnimation);
 	}
 
-	protected void move(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
+	protected void move(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
 		if (!this.validateMovement(entitypatch, animation)) {
 			return;
 		}
 		
-		if (this.getState(EntityState.INACTION, entitypatch, entitypatch.getAnimator().getPlayerFor(this).getElapsedTime())) {
+		if (this.getState(EntityState.INACTION, entitypatch, entitypatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime())) {
 			LivingEntity livingentity = entitypatch.getOriginal();
 			Vec3 vec3 = this.getCoordVector(entitypatch, animation);
 			livingentity.move(MoverType.SELF, vec3);
 		}
 	}
 	
-	protected boolean validateMovement(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
+	protected boolean validateMovement(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
 		if (!entitypatch.shouldMoveOnCurrentSide(this)) {
 			return false;
 		}
 		
-		if (animation.isLinkAnimation()) {
+		if (animation.get().isLinkAnimation()) {
 			if (!this.getProperty(ActionAnimationProperty.MOVE_ON_LINK).orElse(true)) {
 				return false;
 			} else {
@@ -201,7 +195,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	public void correctRootJoint(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		JointTransform jt = pose.getOrDefaultTransform("Root");
 		Vec3f jointPosition = jt.translation();
-		OpenMatrix4f toRootTransformApplied = entitypatch.getArmature().searchJointByName("Root").getLocalTrasnform().removeTranslation();
+		OpenMatrix4f toRootTransformApplied = entitypatch.getArmature().searchJointByName("Root").getLocalTransform().removeTranslation();
 		OpenMatrix4f toOrigin = OpenMatrix4f.invert(toRootTransformApplied, null);
 		Vec3f worldPosition = OpenMatrix4f.transform3v(toRootTransformApplied, jointPosition, null);
 		worldPosition.x = 0.0F;
@@ -215,10 +209,10 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	@Override
-	public void setLinkAnimation(DynamicAnimation fromAnimation, Pose startPose, boolean isOnSameLayer, float convertTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
+	public void setLinkAnimation(AnimationAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
 		dest.resetNextStartTime();
 		float playTime = this.getPlaySpeed(entitypatch, dest);
-		PlaybackSpeedModifier playSpeedModifier = this.getRealAnimation().getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).orElse(null);
+		PlaybackSpeedModifier playSpeedModifier = this.getRealAnimation().get().getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).orElse(null);
 		
 		if (playSpeedModifier != null) {
 			playTime = playSpeedModifier.modify(this, entitypatch, playTime, 0.0F, playTime);
@@ -226,15 +220,15 @@ public class ActionAnimation extends MainFrameAnimation {
 		
 		playTime = Math.abs(playTime) * EpicFightOptions.A_TICK;
 		
-		float linkTime = (convertTimeModifier > 0.0F) ? convertTimeModifier + this.convertTime : this.convertTime;
+		float linkTime = (transitionTimeModifier > 0.0F) ? transitionTimeModifier + this.transitionTime : this.transitionTime;
 		float totalTime = playTime * (int)Math.ceil(linkTime / playTime);
-		float nextStartTime = Math.max(0.0F, -convertTimeModifier);
+		float nextStartTime = Math.max(0.0F, -transitionTimeModifier);
 		nextStartTime += totalTime - linkTime;
 		
 		dest.setNextStartTime(nextStartTime);
 		dest.getTransfroms().clear();
 		dest.setTotalTime(totalTime);
-		dest.setConnectedAnimations(fromAnimation, this);
+		dest.setConnectedAnimations(fromAnimation, this.getAccessor());
 		
 		Pose nextStartPose = this.getPoseByTime(entitypatch, nextStartTime, 1.0F);
 		
@@ -248,11 +242,11 @@ public class ActionAnimation extends MainFrameAnimation {
 		Set<String> joint2 = new HashSet<> (data2.keySet());
 		
 		if (entitypatch.isLogicalClient()) {
-			JointMaskEntry entry = fromAnimation.getJointMaskEntry(entitypatch, false).orElse(null);
+			JointMaskEntry entry = fromAnimation.get().getJointMaskEntry(entitypatch, false).orElse(null);
 			JointMaskEntry entry2 = this.getJointMaskEntry(entitypatch, true).orElse(null);
 			
 			if (entry != null && entitypatch.isLogicalClient()) {
-				joint1.removeIf((jointName) -> entry.isMasked(fromAnimation.getProperty(ClientAnimationProperties.LAYER_TYPE).orElse(Layer.LayerType.BASE_LAYER) == Layer.LayerType.BASE_LAYER ?
+				joint1.removeIf((jointName) -> entry.isMasked(fromAnimation.get().getProperty(ClientAnimationProperties.LAYER_TYPE).orElse(Layer.LayerType.BASE_LAYER) == Layer.LayerType.BASE_LAYER ?
 						entitypatch.getClientAnimator().currentMotion() : entitypatch.getClientAnimator().currentCompositeMotion(), jointName));
 			}
 			
@@ -292,9 +286,18 @@ public class ActionAnimation extends MainFrameAnimation {
 			}
 		}
 		
+		this.getProperty(ActionAnimationProperty.COORD).ifPresent((coord) -> {
+			Keyframe[] keyframes = new Keyframe[2];
+			keyframes[0] = new Keyframe(0.0F, JointTransform.empty());
+			keyframes[1] = new Keyframe(totalTime, coord.getKeyframes()[0].transform());
+			
+			TransformSheet sheet = new TransformSheet(keyframes);
+			dest.getTransfroms().put("Coord", sheet);
+		});
+		
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
 			MoveCoordSetter moveCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse(MoveCoordFunctions.RAW_COORD);
-			moveCoordSetter.set(dest, entitypatch, entitypatch.getArmature().getActionAnimationCoord());
+			moveCoordSetter.set(dest, entitypatch, entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD));
 		}
 	}
 	
@@ -304,36 +307,33 @@ public class ActionAnimation extends MainFrameAnimation {
 		if (this.getProperty(ActionAnimationProperty.COORD).isEmpty()) {
 			TransformSheet coordTransform = this.getTransfroms().get("Root");
 			jt.translation().add(0.0F, 0.0F, coordTransform.getInterpolatedTranslation(poseTime).z);
-			
-		} else {
-			TransformSheet coordTransform = this.getProperty(ActionAnimationProperty.COORD).get();
-			jt.translation().add(0.0F, 0.0F, coordTransform.getInterpolatedTranslation(poseTime).z);
 		}
 	}
 	
-	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
+	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation);
 		TimePairList coordUpdateTime = this.getProperty(ActionAnimationProperty.COORD_UPDATE_TIME).orElse(null);
 		boolean isCoordUpdateTime = coordUpdateTime == null || coordUpdateTime.isTimeInPairs(player.getElapsedTime());
 		
-		TransformSheet transformSheet = entitypatch.getArmature().getActionAnimationCoord();
+		TransformSheet transformSheet = entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD);
 		MoveCoordSetter moveCoordsetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_SET_TICK).orElse(null) : MoveCoordFunctions.RAW_COORD;
 		
 		if (moveCoordsetter != null) {
-			moveCoordsetter.set(animation, entitypatch, transformSheet);
+			moveCoordsetter.set(animation.get(), entitypatch, transformSheet);
 		}
 		
 		boolean hasNoGravity = entitypatch.getOriginal().isNoGravity();
 		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(this.getProperty(ActionAnimationProperty.COORD).isPresent());
 		MoveCoordGetter moveGetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD) : MoveCoordFunctions.MODEL_COORD;
-		Vec3f move = moveGetter.get(animation, entitypatch, transformSheet);
+		Vec3f move = moveGetter.get(animation.get(), entitypatch, transformSheet);
 		LivingEntity livingentity = entitypatch.getOriginal();
 		Vec3 motion = livingentity.getDeltaMovement();
 		double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();
 		
 		this.getProperty(ActionAnimationProperty.NO_GRAVITY_TIME).ifPresentOrElse((noGravityTime) -> {
-			if (noGravityTime.isTimeInPairs(animation.isLinkAnimation() ? 0.0F : player.getElapsedTime())) {
+			if (noGravityTime.isTimeInPairs(animation.get().isLinkAnimation() ? 0.0F : player.getElapsedTime())) {
 				livingentity.setDeltaMovement(motion.x, 0.0D, motion.z);
+				move.y = Math.max(move.y, 0.0F);
 			} else {
 				move.y = 0.0F;
 			}
@@ -345,6 +345,13 @@ public class ActionAnimation extends MainFrameAnimation {
 		
 		if (!moveVertical) {
 			move.y = 0.0F;
+		}
+		
+		if (isCoordUpdateTime) {
+			this.getProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER).ifPresent((entityYRotProvider) -> {
+				float yRot = entityYRotProvider.get(animation.get(), entitypatch);
+				entitypatch.setYRot(yRot);
+			});
 		}
 		
 		return move.toDoubleVector();

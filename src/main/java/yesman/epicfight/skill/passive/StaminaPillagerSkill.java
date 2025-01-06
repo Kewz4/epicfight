@@ -6,7 +6,7 @@ import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
@@ -15,7 +15,7 @@ public class StaminaPillagerSkill extends PassiveSkill {
 	
 	protected float regenRate;
 	
-	public StaminaPillagerSkill(Builder<? extends Skill> builder) {
+	public StaminaPillagerSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	
@@ -29,7 +29,7 @@ public class StaminaPillagerSkill extends PassiveSkill {
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
 			if (event.getAttackDamage() > event.getTarget().getHealth()) {
 				float stamina = event.getPlayerPatch().getStamina();
 				float missingStamina = event.getPlayerPatch().getMaxStamina() - stamina;
@@ -42,7 +42,7 @@ public class StaminaPillagerSkill extends PassiveSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
 	}
 	
 	@OnlyIn(Dist.CLIENT)

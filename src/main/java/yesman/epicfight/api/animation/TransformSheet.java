@@ -1,18 +1,33 @@
 package yesman.epicfight.api.animation;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+import org.joml.Quaternionf;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class TransformSheet {
+	public static final TransformSheet EMPTY_SHEET = new TransformSheet(List.of(new Keyframe(0.0F, JointTransform.empty()), new Keyframe(Float.MAX_VALUE, JointTransform.empty())));
+	public static final Function<Vec3, TransformSheet> EMPTY_SHEET_PROVIDER = (translation) -> {
+		return new TransformSheet(List.of(new Keyframe(0.0F, JointTransform.translation(new Vec3f(translation))), new Keyframe(Float.MAX_VALUE, JointTransform.empty())));
+	};
+	
 	private Keyframe[] keyframes;
+	
+	public TransformSheet() {
+		this(new Keyframe[0]);
+	}
+	
+	public TransformSheet(int size) {
+		this(new Keyframe[size]);
+	}
 	
 	public TransformSheet(List<Keyframe> keyframeList) {
 		this(keyframeList.toArray(new Keyframe[0]));
@@ -20,10 +35,6 @@ public class TransformSheet {
 	
 	public TransformSheet(Keyframe[] keyframes) {
 		this.keyframes = keyframes;
-	}
-	
-	public TransformSheet() {
-		this(new Keyframe[0]);
 	}
 	
 	public JointTransform getStartTransform() {
@@ -55,7 +66,7 @@ public class TransformSheet {
 			this.keyframes = new Keyframe[opponent.keyframes.length];
 			
 			for (int i = 0; i < this.keyframes.length; i++) {
-				this.keyframes[i] = new Keyframe(0.0F, JointTransform.empty());
+				this.keyframes[i] = Keyframe.empty();
 			}
 		}
 		
@@ -69,15 +80,15 @@ public class TransformSheet {
 	/**
 	 * Transform each joint
 	 */
-	public void transform(Consumer<JointTransform> transformFunc) {
+	public void forEach(BiConsumer<Integer, Keyframe> transformFunc) {
 		this.transform(transformFunc, 0, this.keyframes.length);
 	}
 	
-	public void transform(Consumer<JointTransform> transformFunc, int start, int end) {
+	public void transform(BiConsumer<Integer, Keyframe> transformFunc, int start, int end) {
 		end = Math.min(end, this.keyframes.length);
 		
 		for (int i = start; i < end; i++) {
-			transformFunc.accept(this.keyframes[i].transform());
+			transformFunc.accept(i, this.keyframes[i]);
 		}
 	}
 	
@@ -97,6 +108,23 @@ public class TransformSheet {
 		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
 		JointTransform trasnform = JointTransform.interpolate(this.keyframes[interpolInfo.prev].transform(), this.keyframes[interpolInfo.next].transform(), interpolInfo.zero2One);
 		return trasnform;
+	}
+	
+	public TransformSheet extend(TransformSheet target) {
+		int newKeyLength = this.keyframes.length + target.keyframes.length;
+		Keyframe[] newKeyfrmaes = new Keyframe[newKeyLength];
+		
+		for (int i = 0; i < this.keyframes.length; i++) {
+			newKeyfrmaes[i] = this.keyframes[i];
+		}
+		
+		for (int i = this.keyframes.length; i < newKeyLength; i++) {
+			newKeyfrmaes[i] = new Keyframe(target.keyframes[i - this.keyframes.length]);
+		}
+		
+		this.keyframes = newKeyfrmaes;
+		
+		return this;
 	}
 	
 	public void correctAnimationByNewPosition(Vec3f startpos, Vec3f startToEnd, Vec3f modifiedStart, Vec3f modifiedStartToEnd) {
@@ -157,36 +185,85 @@ public class TransformSheet {
 		return transform;
 	}
 	
-	public TransformSheet getCorrectedWorldCoord(LivingEntityPatch<?> entitypatch, Vec3 start, Vec3 dest, float xRot, float yRot, int startFrame, int endFrame, boolean startFromOrigin) {
-		TransformSheet newTransformSheet = this.copyAll();
+	/**
+	 * Transform the animation coord system to world coord system regarding origin point as @param worldDest
+	 * 
+	 * @param entitypatch
+	 * @param worldStart
+	 * @param worldDest
+	 * @param xRot
+	 * @param entityYRot
+	 * @param startFrame
+	 * @param endFrame
+	 * @return
+	 */
+	public TransformSheet transformToWorldCoordOriginAsDest(LivingEntityPatch<?> entitypatch, Vec3 startInWorld, Vec3 destInWorld, float entityYRot, float destYRot, int startFrmae, int destFrame) {
+		TransformSheet byStart = this.copy(0, destFrame + 1);
+		TransformSheet byDest = this.copy(0, destFrame + 1);
+		TransformSheet result = new TransformSheet(destFrame + 1);
+		Vec3 toTargetInWorld = destInWorld.subtract(startInWorld);
+		double worldMagnitude = toTargetInWorld.horizontalDistance();
+		double animMagnitude = this.keyframes[0].transform().translation().horizontalDistance();
+		float scale = (float)(worldMagnitude / animMagnitude);
 		
-		if (startFromOrigin) {
-			Vec3f firstPos = newTransformSheet.keyframes[0].transform().translation().copy();
-			
-			newTransformSheet.transform((jt) -> {
-				jt.translation().sub(firstPos);
-			});
-		}
+		//System.out.println("start: " + startInWorld);
+		//System.out.println("Dest: " + destInWorld);
+		//System.out.println("Dest y rot: " + destYRot);
 		
-		Vec3f fromCoord = startFromOrigin ? newTransformSheet.keyframes[startFrame].transform().translation() : Vec3f.ZERO;
-		Vec3f toCoord = newTransformSheet.keyframes[endFrame - 1].transform().translation();
-		float originalDistance = (float)Math.sqrt(fromCoord.distanceSqr(toCoord));
-		float worldDistance = (float)Math.sqrt(dest.distanceToSqr(start));
-		float ratio = worldDistance / originalDistance;
-		
-		newTransformSheet.transform((jt) -> {
-			Vec3f kfTranslation = jt.translation();
-			kfTranslation.set(-kfTranslation.x, kfTranslation.y, kfTranslation.z > 0.0F ? kfTranslation.z : kfTranslation.z * ratio);
-			Vec3f.rotate(xRot, Vec3f.X_AXIS, kfTranslation, kfTranslation);
-		}, startFrame, endFrame);
-		
-		newTransformSheet.transform((jt) -> {
-			jt.translation().rotate(yRot, Vec3f.Y_AXIS);
-			jt.translation().multiply(1.0F, 1.0F, -1.0F);
-			jt.translation().add((float)start.x, (float)start.y, (float)start.z);
+		byStart.forEach((idx, keyframe) -> {
+			keyframe.transform().translation().sub(this.keyframes[0].transform().translation());
+			keyframe.transform().translation().multiply(1.0F, 1.0F, scale);
+			keyframe.transform().translation().rotate(-entityYRot, Vec3f.Y_AXIS);
+			keyframe.transform().translation().multiply(-1.0F, 1.0F, -1.0F);
+			keyframe.transform().translation().add(startInWorld);
 		});
 		
-		return newTransformSheet;
+		//System.out.println("\nby start");
+		//System.out.println(byStart);
+		
+		byDest.forEach((idx, keyframe) -> {
+			keyframe.transform().translation().multiply(1.0F, 1.0F, Mth.lerp((idx / (float)destFrame), scale, 1.0F));
+			keyframe.transform().translation().rotate(-destYRot, Vec3f.Y_AXIS);
+			keyframe.transform().translation().multiply(-1.0F, 1.0F, -1.0F);
+			keyframe.transform().translation().add(destInWorld);
+		});
+		
+		//System.out.println("\nby dest");
+		//System.out.println(byDest);
+		//System.out.println(startFrmae +" ~ "+ destFrame);
+		
+		for (int i = 0; i < destFrame + 1; i++) {
+			if (i <= startFrmae) {
+				result.getKeyframes()[i] = new Keyframe(this.keyframes[i].time(), JointTransform.translation(byStart.getKeyframes()[i].transform().translation()));
+			} else {
+				float lerp = this.keyframes[i].time() == 0.0F ? 0.0F : this.keyframes[i].time() / this.keyframes[destFrame].time();
+				Vec3f lerpTranslation = Vec3f.interpolate(byStart.getKeyframes()[i].transform().translation(), byDest.getKeyframes()[i].transform().translation(), lerp, null);
+				result.getKeyframes()[i] = new Keyframe(this.keyframes[i].time(), JointTransform.translation(lerpTranslation));
+			}
+		}
+		
+		//System.out.println("\ndistance result");
+		//System.out.println(result);
+		//System.out.println("");
+		
+		if (this.keyframes.length > destFrame) {
+			TransformSheet behindDestination = this.copy(destFrame + 1, this.keyframes.length);
+			
+			behindDestination.forEach((idx, keyframe) -> {
+				keyframe.transform().translation().sub(this.keyframes[destFrame].transform().translation());
+				keyframe.transform().translation().rotate(entityYRot, Vec3f.Y_AXIS);
+				keyframe.transform().translation().multiply(-1.0F, 1.0F, -1.0F);
+				keyframe.transform().translation().add(result.getKeyframes()[destFrame].transform().translation());
+			});
+			
+			result.extend(behindDestination);
+		}
+		
+		//System.out.println("\nresult");
+		//System.out.println(result);
+		//System.out.println("");
+		
+		return result;
 	}
 	
 	private InterpolationInfo getInterpolationInfo(float currentTime) {

@@ -8,6 +8,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -62,7 +63,7 @@ public class CustomMobPatch<T extends PathfinderMob> extends MobPatch<T> {
 	public void initAnimator(Animator animator) {
 		super.initAnimator(animator);
 		
-		for (Pair<LivingMotion, StaticAnimation> pair : this.provider.getDefaultAnimations()) {
+		for (Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>> pair : this.provider.getDefaultAnimations()) {
 			animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 		}
 	}
@@ -73,7 +74,7 @@ public class CustomMobPatch<T extends PathfinderMob> extends MobPatch<T> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return this.provider.getStunAnimations().get(stunType);
 	}
 	

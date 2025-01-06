@@ -26,7 +26,7 @@ public class FakeAirSlashAnimation extends FakeAttackAnimation {
 	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
 		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
 		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.AIR_SLASH);
-		fakeAnimation.setParameter("convertTime", this.convertTime);
+		fakeAnimation.setParameter("convertTime", this.transitionTime);
 		fakeAnimation.setParameter("path", this.registryName.toString());
 		fakeAnimation.setParameter("armature", this.armature);
 		

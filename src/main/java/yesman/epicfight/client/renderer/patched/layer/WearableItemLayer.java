@@ -33,14 +33,14 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
-import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.Mesh.DrawingFunction;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
-import yesman.epicfight.api.exception.MeshLoadingException;
+import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonAssetLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.mesh.HumanoidMesh;
@@ -73,7 +73,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 	private final boolean firstPersonModel;
 	private final TextureAtlas armorTrimAtlas;
 	
-	public WearableItemLayer(MeshProvider<AM> meshProvider, boolean firstPersonModel, ModelManager modelManager) {
+	public WearableItemLayer(AssetAccessor<AM> meshProvider, boolean firstPersonModel, ModelManager modelManager) {
 		super(meshProvider);
 		
 		this.firstPersonModel = firstPersonModel;
@@ -91,7 +91,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 	private void renderTrim(PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, SkinnedMesh model, Armature armature, ArmorMaterial armorMaterial, ArmorTrim armorTrim, EquipmentSlot slot, OpenMatrix4f[] poses) {
 		TextureAtlasSprite textureatlassprite = this.armorTrimAtlas.getSprite(innerModel(slot) ? armorTrim.innerTexture(armorMaterial) : armorTrim.outerTexture(armorMaterial));
 		VertexConsumer vertexConsumer = textureatlassprite.wrap(multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(Sheets.armorTrimsSheet())));
-		model.drawPosed(poseStack, vertexConsumer, DrawingFunction.ENTITY_TEXTURED, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, armature, poses);
+		model.drawPosed(poseStack, vertexConsumer, DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, armature, poses);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -221,7 +221,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 				try {
 					JsonAssetLoader modelLoader = new JsonAssetLoader(resourceManager, rl);
 					animatedMesh = modelLoader.loadSkinnedMesh(SkinnedMesh::new);
-				} catch (MeshLoadingException e) {
+				} catch (AssetLoadingException e) {
 					e.printStackTrace();
 					animatedMesh = null;
 				}

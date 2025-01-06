@@ -14,6 +14,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.gameasset.Animations;
@@ -23,7 +24,7 @@ public class EpicFightDamageSource extends DamageSource {
 	private final Set<TagKey<DamageType>> runtimeTags = Sets.newHashSet();
 	private final Set<ResourceKey<DamageType>> runtimeTypes = Sets.newHashSet();
 	
-	private StaticAnimation animation;
+	private AnimationAccessor<? extends StaticAnimation> animation;
 	private Vec3 initialPosition;
 	private boolean basicAttack;
 	
@@ -117,13 +118,13 @@ public class EpicFightDamageSource extends DamageSource {
 		return basicAttack;
 	}
 	
-	public EpicFightDamageSource setAnimation(StaticAnimation animation) {
+	public EpicFightDamageSource setAnimation(AnimationAccessor<? extends StaticAnimation> animation) {
 		this.animation = animation;
 		return this;
 	}
 	
-	public StaticAnimation getAnimation() {
-		return this.animation == null ? Animations.DUMMY_ANIMATION : this.animation;
+	public AnimationAccessor<? extends StaticAnimation> getAnimation() {
+		return this.animation == null ? Animations.EMPTY_ANIMATION : this.animation;
 	}
 	
 	@Override
