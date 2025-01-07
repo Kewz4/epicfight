@@ -15,6 +15,7 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
@@ -40,7 +41,7 @@ public class RushingTempoSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		AnimationAccessor<? extends DynamicAnimation> animation = executer.getAnimator().getPlayerFor(null).getAnimation();
+		AssetAccessor<? extends DynamicAnimation> animation = executer.getAnimator().getPlayerFor(null).getAnimation();
 		
 		if (this.comboAnimation.containsKey(animation)) {
 			executer.playAnimationSynchronized(this.comboAnimation.get(animation), 0.0F);

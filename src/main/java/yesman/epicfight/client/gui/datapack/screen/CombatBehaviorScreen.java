@@ -56,7 +56,7 @@ public class CombatBehaviorScreen extends Screen {
 	private Grid conditionGrid;
 	private Grid parameterGrid;
 	
-	protected CombatBehaviorScreen(Screen caller, CompoundTag rootTag, Armature armature, AssetAccessor<SkinnedMesh> mesh, boolean isHumanoidSubTag) {
+	protected CombatBehaviorScreen(Screen caller, CompoundTag rootTag, AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh, boolean isHumanoidSubTag) {
 		super(Component.translatable("datapack_edit.mob_patch.combat_behavior"));
 		
 		this.isHumanoidSubTag = isHumanoidSubTag;
@@ -531,7 +531,7 @@ public class CombatBehaviorScreen extends Screen {
 		
 		for (Tag behaviorTag : tag.getList("behaviors", Tag.TAG_COMPOUND)) {
 			CompoundTag behaviorCompound = (CompoundTag)behaviorTag;
-			StaticAnimation animation = DatapackEditScreen.animationByKey(behaviorCompound.getString("animation"));
+			AssetAccessor<? extends StaticAnimation> animation = DatapackEditScreen.animationByKey(behaviorCompound.getString("animation"));
 			
 			if (animation != null) {
 				this.modelPreviewer.addAnimationToPlay(animation);

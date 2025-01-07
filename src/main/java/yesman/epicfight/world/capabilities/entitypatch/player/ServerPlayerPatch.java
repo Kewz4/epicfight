@@ -21,9 +21,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPAddLearnedSkill;
@@ -175,17 +175,17 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 			return;
 		}
 		
-		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
-		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
 		
 		CapabilityItem mainhandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		CapabilityItem offhandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
 		
-		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
 		livingMotionModifiers.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
 		
-		for (Map.Entry<LivingMotion, AnimationAccessor<? extends StaticAnimation>> entry : livingMotionModifiers.entrySet()) {
-			AnimationAccessor<? extends StaticAnimation> aniamtion = entry.getValue();
+		for (Map.Entry<LivingMotion, AssetAccessor<? extends StaticAnimation>> entry : livingMotionModifiers.entrySet()) {
+			AssetAccessor<? extends StaticAnimation> aniamtion = entry.getValue();
 			
 			if (!oldLivingAnimations.containsKey(entry.getKey())) {
 				this.updatedMotionCurrentTick = true;

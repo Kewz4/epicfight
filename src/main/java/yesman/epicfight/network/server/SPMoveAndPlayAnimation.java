@@ -7,8 +7,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class SPMoveAndPlayAnimation extends SPPlayAnimationAndSetTarget {
@@ -25,7 +25,7 @@ public class SPMoveAndPlayAnimation extends SPPlayAnimationAndSetTarget {
 		this.yRot = yRot;
 	}
 	
-	public SPMoveAndPlayAnimation(Action action, AnimationAccessor<? extends StaticAnimation> animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
+	public SPMoveAndPlayAnimation(Action action, AssetAccessor<? extends StaticAnimation> animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
 		super(action, animation, modifyTime, entitypatch);
 		
 		Vec3 position = entitypatch.getOriginal().position();

@@ -17,6 +17,7 @@ import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LongHitAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -31,7 +32,7 @@ public class GrapplingTryAnimation extends AttackAnimation {
 		AnimationAccessor<? extends LongHitAnimation> grapplingHitAnimation,
 		AnimationAccessor<? extends GrapplingAttackAnimation> grapplingAttackAnimation,
 		AnimationAccessor<? extends ActionAnimation> failAnimation,
-		Armature armature
+		AssetAccessor<? extends Armature> armature
 	) {
 		this(convertTime, antic, preDelay, contact, recovery, InteractionHand.MAIN_HAND, collider, colliderJoint, accessor, grapplingHitAnimation, grapplingAttackAnimation, failAnimation, armature);
 	}
@@ -40,7 +41,7 @@ public class GrapplingTryAnimation extends AttackAnimation {
 		AnimationAccessor<? extends LongHitAnimation> grapplingHitAnimation,
 		AnimationAccessor<? extends GrapplingAttackAnimation> grapplingAttackAnimation,
 		AnimationAccessor<? extends ActionAnimation> failAnimation,
-		Armature armature
+		AssetAccessor<? extends Armature> armature
 	) {
 		super(convertTime, antic, preDelay, contact, recovery, hand, collider, colliderJoint, accessor, armature);
 		this.grapplingAttackAnimation = grapplingAttackAnimation;
@@ -73,7 +74,7 @@ public class GrapplingTryAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		super.end(entitypatch, nextAnimation, isEnd);
 		
 		if (isEnd && !entitypatch.isLogicalClient()) {
@@ -109,6 +110,6 @@ public class GrapplingTryAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	protected void attackTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
+	protected void attackTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 	}
 }

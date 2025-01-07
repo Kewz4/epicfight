@@ -11,6 +11,7 @@ import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.FABRIK;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -21,10 +22,10 @@ import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.EnderDra
 import java.util.Map;
 
 public interface ProceduralAnimation {
-	default void setIKInfo(IKInfo[] ikInfos, Map<String, TransformSheet> src, Map<String, TransformSheet> dest, Armature armature, boolean correctY, boolean correctZ) {
+	default void setIKInfo(IKInfo[] ikInfos, Map<String, TransformSheet> src, Map<String, TransformSheet> dest, AssetAccessor<? extends Armature> armature, boolean correctY, boolean correctZ) {
 		for (IKInfo ikInfo : ikInfos) {
 			ikInfo.pathToEndJoint = Lists.newArrayList();
-			Joint start = armature.searchJointByName(ikInfo.startJoint.getName());
+			Joint start = armature.get().searchJointByName(ikInfo.startJoint.getName());
 			int pathToEnd = Integer.parseInt(start.searchPath("", ikInfo.endJoint.getName()));
 			ikInfo.pathToEndJoint.add(start.getName());
 			
@@ -46,7 +47,7 @@ public interface ProceduralAnimation {
 					pose.putJointData(jointName, src.get(jointName).getInterpolatedTransform(kf.time()));
 				}
 				
-				OpenMatrix4f bindedTransform = armature.getBindedTransformFor(pose, ikInfo.endJoint);
+				OpenMatrix4f bindedTransform = armature.get().getBindedTransformFor(pose, ikInfo.endJoint);
 				JointTransform bindedJointTransform = JointTransform.fromMatrixWithoutScale(bindedTransform);
 				bindedposKeyframes[i] = new Keyframe(kf);
 				JointTransform tipTransform = bindedposKeyframes[i].transform();

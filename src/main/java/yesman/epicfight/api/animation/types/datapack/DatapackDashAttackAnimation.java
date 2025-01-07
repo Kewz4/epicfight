@@ -8,26 +8,27 @@ import net.minecraft.nbt.ListTag;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.types.AttackAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.model.Armature;
 
 @OnlyIn(Dist.CLIENT)
-public class FakeAirSlashAnimation extends FakeAttackAnimation {
-	public FakeAirSlashAnimation(float convertTime, String path, Armature armature, ListTag phases) {
+public class DatapackDashAttackAnimation extends DatapackAttackAnimation {
+	public DatapackDashAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, ListTag phases) {
 		super(convertTime, path, armature, phases);
 	}
 	
-	public FakeAirSlashAnimation(float convertTime, String path, Armature armature, Phase... phases) {
+	public DatapackDashAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, path, armature, phases);
 	}
 	
 	@Override
-	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
-		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
-		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.AIR_SLASH);
+	public EditorAnimation readAnimationFromJson(JsonArray rawAnimationJson) {
+		EditorAnimation fakeAnimation = new EditorAnimation(this.registryName().toString(), this.armature, this.clip, rawAnimationJson);
+		fakeAnimation.setAnimationClass(EditorAnimation.AnimationType.DASH_ATTACK);
 		fakeAnimation.setParameter("convertTime", this.transitionTime);
-		fakeAnimation.setParameter("path", this.registryName.toString());
+		fakeAnimation.setParameter("path", this.registryName().toString());
 		fakeAnimation.setParameter("armature", this.armature);
 		
 		ListTag listTag = new ListTag();

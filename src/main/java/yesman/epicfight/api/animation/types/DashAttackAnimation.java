@@ -7,17 +7,18 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.gameasset.Animations;
 
 public class DashAttackAnimation extends AttackAnimation {
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature) {
+	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature, false);
 	}
 	
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature, boolean directional) {
+	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, boolean directional) {
 		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
@@ -25,7 +26,7 @@ public class DashAttackAnimation extends AttackAnimation {
 		}
 	}
 	
-	public DashAttackAnimation(float convertTime, AnimationAccessor<? extends DashAttackAnimation> accessor, Armature armature, Phase... phases) {
+	public DashAttackAnimation(float convertTime, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, accessor, armature, phases);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);

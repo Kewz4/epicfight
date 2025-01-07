@@ -19,12 +19,12 @@ import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.ServerAnimator;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer.Priority;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMask.BindModifier;
@@ -40,9 +40,9 @@ public class ClientAnimator extends Animator {
 		return entitypatch.isLogicalClient() ? new ClientAnimator(entitypatch) : ServerAnimator.getAnimator(entitypatch);
 	}
 	
-	private final Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> compositeLivingAnimations;
-	private final Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> defaultLivingAnimations;
-	private final Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> defaultCompositeLivingAnimations;
+	private final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> compositeLivingAnimations;
+	private final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> defaultLivingAnimations;
+	private final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> defaultCompositeLivingAnimations;
 	public final Layer.BaseLayer baseLayer;
 	private LivingMotion currentMotion;
 	private LivingMotion currentCompositeMotion;
@@ -65,21 +65,21 @@ public class ClientAnimator extends Animator {
 	
 	/** Play an animation by animation instance **/
 	@Override
-	public void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier) {
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier) {
 		Layer layer = nextAnimation.get().getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(nextAnimation.get().getPriority());
 		layer.paused = false;
 		layer.playAnimation(nextAnimation, this.entitypatch, transitionTimeModifier);
 	}
 	
 	@Override
-	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> nextAnimation) {
 		Layer layer = nextAnimation.get().getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(nextAnimation.get().getPriority());
 		layer.paused  = false;
 		layer.playAnimationInstantly(nextAnimation, this.entitypatch);
 	}
 	
 	@Override
-	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation) {
 		Layer layer = nextAnimation.get().getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(nextAnimation.get().getPriority());
 		
 		if (nextAnimation.get().getPriority().isHigherThan(layer.animationPlayer.getAnimation().get().getRealAnimation().get().getPriority())) {
@@ -95,11 +95,11 @@ public class ClientAnimator extends Animator {
 	}
 	
 	@Override
-	public void addLivingAnimation(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) {
+	public void addLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> animation) {
 		Layer.LayerType layerType = animation.get().getLayerType();
 		boolean isBaseLayer = (layerType == Layer.LayerType.BASE_LAYER);
 		
-		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> storage = layerType == Layer.LayerType.BASE_LAYER ? this.livingAnimations : this.compositeLivingAnimations;
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> storage = layerType == Layer.LayerType.BASE_LAYER ? this.livingAnimations : this.compositeLivingAnimations;
 		LivingMotion compareMotion = layerType == Layer.LayerType.BASE_LAYER ? this.currentMotion : this.currentCompositeMotion;
 		Layer layer = layerType == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(animation.get().getPriority());
 		storage.put(livingMotion, animation);
@@ -140,11 +140,11 @@ public class ClientAnimator extends Animator {
 		this.defaultCompositeLivingAnimations.forEach((key, val) -> this.addLivingAnimation(key, val));
 	}
 	
-	public AnimationAccessor<? extends StaticAnimation> getLivingMotion(LivingMotion motion) {
+	public AssetAccessor<? extends StaticAnimation> getLivingMotion(LivingMotion motion) {
 		return this.livingAnimations.getOrDefault(motion, this.livingAnimations.get(LivingMotions.IDLE));
 	}
 	
-	public AnimationAccessor<? extends StaticAnimation> getCompositeLivingMotion(LivingMotion motion) {
+	public AssetAccessor<? extends StaticAnimation> getCompositeLivingMotion(LivingMotion motion) {
 		return this.compositeLivingAnimations.get(motion);
 	}
 	
@@ -154,7 +154,7 @@ public class ClientAnimator extends Animator {
 		
 		this.setCurrentMotionsAsDefault();
 		
-		AnimationAccessor<? extends StaticAnimation> idleMotion = this.livingAnimations.get(this.currentMotion);
+		AssetAccessor<? extends StaticAnimation> idleMotion = this.livingAnimations.get(this.currentMotion);
 		this.baseLayer.playAnimationInstantly(idleMotion, this.entitypatch);
 	}
 	
@@ -191,7 +191,7 @@ public class ClientAnimator extends Animator {
 				});
 				
 				if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
-					AnimationAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion);
+					AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion);
 					
 					if (nextLivingAnimation == null || nextLivingAnimation.get().getPriority() != this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()) {
 						this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
@@ -222,7 +222,7 @@ public class ClientAnimator extends Animator {
 		}
 	}
 	
-	public AnimationAccessor<? extends StaticAnimation> getJumpAnimation() {
+	public AssetAccessor<? extends StaticAnimation> getJumpAnimation() {
 		return this.livingAnimations.get(LivingMotions.JUMP);
 	}
 	
@@ -247,7 +247,7 @@ public class ClientAnimator extends Animator {
 		Pose composedPose = new Pose();
 		Pose baseLayerPose = this.baseLayer.getEnabledPose(this.entitypatch, useCurrentMotion, partialTicks);
 		
-		Map<Layer.Priority, Pair<AnimationAccessor<? extends DynamicAnimation>, Pose>> layerPoses = Maps.newLinkedHashMap();
+		Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> layerPoses = Maps.newLinkedHashMap();
 		composedPose.putJointData(baseLayerPose);
 		
 		for (Layer.Priority priority : this.baseLayer.baseLayerPriority.uppers()) {
@@ -273,7 +273,7 @@ public class ClientAnimator extends Animator {
 	public Pose getComposedLayerPoseBelow(Layer.Priority priorityLimit, float partialTicks) {
 		Pose composedPose = this.baseLayer.getEnabledPose(this.entitypatch, true, partialTicks);
 		Pose baseLayerPose = this.baseLayer.getEnabledPose(this.entitypatch, true, partialTicks);
-		Map<Layer.Priority, Pair<AnimationAccessor<? extends DynamicAnimation>, Pose>> layerPoses = Maps.newLinkedHashMap();
+		Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> layerPoses = Maps.newLinkedHashMap();
 		
 		for (Layer.Priority priority : priorityLimit.lowers()) {
 			Layer compositeLayer = this.baseLayer.compositeLayers.get(priority);
@@ -296,12 +296,12 @@ public class ClientAnimator extends Animator {
 		return composedPose;
 	}
 	
-	public void applyBindModifier(Pose basePose, Pose result, Joint joint, Map<Layer.Priority, Pair<AnimationAccessor<? extends DynamicAnimation>, Pose>> poses, boolean useCurrentMotion) {
+	public void applyBindModifier(Pose basePose, Pose result, Joint joint, Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> poses, boolean useCurrentMotion) {
 		List<Priority> list = Lists.newArrayList(poses.keySet());
 		Collections.reverse(list);
 		
 		for (Layer.Priority priority : list) {
-			AnimationAccessor<? extends DynamicAnimation> nowPlaying = poses.get(priority).getFirst();
+			AssetAccessor<? extends DynamicAnimation> nowPlaying = poses.get(priority).getFirst();
 			JointMaskEntry jointMaskEntry = nowPlaying.get().getJointMaskEntry(this.entitypatch, useCurrentMotion).orElse(null);
 			
 			if (jointMaskEntry != null) {
@@ -343,8 +343,8 @@ public class ClientAnimator extends Animator {
 	
 	public void resetCompositeMotion(boolean playIdleMotion) {
 		if (playIdleMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
-			AnimationAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
-			AnimationAccessor<? extends StaticAnimation> currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
+			AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
+			AssetAccessor<? extends StaticAnimation> currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
 			
 			if (nextLivingAnimation == null || (currentLivingMotion != null && nextLivingAnimation.get().getPriority() != currentLivingMotion.get().getPriority())) {
 				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
@@ -376,7 +376,7 @@ public class ClientAnimator extends Animator {
 	}
 	
 	@Override
-	public AnimationPlayer getPlayerFor(AnimationAccessor<? extends DynamicAnimation> playingAnimation) {
+	public AnimationPlayer getPlayerFor(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
 		for (Layer layer : this.baseLayer.compositeLayers.values()) {
 			if (layer.animationPlayer.getAnimation().get().getRealAnimation().equals(playingAnimation)) {
 				return layer.animationPlayer;
@@ -386,7 +386,7 @@ public class ClientAnimator extends Animator {
 		return this.baseLayer.animationPlayer;
 	}
 	
-	public Layer.Priority getPriorityFor(AnimationAccessor<? extends DynamicAnimation> playingAnimation) {
+	public Layer.Priority getPriorityFor(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
 		for (Layer layer : this.baseLayer.compositeLayers.values()) {
 			if (layer.animationPlayer.getAnimation().get().getRealAnimation().equals(playingAnimation)) {
 				return layer.priority;

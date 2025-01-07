@@ -9,11 +9,12 @@ import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class HitAnimation extends MainFrameAnimation {
-	public HitAnimation(float convertTime, AnimationAccessor<? extends HitAnimation> accessor, Armature armature) {
+	public HitAnimation(float convertTime, AnimationAccessor<? extends HitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
@@ -27,7 +28,7 @@ public class HitAnimation extends MainFrameAnimation {
 			.addState(EntityState.HURT_LEVEL, 1);
 	}
 	
-	public HitAnimation(float convertTime, String path, Armature armature) {
+	public HitAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, path, armature);
 		
 		this.stateSpectrumBlueprint.clear()
@@ -48,7 +49,7 @@ public class HitAnimation extends MainFrameAnimation {
 	}
 	
 	@Override
-	public void setLinkAnimation(AnimationAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
+	public void setLinkAnimation(AssetAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
 		dest.resetNextStartTime();
 		
 		dest.getTransfroms().clear();

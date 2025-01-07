@@ -18,6 +18,7 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.config.EpicFightOptions;
@@ -25,9 +26,9 @@ import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public abstract class DynamicAnimation {
-	protected final AnimationClip animationClip = new AnimationClip();
 	protected final boolean isRepeat;
 	protected final float transitionTime;
+	protected AnimationClip animationClip;
 	
 	public DynamicAnimation() {
 		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, false);
@@ -43,7 +44,6 @@ public abstract class DynamicAnimation {
 	}
 	
 	public Pose getPoseByTime(LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
-		//System.out.println(this);
 		Pose pose = this.getRawPose(time);
 		this.modifyPose(this, pose, entitypatch, time, partialTicks);
 		
@@ -81,8 +81,8 @@ public abstract class DynamicAnimation {
 	 * if @param isEnd true, nextAnimation is null
 	 * if @param isEnd false, nextAnimation is not null
 	 */
-	public void end(LivingEntityPatch<?> entitypatch, @Nullable AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {}
-	public void linkTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> linkAnimation) {};
+	public void end(LivingEntityPatch<?> entitypatch, @Nullable AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {}
+	public void linkTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> linkAnimation) {};
 	
 	public boolean hasTransformFor(String joint) {
 		return this.getTransfroms().containsKey(joint);
@@ -178,7 +178,7 @@ public abstract class DynamicAnimation {
 	}
 
 	public abstract <A extends DynamicAnimation> AnimationAccessor<? extends DynamicAnimation> getAccessor();
-	public abstract AnimationAccessor<? extends StaticAnimation> getRealAnimation();
+	public abstract AssetAccessor<? extends StaticAnimation> getRealAnimation();
 	
 	public boolean isLinkAnimation() {
 		return false;

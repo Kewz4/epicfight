@@ -24,6 +24,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -163,13 +164,13 @@ public class WeaponComboScreen extends Screen {
 								.transparentBackground(false)
 								.addColumn(Grid.popup("combo_animation", PopupBox.AnimationPopupBox::new)
 												.filter((animation) -> animation instanceof AttackAnimation)
-												.editWidgetCreated((popupBox) -> popupBox.setModel(() -> Armatures.BIPED, () -> Meshes.BIPED))
-												.toDisplayText((animation) -> animation == null ? "" : animation.getRegistryName().toString())
+												.editWidgetCreated((popupBox) -> popupBox.setModel(Armatures.BIPED, Meshes.BIPED))
+												.toDisplayText((animation) -> animation == null ? "" : animation.registryName().toString())
 												.valueChanged((event) -> {
 													ListTag animationList = this.styles.get(this.stylesGrid.getRowposition()).getValue();
 													
 													animationList.remove(event.rowposition);
-													animationList.add(event.rowposition, StringTag.valueOf(ParseUtil.nullOrToString(event.postValue, (animation) -> animation.getRegistryName().toString())));
+													animationList.add(event.rowposition, StringTag.valueOf(ParseUtil.nullOrToString(event.postValue, (animation) -> animation.registryName().toString())));
 													
 													if (event.postValue != null) {
 														this.reloadAnimationPlayer();
@@ -187,7 +188,7 @@ public class WeaponComboScreen extends Screen {
 								})
 								.build();
 		
-		this.modelPreviewer = new ModelPreviewer(110, 200, 45, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, () -> Meshes.BIPED);
+		this.modelPreviewer = new ModelPreviewer(110, 200, 45, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, Meshes.BIPED);
 		
 		CompoundTag colliderTag = rootTag.getCompound("collider");
 		
@@ -202,7 +203,7 @@ public class WeaponComboScreen extends Screen {
 					if (pair.getSecond() != null) {
 						ListTag listTag = this.styles.get(this.stylesGrid.getRowposition()).getValue();
 						listTag.remove(listTag.size() - 2);
-						listTag.add(listTag.size() - 1, StringTag.valueOf(ParseUtil.nullOrToString(pair.getSecond(), (animation$2) -> animation$2.getRegistryName().toString())));
+						listTag.add(listTag.size() - 1, StringTag.valueOf(ParseUtil.nullOrToString(pair.getSecond(), (animation$2) -> animation$2.registryName().toString())));
 						this.reloadAnimationPlayer();
 					}
 				});
@@ -212,13 +213,13 @@ public class WeaponComboScreen extends Screen {
 					if (pair.getSecond() != null) {
 						ListTag listTag = this.styles.get(this.stylesGrid.getRowposition()).getValue();
 						listTag.remove(listTag.size() - 1);
-						listTag.add(listTag.size(), StringTag.valueOf(ParseUtil.nullOrToString(pair.getSecond(), (animation$2) -> animation$2.getRegistryName().toString())));
+						listTag.add(listTag.size(), StringTag.valueOf(ParseUtil.nullOrToString(pair.getSecond(), (animation$2) -> animation$2.registryName().toString())));
 						this.reloadAnimationPlayer();
 					}
 				});
 		
-		this.dashAttackPopupbox.setModel(() -> Armatures.BIPED, () -> Meshes.BIPED);
-		this.airSlashPopupbox.setModel(() -> Armatures.BIPED, () -> Meshes.BIPED);
+		this.dashAttackPopupbox.setModel(Armatures.BIPED, Meshes.BIPED);
+		this.airSlashPopupbox.setModel(Armatures.BIPED, Meshes.BIPED);
 		
 		this.dashAttackPopupbox.applyFilter((animation) -> animation instanceof AttackAnimation);
 		this.airSlashPopupbox.applyFilter((animation) -> animation instanceof AttackAnimation);
@@ -284,7 +285,7 @@ public class WeaponComboScreen extends Screen {
 			exit:
 			for (PackEntry<String, ListTag> entry : this.styles) {
 				for (Tag tag : entry.getValue()) {
-					if (AnimationManager.getInstance().byKey(new ResourceLocation(tag.getAsString())) == null) {
+					if (AnimationManager.byKey(ResourceLocation.tryParse(tag.getAsString())) == null) {
 						animation = tag.getAsString();
 						style = entry.getKey();
 						allTagsNormal = false;
@@ -370,18 +371,19 @@ public class WeaponComboScreen extends Screen {
 	}
 	
 	private void reloadAnimationPlayer() {
-		List<StaticAnimation> animations = Lists.newArrayList();
+		List<AssetAccessor<? extends StaticAnimation>> animations = Lists.newArrayList();
 		
 		this.comboGrid.visitRows((values) -> {
-			StaticAnimation animation = (StaticAnimation)values.get("combo_animation");
+			@SuppressWarnings("unchecked")
+			AssetAccessor<? extends StaticAnimation> animation = (AssetAccessor<? extends StaticAnimation>)values.get("combo_animation");
 			
 			if (animation != null) {
 				animations.add(animation);
 			}
 		});
 		
-		StaticAnimation dashAttack = this.dashAttackPopupbox._getValue();
-		StaticAnimation airSlash = this.airSlashPopupbox._getValue();
+		AssetAccessor<? extends StaticAnimation> dashAttack = this.dashAttackPopupbox._getValue();
+		AssetAccessor<? extends StaticAnimation> airSlash = this.airSlashPopupbox._getValue();
 		
 		if (dashAttack != null) {
 			animations.add(dashAttack);

@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -44,9 +43,9 @@ public class LayerUtil {
 	public static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> void addLayer(LayerRenderer<E, T, M> renderer, EntityType<?> entityType, List<Pair<ResourceLocation, JsonElement>> layers) {
 		Map<ResourceLocation, LayerProvider<E, T, M, R, AM>> layersbyid = Maps.newHashMap();
 		
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "invisible"), LayerUtil::getInvisibleLayer);
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "eyes"), LayerUtil::getEyesLayer);
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "model_original"), LayerUtil::getOriginalModelLayer);
+		layersbyid.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "invisible"), LayerUtil::getInvisibleLayer);
+		layersbyid.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "eyes"), LayerUtil::getEyesLayer);
+		layersbyid.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "model_original"), LayerUtil::getOriginalModelLayer);
 		
 		MinecraftForge.EVENT_BUS.post(new RegisterResourceLayersEvent<> (layersbyid));
 		
@@ -73,7 +72,7 @@ public class LayerUtil {
 					clss = Class.forName(targetLayer);
 				}
 				
-				ResourceLocation rl = new ResourceLocation(layerType);
+				ResourceLocation rl = ResourceLocation.tryParse(layerType);
 				
 				if (!layersbyid.containsKey(rl)) {
 					throw new NoSuchElementException("No layer type " + layerType);
@@ -89,7 +88,7 @@ public class LayerUtil {
 					
 					for (JsonElement conditionElement : conditionsArray) {
 						JsonObject conditionObj = conditionElement.getAsJsonObject();
-						Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(GsonHelper.getAsString(conditionObj, "predicate")));
+						Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.tryParse(GsonHelper.getAsString(conditionObj, "predicate")));
 						EntityPatchCondition condition = conditionProvider.get();
 						condition.read(conditionObj);
 						conditions[idx] = condition;
@@ -139,8 +138,8 @@ public class LayerUtil {
 			throw new NoSuchElementException("Layer type epicfight:eyes requires to specify model");
 		}
 		
-		ResourceLocation textureLocation = new ResourceLocation(properties.get("texture").getAsString());
-		AssetAccessor<SkinnedMesh> mesh = Meshes.getOrCreate(Minecraft.getInstance().getResourceManager(), new ResourceLocation(properties.get("model").getAsString()), jsonAssetLoader -> jsonAssetLoader.loadSkinnedMesh(SkinnedMesh::new));
+		ResourceLocation textureLocation = ResourceLocation.tryParse(properties.get("texture").getAsString());
+		AssetAccessor<SkinnedMesh> mesh = Meshes.getOrCreate(ResourceLocation.tryParse(properties.get("model").getAsString()), jsonAssetLoader -> jsonAssetLoader.loadSkinnedMesh(SkinnedMesh::new));
 		
 		return new PatchedEyesLayer<> (textureLocation, mesh);
 	}

@@ -9,6 +9,7 @@ import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
@@ -16,11 +17,15 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class ConcurrentLinkAnimation extends DynamicAnimation implements AnimationAccessor<ConcurrentLinkAnimation> {
-	protected AnimationAccessor<? extends StaticAnimation> nextAnimation;
-	protected AnimationAccessor<? extends DynamicAnimation> currentAnimation;
+	protected AssetAccessor<? extends StaticAnimation> nextAnimation;
+	protected AssetAccessor<? extends DynamicAnimation> currentAnimation;
 	protected float startsAt;
 	
-	public void acceptFrom(AnimationAccessor<? extends DynamicAnimation> currentAnimation, AnimationAccessor<? extends StaticAnimation> nextAnimation, float time) {
+	public ConcurrentLinkAnimation() {
+		this.animationClip = new AnimationClip();
+	}
+	
+	public void acceptFrom(AssetAccessor<? extends DynamicAnimation> currentAnimation, AssetAccessor<? extends StaticAnimation> nextAnimation, float time) {
 		this.currentAnimation = currentAnimation;
 		this.nextAnimation = nextAnimation;
 		this.startsAt = time;
@@ -33,7 +38,7 @@ public class ConcurrentLinkAnimation extends DynamicAnimation implements Animati
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (!isEnd) {
 			this.nextAnimation.get().end(entitypatch, nextAnimation, isEnd);
 		} else {
@@ -106,7 +111,7 @@ public class ConcurrentLinkAnimation extends DynamicAnimation implements Animati
 	}
 	
 	@Override
-	public AnimationAccessor<? extends StaticAnimation> getRealAnimation() {
+	public AssetAccessor<? extends StaticAnimation> getRealAnimation() {
 		return this.nextAnimation;
 	}
 	

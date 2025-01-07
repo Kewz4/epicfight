@@ -24,7 +24,6 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -72,13 +71,11 @@ public class JsonAssetLoader {
 	public static final String UNGROUPED_VERTICES_GROUP = "noGroups";
 	
 	private JsonObject rootJson;
-	private ResourceManager resourceManager;
 	private ResourceLocation resourceLocation;
 	private String filehash;
 	
 	public JsonAssetLoader(ResourceManager resourceManager, ResourceLocation resourceLocation) throws AssetLoadingException {
 		JsonReader jsonReader = null;
-		this.resourceManager = resourceManager;
 		this.resourceLocation = resourceLocation;
 		
 		try {
@@ -130,7 +127,6 @@ public class JsonAssetLoader {
 	@OnlyIn(Dist.CLIENT)
 	public JsonAssetLoader(InputStream inputstream, ResourceLocation resourceLocation) throws IOException {
 		JsonReader jsonReader = null;
-		this.resourceManager = Minecraft.getInstance().getResourceManager();
 		this.resourceLocation = resourceLocation;
 		
 		jsonReader = new JsonReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8));
@@ -143,7 +139,6 @@ public class JsonAssetLoader {
 	
 	@OnlyIn(Dist.CLIENT)
 	public JsonAssetLoader(JsonObject rootJson, ResourceLocation rl) {
-		this.resourceManager = Minecraft.getInstance().getResourceManager();
 		this.rootJson = rootJson;
 		this.resourceLocation = rl;
 		this.filehash = StringUtil.EMPTY_STRING;
@@ -249,7 +244,7 @@ public class JsonAssetLoader {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
-			T mesh = Meshes.getOrCreate(this.resourceManager, parent, (jsonLoader) -> jsonLoader.loadClassicMesh(constructor)).get();
+			T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadClassicMesh(constructor)).get();
 			return constructor.invoke(null, null, mesh, this.getRenderProperties());
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
@@ -310,7 +305,7 @@ public class JsonAssetLoader {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
-			T mesh = Meshes.getOrCreate(this.resourceManager, parent, (jsonLoader) -> jsonLoader.loadSkinnedMesh(constructor)).get();
+			T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadSkinnedMesh(constructor)).get();
 			return constructor.invoke(null, null, mesh, this.getRenderProperties());
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
@@ -478,7 +473,7 @@ public class JsonAssetLoader {
 		boolean attack = animation instanceof AttackAnimation;
 		boolean noTransformData = !action && !attack && FMLEnvironment.dist == Dist.DEDICATED_SERVER;
 		boolean root = true;
-		Armature armature = animation.getArmature();
+		Armature armature = animation.getArmature().get();
 		
 		Set<String> allowedJoints = Sets.newLinkedHashSet();
 		
@@ -591,7 +586,7 @@ public class JsonAssetLoader {
 	public AnimationClip loadAllJointsClipForAnimation(StaticAnimation animation) {
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		boolean root = true;
-		Armature armature = animation.getArmature();
+		Armature armature = animation.getArmature().get();
 		AnimationClip clip = new AnimationClip();
 		
 		for (JsonElement element : array) {

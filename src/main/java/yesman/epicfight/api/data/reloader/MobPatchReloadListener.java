@@ -317,7 +317,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			ResourceLocation armatureId = new ResourceLocation(tag.getString("armature"));
 			
 			if (EpicFightMod.isPhysicalClient()) {
-				Meshes.getOrCreate(Minecraft.getInstance().getResourceManager(), modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
+				Meshes.getOrCreate(modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
 			}
 			
 			Armatures.registerEntityTypeArmature(entityType, ArmatureAccessor.create(armatureId, Armature::new));

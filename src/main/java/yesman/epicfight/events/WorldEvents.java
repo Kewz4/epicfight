@@ -84,13 +84,13 @@ public class WorldEvents {
 		skillParams.forEach(skillParamsPacket::write);
 		EpicFightNetworkManager.sendToPlayer(skillParamsPacket, player);
 		
-		SPDatapackSync animationPacket = new SPDatapackSync(AnimationManager.getInstance().getUserAnimationsCount(), player.getServer().isResourcePackRequired() ? SPDatapackSync.Type.ANIMATION_IN_MANDATORY_RESOURCE_PACK : SPDatapackSync.Type.ANIMATION_IN_RESOURCE_PACK);
+		SPDatapackSync animationPacket = new SPDatapackSync(AnimationManager.getInstance().getResourcepackAnimationCount(), player.getServer().isResourcePackRequired() ? SPDatapackSync.Type.MANDATORY_RESOURCE_PACK_ANIMATION : SPDatapackSync.Type.RESOURCE_PACK_ANIMATION);
 		SPDatapackSync armorPacket = new SPDatapackSync(ItemCapabilityReloadListener.armorCount(), SPDatapackSync.Type.ARMOR);
 		SPDatapackSync weaponPacket = new SPDatapackSync(ItemCapabilityReloadListener.weaponCount(), SPDatapackSync.Type.WEAPON);
 		SPDatapackSync mobPatchPacket = new SPDatapackSync(MobPatchReloadListener.getTagCount(), SPDatapackSync.Type.MOB);
 		SPDatapackSync weaponTypePacket = new SPDatapackSync(WeaponTypeReloadListener.getTagCount(), SPDatapackSync.Type.WEAPON_TYPE);
 		
-		AnimationManager.getInstance().getUserAnimationStream().forEach(animationPacket::write);
+		AnimationManager.getInstance().getResourcepackAnimationStream().forEach(animationPacket::write);
 		ItemCapabilityReloadListener.getArmorDataStream().forEach(armorPacket::write);
 		ItemCapabilityReloadListener.getWeaponDataStream().forEach(weaponPacket::write);
 		MobPatchReloadListener.getDataStream().forEach(mobPatchPacket::write);

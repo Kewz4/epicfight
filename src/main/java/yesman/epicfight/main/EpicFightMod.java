@@ -25,6 +25,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -41,6 +42,7 @@ import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.ServerAnimator;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
+import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.model.ItemSkins;
@@ -277,11 +279,12 @@ public class EpicFightMod {
     	event.enqueueWork(SkillSlot.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(Style.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(WeaponCategory.ENUM_MANAGER::loadEnum);
+    	event.enqueueWork(() -> {
+    		ModLoader.get().postEvent(new AnimationRegistryEvent());
+    	});
     }
     
 	private void doCommonStuff(final FMLCommonSetupEvent event) {
-		System.out.println("Do Common Stuff");
-		
 		event.enqueueWork(EpicFightCommandArgumentTypes::registerArgumentTypes);
 		event.enqueueWork(EpicFightPotions::addRecipes);
 		event.enqueueWork(EpicFightNetworkManager::registerPackets);

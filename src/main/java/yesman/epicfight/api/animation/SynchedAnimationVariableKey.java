@@ -9,10 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryInternal;
 import net.minecraftforge.registries.RegistryManager;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
 import yesman.epicfight.api.animation.AnimationVariables.SharedAnimationVariableKey;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.PacketBufferCodec;
 import yesman.epicfight.api.utils.datastruct.ClearableIdMapper;
 import yesman.epicfight.main.EpicFightMod;
@@ -76,7 +76,7 @@ public interface SynchedAnimationVariableKey<T> {
 		return getIdMap().getId(this);
 	}
 	
-	default void sync(LivingEntityPatch<?> entitypatch, @Nullable AnimationAccessor<? extends StaticAnimation> animation, T value, AnimationVariablePacket.Action action) {
+	default void sync(LivingEntityPatch<?> entitypatch, @Nullable AssetAccessor<? extends StaticAnimation> animation, T value, AnimationVariablePacket.Action action) {
 		if (entitypatch.isLogicalClient()) {
 			EpicFightNetworkManager.sendToServer(new CPAnimationVariablePacket<> (this, animation, value, action));
 		} else {

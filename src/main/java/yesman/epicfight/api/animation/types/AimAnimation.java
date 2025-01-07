@@ -3,6 +3,7 @@ package yesman.epicfight.api.animation.types;
 import java.util.List;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
@@ -10,6 +11,7 @@ import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.model.Armature;
@@ -20,22 +22,22 @@ import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AimAnimation extends StaticAnimation {
-	public StaticAnimation lookForward;
-	public StaticAnimation lookUp;
-	public StaticAnimation lookDown;
-	public StaticAnimation lying;
+	public DirectStaticAnimation lookForward;
+	public DirectStaticAnimation lookUp;
+	public DirectStaticAnimation lookDown;
+	public DirectStaticAnimation lying;
 	
-	public AimAnimation(boolean repeatPlay, AnimationAccessor<? extends AimAnimation> animationAccessor, String path1, String path2, String path3, String path4, Armature armature) {
-		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, animationAccessor, path1, path2, path3, path4, armature);
+	public AimAnimation(boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
+		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, accessor, path1, path2, path3, path4, armature);
 	}
 	
-	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> animationAccessor, String path1, String path2, String path3, String path4, Armature armature) {
+	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, repeatPlay, path1, armature);
 		
-		this.lookForward = new StaticAnimation(transitionTime, repeatPlay, path1, armature);
-		this.lookUp = new StaticAnimation(transitionTime, repeatPlay, path2, armature);
-		this.lookDown = new StaticAnimation(transitionTime, repeatPlay, path3, armature);
-		this.lying = new StaticAnimation(transitionTime, repeatPlay, path4, armature);
+		this.lookForward = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path1), armature);
+		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path2), armature);
+		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path3), armature);
+		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path4), armature);
 	}
 	
 	@Override
@@ -94,7 +96,7 @@ public class AimAnimation extends StaticAnimation {
 	}
 	
 	@Override
-	public List<StaticAnimation> getSubAnimations() {
+	public List<AssetAccessor<? extends StaticAnimation>> getSubAnimations() {
 		return List.of(this.lookForward, this.lookUp, this.lookDown, this.lying);
 	}
 	

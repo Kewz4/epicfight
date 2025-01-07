@@ -28,6 +28,7 @@ import yesman.epicfight.api.animation.types.KnockdownAnimation;
 import yesman.epicfight.api.animation.types.LongHitAnimation;
 import yesman.epicfight.api.animation.types.MovementAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
@@ -37,15 +38,15 @@ import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class FakeAnimation extends StaticAnimation implements AnimationAccessor<FakeAnimation> {
+public class EditorAnimation extends StaticAnimation implements AnimationAccessor<EditorAnimation> {
 	private AnimationType animationType;
 	private AnimationClip animationClip;
 	private Map<String, Object> constructorParams = Maps.newLinkedHashMap();
 	private JsonArray rawAnimation;
 	private JsonObject properties = new JsonObject();
 	
-	public FakeAnimation(String path, Armature armature, AnimationClip clip, JsonArray rawAnimation) {
-		super(new ResourceLocation(""), 0.0F, false, "", armature, true);
+	public EditorAnimation(String path, AssetAccessor<? extends Armature> armature, AnimationClip clip, JsonArray rawAnimation) {
+		super(new ResourceLocation(""), 0.0F, false, "", armature);
 		
 		this.animationClip = clip;
 		this.rawAnimation = rawAnimation;
@@ -187,8 +188,8 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 		throw new IllegalStateException("Invalid animation type: " + this.animationType);
 	}
 	
-	public FakeAnimation deepCopy() {
-		FakeAnimation fakeAnimation = new FakeAnimation(this.getParameter("path"), this.armature, this.animationClip, this.rawAnimation);
+	public EditorAnimation deepCopy() {
+		EditorAnimation fakeAnimation = new EditorAnimation(this.getParameter("path"), this.armature, this.animationClip, this.rawAnimation);
 		fakeAnimation.animationType = this.animationType;
 		fakeAnimation.constructorParams.clear();
 		fakeAnimation.constructorParams.putAll(this.constructorParams);
@@ -198,8 +199,8 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 		return fakeAnimation;
 	}
 	
-	@SuppressWarnings("rawtypes")
-	public ClipHoldingAnimation createAnimation() throws Throwable {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public DatapackAnimation<? extends StaticAnimation> createAnimation() throws Throwable {
 		try {
 			if (this.animationType == null) {
 				throw new IllegalStateException("Animation type is not defined.");
@@ -208,14 +209,14 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 			Map<String, Class<?>> map = PARAMETERS.get(this.animationType);
 			Class[] paramClasses = map.values().toArray(new Class[0]);
 			Object[] params = this.constructorParams.values().toArray();
-			Constructor<? extends ClipHoldingAnimation> constructor = switchType(this.animationType).getConstructor(paramClasses);
+			Constructor<? extends DatapackAnimation> constructor = switchType(this.animationType).getConstructor(paramClasses);
 			
-			ClipHoldingAnimation animation = constructor.newInstance(params);
+			DatapackAnimation<? extends StaticAnimation> animation = constructor.newInstance(params);
 			animation.setAnimationClip(this.animationClip);
 			animation.setCreator(this);
 			
 			ClientAnimationDataReader clientDataReader = ClientAnimationDataReader.DESERIALIZER.deserialize(this.properties, null, null);
-			clientDataReader.applyClientData(animation.cast());
+			clientDataReader.applyClientData(animation.get());
 			
 			return animation;
 		} catch (IllegalArgumentException e) {
@@ -240,7 +241,7 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 	}
 	
 	private static final Map<AnimationType, Map<String, Class<?>>> PARAMETERS = Maps.newHashMap();
-	private static final Map<AnimationType, Class<? extends ClipHoldingAnimation>> FAKE_ANIMATIONS = Maps.newHashMap();
+	private static final Map<AnimationType, Class<? extends DatapackAnimation<? extends StaticAnimation>>> FAKE_ANIMATIONS = Maps.newHashMap();
 	
 	static {
 		Map<String, Class<?>> staticAnimationParameters = Maps.newLinkedHashMap();
@@ -270,29 +271,29 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 		PARAMETERS.put(AnimationType.LONG_HIT, hitAnimationParameters);
 		PARAMETERS.put(AnimationType.KNOCK_DOWN, hitAnimationParameters);
 		
-		FAKE_ANIMATIONS.put(AnimationType.STATIC, FakeStaticAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.MOVEMENT, FakeMovementAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.ATTACK, FakeAttackAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.BASIC_ATTACK, FakeBasicAttackAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.DASH_ATTACK, FakeDashAttackAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.AIR_SLASH, FakeAirSlashAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.SHORT_HIT, FakeHitAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.LONG_HIT, FakeLongHitAnimation.class);
-		FAKE_ANIMATIONS.put(AnimationType.KNOCK_DOWN, FakeKnockdownAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.STATIC, DatapackStaticAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.MOVEMENT, DatapackMovementAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.ATTACK, DatapackAttackAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.BASIC_ATTACK, DatapackBasicAttackAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.DASH_ATTACK, DatapackDashAttackAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.AIR_SLASH, DatapackAirSlashAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.SHORT_HIT, DatapackHitAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.LONG_HIT, DatapackLongHitAnimation.class);
+		FAKE_ANIMATIONS.put(AnimationType.KNOCK_DOWN, DatapackKnockdownAnimation.class);
 	}
 	
-	public static Class<? extends ClipHoldingAnimation> switchType(AnimationType cls) {
+	public static Class<? extends DatapackAnimation<? extends StaticAnimation>> switchType(AnimationType cls) {
 		return FAKE_ANIMATIONS.get(cls);
 	}
 	
-	public static Class<? extends ClipHoldingAnimation> switchType(Class<? extends StaticAnimation> cls) {
+	public static Class<? extends DatapackAnimation<? extends StaticAnimation>> switchType(Class<? extends StaticAnimation> cls) {
 		for (AnimationType animType : AnimationType.values()) {
 			if (animType.animCls == cls) {
 				return FAKE_ANIMATIONS.get(animType);
 			}
 		}
 		
-		return FakeStaticAnimation.class;
+		return DatapackStaticAnimation.class;
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -324,7 +325,7 @@ public class FakeAnimation extends StaticAnimation implements AnimationAccessor<
 	}
 
 	@Override
-	public FakeAnimation get() {
+	public EditorAnimation get() {
 		return this;
 	}
 

@@ -18,6 +18,7 @@ import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.FABRIK;
@@ -32,7 +33,7 @@ public class EnderDragonWalkAnimation extends StaticAnimation implements Procedu
 	private final IKInfo[] ikInfos;
 	private Map<String, TransformSheet> tipPointTransform = Maps.newHashMap();
 	
-	public EnderDragonWalkAnimation(float convertTime, AnimationAccessor<? extends EnderDragonWalkAnimation> accessor, Armature armature, IKInfo[] ikInfos) {
+	public EnderDragonWalkAnimation(float convertTime, AnimationAccessor<? extends EnderDragonWalkAnimation> accessor, AssetAccessor<? extends Armature> armature, IKInfo[] ikInfos) {
 		super(convertTime, true, accessor, armature);
 		this.ikInfos = ikInfos;
 	}

@@ -10,6 +10,7 @@ import yesman.epicfight.api.animation.AnimationVariables;
 import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
 import yesman.epicfight.api.animation.property.AnimationEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -17,23 +18,24 @@ public class SelectiveAnimation extends StaticAnimation {
 	public static final IndependentAnimationVariableKey<Integer> PREVIOUS_STATE = AnimationVariables.independent(() -> -1, true);
 	
 	private final Function<LivingEntityPatch<?>, Integer> selector;
-	private final StaticAnimation[] selectOptions;
+	private final List<AssetAccessor<? extends StaticAnimation>> selectOptions;
 	
 	/**
 	 * All animations should have same priority and layer type
 	 */
-	public SelectiveAnimation(Function<LivingEntityPatch<?>, Integer> selector, AnimationAccessor<? extends SelectiveAnimation> accessor, StaticAnimation... selectOptions) {
+	@SafeVarargs
+	public SelectiveAnimation(Function<LivingEntityPatch<?>, Integer> selector, AnimationAccessor<? extends SelectiveAnimation> accessor, AssetAccessor<? extends StaticAnimation>... selectOptions) {
 		super(0.15F, false, accessor, null);
 		
 		this.selector = selector;
-		this.selectOptions = selectOptions;
+		this.selectOptions = List.of(selectOptions);
 		
-		for (StaticAnimation subAnimations : this.selectOptions) {
-			subAnimations.addEvents(SimpleEvent.create((entitypatch, animation, params) -> {
+		for (AssetAccessor<? extends StaticAnimation> subAnimations : this.selectOptions) {
+			subAnimations.get().addEvents(SimpleEvent.create((entitypatch, animation, params) -> {
 				int result = this.selector.apply(entitypatch);
 				
 				if (entitypatch.getAnimator().getVariables().get(PREVIOUS_STATE, this.getAccessor()) != result) {
-					entitypatch.getAnimator().playAnimation(this.selectOptions[result], 0.0F);
+					entitypatch.getAnimator().playAnimation(this.selectOptions.get(result), 0.0F);
 					entitypatch.getAnimator().getVariables().put(PREVIOUS_STATE, this.getAccessor(), result);
 				}
 				
@@ -46,8 +48,8 @@ public class SelectiveAnimation extends StaticAnimation {
 		super.begin(entitypatch);
 		
 		int result = this.selector.apply(entitypatch);
-		entitypatch.getAnimator().playAnimation(this.selectOptions[result], 0.0F);
-		entitypatch.getAnimator().getVariables().put(PREVIOUS_STATE, this, result);
+		entitypatch.getAnimator().playAnimation(this.selectOptions.get(result), 0.0F);
+		entitypatch.getAnimator().getVariables().put(PREVIOUS_STATE, this.getAccessor(), result);
 	}
 	
 	@Override
@@ -61,19 +63,19 @@ public class SelectiveAnimation extends StaticAnimation {
 	}
 	
 	@Override
-	public List<StaticAnimation> getSubAnimations() {
-		return List.of(this.selectOptions);
+	public List<AssetAccessor<? extends StaticAnimation>> getSubAnimations() {
+		return this.selectOptions;
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public Layer.Priority getPriority() {
-		return this.selectOptions[0].getPriority();
+		return this.selectOptions.get(0).get().getPriority();
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public Layer.LayerType getLayerType() {
-		return this.selectOptions[0].getLayerType();
+		return this.selectOptions.get(0).get().getLayerType();
 	}
 }

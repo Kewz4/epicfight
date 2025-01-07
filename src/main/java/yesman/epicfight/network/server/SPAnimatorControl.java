@@ -6,8 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -15,12 +15,12 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class SPAnimatorControl extends AnimatorControlPacket {
 	protected int entityId;
 	
-	public SPAnimatorControl(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, LivingEntityPatch<?> entitypatch) {
-		this(action, animation.id(), entitypatch.getOriginal().getId(), transitionTimeModifier, false);
+	public SPAnimatorControl(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, LivingEntityPatch<?> entitypatch) {
+		this(action, animation.get().getId(), entitypatch.getOriginal().getId(), transitionTimeModifier, false);
 	}
 	
-	public SPAnimatorControl(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, int entityId, float transitionTimeModifier, boolean pause) {
-		this(action, animation.id(), entityId, transitionTimeModifier, pause);
+	public SPAnimatorControl(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, int entityId, float transitionTimeModifier, boolean pause) {
+		this(action, animation.get().getId(), entityId, transitionTimeModifier, pause);
 	}
 	
 	public SPAnimatorControl(AnimatorControlPacket.Action action, int animationId, int entityId, float transitionTimeModifier, boolean pause) {

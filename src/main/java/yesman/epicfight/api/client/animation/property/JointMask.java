@@ -12,8 +12,8 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -24,7 +24,7 @@ public class JointMask {
 	@OnlyIn(Dist.CLIENT)
 	@FunctionalInterface
 	public interface BindModifier {
-		public void modify(LivingEntityPatch<?> entitypatch, Pose baseLayerPose, Pose resultPose, LivingMotion livingMotion, JointMaskEntry wholeEntry, Layer.Priority priority, Joint joint, Map<Layer.Priority, Pair<AnimationAccessor<? extends DynamicAnimation>, Pose>> poses);
+		public void modify(LivingEntityPatch<?> entitypatch, Pose baseLayerPose, Pose resultPose, LivingMotion livingMotion, JointMaskEntry wholeEntry, Layer.Priority priority, Joint joint, Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> poses);
 	}
 	
 	public static final BindModifier KEEP_CHILD_LOCROT = (entitypatch, baseLayerPose, result, livingMotion, wholeEntry, priority, joint, poses) -> {

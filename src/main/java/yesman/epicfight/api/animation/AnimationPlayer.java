@@ -2,11 +2,11 @@ package yesman.epicfight.api.animation;
 
 import com.ibm.icu.impl.Pair;
 
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackTimeModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -17,7 +17,7 @@ public class AnimationPlayer {
 	protected boolean isEnd;
 	protected boolean doNotResetTime;
 	protected boolean reversed;
-	protected AnimationAccessor<? extends DynamicAnimation> play;
+	protected AssetAccessor<? extends DynamicAnimation> play;
 	
 	public AnimationPlayer() {
 		this.setPlayAnimation(Animations.EMPTY_ANIMATION);
@@ -26,7 +26,6 @@ public class AnimationPlayer {
 	public void tick(LivingEntityPatch<?> entitypatch) {
 		DynamicAnimation currentPlay = this.getAnimation().get();
 		DynamicAnimation currentPlayStatic = currentPlay.getRealAnimation().get();
-		
 		this.prevElapsedTime = this.elapsedTime;
 		
 		float playbackSpeed = currentPlay.getPlaySpeed(entitypatch, currentPlay);
@@ -72,7 +71,7 @@ public class AnimationPlayer {
 		this.isEnd = false;
 	}
 	
-	public void setPlayAnimation(AnimationAccessor<? extends DynamicAnimation> animation) {
+	public void setPlayAnimation(AssetAccessor<? extends DynamicAnimation> animation) {
 		if (this.doNotResetTime) {
 			this.doNotResetTime = false;
 			this.isEnd = false;
@@ -112,11 +111,11 @@ public class AnimationPlayer {
 		this.isEnd = false;
 	}
 	
-	public void begin(AnimationAccessor<? extends DynamicAnimation> animation, LivingEntityPatch<?> entitypatch) {
+	public void begin(AssetAccessor<? extends DynamicAnimation> animation, LivingEntityPatch<?> entitypatch) {
 		animation.get().tick(entitypatch);
 	}
 	
-	public AnimationAccessor<? extends DynamicAnimation> getAnimation() {
+	public AssetAccessor<? extends DynamicAnimation> getAnimation() {
 		return this.play;
 	}
 	

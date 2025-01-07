@@ -266,12 +266,12 @@ public class RenderEngine {
 			this.entityRendererCache.put(entityType, this.basicHumanoidRenderer);
 		} else if ("epicfight:custom".equals(rendererName)) {
 			if (compound.getBoolean("humanoid")) {
-				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (Meshes.getOrCreate(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context, entityType));
+				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (Meshes.getOrCreate(ResourceLocation.tryParse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context, entityType));
 			} else {
-				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(Meshes.getOrCreate(this.minecraft.getResourceManager(), new ResourceLocation(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context));
+				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(Meshes.getOrCreate(ResourceLocation.tryParse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context));
 			}
 		} else {
-			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(rendererName));
+			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(rendererName));
 			
 			if (this.entityRendererProvider.containsKey(presetEntityType)) {
 				PatchedEntityRenderer renderer = this.entityRendererProvider.get(presetEntityType).apply(entityType);
@@ -337,7 +337,7 @@ public class RenderEngine {
 	
 	public Set<ResourceLocation> getRendererEntries() {
 		Set<ResourceLocation> availableRendererEntities = this.entityRendererProvider.keySet().stream().map((entityType) -> EntityType.getKey(entityType)).collect(Collectors.toSet());
-		availableRendererEntities.add(new ResourceLocation(EpicFightMod.MODID, "custom"));
+		availableRendererEntities.add(ResourceLocation.tryBuild(EpicFightMod.MODID, "custom"));
 		
 		return availableRendererEntities;
 	}

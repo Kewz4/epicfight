@@ -13,6 +13,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimation
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.collider.Collider;
@@ -25,25 +26,25 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class BasicAttackAnimation extends AttackAnimation {
-	public BasicAttackAnimation(float transitionTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, Armature armature) {
+	public BasicAttackAnimation(float transitionTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(transitionTime, antic, antic, contact, recovery, collider, colliderJoint, accessor, armature);
 	}
 	
-	public BasicAttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, Armature armature) {
+	public BasicAttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature);
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
 		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 	}
 	
-	public BasicAttackAnimation(float transitionTime, float antic, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, Armature armature) {
+	public BasicAttackAnimation(float transitionTime, float antic, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, antic, antic, contact, recovery, hand, collider, colliderJoint, accessor, armature);
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
 		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 	}
 	
-	public BasicAttackAnimation(float transitionTime, AnimationAccessor<? extends BasicAttackAnimation> accessor, Armature armature, Phase... phases) {
+	public BasicAttackAnimation(float transitionTime, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(transitionTime, accessor, armature, phases);
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
@@ -84,7 +85,7 @@ public class BasicAttackAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		super.end(entitypatch, nextAnimation, isEnd);
 		
 		boolean stiffAttack = EpicFightGameRules.STIFF_COMBO_ATTACKS.getRuleValue(entitypatch.getOriginal().level());
@@ -108,7 +109,7 @@ public class BasicAttackAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> dynamicAnimation) {
+	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> dynamicAnimation) {
 		Vec3 vec3 = super.getCoordVector(entitypatch, dynamicAnimation);
 		
 		if (entitypatch.shouldBlockMoving() && this.getProperty(ActionAnimationProperty.CANCELABLE_MOVE).orElse(false)) {

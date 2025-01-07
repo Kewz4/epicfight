@@ -1,7 +1,6 @@
 package yesman.epicfight.client.gui.datapack.screen;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
@@ -160,26 +159,6 @@ public class OffhandValidatorScreen extends Screen {
 				packImporter.newRow();
 				packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(new ResourceLocation(compTag.getString("predicate"))));
 			}
-			
-			this.conditionGrid._setValue(packImporter);
-		}
-		/** Convert an old condition format to new one **/
-		else if (rootTag.contains("offhand_item_compatible_predicate", Tag.TAG_COMPOUND)) {
-			CompoundTag conditionTag = rootTag.getCompound("offhand_item_compatible_predicate");
-			CompoundTag compTag = new CompoundTag();
-			
-			compTag.putString("predicate", EpicFightConditions.convertOldNames(conditionTag.getString("condition")));
-			
-			for (Map.Entry<String, Tag> tag : conditionTag.getCompound("predicate").tags.entrySet()) {
-				compTag.put(tag.getKey(), tag.getValue());
-			}
-			
-			this.conditionList.add(compTag);
-			
-			Grid.PackImporter packImporter = new Grid.PackImporter();
-			
-			packImporter.newRow();
-			packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(new ResourceLocation(compTag.getString("predicate"))));
 			
 			this.conditionGrid._setValue(packImporter);
 		}

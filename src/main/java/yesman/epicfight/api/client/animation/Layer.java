@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.Pose;
@@ -18,12 +17,13 @@ import yesman.epicfight.api.animation.types.LayerOffAnimation;
 import yesman.epicfight.api.animation.types.LinkAnimation;
 import yesman.epicfight.api.animation.types.MainFrameAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class Layer {
-	protected AnimationAccessor<? extends StaticAnimation> nextAnimation;
+	protected AssetAccessor<? extends StaticAnimation> nextAnimation;
 	protected final LinkAnimation linkAnimation;
 	protected final ConcurrentLinkAnimation concurrentLinkAnimation;
 	protected final LayerOffAnimation layerOffAnimation;
@@ -45,7 +45,7 @@ public class Layer {
 		this.disabled = true;
 	}
 	
-	public void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
 		// Get pose before calling end()
 		Pose lastPose = entitypatch.getClientAnimator().getPose(0.0F, false);
 		
@@ -67,7 +67,7 @@ public class Layer {
 	/**
 	 * Plays an animation without a link animation
 	 */
-	public void playAnimationInstantly(AnimationAccessor<? extends DynamicAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
+	public void playAnimationInstantly(AssetAccessor<? extends DynamicAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 		if (!this.animationPlayer.isEnd()) {
 			this.animationPlayer.getAnimation().get().end(entitypatch, nextAnimation, false);
 		}
@@ -75,12 +75,12 @@ public class Layer {
 		this.resume();
 		
 		nextAnimation.get().begin(entitypatch);
-		nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+		nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 		entitypatch.updateEntityState();
 		this.nextAnimation = null;
 	}
 	
-	protected void playLivingAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
+	protected void playLivingAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 		if (!this.animationPlayer.isEnd()) {
 			this.animationPlayer.getAnimation().get().end(entitypatch, nextAnimation, false);
 		}
@@ -96,8 +96,8 @@ public class Layer {
 		}
 	}
 	
-	protected void setLinkAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float transitionTimeModifier) {
-		AnimationAccessor<? extends DynamicAnimation> fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
+	protected void setLinkAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float transitionTimeModifier) {
+		AssetAccessor<? extends DynamicAnimation> fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
 		
 		if (fromAnimation.get() instanceof LinkAnimation linkAnimation) {
 			fromAnimation = linkAnimation.getFromAnimation();
@@ -126,7 +126,7 @@ public class Layer {
 					this.nextAnimation.get().begin(entitypatch);
 				}
 				
-				this.nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+				this.nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 				this.nextAnimation = null;
 			} else {
 				if (this.animationPlayer.getAnimation() instanceof LayerOffAnimation) {
@@ -156,7 +156,7 @@ public class Layer {
 	}
 	
 	public void copyLayerTo(Layer layer, float playbackTime) {
-		AnimationAccessor<? extends DynamicAnimation> animation;
+		AssetAccessor<? extends DynamicAnimation> animation;
 		
 		if (this.animationPlayer.getAnimation() == this.linkAnimation) {
 			this.linkAnimation.copyTo(layer.linkAnimation);
@@ -189,13 +189,13 @@ public class Layer {
 		}
 	}
 	
-	public static void setLayerOffAnimation(AnimationAccessor<? extends DynamicAnimation> currentAnimation, Pose currentPose, LayerOffAnimation offAnimation, float transitionTimeModifier) {
+	public static void setLayerOffAnimation(AssetAccessor<? extends DynamicAnimation> currentAnimation, Pose currentPose, LayerOffAnimation offAnimation, float transitionTimeModifier) {
 		offAnimation.setLastAnimation(currentAnimation.get().getRealAnimation());
 		offAnimation.setLastPose(currentPose);
 		offAnimation.setTotalTime(transitionTimeModifier);
 	}
 	
-	public AnimationAccessor<? extends DynamicAnimation> getNextAnimation() {
+	public AssetAccessor<? extends DynamicAnimation> getNextAnimation() {
 		return this.nextAnimation;
 	}
 	
@@ -231,14 +231,14 @@ public class Layer {
 		}
 		
 		@Override
-		public void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
+		public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
 			this.offCompositeLayerLowerThan(entitypatch, nextAnimation);
 			super.playAnimation(nextAnimation, entitypatch, transitionTimeModifier);
 			this.baseLayerPriority = nextAnimation.get().getPriority();
 		}
 		
 		@Override
-		protected void playLivingAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
+		protected void playLivingAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 			if (!this.animationPlayer.isEnd()) {
 				this.animationPlayer.getAnimation().get().end(entitypatch, nextAnimation, false);
 			}
@@ -263,7 +263,7 @@ public class Layer {
 			}
 		}
 		
-		public void offCompositeLayerLowerThan(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+		public void offCompositeLayerLowerThan(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> nextAnimation) {
 			for (Priority p : nextAnimation.get().getPriority().lowerEquals()) {
 				if (p == Priority.LOWEST && !nextAnimation.get().isMainFrameAnimation()) {
 					continue;

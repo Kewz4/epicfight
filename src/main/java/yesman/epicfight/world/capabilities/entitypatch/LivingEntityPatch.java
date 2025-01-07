@@ -48,6 +48,7 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
@@ -197,7 +198,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void onFall(LivingFallEvent event) {
 		if (!this.getOriginal().level().isClientSide() && this.isAirborneState()) {
-			AnimationAccessor<? extends StaticAnimation> fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
+			AssetAccessor<? extends StaticAnimation> fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
 			
 			if (fallAnimation != null) {
 				this.playAnimationSynchronized(fallAnimation, 0);
@@ -435,7 +436,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * Play an animation after the current animation is finished
 	 * @param animation
 	 */
-	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> animation) {
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.isLogicalClient()) {
 			this.animator.reserveAnimation(animation);
 			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, false, false, false));
@@ -449,7 +450,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param packetProvider
 	 */
-	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
 		this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, packetProvider);
 	}
 	
@@ -457,7 +458,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * Play an animation without convert time
 	 * @param animation
 	 */
-	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> animation) {
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.isLogicalClient()) {
 			this.animator.playAnimationInstantly(animation);
 			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, false, false, false));
@@ -471,7 +472,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param packetProvider
 	 */
-	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
 		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, packetProvider);
 	}
 	
@@ -480,7 +481,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param transitionTimeModifier
 	 */
-	public void playAnimation(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
 		if (this.isLogicalClient()) {
 			this.animator.playAnimation(animation, transitionTimeModifier);
 			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, false));
@@ -495,7 +496,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param transitionTimeModifier
 	 * @param packetProvider
 	 */
-	public void playAnimation(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
 		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
 	}
 	
@@ -506,7 +507,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param transitionTimeModifier
 	 */
-	public void playAnimationSynchronized(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
 		if (this.isLogicalClient()) {
 			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
 		} else {
@@ -521,7 +522,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param transitionTimeModifier
 	 */
-	public void playAnimationSynchronized(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
 		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
 	}
 	
@@ -530,7 +531,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param animation
 	 * @param convertTimeModifier
 	 */
-	public void playAnimationInClientSide(AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+	public void playAnimationInClientSide(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
 		if (this.isLogicalClient()) {
 			this.animator.playAnimation(animation, transitionTimeModifier);
 			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, true, false));
@@ -545,7 +546,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param transitionTimeModifier
 	 * @param packetProvider
 	 */
-	private void handleAnimationPacket(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+	private void handleAnimationPacket(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
 		if (this.isLogicalClient()) {
 			throw new IllegalStateException("Cannot send animation play packet in client side.");
 		}
@@ -594,7 +595,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	@FunctionalInterface
 	public interface ServerAnimationPacketProvider {
-		SPAnimatorControl get(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
+		SPAnimatorControl get(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
 	}
 	
 	protected void playReboundAnimation() {
@@ -630,7 +631,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.original.setDeltaMovement(0.0D, 0.0D, 0.0D);
 		this.cancelKnockback = true;
 		
-		AnimationAccessor<? extends StaticAnimation> hitAnimation = this.getHitAnimation(stunType);
+		AssetAccessor<? extends StaticAnimation> hitAnimation = this.getHitAnimation(stunType);
 		
 		if (hitAnimation != null) {
 			this.playAnimationSynchronized(hitAnimation, stunType.hasFixedStunTime() ? 0.0F : stunTime);
@@ -680,7 +681,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.getAnimator();
 	}
 	
-	public abstract AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType);
+	public abstract AssetAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType);
 	public void aboutToDeath() {}
 	
 	public SoundEvent getWeaponHitSound(InteractionHand hand) {

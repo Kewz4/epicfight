@@ -10,6 +10,7 @@ import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.property.AnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer.Priority;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.gameasset.Animations;
@@ -17,12 +18,13 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class LayerOffAnimation extends DynamicAnimation implements AnimationAccessor<LayerOffAnimation> {
-	private AnimationAccessor<? extends DynamicAnimation> lastAnimation;
+	private AssetAccessor<? extends DynamicAnimation> lastAnimation;
 	private Pose lastPose;
 	private final Priority layerPriority;
 	
 	public LayerOffAnimation(Priority layerPriority) {
 		this.layerPriority = layerPriority;
+		this.animationClip = new AnimationClip();
 	}
 	
 	public void setLastPose(Pose pose) {
@@ -30,7 +32,7 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (entitypatch.isLogicalClient() && isEnd) {
 			entitypatch.getClientAnimator().baseLayer.disableLayer(this.layerPriority);
 		}
@@ -55,7 +57,7 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 		return this.lastAnimation.get().getProperty(propertyType);
 	}
 	
-	public void setLastAnimation(AnimationAccessor<? extends DynamicAnimation> animation) {
+	public void setLastAnimation(AssetAccessor<? extends DynamicAnimation> animation) {
 		this.lastAnimation = animation;
 	}
 	
@@ -65,7 +67,7 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 	}
 	
 	@Override
-	public AnimationAccessor<? extends StaticAnimation> getRealAnimation() {
+	public AssetAccessor<? extends StaticAnimation> getRealAnimation() {
 		return Animations.EMPTY_ANIMATION;
 	}
 

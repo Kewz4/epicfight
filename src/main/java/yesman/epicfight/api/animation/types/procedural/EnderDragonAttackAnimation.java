@@ -21,6 +21,7 @@ import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
@@ -35,7 +36,7 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 	private final IKInfo[] ikInfos;
 	private Map<String, TransformSheet> tipPointTransform;
 	
-	public EnderDragonAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, Collider collider, Joint colliderJoint, AnimationAccessor<? extends EnderDragonAttackAnimation> accessor, Armature armature, IKInfo[] ikInfos) {
+	public EnderDragonAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, Collider collider, Joint colliderJoint, AnimationAccessor<? extends EnderDragonAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, IKInfo[] ikInfos) {
 		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature);
 		this.ikInfos = ikInfos;
 		

@@ -55,6 +55,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.animation.AnimationVariables;
 import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
 import yesman.epicfight.api.animation.AnimationVariables.SharedAnimationVariableKey;
@@ -73,7 +75,7 @@ import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.MovementAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.forgeevent.AnimationRegistryEvent;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.api.utils.TimePairList;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -83,61 +85,60 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerP
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class ParCoolCompat implements ICompatModule {
-	public static StaticAnimation BIPED_CLING_TO_CLIFF;
-	public static StaticAnimation BIPED_CLING_TO_CLIFF_LEFT;
-	public static StaticAnimation BIPED_CLING_TO_CLIFF_RIGHT;
-	public static StaticAnimation BIPED_WALL_JUMP_LEFT_START;
-	public static StaticAnimation BIPED_WALL_JUMP_LEFT;
-	public static StaticAnimation BIPED_WALL_JUMP_RIGHT_START;
-	public static StaticAnimation BIPED_WALL_JUMP_RIGHT;
+	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF;
+	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF_LEFT;
+	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF_RIGHT;
+	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_LEFT_START;
+	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_LEFT;
+	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_RIGHT_START;
+	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_RIGHT;
 	
-	public static StaticAnimation BIPED_DIVE;
-	public static StaticAnimation BIPED_WALL_SLIDE_LEFT;
-	public static StaticAnimation BIPED_WALL_SLIDE_RIGHT;
-	public static StaticAnimation BIPED_WALL_RUN_LEFT;
-	public static StaticAnimation BIPED_WALL_RUN_RIGHT;
-	public static StaticAnimation BIPED_FAST_RUN;
-	public static StaticAnimation BIPED_CAT_LEAP;
-	public static StaticAnimation BIPED_HANG_DOWN;
-	public static StaticAnimation BIPED_HANG_DOWN_ORTHOGONAL;
-	public static StaticAnimation BIPED_JUMP_FROM_BAR;
-	public static StaticAnimation BIPED_SLIDE;
-	public static StaticAnimation BIPED_CRAWL;
+	public static AnimationAccessor<StaticAnimation> BIPED_DIVE;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_SLIDE_LEFT;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_SLIDE_RIGHT;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_RUN_LEFT;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_RUN_RIGHT;
+	public static AnimationAccessor<StaticAnimation> BIPED_FAST_RUN;
+	public static AnimationAccessor<StaticAnimation> BIPED_CAT_LEAP;
+	public static AnimationAccessor<StaticAnimation> BIPED_HANG_DOWN;
+	public static AnimationAccessor<StaticAnimation> BIPED_HANG_DOWN_ORTHOGONAL;
+	public static AnimationAccessor<StaticAnimation> BIPED_JUMP_FROM_BAR;
+	public static AnimationAccessor<StaticAnimation> BIPED_SLIDE;
+	public static AnimationAccessor<MovementAnimation> BIPED_CRAWL;
 	
-	public static StaticAnimation BIPED_CLING_START;
-	public static StaticAnimation BIPED_CLING_MOVE_LEFT;
-	public static StaticAnimation BIPED_CLING_MOVE_LEFT_CORNER1;
-	public static StaticAnimation BIPED_CLING_MOVE_LEFT_CORNER2;
-	public static StaticAnimation BIPED_CLING_MOVE_RIGHT;
-	public static StaticAnimation BIPED_CLING_MOVE_RIGHT_CORNER1;
-	public static StaticAnimation BIPED_CLING_MOVE_RIGHT_CORNER2;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_START;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_LEFT;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_LEFT_CORNER1;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_LEFT_CORNER2;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_RIGHT;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_RIGHT_CORNER1;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLING_MOVE_RIGHT_CORNER2;
 	
-	public static StaticAnimation BIPED_CLIMB_UP;
-	public static StaticAnimation BIPED_VAULT_FORWARD;
-	public static StaticAnimation BIPED_VAULT_LEFT;
-	public static StaticAnimation BIPED_VAULT_RIGHT;
-	public static StaticAnimation BIPED_ROLL_LEFT;
-	public static StaticAnimation BIPED_ROLL_RIGHT;
-	public static StaticAnimation BIPED_HANG_DOWN_INERTIA_ORTHOGONAL;
-	public static StaticAnimation BIPED_HANG_DOWN_INERTIA;
-	public static StaticAnimation BIPED_JUMP_FROM_BAR_START_ORTHOGONAL;
-	public static StaticAnimation BIPED_JUMP_FROM_BAR_START;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_FORWARD_START;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_FORWARD_CROSS2;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_FORWARD_END1;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_FORWARD_END2;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_BACKWARD;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_LEFT;
-	public static StaticAnimation BIPED_HANG_DOWN_MOVE_RIGHT;
+	public static AnimationAccessor<ActionAnimation> BIPED_CLIMB_UP;
+	public static AnimationAccessor<ActionAnimation> BIPED_VAULT_FORWARD;
+	public static AnimationAccessor<ActionAnimation> BIPED_VAULT_LEFT;
+	public static AnimationAccessor<ActionAnimation> BIPED_VAULT_RIGHT;
+	public static AnimationAccessor<ActionAnimation> BIPED_ROLL_LEFT;
+	public static AnimationAccessor<ActionAnimation> BIPED_ROLL_RIGHT;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_INERTIA_ORTHOGONAL;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_INERTIA;
+	public static AnimationAccessor<ActionAnimation> BIPED_JUMP_FROM_BAR_START_ORTHOGONAL;
+	public static AnimationAccessor<ActionAnimation> BIPED_JUMP_FROM_BAR_START;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_FORWARD_START;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_FORWARD_CROSS2;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_FORWARD_END1;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_FORWARD_END2;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_BACKWARD;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_LEFT;
+	public static AnimationAccessor<ActionAnimation> BIPED_HANG_DOWN_MOVE_RIGHT;
 	
-	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, BiFunction<PlayerPatch<?>, ParCoolActionEvent.StartEvent, StaticAnimation>> PARCOOL_ACTION_MAPPING = Maps.newHashMap();
+	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, BiFunction<PlayerPatch<?>, ParCoolActionEvent.StartEvent, AssetAccessor<? extends StaticAnimation>>> PARCOOL_ACTION_MAPPING = Maps.newHashMap();
 	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, BiFunction<PlayerPatch<?>, Action, Boolean>> PARCOOL_ACTION_CANCEL_EVENTS = Maps.newHashMap();
 	
 	private static final ByteBuffer DUMMY_BUFFER = ByteBuffer.allocate(128);
@@ -151,13 +152,10 @@ public class ParCoolCompat implements ICompatModule {
 	public static final IndependentAnimationVariableKey<Vec3> CLING_DESTINATION = AnimationVariables.independent(() -> null, true);
 	
 	public static void registerAnimations(AnimationRegistryEvent event) {
-		event.getRegistryMap().put(ParCool.MOD_ID, ParCoolCompat::build);
-	}
-	
-	private static void build() {
-		HumanoidArmature biped = Armatures.BIPED;
+		event.startsWith(ParCool.MOD_ID);
 		
-		BIPED_CLING_TO_CLIFF = new StaticAnimation(true, "biped/cling_to_cliff", biped)
+		BIPED_CLING_TO_CLIFF = event.nextAccessor("biped/cling_to_cliff", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
@@ -165,18 +163,22 @@ public class ParCoolCompat implements ICompatModule {
 					entitypatch.setYRot(entitypatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT));
 				}, Side.LOCAL_CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, true);
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true));
 		
-		BIPED_CLING_TO_CLIFF_LEFT = new StaticAnimation(true, "biped/cling_to_cliff_left", biped)
+		BIPED_CLING_TO_CLIFF_LEFT = event.nextAccessor("biped/cling_to_cliff_left", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_CLING_TO_CLIFF_RIGHT = new StaticAnimation(true, "biped/cling_to_cliff_right", biped)
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_CLING_TO_CLIFF_RIGHT = event.nextAccessor("biped/cling_to_cliff_right", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_WALL_JUMP_LEFT_START = new ActionAnimation(0.05F, "biped/wall_jump_left_start", biped)
+		BIPED_WALL_JUMP_LEFT_START = event.nextAccessor("biped/wall_jump_left_start", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
@@ -185,14 +187,18 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS,
 					SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT),
-					SimpleEvent.create(ParcoolUtils.WALL_JUMP, Side.CLIENT));
-		BIPED_WALL_JUMP_LEFT = new ActionAnimation(0.15F, 0.7F, "biped/wall_jump_left", biped)
+					SimpleEvent.create(ParcoolUtils.WALL_JUMP, Side.CLIENT)));
+		
+		BIPED_WALL_JUMP_LEFT = event.nextAccessor("biped/wall_jump_left", (accessor) ->
+			new ActionAnimation(0.15F, 0.7F, accessor, Armatures.BIPED)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.addStateRemoveOld(EntityState.TURNING_LOCKED, false)
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
 					KeyBindings.getKeyGrabWall().setDown(false);
-				}, Side.LOCAL_CLIENT));
-		BIPED_WALL_JUMP_RIGHT_START = new ActionAnimation(0.05F, "biped/wall_jump_right_start", biped)
+				}, Side.LOCAL_CLIENT)));
+		
+		BIPED_WALL_JUMP_RIGHT_START = event.nextAccessor("biped/wall_jump_right_start", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
@@ -202,15 +208,18 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS,
 					SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT),
 					SimpleEvent.create(ParcoolUtils.WALL_JUMP, Side.CLIENT)
-				);
-		BIPED_WALL_JUMP_RIGHT = new ActionAnimation(0.15F, 0.7F, "biped/wall_jump_right", biped)
+				));
+		
+		BIPED_WALL_JUMP_RIGHT = event.nextAccessor("biped/wall_jump_right", (accessor) ->
+			new ActionAnimation(0.15F, 0.7F, accessor, Armatures.BIPED)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.addStateRemoveOld(EntityState.TURNING_LOCKED, false)
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
 					KeyBindings.getKeyGrabWall().setDown(false);
-				}, Side.LOCAL_CLIENT));
+				}, Side.LOCAL_CLIENT)));
 		
-		BIPED_DIVE = new StaticAnimation(true, "biped/dive", biped).addProperty(StaticAnimationProperty.POSE_MODIFIER,
+		BIPED_DIVE = event.nextAccessor("biped/dive", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED).addProperty(StaticAnimationProperty.POSE_MODIFIER,
 				new AnimationProperty.PoseModifier() {
 					public static final Vector3f RANDOM_AXIS = new Vector3f();
 					
@@ -234,64 +243,81 @@ public class ParCoolCompat implements ICompatModule {
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_WALL_SLIDE_LEFT = new StaticAnimation(true, "biped/wall_slide_left", biped)
+		BIPED_WALL_SLIDE_LEFT = event.nextAccessor("biped/wall_slide_left", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_WALL_SLIDE_RIGHT = new StaticAnimation(true, "biped/wall_slide_right", biped)
-				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_WALL_RUN_LEFT = new StaticAnimation(true, "biped/wall_run_left", biped)
+		BIPED_WALL_SLIDE_RIGHT = event.nextAccessor("biped/wall_slide_right", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_WALL_RUN_RIGHT = new StaticAnimation(true, "biped/wall_run_right", biped)
-				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_FAST_RUN = new StaticAnimation(true, "biped/fast_run", biped)
+		BIPED_WALL_RUN_LEFT = event.nextAccessor("biped/wall_run_left", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_CAT_LEAP = new StaticAnimation(0.05F, false, "biped/cat_leap", biped)
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_WALL_RUN_RIGHT = event.nextAccessor("biped/wall_run_right", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_FAST_RUN = event.nextAccessor("biped/fast_run", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_CAT_LEAP = event.nextAccessor("biped/cat_leap", (accessor) ->
+			new StaticAnimation(0.05F, false, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addState(EntityState.UPDATE_LIVING_MOTION, false);
+				.addState(EntityState.UPDATE_LIVING_MOTION, false));
 		
-		BIPED_HANG_DOWN = new StaticAnimation(true, "biped/hang_down", biped)
+		BIPED_HANG_DOWN = event.nextAccessor("biped/hang_down", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_HANG_DOWN_ORTHOGONAL = new StaticAnimation(true, "biped/hang_down_orthogonal", biped)
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_HANG_DOWN_ORTHOGONAL = event.nextAccessor("biped/hang_down_orthogonal", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
-		BIPED_JUMP_FROM_BAR = new StaticAnimation(false, "biped/jump_from_bar", biped)
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+		
+		BIPED_JUMP_FROM_BAR = event.nextAccessor("biped/jump_from_bar", (accessor) ->
+			new StaticAnimation(false, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
 					KeyBindings.getKeyHangDown().setDown(false);
-				}, Side.LOCAL_CLIENT));
+				}, Side.LOCAL_CLIENT)));
 		
-		BIPED_SLIDE = new StaticAnimation(true, "biped/slide", biped)
+		BIPED_SLIDE = event.nextAccessor("biped/slide", (accessor) ->
+			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CRAWL = new MovementAnimation(true, "biped/crawl", biped)
+		BIPED_CRAWL = event.nextAccessor("biped/crawl", (accessor) ->
+			new MovementAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					return speed;
-				});
+				}));
 		
-		BIPED_CLING_START = new ActionAnimation(0.05F, "biped/cling_start", biped)
+		BIPED_CLING_START = event.nextAccessor("biped/cling_start", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -303,9 +329,10 @@ public class ParCoolCompat implements ICompatModule {
 					return entitypatch.getAnimator().getVariables().get(CLING_DESTINATION, BIPED_CLING_START);
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_LEFT = new ActionAnimation(0.1F, "biped/cling_move_left", biped)
+		BIPED_CLING_MOVE_LEFT = event.nextAccessor("biped/cling_move_left", (accessor) ->
+			new ActionAnimation(0.1F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE)
@@ -317,9 +344,10 @@ public class ParCoolCompat implements ICompatModule {
 					SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(com.alrex.parcool.api.SoundEvents.CLING_TO_CLIFF.get()),
 					SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT)
 				)
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_LEFT_CORNER1 = new ActionAnimation(0.1F, "biped/cling_move_left_corner1", biped)
+		BIPED_CLING_MOVE_LEFT_CORNER1 = event.nextAccessor("biped/cling_move_left_corner1", (accessor) ->
+			new ActionAnimation(0.1F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -329,8 +357,7 @@ public class ParCoolCompat implements ICompatModule {
 						return entitypatch.getYRot();
 					}
 					
-					System.out.println(self.getCoord());
-					entitypatch.getAnimator().getPlayerFor(self).getElapsedTime();
+					entitypatch.getAnimator().getPlayerFor(self.getAccessor()).getElapsedTime();
 					
 					return 0.0F;
 				})
@@ -341,9 +368,10 @@ public class ParCoolCompat implements ICompatModule {
 					return entitypatch.getAnimator().getVariables().get(CLING_DESTINATION, BIPED_CLING_MOVE_LEFT_CORNER1);
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_LEFT_CORNER2 = new ActionAnimation(0.1F, "biped/cling_move_left_corner2", biped)
+		BIPED_CLING_MOVE_LEFT_CORNER2 = event.nextAccessor("biped/cling_move_left_corner2", (accessor) ->
+			new ActionAnimation(0.1F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -355,9 +383,10 @@ public class ParCoolCompat implements ICompatModule {
 					return entitypatch.getAnimator().getVariables().get(CLING_DESTINATION, BIPED_CLING_MOVE_LEFT_CORNER2);
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_RIGHT = new ActionAnimation(0.1F, "biped/cling_move_right", biped)
+		BIPED_CLING_MOVE_RIGHT = event.nextAccessor("biped/cling_move_right", (accessor) ->
+			new ActionAnimation(0.1F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE)
@@ -369,9 +398,10 @@ public class ParCoolCompat implements ICompatModule {
 					SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(com.alrex.parcool.api.SoundEvents.CLING_TO_CLIFF.get()),
 					SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT)
 				)
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_RIGHT_CORNER1 = new ActionAnimation(0.05F, "biped/cling_move_right_corner1", biped)
+		BIPED_CLING_MOVE_RIGHT_CORNER1 = event.nextAccessor("biped/cling_move_right_corner1", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -382,10 +412,10 @@ public class ParCoolCompat implements ICompatModule {
 					}
 					
 					Quaternionf qInitRot = self.getCoord().getInterpolatedRotation(0.0F);
-					Quaternionf qRot = self.getCoord().getInterpolatedRotation(entitypatch.getAnimator().getPlayerFor(self).getElapsedTime());
+					Quaternionf qRot = self.getCoord().getInterpolatedRotation(entitypatch.getAnimator().getPlayerFor(self.getAccessor()).getElapsedTime());
 					Vector3f initAngles = qInitRot.getEulerAnglesXYZ(new Vector3f());
 					Vector3f angles = qRot.getEulerAnglesXYZ(new Vector3f());
-					float initRot = entitypatch.getAnimator().getVariables().get(CLIFF_START_Y_ROT, self.getOwner());
+					float initRot = entitypatch.getAnimator().getVariables().get(CLIFF_START_Y_ROT, self.getRealAnimation());
 					
 					return initRot + (float)(Math.toDegrees(angles.y) - Math.toDegrees(initAngles.y));
 				})
@@ -396,9 +426,10 @@ public class ParCoolCompat implements ICompatModule {
 					return entitypatch.getAnimator().getVariables().get(CLING_DESTINATION, BIPED_CLING_MOVE_RIGHT_CORNER1);
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLING_MOVE_RIGHT_CORNER2 = new ActionAnimation(0.05F, "biped/cling_move_right_corner2", biped)
+		BIPED_CLING_MOVE_RIGHT_CORNER2 = event.nextAccessor("biped/cling_move_right_corner2", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -410,9 +441,10 @@ public class ParCoolCompat implements ICompatModule {
 					return entitypatch.getAnimator().getVariables().get(CLING_DESTINATION, BIPED_CLING_MOVE_RIGHT_CORNER2);
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_CLIMB_UP = new ActionAnimation(0.15F, "biped/climb_up", biped)
+		BIPED_CLIMB_UP = event.nextAccessor("biped/climb_up", (accessor) ->
+			new ActionAnimation(0.15F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
@@ -426,33 +458,37 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
 					KeyBindings.getKeyGrabWall().setDown(false);
-				}, Side.LOCAL_CLIENT));
+				}, Side.LOCAL_CLIENT)));
 		
-		BIPED_VAULT_FORWARD = new ActionAnimation(0.1F, 0.3F, "biped/vault_forward", biped)
+		BIPED_VAULT_FORWARD = event.nextAccessor("biped/vault_forward", (accessor) ->
+			new ActionAnimation(0.1F, 0.3F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_VAULT_LEFT = new ActionAnimation(0.1F, 0.3F, "biped/vault_left", biped)
+		BIPED_VAULT_LEFT = event.nextAccessor("biped/vault_left", (accessor) ->
+			new ActionAnimation(0.1F, 0.3F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_VAULT_RIGHT = new ActionAnimation(0.1F, 0.3F, "biped/vault_right", biped)
+		BIPED_VAULT_RIGHT = event.nextAccessor("biped/vault_right", (accessor) ->
+			new ActionAnimation(0.1F, 0.3F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_INERTIA = new ActionAnimation(0.05F, 1.35F, "biped/hang_down_inertia", biped)
+		BIPED_HANG_DOWN_INERTIA = event.nextAccessor("biped/hang_down_inertia", (accessor) ->
+			new ActionAnimation(0.05F, 1.35F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -461,9 +497,10 @@ public class ParCoolCompat implements ICompatModule {
 					return ParcoolUtils.getHangableBars(entitypatch.getOriginal()); 
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_INERTIA_ORTHOGONAL = new ActionAnimation(0.05F, 1.35F, "biped/hang_down_inertia_orthogonal", biped)
+		BIPED_HANG_DOWN_INERTIA_ORTHOGONAL = event.nextAccessor("biped/hang_down_inertia_orthogonal", (accessor) ->
+			new ActionAnimation(0.05F, 1.35F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_ORIGIN_AS_DESTINATION)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
 				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
@@ -478,9 +515,10 @@ public class ParCoolCompat implements ICompatModule {
 					}
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_JUMP_FROM_BAR_START_ORTHOGONAL = new ActionAnimation(0.05F, "biped/jump_from_bar_start_orthogonal", biped)
+		BIPED_JUMP_FROM_BAR_START_ORTHOGONAL = event.nextAccessor("biped/jump_from_bar_start_orthogonal", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
@@ -500,9 +538,10 @@ public class ParCoolCompat implements ICompatModule {
 						
 						entitypatch.getAnimator().reserveAnimation(BIPED_JUMP_FROM_BAR);
 					}
-				, Side.CLIENT));
+				, Side.CLIENT)));
 		
-		BIPED_JUMP_FROM_BAR_START = new ActionAnimation(0.05F, "biped/jump_from_bar_start", biped)
+		BIPED_JUMP_FROM_BAR_START = event.nextAccessor("biped/jump_from_bar_start", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
@@ -524,86 +563,94 @@ public class ParCoolCompat implements ICompatModule {
 							entitypatch.getAnimator().reserveAnimation(BIPED_JUMP_FROM_BAR);
 						}
 					}
-				, Side.CLIENT));
+				, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_FORWARD_START = new ActionAnimation(0.05F, "biped/hang_down_move_start", biped)
+		BIPED_HANG_DOWN_MOVE_FORWARD_START = event.nextAccessor("biped/hang_down_move_start", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, AnimationEvent.SimpleEvent.<AnimationEvent.E1<Boolean>>create((entitypatch, animation, params) -> {
-					if (params.first() && entitypatch instanceof PlayerPatch playerpatch && playerpatch.isBattleMode()) {
+					if (params.first() && entitypatch instanceof PlayerPatch<?> playerpatch && playerpatch.isBattleMode()) {
 						if (KeyBindings.getKeyForward().isDown() && KeyBindings.getKeyHangDown().isDown()) {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1);
 						} else {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_END1);
 						}
 					}
-				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1 = new ActionAnimation(0.05F, "biped/hang_down_move_cross1", biped)
+		BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1 = event.nextAccessor("biped/hang_down_move_cross1", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, AnimationEvent.SimpleEvent.<AnimationEvent.E1<Boolean>>create((entitypatch, animation, params) -> {
-					if (params.first() && entitypatch instanceof PlayerPatch playerpatch && playerpatch.isBattleMode()) {
+					if (params.first() && entitypatch instanceof PlayerPatch<?> playerpatch && playerpatch.isBattleMode()) {
 						if (KeyBindings.getKeyForward().isDown() && KeyBindings.getKeyHangDown().isDown()) {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_CROSS2);
 						} else {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_END2);
 						}
 					}
-				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_FORWARD_CROSS2 = new ActionAnimation(0.05F, "biped/hang_down_move_cross2", biped)
+		BIPED_HANG_DOWN_MOVE_FORWARD_CROSS2 = event.nextAccessor("biped/hang_down_move_cross2", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, AnimationEvent.SimpleEvent.<AnimationEvent.E1<Boolean>>create((entitypatch, animation, params) -> {
-					if (params.first() && entitypatch instanceof PlayerPatch playerpatch && playerpatch.isBattleMode()) {
+					if (params.first() && entitypatch instanceof PlayerPatch<?> playerpatch && playerpatch.isBattleMode()) {
 						if (KeyBindings.getKeyForward().isDown() && KeyBindings.getKeyHangDown().isDown()) {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_CROSS1);
 						} else {
 							playerpatch.reserveAnimation(BIPED_HANG_DOWN_MOVE_FORWARD_END1);
 						}
 					}
-				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				}, Side.LOCAL_CLIENT), SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_FORWARD_END1 = new ActionAnimation(0.05F, "biped/hang_down_move_end1", biped)
+		BIPED_HANG_DOWN_MOVE_FORWARD_END1 = event.nextAccessor("biped/hang_down_move_end1", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_FORWARD_END2 = new ActionAnimation(0.05F, "biped/hang_down_move_end2", biped)
+		BIPED_HANG_DOWN_MOVE_FORWARD_END2 = event.nextAccessor("biped/hang_down_move_end2", (accessor) ->
+			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_BACKWARD = new ActionAnimation(0.15F, 0.6F, "biped/hang_down_move_backward", biped)
+		BIPED_HANG_DOWN_MOVE_BACKWARD = event.nextAccessor("biped/hang_down_move_backward", (accessor) ->
+			new ActionAnimation(0.15F, 0.6F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_LEFT = new ActionAnimation(0.15F, 0.45F, "biped/hang_down_move_left", biped)
+		BIPED_HANG_DOWN_MOVE_LEFT = event.nextAccessor("biped/hang_down_move_left", (accessor) ->
+			new ActionAnimation(0.15F, 0.45F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_HANG_DOWN_MOVE_RIGHT = new ActionAnimation(0.15F, 0.45F, "biped/hang_down_move_right", biped)
+		BIPED_HANG_DOWN_MOVE_RIGHT = event.nextAccessor("biped/hang_down_move_right", (accessor) ->
+			new ActionAnimation(0.15F, 0.45F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(-1.0F, 10.0F))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(SoundEvents.CHAIN_STEP), SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
 		PARCOOL_ACTION_MAPPING.clear();
 		PARCOOL_ACTION_CANCEL_EVENTS.clear();
 		
-		PARCOOL_ACTION_MAPPING.put(ClimbUp.class, (playerpatch, event) -> BIPED_CLIMB_UP);
-		PARCOOL_ACTION_MAPPING.put(CatLeap.class, (playerpatch, event) -> {
-			Parkourability parkourability = Parkourability.get(event.getPlayer());
+		PARCOOL_ACTION_MAPPING.put(ClimbUp.class, (playerpatch, startEvent) -> BIPED_CLIMB_UP);
+		PARCOOL_ACTION_MAPPING.put(CatLeap.class, (playerpatch, startEvent) -> {
+			Parkourability parkourability = Parkourability.get(startEvent.getPlayer());
 			
 			if (parkourability.get(Slide.class).isDoing() || parkourability.get(Crawl.class).isDoing()) {
 				return null;
@@ -612,9 +659,9 @@ public class ParCoolCompat implements ICompatModule {
 			return BIPED_CAT_LEAP;
 		});
 		
-		PARCOOL_ACTION_MAPPING.put(HangDown.class, (playerpatch, event) -> {
-			HangDown action = ((HangDown)event.getAction());
-			float yRot = ParcoolUtils.idealYRotForHanging(action, event.getPlayer());
+		PARCOOL_ACTION_MAPPING.put(HangDown.class, (playerpatch, startEvent) -> {
+			HangDown action = ((HangDown)startEvent.getAction());
+			float yRot = ParcoolUtils.idealYRotForHanging(action, startEvent.getPlayer());
 			
 			if (action.isOrthogonalToBar()) {
 				playerpatch.setModelYRot(yRot, true);
@@ -625,8 +672,8 @@ public class ParCoolCompat implements ICompatModule {
 			}
 		});
 		
-		PARCOOL_ACTION_MAPPING.put(Vault.class, (playerpatch, event) -> {
-			Vault.AnimationType type = ((Vault)event.getAction()).getCurrentAnimation();
+		PARCOOL_ACTION_MAPPING.put(Vault.class, (playerpatch, startEvent) -> {
+			Vault.AnimationType type = ((Vault)startEvent.getAction()).getCurrentAnimation();
 			
 			switch (type) {
 			case KONG_VAULT -> {
@@ -644,7 +691,7 @@ public class ParCoolCompat implements ICompatModule {
 			}
 		});
 		
-		PARCOOL_ACTION_MAPPING.put(ClingToCliff.class, (playerpatch, event) -> {
+		PARCOOL_ACTION_MAPPING.put(ClingToCliff.class, (playerpatch, startEvent) -> {
 			/**
 			Vec3 wallVec = ParcoolUtils.getGrabbableWall(playerpatch.getOriginal());
 			
@@ -709,7 +756,7 @@ public class ParCoolCompat implements ICompatModule {
 		});
 		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(ClingToCliff.class, (playerpatch, action) -> {
-			DynamicAnimation nowPlaying = playerpatch.getAnimator().getPlayerFor(null).getAnimation().getRealAnimation();
+			AssetAccessor<? extends StaticAnimation> nowPlaying = playerpatch.getAnimator().getPlayerFor(null).getAnimation().get().getRealAnimation();
 			
 			if (nowPlaying == BIPED_CLING_START || nowPlaying == BIPED_CLIMB_UP) {
 				return true;
@@ -783,7 +830,7 @@ public class ParCoolCompat implements ICompatModule {
 			PlayerPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), PlayerPatch.class);
 			
 			if (entitypatch != null && entitypatch.isLogicalClient() && entitypatch.isBattleMode() && PARCOOL_ACTION_MAPPING.containsKey(event.getAction().getClass())) {
-				StaticAnimation animation = PARCOOL_ACTION_MAPPING.get(event.getAction().getClass()).apply(entitypatch, event);
+				AssetAccessor<? extends StaticAnimation> animation = PARCOOL_ACTION_MAPPING.get(event.getAction().getClass()).apply(entitypatch, event);
 				
 				if (animation != null) {
 					entitypatch.getAnimator().playAnimation(animation, 0.0F);
@@ -1175,7 +1222,7 @@ public class ParCoolCompat implements ICompatModule {
 						currentAdjacentWall.y == 0 ? Math.floor(playerLocation.z() + (canKeepMoving ? coordVec.z : 0.0F)) + 0.5D : playerLocation.z()
 					);
 					
-					StaticAnimation moveAnimation = (clingType == ClingType.MOVE_LEFT ? BIPED_CLING_MOVE_LEFT : BIPED_CLING_MOVE_RIGHT);
+					AnimationAccessor<? extends StaticAnimation> moveAnimation = (clingType == ClingType.MOVE_LEFT ? BIPED_CLING_MOVE_LEFT : BIPED_CLING_MOVE_RIGHT);
 					
 					//System.out.println(destination +" "+ destination.subtract(playerLocation).horizontalDistance());
 					
@@ -1184,7 +1231,7 @@ public class ParCoolCompat implements ICompatModule {
 					//System.out.println(destination +" "+ playerLocation + " distance: " + distance);
 					
 					if (distance < 0.1D) {
-						StaticAnimation cornerMoveAnimation = null;
+						AnimationAccessor<? extends StaticAnimation> cornerMoveAnimation = null;
 						
 						if (shouldTurnInside) {
 							cornerMoveAnimation = (clingType == ClingType.MOVE_LEFT ? BIPED_CLING_MOVE_LEFT_CORNER1 : BIPED_CLING_MOVE_RIGHT_CORNER1);
@@ -1215,7 +1262,7 @@ public class ParCoolCompat implements ICompatModule {
 					
 					return true;
 				} else {
-					StaticAnimation moveAnimation = (clingType == ClingType.MOVE_LEFT ? BIPED_CLING_MOVE_LEFT : BIPED_CLING_MOVE_RIGHT);
+					AnimationAccessor<? extends StaticAnimation> moveAnimation = (clingType == ClingType.MOVE_LEFT ? BIPED_CLING_MOVE_LEFT : BIPED_CLING_MOVE_RIGHT);
 					
 					playerpatch.setModelYRot(playerpatch.getYRot(), true);
 					playerpatch.playAnimationInClientSide(moveAnimation, 0.0F);

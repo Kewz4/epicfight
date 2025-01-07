@@ -36,6 +36,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimation
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
@@ -60,15 +61,15 @@ public class AttackAnimation extends ActionAnimation {
 	
 	public final Phase[] phases;
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, Armature armature) {
+	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, Armature armature) {
+	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, AnimationAccessor<? extends AttackAnimation> accessor, Armature armature, Phase... phases) {
+	public AttackAnimation(float convertTime, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, accessor, armature);
 		
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
@@ -89,14 +90,14 @@ public class AttackAnimation extends ActionAnimation {
 	/**
 	 * For internal use
 	 */
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
+	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
 	}
 	
 	/**
 	 * For internal use
 	 */
-	public AttackAnimation(float convertTime, String path, Armature armature, Phase... phases) {
+	public AttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, 0.0F, path, armature);
 		
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
@@ -144,7 +145,7 @@ public class AttackAnimation extends ActionAnimation {
 	}
 	
 	@Override
-	public void linkTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> linkAnimation) {
+	public void linkTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> linkAnimation) {
 		super.linkTick(entitypatch, linkAnimation);
 		
 		if (!entitypatch.isLogicalClient() && entitypatch instanceof MobPatch<?> mobpatch) {
@@ -178,7 +179,7 @@ public class AttackAnimation extends ActionAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		super.end(entitypatch, nextAnimation, isEnd);
 		
 		if (entitypatch instanceof ServerPlayerPatch playerpatch && isEnd) {
@@ -194,7 +195,7 @@ public class AttackAnimation extends ActionAnimation {
 		}
 	}
 	
-	protected void attackTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
+	protected void attackTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 		float prevElapsedTime = player.getPrevElapsedTime();
 		float elapsedTime = player.getElapsedTime();

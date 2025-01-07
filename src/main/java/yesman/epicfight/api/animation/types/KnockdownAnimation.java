@@ -3,6 +3,7 @@ package yesman.epicfight.api.animation.types;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageTypes;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
@@ -10,7 +11,7 @@ import yesman.epicfight.world.damagesource.EpicFightDamageType;
 import yesman.epicfight.world.damagesource.StunType;
 
 public class KnockdownAnimation extends LongHitAnimation {
-	public KnockdownAnimation(float convertTime, AnimationAccessor<? extends KnockdownAnimation> accessor, Armature armature) {
+	public KnockdownAnimation(float convertTime, AnimationAccessor<? extends KnockdownAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint
@@ -36,7 +37,7 @@ public class KnockdownAnimation extends LongHitAnimation {
 	/**
 	 * For internal use
 	 */
-	public KnockdownAnimation(float convertTime, String path, Armature armature) {
+	public KnockdownAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, path, armature);
 		
 		this.stateSpectrumBlueprint

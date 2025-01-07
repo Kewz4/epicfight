@@ -14,8 +14,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -26,7 +26,7 @@ public class SPChangeLivingMotion {
 	private int count;
 	private final boolean setChangesAsDefault;
 	private List<LivingMotion> motionList = Lists.newArrayList();
-	private List<AnimationAccessor<? extends StaticAnimation>> animationList = Lists.newArrayList();
+	private List<AssetAccessor<? extends StaticAnimation>> animationList = Lists.newArrayList();
 	
 	public SPChangeLivingMotion() {
 		this(-1);
@@ -46,7 +46,7 @@ public class SPChangeLivingMotion {
 		this.setChangesAsDefault = setChangesAsDefault;
 	}
 	
-	public SPChangeLivingMotion putPair(LivingMotion motion, AnimationAccessor<? extends StaticAnimation> animation) {
+	public SPChangeLivingMotion putPair(LivingMotion motion, AssetAccessor<? extends StaticAnimation> animation) {
 		if (animation != null) {
 			this.motionList.add(motion);
 			this.animationList.add(animation);
@@ -56,7 +56,7 @@ public class SPChangeLivingMotion {
 		return this;
 	}
 	
-	public void putEntries(Set<Map.Entry<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> motionSet) {
+	public void putEntries(Set<Map.Entry<LivingMotion, AssetAccessor<? extends StaticAnimation>>> motionSet) {
 		motionSet.forEach((entry) -> {
 			if (entry.getValue() != null) {
 				this.motionList.add(entry.getKey());
@@ -69,7 +69,7 @@ public class SPChangeLivingMotion {
 	public static SPChangeLivingMotion fromBytes(FriendlyByteBuf buf) {
 		SPChangeLivingMotion msg = new SPChangeLivingMotion(buf.readInt(), buf.readInt(), buf.readBoolean());
 		List<LivingMotion> motionList = Lists.newArrayList();
-		List<AnimationAccessor<? extends StaticAnimation>> animationList = Lists.newArrayList();
+		List<AssetAccessor<? extends StaticAnimation>> animationList = Lists.newArrayList();
 		
 		for (int i = 0; i < msg.count; i++) {
 			motionList.add(LivingMotion.ENUM_MANAGER.getOrThrow(buf.readInt()));
@@ -99,8 +99,8 @@ public class SPChangeLivingMotion {
 			buf.writeInt(motion.universalOrdinal());
 		}
 		
-		for (AnimationAccessor<? extends StaticAnimation> anim : msg.animationList) {
-			buf.writeInt(anim.id());
+		for (AssetAccessor<? extends StaticAnimation> anim : msg.animationList) {
+			buf.writeInt(anim.get().getId());
 		}
 	}
 	

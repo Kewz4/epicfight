@@ -11,6 +11,7 @@ import yesman.epicfight.api.animation.property.AnimationEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.gameasset.Animations;
@@ -28,11 +29,11 @@ public class DodgeAnimation extends ActionAnimation {
 		return AttackResult.ResultType.SUCCESS;
 	};
 	
-	public DodgeAnimation(float convertTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, Armature armature) {
+	public DodgeAnimation(float convertTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, 10.0F, accessor, width, height, armature);
 	}
 	
-	public DodgeAnimation(float convertTime, float delayTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, Armature armature) {
+	public DodgeAnimation(float convertTime, float delayTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, delayTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()

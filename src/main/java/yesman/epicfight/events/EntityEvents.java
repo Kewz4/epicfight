@@ -45,9 +45,9 @@ import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.event.entity.player.PlayerFlyableFallEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
@@ -281,7 +281,7 @@ public class EntityEvents {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 				
 				if (entitypatch != null && !entitypatch.getEntityState().inaction()) {
-					AnimationAccessor<? extends StaticAnimation> fallAnimation = entitypatch.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, entitypatch.getHitAnimation(StunType.FALL));
+					AssetAccessor<? extends StaticAnimation> fallAnimation = entitypatch.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, entitypatch.getHitAnimation(StunType.FALL));
 					
 					if (fallAnimation != null) {
 						entitypatch.playAnimationSynchronized(fallAnimation, 0);
@@ -546,7 +546,7 @@ public class EntityEvents {
 		
 		if (entitypatch != null && entitypatch.isLogicalClient()) {
 			if (!entitypatch.getEntityState().inaction() && !event.getEntity().isInWater()) {
-				AnimationAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
+				AssetAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
 				entitypatch.playAnimationInClientSide(jumpAnimation, 0.0F);
 			}
 		}

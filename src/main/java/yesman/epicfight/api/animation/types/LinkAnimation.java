@@ -13,14 +13,19 @@ import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class LinkAnimation extends DynamicAnimation implements AnimationAccessor<LinkAnimation> {
-	protected AnimationAccessor<? extends DynamicAnimation> fromAnimation;
-	protected AnimationAccessor<? extends StaticAnimation> toAnimation;
+	protected AssetAccessor<? extends DynamicAnimation> fromAnimation;
+	protected AssetAccessor<? extends StaticAnimation> toAnimation;
 	protected float nextStartTime;
+	
+	public LinkAnimation() {
+		this.animationClip = new AnimationClip();
+	}
 	
 	@Override
 	public void tick(LivingEntityPatch<?> entitypatch) {
@@ -28,7 +33,7 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (!isEnd) {
 			this.toAnimation.get().end(entitypatch, nextAnimation, isEnd);
 		} else {
@@ -107,12 +112,12 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 		return this.toAnimation.get().getPlaySpeed(entitypatch, animation);
 	}
 	
-	public void setConnectedAnimations(AnimationAccessor<? extends DynamicAnimation> from, AnimationAccessor<? extends StaticAnimation> to) {
+	public void setConnectedAnimations(AssetAccessor<? extends DynamicAnimation> from, AssetAccessor<? extends StaticAnimation> to) {
 		this.fromAnimation = from.get().getRealAnimation();
 		this.toAnimation = to;
 	}
 	
-	public AnimationAccessor<? extends StaticAnimation> getNextAnimation() {
+	public AssetAccessor<? extends StaticAnimation> getNextAnimation() {
 		return this.toAnimation;
 	}
 	
@@ -148,11 +153,11 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	}
 	
 	@Override
-	public AnimationAccessor<? extends StaticAnimation> getRealAnimation() {
+	public AssetAccessor<? extends StaticAnimation> getRealAnimation() {
 		return this.toAnimation;
 	}
 		
-	public AnimationAccessor<? extends DynamicAnimation> getFromAnimation() {
+	public AssetAccessor<? extends DynamicAnimation> getFromAnimation() {
 		return this.fromAnimation;
 	} 
 	

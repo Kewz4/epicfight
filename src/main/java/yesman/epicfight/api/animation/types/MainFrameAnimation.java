@@ -3,6 +3,7 @@ package yesman.epicfight.api.animation.types;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
@@ -12,11 +13,11 @@ import yesman.epicfight.world.entity.eventlistener.ActionEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 public class MainFrameAnimation extends StaticAnimation {
-	public MainFrameAnimation(float convertTime, AnimationAccessor<? extends MainFrameAnimation> accessor, Armature armature) {
+	public MainFrameAnimation(float convertTime, AnimationAccessor<? extends MainFrameAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, false, accessor, armature);
 	}
 	
-	public MainFrameAnimation(float convertTime, String path, Armature armature) {
+	public MainFrameAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, false, path, armature);
 	}
 	

@@ -2,11 +2,11 @@ package yesman.epicfight.api.animation;
 
 import com.mojang.datafixers.util.Pair;
 
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.LinkAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -18,7 +18,7 @@ public class ServerAnimator extends Animator {
 	private final LinkAnimation linkAnimation;
 	public final AnimationPlayer animationPlayer;
 	
-	protected AnimationAccessor<? extends DynamicAnimation> nextAnimation;
+	protected AssetAccessor<? extends DynamicAnimation> nextAnimation;
 	public boolean hardPaused = false;
 	public boolean softPaused = false;
 	
@@ -31,7 +31,7 @@ public class ServerAnimator extends Animator {
 	
 	/** Play an animation by animation instance **/
 	@Override
-	public void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier) {
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier) {
 		this.softPaused = false;
 		Pose lastPose = this.animationPlayer.getAnimation().get().getPoseByTime(this.entitypatch, 0.0F, 0.0F);
 		
@@ -50,7 +50,7 @@ public class ServerAnimator extends Animator {
 	}
 	
 	@Override
-	public void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> nextAnimation) {
 		this.softPaused = false;
 		
 		if (!this.animationPlayer.isEnd()) {
@@ -58,12 +58,12 @@ public class ServerAnimator extends Animator {
 		}
 		
 		nextAnimation.get().begin(this.entitypatch);
-		nextAnimation.putOnPlayer(this.animationPlayer, this.entitypatch);
+		nextAnimation.get().putOnPlayer(this.animationPlayer, this.entitypatch);
 		this.entitypatch.updateEntityState();
 	}
 	
 	@Override
-	public void reserveAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation) {
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation) {
 		this.softPaused = false;
 		
 		if (!this.animationPlayer.isEnd && this.animationPlayer.getAnimation() != null) {
@@ -93,7 +93,7 @@ public class ServerAnimator extends Animator {
 					this.nextAnimation.get().begin(this.entitypatch);
 				}
 				
-				this.nextAnimation.putOnPlayer(this.animationPlayer, this.entitypatch);
+				this.nextAnimation.get().putOnPlayer(this.animationPlayer, this.entitypatch);
 				this.nextAnimation = null;
 			}
 		} else {
@@ -107,7 +107,7 @@ public class ServerAnimator extends Animator {
 	}
 	
 	@Override
-	public AnimationPlayer getPlayerFor(AnimationAccessor<? extends DynamicAnimation> playingAnimation) {
+	public AnimationPlayer getPlayerFor(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
 		return this.animationPlayer;
 	}
 	

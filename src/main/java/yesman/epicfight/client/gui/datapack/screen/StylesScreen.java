@@ -3,7 +3,6 @@ package yesman.epicfight.client.gui.datapack.screen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -235,19 +234,6 @@ public class StylesScreen extends Screen {
 				
 				if (caseComp.contains("conditions")) {
 					caseComp$2.put("conditions", caseComp.get("conditions"));
-				}
-				/** Convert an old condition format to new one **/
-				else if (caseComp.contains("condition")) {
-					ListTag conditionsList = new ListTag();
-					CompoundTag conditionTag = new CompoundTag();
-					conditionTag.putString("predicate", EpicFightConditions.convertOldNames(caseComp.getString("condition")));
-					
-					for (Map.Entry<String, Tag> tag : caseComp.getCompound("predicate").tags.entrySet()) {
-						conditionTag.put(tag.getKey(), tag.getValue());
-					}
-					
-					conditionsList.add(conditionTag);
-					caseComp$2.put("conditions", conditionsList);
 				}
 				
 				packImporter.newRow();

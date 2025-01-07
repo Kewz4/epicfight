@@ -9,16 +9,16 @@ import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraftforge.common.MinecraftForge;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public abstract class Animator {
-	protected final Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> livingAnimations = Maps.newHashMap();
+	protected final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingAnimations = Maps.newHashMap();
 	protected final AnimationVariables animationVariables = new AnimationVariables(this);
 	protected final LivingEntityPatch<?> entitypatch;
 	
@@ -32,7 +32,7 @@ public abstract class Animator {
 	 * @param nextAnimation
 	 * @param transitionTimeModifier extends the transition time if positive value provided, or starts in time as an amount of time (e.g. -0.1F starts in 0.1F frame time)
 	 */
-	public abstract void playAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier);
+	public abstract void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier);
 	
 	public final void playAnimation(int id, float transitionTimeModifier) {
 		this.playAnimation(AnimationManager.byId(id), transitionTimeModifier);
@@ -42,7 +42,7 @@ public abstract class Animator {
 	 * Play a given animation without transition animation.
 	 * @param nextAnimation
 	 */
-	public abstract void playAnimationInstantly(AnimationAccessor<? extends StaticAnimation> nextAnimation);
+	public abstract void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> nextAnimation);
 	
 	public final void playAnimationInstantly(int id) {
 		this.playAnimationInstantly(AnimationManager.byId(id));
@@ -53,7 +53,7 @@ public abstract class Animator {
 	 * If the given animation has a higher priority than current animation, it terminates the current animation by force and play the next animation
 	 * @param nextAnimation
 	 */
-	public abstract void reserveAnimation(AnimationAccessor<? extends StaticAnimation> nextAnimation);
+	public abstract void reserveAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation);
 	
 	public final void reserveAnimation(int id) {
 		this.reserveAnimation(AnimationManager.byId(id));
@@ -65,7 +65,7 @@ public abstract class Animator {
 	
 	public abstract EntityState getEntityState();
 	/** Give a null value as a parameter to get an animation that is highest priority on client **/
-	public abstract AnimationPlayer getPlayerFor(@Nullable AnimationAccessor<? extends DynamicAnimation> playingAnimation);
+	public abstract AnimationPlayer getPlayerFor(@Nullable AssetAccessor<? extends DynamicAnimation> playingAnimation);
 	public abstract <T> Pair<AnimationPlayer, T> findFor(Class<T> animationType);
 	public abstract Pose getPose(float partialTicks);
 	
@@ -78,15 +78,15 @@ public abstract class Animator {
 		this.playAnimation(this.livingAnimations.getOrDefault(LivingMotions.DEATH, Animations.BIPED_DEATH), 0);
 	}
 	
-	public void addLivingAnimation(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) {
+	public void addLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> animation) {
 		this.livingAnimations.put(livingMotion, animation);
 	}
 	
-	public AnimationAccessor<? extends StaticAnimation> getLivingAnimation(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> defaultGetter) {
+	public AssetAccessor<? extends StaticAnimation> getLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> defaultGetter) {
 		return this.livingAnimations.getOrDefault(livingMotion, defaultGetter);
 	}
 	
-	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingAnimations() {
+	public Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> getLivingAnimations() {
 		return ImmutableMap.copyOf(this.livingAnimations);
 	}
 	

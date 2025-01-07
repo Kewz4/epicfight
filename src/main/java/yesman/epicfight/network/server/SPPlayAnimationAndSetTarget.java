@@ -8,8 +8,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.network.NetworkEvent;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class SPPlayAnimationAndSetTarget extends SPAnimatorControl {
@@ -20,7 +20,7 @@ public class SPPlayAnimationAndSetTarget extends SPAnimatorControl {
 		this.targetId = targetId;
 	}
 	
-	public SPPlayAnimationAndSetTarget(Action action, AnimationAccessor<? extends StaticAnimation> animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
+	public SPPlayAnimationAndSetTarget(Action action, AssetAccessor<? extends StaticAnimation> animation, float modifyTime, LivingEntityPatch<?> entitypatch) {
 		super(action, animation, modifyTime, entitypatch);
 		this.targetId = entitypatch.getTarget().getId();
 	}

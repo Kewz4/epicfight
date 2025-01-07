@@ -7,8 +7,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
@@ -19,8 +19,8 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 
 public class EviscerateSkill extends WeaponInnateSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("f082557a-b2f9-11eb-8529-0242ac130003");
-	private AnimationAccessor<? extends AttackAnimation> first;
-	private AnimationAccessor<? extends AttackAnimation> second;
+	private AssetAccessor<? extends AttackAnimation> first;
+	private AssetAccessor<? extends AttackAnimation> second;
 	
 	public EviscerateSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);

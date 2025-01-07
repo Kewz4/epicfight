@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 import yesman.epicfight.gameasset.Animations;
@@ -25,7 +26,7 @@ public class AnimationVariables {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T get(IndependentAnimationVariableKey<T> key, AnimationAccessor<? extends StaticAnimation> animation) {
+	public <T> T get(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation) {
 		if (animation == null) {
 			return null;
 		}
@@ -40,7 +41,7 @@ public class AnimationVariables {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T getOrDefault(IndependentAnimationVariableKey<T> key, AnimationAccessor<? extends StaticAnimation> animation) {
+	public <T> T getOrDefault(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation) {
 		if (animation == null) {
 			return null;
 		}
@@ -73,21 +74,21 @@ public class AnimationVariables {
 		
 		if (synchronize && key instanceof SynchedAnimationVariableKey) {
 			SynchedAnimationVariableKey<T> synchedanimationvariablekey = (SynchedAnimationVariableKey<T>)key;
-			synchedanimationvariablekey.sync(this.animator.entitypatch, (AnimationAccessor<? extends StaticAnimation>)null, value, AnimationVariablePacket.Action.PUT);
+			synchedanimationvariablekey.sync(this.animator.entitypatch, (AssetAccessor<? extends StaticAnimation>)null, value, AnimationVariablePacket.Action.PUT);
 		}
 	}
 	
-	public <T> void put(IndependentAnimationVariableKey<T> key, AnimationAccessor<? extends StaticAnimation> animation) {
+	public <T> void put(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation) {
 		this.put(key, animation, key.defaultValue());
 	}
 	
-	public <T> void put(IndependentAnimationVariableKey<T> key, AnimationAccessor<? extends StaticAnimation> animation, T value) {
+	public <T> void put(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation, T value) {
 		this.put(key, animation, value, true);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Deprecated // Avoid direct use
-	public <T> void put(IndependentAnimationVariableKey<T> key, AnimationAccessor<? extends StaticAnimation> animation, T value, boolean synchronize) {
+	public <T> void put(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation, T value, boolean synchronize) {
 		if (animation == Animations.EMPTY_ANIMATION) {
 			return;
 		}
@@ -149,13 +150,13 @@ public class AnimationVariables {
 		}
 	}
 	
-	public void remove(IndependentAnimationVariableKey<?> key, AnimationAccessor<? extends StaticAnimation> animation) {
+	public void remove(IndependentAnimationVariableKey<?> key, AssetAccessor<? extends StaticAnimation> animation) {
 		this.remove(key, animation, true);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Deprecated // Avoid direct use
-	public void remove(IndependentAnimationVariableKey<?> key, AnimationAccessor<? extends StaticAnimation> animation, boolean synchronize) {
+	public void remove(IndependentAnimationVariableKey<?> key, AssetAccessor<? extends StaticAnimation> animation, boolean synchronize) {
 		if (animation == Animations.EMPTY_ANIMATION) {
 			return;
 		}

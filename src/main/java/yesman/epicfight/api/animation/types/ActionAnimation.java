@@ -26,6 +26,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimation
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordGetter;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordSetter;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
@@ -44,12 +45,12 @@ public class ActionAnimation extends MainFrameAnimation {
 	public static final IndependentAnimationVariableKey<Vec3f> LAST_MODEL_COORD = AnimationVariables.independent(() -> (Vec3f)null, true);
 	public static final IndependentAnimationVariableKey<Float> INITIAL_LOOK_VEC_DOT = AnimationVariables.independent(() -> (Float)null, true);
 	
-	public ActionAnimation(float convertTime, AnimationAccessor<? extends ActionAnimation> accessor, Armature armature) {
-		this(convertTime, Float.MAX_VALUE, accessor, armature);
+	public ActionAnimation(float transitionTime, AnimationAccessor<? extends ActionAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, Float.MAX_VALUE, accessor, armature);
 	}
 	
-	public ActionAnimation(float convertTime, float postDelay, AnimationAccessor<? extends ActionAnimation> accessor, Armature armature) {
-		super(convertTime, accessor, armature);
+	public ActionAnimation(float transitionTime, float postDelay, AnimationAccessor<? extends ActionAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, postDelay)
@@ -65,10 +66,10 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	/**
-	 * For internal use
+	 * For resourcepack animation
 	 */
-	public ActionAnimation(float convertTime, float postDelay, String path, Armature armature) {
-		super(convertTime, path, armature);
+	public ActionAnimation(float transitionTime, float postDelay, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, path, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, postDelay)
@@ -138,7 +139,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	@Override
-	public void linkTick(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> linkAnimation) {
+	public void linkTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> linkAnimation) {
 		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
 			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
 		}
@@ -146,7 +147,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		this.move(entitypatch, linkAnimation);
 	}
 
-	protected void move(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
+	protected void move(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		if (!this.validateMovement(entitypatch, animation)) {
 			return;
 		}
@@ -158,7 +159,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		}
 	}
 	
-	protected boolean validateMovement(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
+	protected boolean validateMovement(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		if (!entitypatch.shouldMoveOnCurrentSide(this)) {
 			return false;
 		}
@@ -209,7 +210,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	@Override
-	public void setLinkAnimation(AnimationAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
+	public void setLinkAnimation(AssetAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
 		dest.resetNextStartTime();
 		float playTime = this.getPlaySpeed(entitypatch, dest);
 		PlaybackSpeedModifier playSpeedModifier = this.getRealAnimation().get().getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).orElse(null);
@@ -310,7 +311,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		}
 	}
 	
-	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> animation) {
+	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation);
 		TimePairList coordUpdateTime = this.getProperty(ActionAnimationProperty.COORD_UPDATE_TIME).orElse(null);
 		boolean isCoordUpdateTime = coordUpdateTime == null || coordUpdateTime.isTimeInPairs(player.getElapsedTime());

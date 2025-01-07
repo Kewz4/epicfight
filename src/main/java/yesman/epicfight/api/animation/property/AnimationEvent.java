@@ -4,8 +4,8 @@ import java.util.function.Predicate;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
@@ -19,15 +19,15 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 		this.event = event;
 	}
 	
-	protected abstract boolean checkCondition(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed);
+	protected abstract boolean checkCondition(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed);
 	
-	public void execute(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
+	public void execute(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
 		if (this.side.predicate.test(entitypatch.getOriginal()) && this.checkCondition(entitypatch, animation, prevElapsed, elapsed)) {
 			this.event.fire(entitypatch, animation, this.params);
 		}
 	}
 	
-	public void executeWithNewParams(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed, AnimationParameters parameters) {
+	public void executeWithNewParams(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed, AnimationParameters parameters) {
 		if (this.side.predicate.test(entitypatch.getOriginal()) && this.checkCondition(entitypatch, animation, prevElapsed, elapsed)) {
 			this.event.fire(entitypatch, animation, parameters);
 		}
@@ -39,7 +39,7 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 		}
 		
 		@Override
-		protected boolean checkCondition(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
+		protected boolean checkCondition(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
 			return true;
 		}
 		
@@ -57,7 +57,7 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 		}
 		
 		@Override
-		public boolean checkCondition(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
+		public boolean checkCondition(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
 			return this.time >= prevElapsed && this.time < elapsed;
 		}
 		
@@ -86,7 +86,7 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 		}
 		
 		@Override
-		public boolean checkCondition(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
+		public boolean checkCondition(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, float prevElapsed, float elapsed) {
 			return this.start <= elapsed && this.end > elapsed;
 		}
 		
@@ -178,61 +178,61 @@ public abstract class AnimationEvent<EVENT extends AnimationEvent.Event<?, ?, ?,
 	
 	@FunctionalInterface
 	public interface Event<A, B, C, D, E, F, G, H, I, J> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, J> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, J> params);
 	}
 	
 	@FunctionalInterface
 	public interface E0 extends Event<Void, Void, Void, Void, Void, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<Void, Void, Void, Void, Void, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<Void, Void, Void, Void, Void, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E1<A> extends Event<A, Void, Void, Void, Void, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, Void, Void, Void, Void, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, Void, Void, Void, Void, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E2<A, B> extends Event<A, B, Void, Void, Void, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, Void, Void, Void, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, Void, Void, Void, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E3<A, B, C> extends Event<A, B, C, Void, Void, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, Void, Void, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, Void, Void, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E4<A, B, C, D> extends Event<A, B, C, D, Void, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, Void, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, Void, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E5<A, B, C, D, E> extends Event<A, B, C, D, E, Void, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, Void, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, Void, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E6<A, B, C, D, E, F> extends Event<A, B, C, D, E, F, Void, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, Void, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, Void, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E7<A, B, C, D, E, F, G> extends Event<A, B, C, D, E, F, G, Void, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, Void, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, Void, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E8<A, B, C, D, E, F, G, H> extends Event<A, B, C, D, E, F, G, H, Void, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, Void, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, Void, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E9<A, B, C, D, E, F, G, H, I> extends Event<A, B, C, D, E, F, G, H, I, Void> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, Void> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, Void> params);
 	}
 	
 	@FunctionalInterface
 	public interface E10<A, B, C, D, E, F, G, H, I, J> extends Event<A, B, C, D, E, F, G, H, I, J> {
-		void fire(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, J> params);
+		void fire(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, AnimationParameters<A, B, C, D, E, F, G, H, I, J> params);
 	}
 }

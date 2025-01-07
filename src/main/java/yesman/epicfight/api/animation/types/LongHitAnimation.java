@@ -3,10 +3,11 @@ package yesman.epicfight.api.animation.types;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 
 public class LongHitAnimation extends ActionAnimation {
-	public LongHitAnimation(float convertTime, AnimationAccessor<? extends LongHitAnimation> accessor, Armature armature) {
+	public LongHitAnimation(float convertTime, AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, accessor, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
@@ -26,7 +27,7 @@ public class LongHitAnimation extends ActionAnimation {
 	/**
 	 * For internal user
 	 */
-	public LongHitAnimation(float convertTime, String path, Armature armature) {
+	public LongHitAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, Float.MAX_VALUE, path, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);

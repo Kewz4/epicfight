@@ -36,6 +36,7 @@ import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.ItemSkin;
@@ -51,14 +52,14 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class TrailParticle extends TextureSheetParticle {
 	protected final Joint joint;
 	protected final TrailInfo trailInfo;
-	protected final AnimationAccessor<? extends StaticAnimation> animation;
+	protected final AssetAccessor<? extends StaticAnimation> animation;
 	protected final LivingEntityPatch<?> entitypatch;
 	protected final List<TrailEdge> invisibleTrailEdges;
 	protected final List<TrailEdge> visibleTrailEdges;
 	protected boolean animationEnd;
 	protected float startEdgeCorrection = 0.0F;
 	
-	protected TrailParticle(ClientLevel level, LivingEntityPatch<?> entitypatch, Joint joint, AnimationAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo, SpriteSet spriteSet) {
+	protected TrailParticle(ClientLevel level, LivingEntityPatch<?> entitypatch, Joint joint, AssetAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo, SpriteSet spriteSet) {
 		super(level, 0, 0, 0);
 		
 		this.joint = joint;
@@ -123,7 +124,7 @@ public class TrailParticle extends TextureSheetParticle {
 	}
 	
 	@Deprecated /** This constructor is only for {@link ModelPreviewer} **/
-	protected TrailParticle(Armature armature, LivingEntityPatch<?> entitypatch, Joint joint, AnimationAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo) {
+	protected TrailParticle(Armature armature, LivingEntityPatch<?> entitypatch, Joint joint, AssetAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo) {
 		super(null, 0, 0, 0);
 		
 		this.entitypatch = entitypatch;

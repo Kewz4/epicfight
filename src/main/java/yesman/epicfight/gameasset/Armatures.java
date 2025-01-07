@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -110,13 +111,13 @@ public class Armatures {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <A extends Armature> Set<AssetAccessor<A>> entry() {
-		Set<AssetAccessor<A>> newset = Sets.newHashSet();
+	public static <A extends Armature> Set<Pair<ResourceLocation, AssetAccessor<A>>> entry() {
+		Set<Pair<ResourceLocation, AssetAccessor<A>>> newset = Sets.newHashSet();
 		
 		for (AssetAccessor<? extends Armature> accessor : ARMATURES.keySet()) {
 			try {
 				AssetAccessor<A> casted = (AssetAccessor<A>)accessor;
-				newset.add(casted);
+				newset.add(Pair.of(casted.registryName(), casted));
 			} catch(ClassCastException e) {
 			}
 		}

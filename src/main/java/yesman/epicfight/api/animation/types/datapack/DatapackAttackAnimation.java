@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -16,6 +17,7 @@ import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.types.AttackAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.collider.Collider;
@@ -24,7 +26,7 @@ import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class FakeAttackAnimation extends AttackAnimation implements ClipHoldingAnimation {
+public class DatapackAttackAnimation extends AttackAnimation implements DatapackAnimation<DatapackAttackAnimation> {
 	private static Phase[] convertListTagToPhases(ListTag listTag, Armature armature) {
 		float start = 0.0F;
 		Phase[] phases = new Phase[listTag.size()];
@@ -83,23 +85,24 @@ public class FakeAttackAnimation extends AttackAnimation implements ClipHoldingA
 	}
 	
 	protected AnimationClip clip;
-	protected FakeAnimation fakeAnimation;
+	protected EditorAnimation fakeAnimation;
+	protected ResourceLocation registryName;
 	
-	public FakeAttackAnimation(float convertTime, String path, Armature armature, ListTag phases) {
-		super(convertTime, path, armature, true, convertListTagToPhases(phases, armature));
+	public DatapackAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, ListTag phases) {
+		super(convertTime, path, armature, convertListTagToPhases(phases, armature.get()));
 	}
 	
-	public FakeAttackAnimation(float convertTime, String path, Armature armature, Phase... phases) {
-		super(convertTime, path, armature, true, phases);
+	public DatapackAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(convertTime, path, armature, phases);
 	}
 	
 	@Override
-	public void setCreator(FakeAnimation fakeAnimation) {
+	public void setCreator(EditorAnimation fakeAnimation) {
 		this.fakeAnimation = fakeAnimation;
 	}
 	
 	@Override
-	public FakeAnimation getCreator() {
+	public EditorAnimation getCreator() {
 		return this.fakeAnimation;
 	}
 	
@@ -120,11 +123,11 @@ public class FakeAttackAnimation extends AttackAnimation implements ClipHoldingA
 	}
 	
 	@Override
-	public FakeAnimation buildAnimation(JsonArray rawAnimationJson) {
-		FakeAnimation fakeAnimation = new FakeAnimation(this.registryName.toString(), this.armature, this.clip, rawAnimationJson);
-		fakeAnimation.setAnimationClass(FakeAnimation.AnimationType.ATTACK);
+	public EditorAnimation readAnimationFromJson(JsonArray rawAnimationJson) {
+		EditorAnimation fakeAnimation = new EditorAnimation(this.registryName().toString(), this.armature, this.clip, rawAnimationJson);
+		fakeAnimation.setAnimationClass(EditorAnimation.AnimationType.ATTACK);
 		fakeAnimation.setParameter("convertTime", this.transitionTime);
-		fakeAnimation.setParameter("path", this.registryName.toString());
+		fakeAnimation.setParameter("path", this.registryName().toString());
 		fakeAnimation.setParameter("armature", this.armature);
 		
 		ListTag listTag = new ListTag();
@@ -144,7 +147,7 @@ public class FakeAttackAnimation extends AttackAnimation implements ClipHoldingA
 				compTag.put("collider", phase.colliders[0].getSecond().serialize(new CompoundTag()));
 			}
 			
-			compTag.putString("joint", this.armature.toString() +"."+ phase.colliders[0].getFirst().getName());
+			compTag.putString("joint", this.armature.registryName() +"."+ phase.colliders[0].getFirst().getName());
 			
 			listTag.add(compTag);
 		}
@@ -170,5 +173,25 @@ public class FakeAttackAnimation extends AttackAnimation implements ClipHoldingA
 		this.fakeAnimation = fakeAnimation;
 		
 		return fakeAnimation;
+	}
+
+	@Override
+	public DatapackAttackAnimation get() {
+		return this;
+	}
+	
+	@Override
+	public void setRegistryName(ResourceLocation registryName) {
+		this.registryName = registryName;
+	}
+	
+	@Override
+	public ResourceLocation registryName() {
+		return this.registryName;
+	}
+
+	@Override
+	public boolean isPresent() {
+		return true;
 	}
 }

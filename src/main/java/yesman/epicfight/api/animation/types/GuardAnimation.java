@@ -1,14 +1,15 @@
 package yesman.epicfight.api.animation.types;
 
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 
 public class GuardAnimation extends MainFrameAnimation {
-	public GuardAnimation(float transitionTime, AnimationAccessor<? extends GuardAnimation> accessor, Armature armature) {
+	public GuardAnimation(float transitionTime, AnimationAccessor<? extends GuardAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(transitionTime, Float.MAX_VALUE, accessor, armature);
 	}
 	
-	public GuardAnimation(float transitionTime, float lockTime, AnimationAccessor<? extends GuardAnimation> accessor, Armature armature) {
+	public GuardAnimation(float transitionTime, float lockTime, AnimationAccessor<? extends GuardAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()

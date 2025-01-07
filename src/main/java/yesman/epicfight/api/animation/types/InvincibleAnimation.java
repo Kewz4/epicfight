@@ -2,11 +2,12 @@ package yesman.epicfight.api.animation.types;
 
 import net.minecraft.tags.DamageTypeTags;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
 
 public class InvincibleAnimation extends ActionAnimation {
-	public InvincibleAnimation(float convertTime, AnimationAccessor<? extends InvincibleAnimation> accessor, Armature armature) {
+	public InvincibleAnimation(float convertTime, AnimationAccessor<? extends InvincibleAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()

@@ -5,8 +5,8 @@ import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.network.server.SPAnimatorControl;
@@ -17,8 +17,8 @@ public class CPAnimatorControl extends AnimatorControlPacket {
 	private boolean isClientOnly;
 	private boolean responseToSender;
 	
-	public CPAnimatorControl(AnimatorControlPacket.Action action, AnimationAccessor<? extends StaticAnimation> animation, float transitionTime, boolean pause, boolean clinetOnly, boolean resendToSender) {
-		this(action, animation.id(), transitionTime, pause, clinetOnly, resendToSender);
+	public CPAnimatorControl(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTime, boolean pause, boolean clinetOnly, boolean resendToSender) {
+		this(action, animation.get().getId(), transitionTime, pause, clinetOnly, resendToSender);
 	}
 	
 	public CPAnimatorControl(AnimatorControlPacket.Action action, int animationId, float transitionTimeModifier, boolean pause, boolean clinetOnly, boolean resendToSender) {

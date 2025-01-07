@@ -11,6 +11,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimation
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.ValueModifier;
@@ -18,11 +19,11 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AirSlashAnimation extends AttackAnimation {
-	public AirSlashAnimation(float convertTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, Armature armature) {
+	public AirSlashAnimation(float convertTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, antic, antic, contact, recovery, true, collider, colliderJoint, accessor, armature);
 	}
 	
-	public AirSlashAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, boolean directional, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, Armature armature) {
+	public AirSlashAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, boolean directional, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
@@ -30,7 +31,7 @@ public class AirSlashAnimation extends AttackAnimation {
 		}
 	}
 	
-	public AirSlashAnimation(float convertTime, AnimationAccessor<? extends AirSlashAnimation> accessor, Armature armature, Phase... phases) {
+	public AirSlashAnimation(float convertTime, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, accessor, armature, phases);
 		
 		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.5F));

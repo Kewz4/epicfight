@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
@@ -31,6 +32,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimation
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.Layer.LayerType;
@@ -71,7 +73,7 @@ public class StaticAnimation extends DynamicAnimation {
 	 * States will bind into animation on {@link AnimationManager#apply}
 	 */
 	protected final StateSpectrum.Blueprint stateSpectrumBlueprint = new StateSpectrum.Blueprint();
-	protected final Armature armature;
+	protected final AssetAccessor<? extends Armature> armature;
 	protected final StateSpectrum stateSpectrum = new StateSpectrum();
 	protected ResourceLocation resourceLocation;
 	protected AnimationAccessor<? extends StaticAnimation> accessor;
@@ -80,49 +82,46 @@ public class StaticAnimation extends DynamicAnimation {
 	public StaticAnimation() {
 		super(0.0F, true);
 		
-		this.resourceLocation = new ResourceLocation(EpicFightMod.MODID, "emtpy");
+		this.resourceLocation = ResourceLocation.tryBuild(EpicFightMod.MODID, "emtpy");
 		this.armature = null;
 		this.filehash = StringUtil.EMPTY_STRING;
 	}
 	
-	public StaticAnimation(boolean repeatPlay, AnimationAccessor<? extends StaticAnimation> accessor, Armature armature) {
-		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, accessor, armature);
+	public StaticAnimation(boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
 	}
 	
-	public StaticAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, Armature armature) {
+	public StaticAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, isRepeat);
 		
-		this.resourceLocation = new ResourceLocation(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
+		this.resourceLocation = ResourceLocation.tryBuild(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
 		this.armature = armature;
 		this.accessor = accessor;
 		this.filehash = getFileHash(this.resourceLocation);
-		this.loadAnimation();
 	}
 	
-	/* For internal use */
-	public StaticAnimation(float convertTime, boolean isRepeat, String path, Armature armature) {
-		super(convertTime, isRepeat);
+	/* Resourcepack animations */
+	public StaticAnimation(float transitionTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, isRepeat);
 		
-		ResourceLocation registryName = new ResourceLocation(path);
-		this.resourceLocation = new ResourceLocation(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
+		ResourceLocation registryName = ResourceLocation.tryParse(path);
+		this.resourceLocation = ResourceLocation.tryBuild(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
 		this.armature = armature;
-		this.loadAnimation();
 		this.filehash = getFileHash(this.resourceLocation);
 	}
 	
 	/* Multilayer Constructor */
-	public StaticAnimation(ResourceLocation baseAnimPath, float transitionTime, boolean repeatPlay, String registryName, Armature armature, boolean multilayer) {
-		super(transitionTime, repeatPlay);
+	public StaticAnimation(ResourceLocation fileLocation, float transitionTime, boolean isRepeat, String registryName, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, isRepeat);
 		
-		this.resourceLocation = baseAnimPath;
+		this.resourceLocation = fileLocation;
 		this.armature = armature;
 		this.filehash = StringUtil.EMPTY_STRING;
-		this.loadAnimation();
 	}
 	
 	public void loadAnimation() {
 		if (!this.isMetaAnimation()) {
-			AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
+			this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
 			AnimationManager.readAnimationProperties(this);
 		}
 	}
@@ -131,7 +130,16 @@ public class StaticAnimation extends DynamicAnimation {
 		this.stateSpectrum.readFrom(this.stateSpectrumBlueprint);
 	}
 	
-	public void setLinkAnimation(final AnimationAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
+	@Override
+	public AnimationClip getAnimationClip() {
+		if (this.animationClip == null) {
+			this.loadAnimation();
+		}
+		
+		return this.animationClip;
+	}
+	
+	public void setLinkAnimation(final AssetAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
 		if (!entitypatch.isLogicalClient()) {
 			startPose = Animations.EMPTY_ANIMATION.getPoseByTime(entitypatch, 0.0F, 1.0F);
 		}
@@ -220,7 +228,7 @@ public class StaticAnimation extends DynamicAnimation {
 				for (TrailInfo trailInfo : trailInfos) {
 					double eid = Double.longBitsToDouble((long)entitypatch.getOriginal().getId());
 					double animid = Double.longBitsToDouble((long)this.getId());
-					double jointId = Double.longBitsToDouble((long)this.armature.searchJointByName(trailInfo.joint).getId());
+					double jointId = Double.longBitsToDouble((long)this.armature.get().searchJointByName(trailInfo.joint).getId());
 					double index = Double.longBitsToDouble((long)idx++);
 					
 					if (trailInfo.hand != null) {
@@ -247,7 +255,7 @@ public class StaticAnimation extends DynamicAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, AnimationAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		if (entitypatch instanceof PlayerPatch<?> playerpatch) {
 			playerpatch.getEventListener().triggerEvents(EventType.ANIMATION_END_EVENT, new AnimationEndEvent(playerpatch, this, isEnd));
 		}
@@ -316,6 +324,10 @@ public class StaticAnimation extends DynamicAnimation {
 	
 	@Override
 	public int getId() {
+		if (this.accessor == null) {
+			throw new NullPointerException("I don have accessor " + this.resourceLocation);
+		}
+		
 		return this.accessor.id();
 	}
 	
@@ -354,7 +366,7 @@ public class StaticAnimation extends DynamicAnimation {
 	
 	@SuppressWarnings("unchecked")
 	public <A extends StaticAnimation> A setResourceLocation(String namespace, String path) {
-		this.resourceLocation = new ResourceLocation(namespace, "animmodels/animations/" + path + ".json");
+		this.resourceLocation = ResourceLocation.tryBuild(namespace, "animmodels/animations/" + path + ".json");
 		return (A)this;
 	}
 	
@@ -367,7 +379,7 @@ public class StaticAnimation extends DynamicAnimation {
 		return this.accessor.registryName();
 	}
 	
-	public Armature getArmature() {
+	public AssetAccessor<? extends Armature> getArmature() {
 		return this.armature;
 	}
 	
@@ -397,14 +409,14 @@ public class StaticAnimation extends DynamicAnimation {
 	@Deprecated
 	public StaticAnimation addPropertyUnsafe(AnimationProperty<?> propertyType, Object value) {
 		this.properties.put(propertyType, value);
-		this.getSubAnimations().forEach((subAnimation) -> subAnimation.addPropertyUnsafe(propertyType, value));
+		this.getSubAnimations().forEach((subAnimation) -> subAnimation.get().addPropertyUnsafe(propertyType, value));
 		return this;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <A extends StaticAnimation, V> A addProperty(StaticAnimationProperty<V> propertyType, V value) {
 		this.properties.put(propertyType, value);
-		this.getSubAnimations().forEach((subAnimation) -> subAnimation.addProperty(propertyType, value));
+		this.getSubAnimations().forEach((subAnimation) -> subAnimation.get().addProperty(propertyType, value));
 		return (A)this;
 	}
 	
@@ -419,7 +431,7 @@ public class StaticAnimation extends DynamicAnimation {
 			return List.of(events);
 		});
 		
-		this.getSubAnimations().forEach((subAnimation) -> subAnimation.addEvents(key, events));
+		this.getSubAnimations().forEach((subAnimation) -> subAnimation.get().addEvents(key, events));
 		
 		return (A)this;
 	}
@@ -434,7 +446,7 @@ public class StaticAnimation extends DynamicAnimation {
 			return List.of(events);
 		});
 		
-		this.getSubAnimations().forEach((subAnimation) -> subAnimation.addEvents(events));
+		this.getSubAnimations().forEach((subAnimation) -> subAnimation.get().addEvents(events));
 		
 		return (A)this;
 	}
@@ -501,8 +513,8 @@ public class StaticAnimation extends DynamicAnimation {
 		return val;
 	}
 	
-	public List<StaticAnimation> getSubAnimations() {
-		return List.of(this);
+	public List<AssetAccessor<? extends StaticAnimation>> getSubAnimations() {
+		return List.of();
 	}
 	
 	@Override
@@ -514,6 +526,10 @@ public class StaticAnimation extends DynamicAnimation {
 	@Override
 	public <A extends DynamicAnimation> AnimationAccessor<A> getAccessor() {
 		return (AnimationAccessor<A>)this.accessor;
+	}
+	
+	public void setAccessor(AnimationAccessor<? extends StaticAnimation> accessor) {
+		this.accessor = accessor;
 	}
 	
 	public void invalidate() {

@@ -20,7 +20,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
-import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
+import yesman.epicfight.api.animation.types.datapack.EditorAnimation;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
@@ -39,14 +39,14 @@ public class StaticAnimationPropertyScreen extends Screen {
 	private final ComboBox<LayerOptions> layerTypeCombo;
 	private final Consumer<LayerOptions> layerTypeResponder;
 	private final Screen parentScreen;
-	private final FakeAnimation animation;
+	private final EditorAnimation animation;
 	
 	private Layer.Priority baseLayerPriority;
 	private Layer.Priority compositeLayerPriority;
 	private List<PackEntry<LivingMotion, JointMaskSet>> baseLayerMasks = Lists.newArrayList();
 	private List<PackEntry<LivingMotion, JointMaskSet>> compositeLayerMasks = Lists.newArrayList();
 	
-	protected StaticAnimationPropertyScreen(Screen parentScreen, FakeAnimation animation) {
+	protected StaticAnimationPropertyScreen(Screen parentScreen, EditorAnimation animation) {
 		super(Component.translatable("datapack_edit.import_animation.client_data"));
 		
 		this.parentScreen = parentScreen;

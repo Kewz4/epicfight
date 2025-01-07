@@ -79,12 +79,12 @@ public class Meshes implements PreparableReloadListener {
 	//Layers
 	public static MeshAccessor<SkinnedMesh> CLOAK = MeshAccessor.create(EpicFightMod.MODID, "layer/cloak", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	
-	public static void build(ResourceManager resourceManager) {
+	public static void reload(ResourceManager resourceManager) {
 		Meshes.resourceManager = resourceManager;
 		MESHES.clear();
 	}
 	
-	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceManager rm, ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
+	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
 		return MeshAccessor.create(id, jsonLoader);
 	}
 	
@@ -110,7 +110,7 @@ public class Meshes implements PreparableReloadListener {
 	@Override
 	public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier stage, ResourceManager resourceManager, ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler, Executor backgroundExecutor, Executor gameExecutor) {
 		return CompletableFuture.runAsync(() -> {
-			Meshes.build(resourceManager);
+			Meshes.reload(resourceManager);
 		}, gameExecutor).thenCompose(stage::wait);
 	}
 	

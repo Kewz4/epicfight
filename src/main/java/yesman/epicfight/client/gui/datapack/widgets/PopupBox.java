@@ -33,7 +33,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
@@ -188,15 +187,15 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class AnimationPopupBox extends PopupBox<AnimationAccessor<? extends StaticAnimation>> {
-		private AssetAccessor<Armature> armature;
-		private AssetAccessor<SkinnedMesh> mesh;
+	public static class AnimationPopupBox extends PopupBox<AssetAccessor<? extends StaticAnimation>> {
+		private AssetAccessor<? extends Armature> armature;
+		private AssetAccessor<? extends SkinnedMesh> mesh;
 		
-		public AnimationPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AnimationAccessor<? extends StaticAnimation>>> responder) {
+		public AnimationPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<? extends StaticAnimation>>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (animation) -> ParseUtil.nullOrToString(animation, (a) -> a.registryName().toString()), responder);
 		}
 		
-		public void setModel(AssetAccessor<Armature> armature, AssetAccessor<SkinnedMesh> mesh) {
+		public void setModel(AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 			this.armature = armature;
 			this.mesh = mesh;
 		}
@@ -207,7 +206,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 				if (this.armature.get() == null || this.mesh.get() == null) {
 					this.owner.getMinecraft().setScreen(new MessageScreen<>("", "Define model and armature first.", this.owner, (button2) -> this.owner.getMinecraft().setScreen(this.owner), 180, 60));
 				} else {
-					this.owner.getMinecraft().setScreen(new SelectAnimationScreen(this.owner, this::_setValue, this::_setValue, this.getFilter(), this.armature.get(), this.mesh));
+					this.owner.getMinecraft().setScreen(new SelectAnimationScreen(this.owner, this::_setValue, this::_setValue, this.getFilter(), this.armature, this.mesh));
 				}
 			}
 		}
@@ -301,8 +300,8 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class MeshPopupBox extends PopupBox<AssetAccessor<SkinnedMesh>> {
-		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<SkinnedMesh>>> responder) {
+	public static class MeshPopupBox extends PopupBox<AssetAccessor<? extends SkinnedMesh>> {
+		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<? extends SkinnedMesh>>> responder) {
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullOrToString(mesh, (accessor) -> ParseUtil.nullOrToString(accessor, accessor$2 -> accessor$2.registryName().toString())), responder);
 		}
 		
@@ -329,7 +328,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 		@Override
 		public void onClick(double x, double y) {
 			if (this.clickedPopupButton(x, y)) {
-				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, ParseUtil.mapEntryToPair(Armatures.entry()), "Armature", (name, item) -> {
+				Set<Pair<ResourceLocation, AssetAccessor<Armature>>> entries = Armatures.entry();
+				
+				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<> (this.owner, entries, "Armature", (name, item) -> {
 					this._setValue(item);
 					this.setDisplayText(name);
 				}, (name, item) -> {
