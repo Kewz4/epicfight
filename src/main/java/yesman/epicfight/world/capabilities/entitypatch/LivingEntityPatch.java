@@ -214,7 +214,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void updateEntityState() {
 		this.state = this.animator.getEntityState();
-		this.updateMotion(true);
 	}
 	
 	public void cancelAnyAction() {
