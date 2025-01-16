@@ -7,8 +7,8 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 
 public class LongHitAnimation extends ActionAnimation {
-	public LongHitAnimation(float convertTime, AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, accessor, armature);
+	public LongHitAnimation(float transitionTime, AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, accessor, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
 		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);
@@ -27,8 +27,8 @@ public class LongHitAnimation extends ActionAnimation {
 	/**
 	 * For internal user
 	 */
-	public LongHitAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, Float.MAX_VALUE, path, armature);
+	public LongHitAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, Float.MAX_VALUE, path, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
 		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);

@@ -29,12 +29,12 @@ public class DodgeAnimation extends ActionAnimation {
 		return AttackResult.ResultType.SUCCESS;
 	};
 	
-	public DodgeAnimation(float convertTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
-		this(convertTime, 10.0F, accessor, width, height, armature);
+	public DodgeAnimation(float transitionTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, 10.0F, accessor, width, height, armature);
 	}
 	
-	public DodgeAnimation(float convertTime, float delayTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, delayTime, accessor, armature);
+	public DodgeAnimation(float transitionTime, float delayTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, delayTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, delayTime)

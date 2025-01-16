@@ -88,7 +88,7 @@ mixin {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-	/**
+	
     //implementation fg.deobf("local:epcfight:20.x.x")
     compileOnly fg.deobf("curse.maven:geckolib-388172:5675221")
     compileOnly fg.deobf("curse.maven:azurelib-817423:5500355")
@@ -119,12 +119,6 @@ dependencies {
     compileOnly fg.deobf("curse.maven:citadel-331936:5559513")
     
     compileOnly fg.deobf("curse.maven:parcool-482378:6035545")
-    **/
-    
-    implementation fg.deobf("curse.maven:patchouli-306770:4966125")
-    implementation fg.deobf("curse.maven:azurelib-817423:6004977")
-    implementation fg.deobf("curse.maven:samurai-dynasty-848381:5672395")
-    implementation fg.deobf("curse.maven:curios-309927:6058834")
     
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

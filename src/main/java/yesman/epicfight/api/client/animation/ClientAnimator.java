@@ -69,8 +69,6 @@ public class ClientAnimator extends Animator {
 		Layer layer = nextAnimation.get().getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(nextAnimation.get().getPriority());
 		layer.paused = false;
 		layer.playAnimation(nextAnimation, this.entitypatch, transitionTimeModifier);
-		
-		System.out.println("Play " + nextAnimation +" "+ this.entitypatch);
 	}
 	
 	@Override
@@ -164,12 +162,10 @@ public class ClientAnimator extends Animator {
 	public void tick() {
 		// Layer debugging
 		/**
-		if (this.entitypatch instanceof CustomMobPatch) {
-			for (Layer layer : this.getAllLayers()) {
-				System.out.println(layer);
-			}
-			System.out.println();
+		for (Layer layer : this.getAllLayers()) {
+			System.out.println(layer);
 		}
+		System.out.println();
 		**/
 		if (this.hardPaused) {
 			return;
@@ -336,17 +332,18 @@ public class ClientAnimator extends Animator {
 		return this.currentCompositeMotion.isSame(motion);
 	}
 	
-	public void resetMotion(boolean playLivingMotion) {
+	public void resumeLivingMotionUpdate(boolean playLivingMotion) {
 		this.entitypatch.updateMotion(false);
 		this.currentMotion = this.entitypatch.currentLivingMotion;
 		
 		if (playLivingMotion && this.livingAnimations.containsKey(this.entitypatch.currentLivingMotion)) {
 			this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
 		}
-	}
-	
-	public void resetCompositeMotion(boolean playIdleMotion) {
-		if (playIdleMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
+		
+		this.currentCompositeMotion = LivingMotions.NONE;
+		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
+		
+		if (playLivingMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
 			AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
 			AssetAccessor<? extends StaticAnimation> currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
 			
@@ -356,7 +353,14 @@ public class ClientAnimator extends Animator {
 			
 			this.playAnimation(this.getCompositeLivingMotion(LivingMotions.IDLE), 0.0F);
 		}
-		
+	}
+	
+	public void resetMotion() {
+		this.currentMotion = LivingMotions.IDLE;
+		this.entitypatch.currentLivingMotion = LivingMotions.IDLE;
+	}
+	
+	public void resetCompositeMotion() {
 		this.currentCompositeMotion = LivingMotions.NONE;
 		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
 	}
@@ -375,7 +379,7 @@ public class ClientAnimator extends Animator {
 		if (this.compositeLivingAnimations.containsKey(LivingMotions.SHOT)) {
 			this.playAnimation(this.compositeLivingAnimations.get(LivingMotions.SHOT), 0.0F);
 			this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
-			this.resetCompositeMotion(false);
+			this.resetCompositeMotion();
 		}
 	}
 	

@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 
 public class IRISCompat implements ICompatModule {
 	@OnlyIn(Dist.CLIENT)
@@ -24,7 +24,7 @@ public class IRISCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static void clearIrisShaders() {
-		EpicFightMod.CLIENT_CONFIGS.shaderModeSwitchingLocked = false;
+		ClientConfig.animationShaderLockedByException = false;
 		IRIS_SHADER_PROVIDERS.clear();
 	}
 	

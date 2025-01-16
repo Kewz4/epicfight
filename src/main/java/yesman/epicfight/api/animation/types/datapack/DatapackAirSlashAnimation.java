@@ -15,12 +15,12 @@ import yesman.epicfight.api.model.Armature;
 
 @OnlyIn(Dist.CLIENT)
 public class DatapackAirSlashAnimation extends DatapackAttackAnimation {
-	public DatapackAirSlashAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, ListTag phases) {
-		super(convertTime, path, armature, phases);
+	public DatapackAirSlashAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature, ListTag phases) {
+		super(transitionTime, path, armature, phases);
 	}
 	
-	public DatapackAirSlashAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
-		super(convertTime, path, armature, phases);
+	public DatapackAirSlashAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, path, armature, phases);
 	}
 	
 	@Override

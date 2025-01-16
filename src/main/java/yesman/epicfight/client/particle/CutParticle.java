@@ -9,7 +9,7 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 
 @OnlyIn(Dist.CLIENT)
 public class CutParticle extends HitParticle {
@@ -37,7 +37,7 @@ public class CutParticle extends HitParticle {
 	    
 		@Override
 		public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-			if (!EpicFightMod.CLIENT_CONFIGS.bloodEffects.getValue()) {
+			if (!ClientConfig.bloodEffects) {
 				return null;
 			}
 			

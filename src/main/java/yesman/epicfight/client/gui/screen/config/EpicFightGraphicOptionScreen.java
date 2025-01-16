@@ -17,74 +17,60 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.client.gui.widgets.EpicFightOptionList;
 import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.EpicFightOptions;
-import yesman.epicfight.config.OptionHandler;
-import yesman.epicfight.config.OptionHandler.BooleanOptionHandler;
-import yesman.epicfight.config.OptionHandler.IntegerOptionHandler;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 	private EpicFightOptionList optionsList;
 	
-	public EpicFightGraphicOptionScreen(Screen parentScreen, EpicFightOptions config) {
-		super(parentScreen, config, Component.translatable("gui." + EpicFightMod.MODID + ".graphic_options"));
+	public EpicFightGraphicOptionScreen(Screen parentScreen) {
+		super(parentScreen, Component.translatable("gui." + EpicFightMod.MODID + ".graphic_options"));
 	}
 	
 	@Override
 	protected void init() {
 		super.init();
 		
-		this.optionsList = new EpicFightOptionList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
+		String modid = EpicFightMod.MODID;
 		
-		OptionHandler<ClientConfig.HealthBarShowOptions> showHealthIndicator = this.config.healthBarShowOption;
-		BooleanOptionHandler showTargetIndicator = this.config.showTargetIndicator;
-		BooleanOptionHandler filterAnimation = this.config.filterAnimation;
-		BooleanOptionHandler enableAimHelper = this.config.enableAimHelperPointer;
-		OptionHandler<Double> aimHelperColor = this.config.aimHelperWidgetPosition;
-		BooleanOptionHandler bloodEffects = this.config.bloodEffects;
-		BooleanOptionHandler aimingCorrection = this.config.aimingCorrection;
-		BooleanOptionHandler showEpicFightAttributes = this.config.showEpicFightAttributes;
-		IntegerOptionHandler maxHitProjectiles = this.config.maxStuckProjectiles;
-		BooleanOptionHandler useAnimationShader = this.config.useAnimationShader;
-		BooleanOptionHandler firstPersonModel = this.config.firstPersonModel;
+		this.optionsList = new EpicFightOptionList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
 		
 		int buttonHeight = -32;
 		
-		Button filterAnimationButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".filter_animation." + (filterAnimation.getValue() ? "on" : "off")), (button) -> {
-			filterAnimation.setValue(!filterAnimation.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".filter_animation." + (filterAnimation.getValue() ? "on" : "off")));
+		Button filterAnimationButton = Button.builder(Component.translatable("gui." + modid + ".filter_animation." + (ClientConfig.filterAnimation ? "on" : "off")), (button) -> {
+			ClientConfig.filterAnimation = !ClientConfig.filterAnimation;
+			button.setMessage(Component.translatable("gui." + modid + ".filter_animation." + (ClientConfig.filterAnimation ? "on" : "off")));
 		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(title)).build();
 		
-		Button healthBarShowOptionButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".health_bar_show_option." + showHealthIndicator.getValue().toString()), (button) -> {
-			showHealthIndicator.setValue(showHealthIndicator.getValue().nextOption());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".health_bar_show_option." + showHealthIndicator.getValue().toString()));
-		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".filter_animation.tooltip"))).build();
+		Button healthBarShowOptionButton = Button.builder(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarType.toString()), (button) -> {
+			ClientConfig.healthBarType = ClientConfig.healthBarType.nextEnum();
+			button.setMessage(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarType.toString()));
+		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".filter_animation.tooltip"))).build();
 		
 		this.optionsList.addSmall(filterAnimationButton, healthBarShowOptionButton);
 		
 		buttonHeight += 24;
 		
-		Button showTargetIndicatorButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".target_indicator." + (showTargetIndicator.getValue() ? "on" : "off")), (button) -> {
-			showTargetIndicator.setValue(!showTargetIndicator.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".target_indicator." + (showTargetIndicator.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 + 5, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".target_indicator.tooltip"))).build();
+		Button showTargetIndicatorButton = Button.builder(Component.translatable("gui." + modid + ".target_indicator." + (ClientConfig.showTargetIndicator ? "on" : "off")), (button) -> {
+			ClientConfig.showTargetIndicator = !ClientConfig.showTargetIndicator;
+			button.setMessage(Component.translatable("gui." + modid + ".target_indicator." + (ClientConfig.showTargetIndicator ? "on" : "off")));
+		}).pos(this.width / 2 + 5, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".target_indicator.tooltip"))).build();
 		
-		Button enableAimHelperButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".aim_helper." + (enableAimHelper.getValue() ? "on" : "off")), (button) -> {
-			enableAimHelper.setValue(!enableAimHelper.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".aim_helper." + (enableAimHelper.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".aim_helper.tooltip"))).build();
+		Button enableAimHelperButton = Button.builder(Component.translatable("gui." + modid + ".aim_helper." + (ClientConfig.enableAimHelper ? "on" : "off")), (button) -> {
+			ClientConfig.enableAimHelper = !ClientConfig.enableAimHelper;
+			button.setMessage(Component.translatable("gui." + modid + ".aim_helper." + (ClientConfig.enableAimHelper ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aim_helper.tooltip"))).build();
 		
 		this.optionsList.addSmall(showTargetIndicatorButton, enableAimHelperButton);
 		
 		buttonHeight+=24;
 		
-		Button bloodEffectsButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".blood_effects." + (bloodEffects.getValue() ? "on" : "off")), (button) -> {
-			bloodEffects.setValue(!bloodEffects.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".blood_effects." + (bloodEffects.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".blood_effects.tooltip"))).build();
+		Button bloodEffectsButton = Button.builder(Component.translatable("gui." + modid + ".blood_effects." + (ClientConfig.bloodEffects ? "on" : "off")), (button) -> {
+			ClientConfig.bloodEffects = !ClientConfig.bloodEffects;
+			button.setMessage(Component.translatable("gui." + modid + ".blood_effects." + (ClientConfig.bloodEffects ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".blood_effects.tooltip"))).build();
 		
-		Button exportCustomArmors = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".export_custom_armor"), (button) -> {
+		Button exportCustomArmors = Button.builder(Component.translatable("gui." + modid + ".export_custom_armor"), (button) -> {
 			File resourcePackDirectory = Minecraft.getInstance().getResourcePackDirectory().toFile();
 			try {
 				HumanoidModelBaker.exportModels(resourcePackDirectory);
@@ -93,50 +79,50 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 				EpicFightMod.LOGGER.info("Failed to export custom armor models");
 				e.printStackTrace();
 			}
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".export_custom_armor.tooltip"))).build();
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".export_custom_armor.tooltip"))).build();
 		
 		this.optionsList.addSmall(bloodEffectsButton, exportCustomArmors);
 		
 		buttonHeight += 24;
 		
-		Button aimingCorrectionButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".aiming_correction." + (aimingCorrection.getValue() ? "on" : "off")), (button) -> {
-			aimingCorrection.setValue(!aimingCorrection.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".aiming_correction." + (aimingCorrection.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".aiming_correction.tooltip"))).build();
+		Button aimingCorrectionButton = Button.builder(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")), (button) -> {
+			ClientConfig.aimingPovCorrection = !ClientConfig.aimingPovCorrection;
+			button.setMessage(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aiming_correction.tooltip"))).build();
 		
-		Button uiSetupButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".ui_setup"), (button) -> {
+		Button uiSetupButton = Button.builder(Component.translatable("gui." + modid + ".ui_setup"), (button) -> {
 			this.minecraft.setScreen(new UISetupScreen(this));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".ui_setup.tooltip"))).build();
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".ui_setup.tooltip"))).build();
 		
 		this.optionsList.addSmall(aimingCorrectionButton, uiSetupButton);
 		
 		buttonHeight += 24;
 		
-		Button showEpicfightAttributesButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".show_attributes." + (showEpicFightAttributes.getValue() ? "on" : "off")), (button) -> {
-			showEpicFightAttributes.setValue(!showEpicFightAttributes.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".show_attributes." + (showEpicFightAttributes.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".show_attributes.tooltip"))).build();
+		Button showEpicfightAttributesButton = Button.builder(Component.translatable("gui." + modid + ".show_attributes." + (ClientConfig.showEpicFightAttributesInTooltip ? "on" : "off")), (button) -> {
+			ClientConfig.showEpicFightAttributesInTooltip = !ClientConfig.showEpicFightAttributesInTooltip;
+			button.setMessage(Component.translatable("gui." + modid + ".show_attributes." + (ClientConfig.showEpicFightAttributesInTooltip ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".show_attributes.tooltip"))).build();
 		
-		Button maxHitProjectilesButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".max_stuck_projectiles", String.valueOf(maxHitProjectiles.getValue())), (button) -> {
-			maxHitProjectiles.setValue((maxHitProjectiles.getValue() + 1) % 30);
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".max_stuck_projectiles", String.valueOf(maxHitProjectiles.getValue())));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".max_stuck_projectiles.tooltip"))).build();
+		Button maxHitProjectilesButton = Button.builder(Component.translatable("gui." + modid + ".max_stuck_projectiles", String.valueOf(ClientConfig.maxStuckProjectiles)), (button) -> {
+			ClientConfig.maxStuckProjectiles = (ClientConfig.maxStuckProjectiles + 1) % 30;
+			button.setMessage(Component.translatable("gui." + modid + ".max_stuck_projectiles", String.valueOf(ClientConfig.maxStuckProjectiles)));
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".max_stuck_projectiles.tooltip"))).build();
 		
 		this.optionsList.addSmall(showEpicfightAttributesButton, maxHitProjectilesButton);
 		
 		buttonHeight += 24;
 		
-		Button firstPersonModelButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".first_person_model." + (firstPersonModel.getValue() ? "on" : "off")), (button) -> {
-			firstPersonModel.setValue(!firstPersonModel.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".first_person_model." + (firstPersonModel.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".first_person_model.tooltip"))).build();
+		Button firstPersonModelButton = Button.builder(Component.translatable("gui." + modid + ".first_person_model." + (ClientConfig.enableAnimatedFirstPersonModel ? "on" : "off")), (button) -> {
+			ClientConfig.enableAnimatedFirstPersonModel = !ClientConfig.enableAnimatedFirstPersonModel;
+			button.setMessage(Component.translatable("gui." + modid + ".first_person_model." + (ClientConfig.enableAnimatedFirstPersonModel ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".first_person_model.tooltip"))).build();
 		
-		Button useAnimationShaderButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".use_animation_shader." + (useAnimationShader.getValue() ? "on" : "off")), (button) -> {
-			useAnimationShader.setValue(!useAnimationShader.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".use_animation_shader." + (useAnimationShader.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".use_animation_shader.tooltip"))).build();
+		Button useAnimationShaderButton = Button.builder(Component.translatable("gui." + modid + ".use_animation_shader." + (ClientConfig.activateAnimationShader ? "on" : "off")), (button) -> {
+			ClientConfig.activateAnimationShader = !ClientConfig.activateAnimationShader;
+			button.setMessage(Component.translatable("gui." + modid + ".use_animation_shader." + (ClientConfig.activateAnimationShader ? "on" : "off")));
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".use_animation_shader.tooltip"))).build();
 		
-		if (this.config.shaderModeSwitchingLocked) {
+		if (ClientConfig.animationShaderLockedByException) {
 			useAnimationShaderButton.active = false;
 			useAnimationShaderButton.setTooltip(Tooltip.create(Component.translatable("gui." + EpicFightMod.MODID + ".use_animation_shader.locked.tooltip")));
 		}
@@ -145,8 +131,8 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		buttonHeight += 30;
 		
-		this.optionsList.addBig(new ColorSlider(this.font, this.width / 2 - 150, this.height / 4 + buttonHeight, 300, 20, Component.translatable("gui."+EpicFightMod.MODID+".aim_helper_color"),
-												ColorSlider.Style.CLASSIC, aimHelperColor.getValue(), (position, color) -> EpicFightMod.CLIENT_CONFIGS.aimHelperWidgetPosition.setValue(position)));
+		this.optionsList.addBig(new ColorSlider(this.font, this.width / 2 - 150, this.height / 4 + buttonHeight, 300, 20, Component.translatable("gui." + modid + ".aim_helper_color"),
+												ColorSlider.Style.CLASSIC, ClientConfig.aimHelperColor, (position, color) -> ClientConfig.aimHelperColor = position));
 		
 		this.addWidget(this.optionsList);
 	}

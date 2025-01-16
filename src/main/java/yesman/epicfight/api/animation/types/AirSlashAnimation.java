@@ -19,20 +19,29 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AirSlashAnimation extends AttackAnimation {
-	public AirSlashAnimation(float convertTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		this(convertTime, antic, antic, contact, recovery, true, collider, colliderJoint, accessor, armature);
+	public AirSlashAnimation(float transitionTime, float antic, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, antic, antic, contact, recovery, true, collider, colliderJoint, accessor, armature);
 	}
 	
-	public AirSlashAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, boolean directional, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
+	public AirSlashAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, boolean directional, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
 			this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 		}
 	}
 	
-	public AirSlashAnimation(float convertTime, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
-		super(convertTime, accessor, armature, phases);
+	public AirSlashAnimation(float transitionTime, AnimationAccessor<? extends AirSlashAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, accessor, armature, phases);
+		
+		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.5F));
+		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
+		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, false);
+		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true);
+	}
+	
+	public AirSlashAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, path, armature, phases);
 		
 		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.5F));
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);

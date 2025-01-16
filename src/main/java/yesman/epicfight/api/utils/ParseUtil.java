@@ -305,5 +305,9 @@ public class ParseUtil {
 		return root;
 	}
 	
+	public static String toLowerCase(String s) {
+		return s.toLowerCase(Locale.ROOT);
+	}
+	
 	private ParseUtil() {}
 }

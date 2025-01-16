@@ -28,7 +28,7 @@ import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPChangePlayerMode;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
@@ -195,7 +195,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public boolean overrideRender() {
 		// Disable rendering the player when animated first person model disabled
 		if (this.original.is(this.minecraft.player)) {
-			if (this.minecraft.options.getCameraType().isFirstPerson() && !EpicFightMod.CLIENT_CONFIGS.firstPersonModel.getValue()) {
+			if (this.minecraft.options.getCameraType().isFirstPerson() && !ClientConfig.enableAnimatedFirstPersonModel) {
 				return false;
 			}
 		}
@@ -207,9 +207,9 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
 		super.updateHeldItem(mainHandCap, offHandCap);
 		
-		if (EpicFightMod.CLIENT_CONFIGS.battleAutoSwitchItems.contains(this.original.getMainHandItem().getItem())) {
+		if (ClientConfig.battleModeSwitchingItems.contains(this.original.getMainHandItem().getItem())) {
 			this.toBattleMode(true);
-		} else if (EpicFightMod.CLIENT_CONFIGS.miningAutoSwitchItems.contains(this.original.getMainHandItem().getItem())) {
+		} else if (ClientConfig.miningModeSwitchingItems.contains(this.original.getMainHandItem().getItem())) {
 			this.toMiningMode(true);
 		}
 	}
@@ -218,7 +218,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public AttackResult tryHurt(DamageSource damageSource, float amount) {
 		AttackResult result = super.tryHurt(damageSource, amount);
 		
-		if (EpicFightMod.CLIENT_CONFIGS.autoPreparation.getValue() && result.resultType == AttackResult.ResultType.SUCCESS && !this.isBattleMode()) {
+		if (ClientConfig.autoPreparation && result.resultType == AttackResult.ResultType.SUCCESS && !this.isBattleMode()) {
 			this.toBattleMode(true);
 		}
 		
@@ -234,7 +234,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public void toMiningMode(boolean synchronize) {
 		if (this.playerMode != PlayerMode.MINING) {
 			ClientEngine.getInstance().renderEngine.downSlideSkillUI();
-			if (EpicFightMod.CLIENT_CONFIGS.cameraAutoSwitch.getValue()) {
+			
+			if (ClientConfig.authSwitchCamera) {
 				this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
 			}
 			
@@ -251,7 +252,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		if (this.playerMode != PlayerMode.BATTLE) {
 			ClientEngine.getInstance().renderEngine.upSlideSkillUI();
 			
-			if (EpicFightMod.CLIENT_CONFIGS.cameraAutoSwitch.getValue()) {
+			if (ClientConfig.authSwitchCamera) {
 				this.minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 			}
 			

@@ -32,6 +32,7 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -67,7 +68,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	public void render(VertexConsumer vertexConsumer, Camera camera, float partialTicks) {
 		PoseStack poseStack = new PoseStack();
 		
-		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
+		if (ClientConfig.activateAnimationShader) {
 			poseStack.mulPoseMatrix(RenderSystem.getModelViewMatrix());
 		}
 		
@@ -77,7 +78,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 		
 		RenderSystem.setShaderTexture(0, WHITE);
 		
-		if (EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue()) {
+		if (ClientConfig.activateAnimationShader) {
 			AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getPositionColorLightmapShader());
 			this.particleMeshProvider.get().drawWithShader(poseStack, animShader, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
 		} else {

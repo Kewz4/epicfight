@@ -7,8 +7,8 @@ import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackTimeMod
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AnimationPlayer {
@@ -35,7 +35,7 @@ public class AnimationPlayer {
 			playbackSpeed = playSpeedModifier.modify(currentPlay, entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
 		}
 		
-		this.elapsedTime += EpicFightOptions.A_TICK * playbackSpeed * (this.isReversed() && currentPlay.canBePlayedReverse() ? -1.0F : 1.0F);
+		this.elapsedTime += EpicFightSharedConstants.A_TICK * playbackSpeed * (this.isReversed() && currentPlay.canBePlayedReverse() ? -1.0F : 1.0F);
 		PlaybackTimeModifier playTimeModifier = currentPlayStatic.getProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER).orElse(null);
 		
 		if (playTimeModifier != null) {

@@ -36,7 +36,7 @@ import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class ActionAnimation extends MainFrameAnimation {
@@ -223,7 +223,7 @@ public class ActionAnimation extends MainFrameAnimation {
 			playTime = playSpeedModifier.modify(this, entitypatch, playTime, 0.0F, playTime);
 		}
 		
-		playTime = Math.abs(playTime) * EpicFightOptions.A_TICK;
+		playTime = Math.abs(playTime) * EpicFightSharedConstants.A_TICK;
 		
 		float linkTime = (transitionTimeModifier > 0.0F) ? transitionTimeModifier + this.transitionTime : this.transitionTime;
 		float totalTime = playTime * (int)Math.ceil(linkTime / playTime);

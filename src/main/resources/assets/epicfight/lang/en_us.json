@@ -256,6 +256,20 @@
 	"gui.epicfight.warn.animation_unsync": "Below animations are missing or don't exist in the server\n\n%s\nPlease check the resource packs that you're missing or unload the packs that the server doesn't have",
 	"gui.epicfight.warn.animation_unsync.etc": "... and %d other animations",
 	
+	"gui.epicfight.skin_setup": "Skins setup",
+	"gui.epicfight.button.save": "Save",
+	"gui.epicfight.button.quit": "Quit",
+	"gui.epicfight.button.signout": "Sign out",
+	"gui.epicfight.button.back": "Back",
+	
+	"gui.epicfight.avatar.cloak_type": "Cloak Type",
+	"gui.epicfight.avatar.cloak_color": "Cloak Color",
+	"gui.epicfight.avatar.vanilla_texture": "Vanilla Texture",
+	
+	"gui.epicfight.avatar.cloak_type.tooltip": "Select a cloak type",
+	"gui.epicfight.avatar.cloak_color.tooltip": "Set a color of the cloak",
+	"gui.epicfight.avatar.vanilla_texture.tooltip": "Check if you want to use vanilla cloak texture",
+	
 	"item.epicfight.bokken": "Bokken",
 	"item.epicfight.uchigatana": "Uchigatana",
 	"item.epicfight.stray_hat": "Stray Hat",

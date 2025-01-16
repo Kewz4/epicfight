@@ -1,73 +1,26 @@
 package yesman.epicfight.config;
 
+import java.util.function.Consumer;
+
 public class OptionHandler<T> {
-	protected final T defaultOption;
-	protected T option;
+	protected T value;
+	protected Consumer<T> onchanged;
 	
-	public OptionHandler(T defaultOption) {
-		this.defaultOption = defaultOption;
-		this.option = defaultOption;
+	public OptionHandler(T value, Consumer<T> onchanged) {
+		this.value = value;
+		this.onchanged = onchanged;
 	}
 	
 	public T getValue() {
-		return this.option;
+		return this.value;
 	}
 	
-	public void setValue(T option) {
-		this.option = option;
+	public void setValue(T value) {
+		this.value = value;
+		this.onchanged.accept(value);
 	}
 	
-	public void setDefaultValue() {
-		this.option = this.defaultOption;
-	}
-	
-	public static class IntegerOptionHandler extends OptionHandler<Integer> {
-		private final int minValue;
-		private final int maxValue;
-		
-		public IntegerOptionHandler(Integer defaultOption, int minValue, int maxValue) {
-			super(defaultOption);
-			this.minValue = minValue;
-			this.maxValue = maxValue;
-		}
-		
-		@Override
-		public void setValue(Integer option) {
-			if (option > this.maxValue) {
-				this.option = this.minValue;
-			} else if (option < this.minValue) {
-				this.option = this.maxValue;
-			} else {
-				this.option = option;
-			}
-		}
-	}
-	
-	public static class DoubleOptionHandler extends OptionHandler<Double> {
-		private final double minValue;
-		private final double maxValue;
-		
-		public DoubleOptionHandler(Double defaultOption, double minValue, double maxValue) {
-			super(defaultOption);
-			this.minValue = minValue;
-			this.maxValue = maxValue;
-		}
-		
-		@Override
-		public void setValue(Double option) {
-			if (option > this.maxValue) {
-				this.option = this.minValue;
-			} else if (option < this.minValue) {
-				this.option = this.maxValue;
-			} else {
-				this.option = option;
-			}
-		}
-	}
-	
-	public static class BooleanOptionHandler extends OptionHandler<Boolean> {
-		public BooleanOptionHandler(boolean defaultOption) {
-			super(defaultOption);
-		}
+	public static <T> OptionHandler<T> of(T value, Consumer<T> onchanged) {
+		return new OptionHandler<> (value, onchanged);
 	}
 }

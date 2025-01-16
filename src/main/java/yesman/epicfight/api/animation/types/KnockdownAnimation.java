@@ -11,8 +11,8 @@ import yesman.epicfight.world.damagesource.EpicFightDamageType;
 import yesman.epicfight.world.damagesource.StunType;
 
 public class KnockdownAnimation extends LongHitAnimation {
-	public KnockdownAnimation(float convertTime, AnimationAccessor<? extends KnockdownAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, accessor, armature);
+	public KnockdownAnimation(float transitionTime, AnimationAccessor<? extends KnockdownAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint
 			.addState(EntityState.KNOCKDOWN, true)
@@ -35,10 +35,10 @@ public class KnockdownAnimation extends LongHitAnimation {
 	}
 	
 	/**
-	 * For internal use
+	 * For resourcepack animation
 	 */
-	public KnockdownAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, path, armature);
+	public KnockdownAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, path, armature);
 		
 		this.stateSpectrumBlueprint
 			.addState(EntityState.KNOCKDOWN, true)

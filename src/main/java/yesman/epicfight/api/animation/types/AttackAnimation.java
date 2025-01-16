@@ -41,7 +41,7 @@ import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.HitEntityList;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.particle.HitParticleType;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -61,22 +61,23 @@ public class AttackAnimation extends ActionAnimation {
 	
 	public final Phase[] phases;
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
+	public AttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		this(convertTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
+	public AttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
-		super(convertTime, accessor, armature);
+	public AttackAnimation(float transitionTime, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, accessor, armature);
 		
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
 		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
 		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.MODEL_COORD);
 		this.addProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER, MoveCoordFunctions.ATTACK_TARGET_LOCATION);
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		
 		this.phases = phases;
 		this.stateSpectrumBlueprint.clear();
 		
@@ -102,7 +103,10 @@ public class AttackAnimation extends ActionAnimation {
 		
 		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
 		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
+		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.MODEL_COORD);
+		this.addProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER, MoveCoordFunctions.ATTACK_TARGET_LOCATION);
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		
 		this.phases = phases;
 		this.stateSpectrumBlueprint.clear();
 		
@@ -394,7 +398,7 @@ public class AttackAnimation extends ActionAnimation {
 	
 	@Override
 	public Object getModifiedLinkState(StateFactor<?> factor, Object val, LivingEntityPatch<?> entitypatch, float elapsedTime) {
-		if (factor == EntityState.ATTACKING && elapsedTime < this.getPlaySpeed(entitypatch, this) * EpicFightOptions.A_TICK) {
+		if (factor == EntityState.ATTACKING && elapsedTime < this.getPlaySpeed(entitypatch, this) * EpicFightSharedConstants.A_TICK) {
 			return false;
 		}
 		

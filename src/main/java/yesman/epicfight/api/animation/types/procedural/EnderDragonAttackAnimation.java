@@ -108,8 +108,8 @@ public class EnderDragonAttackAnimation extends AttackAnimation implements Proce
 		}
 		
 		if (entitypatch.isLogicalClient()) {
-			entitypatch.getClientAnimator().resetMotion(false);
-			entitypatch.getClientAnimator().resetCompositeMotion(false);
+			entitypatch.getClientAnimator().resetMotion();
+			entitypatch.getClientAnimator().resetCompositeMotion();
 		}
 	}
 	

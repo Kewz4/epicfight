@@ -90,8 +90,8 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.client.particle.TrailParticle;
 import yesman.epicfight.client.renderer.EpicFightShaders;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.StunType;
 
@@ -838,7 +838,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				DynamicAnimation nowPlay = this.getAnimation().get();
 				
 				this.prevElapsedTime = this.elapsedTime;
-				this.elapsedTime += EpicFightOptions.A_TICK * (this.isReversed() && nowPlay.canBePlayedReverse() ? -1.0F : 1.0F);
+				this.elapsedTime += EpicFightSharedConstants.A_TICK * (this.isReversed() && nowPlay.canBePlayedReverse() ? -1.0F : 1.0F);
 				
 				if (this.elapsedTime >= nowPlay.getTotalTime()) {
 					if (nowPlay.isRepeat()) {

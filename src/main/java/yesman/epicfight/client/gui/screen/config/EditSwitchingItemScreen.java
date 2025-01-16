@@ -19,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.WeaponCapability;
@@ -42,14 +43,14 @@ public class EditSwitchingItemScreen extends Screen {
 	protected void init() {
 		if (this.battleAutoSwitchItems == null) {
 			this.battleAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID+".gui.to_battle_mode"));
-			EpicFightMod.CLIENT_CONFIGS.battleAutoSwitchItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.battleAutoSwitchItems.addEntry(item));
+			ClientConfig.battleModeSwitchingItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.battleAutoSwitchItems.addEntry(item));
 		} else {
 			this.battleAutoSwitchItems.resize(200, this.height);
 		}
 		
 		if (this.miningAutoSwitchItems == null) {
 			this.miningAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID+".gui.to_mining_mode"));
-			EpicFightMod.CLIENT_CONFIGS.miningAutoSwitchItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.miningAutoSwitchItems.addEntry(item));
+			ClientConfig.miningModeSwitchingItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.miningAutoSwitchItems.addEntry(item));
 		} else {
 			this.miningAutoSwitchItems.resize(200, this.height);
 		}
@@ -60,11 +61,11 @@ public class EditSwitchingItemScreen extends Screen {
 		this.addRenderableWidget(this.miningAutoSwitchItems);
 
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
-			EpicFightMod.CLIENT_CONFIGS.battleAutoSwitchItems.clear();
-			EpicFightMod.CLIENT_CONFIGS.miningAutoSwitchItems.clear();
-			EpicFightMod.CLIENT_CONFIGS.battleAutoSwitchItems.addAll(this.battleAutoSwitchItems.toList());
-			EpicFightMod.CLIENT_CONFIGS.miningAutoSwitchItems.addAll(this.miningAutoSwitchItems.toList());
-			EpicFightMod.CLIENT_CONFIGS.save();
+			ClientConfig.battleModeSwitchingItems.clear();
+			ClientConfig.miningModeSwitchingItems.clear();
+			ClientConfig.battleModeSwitchingItems.addAll(this.battleAutoSwitchItems.toList());
+			ClientConfig.miningModeSwitchingItems.addAll(this.miningAutoSwitchItems.toList());
+			ClientConfig.saveChanges();
 			this.onClose();
 		}).bounds(this.width / 2 - 80, this.height - 28, 160, 20).build());
 	}

@@ -20,8 +20,8 @@ import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
@@ -32,6 +32,7 @@ public class BasicAttackAnimation extends AttackAnimation {
 	
 	public BasicAttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature);
+		
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
 		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
@@ -39,6 +40,7 @@ public class BasicAttackAnimation extends AttackAnimation {
 	
 	public BasicAttackAnimation(float transitionTime, float antic, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, antic, antic, contact, recovery, hand, collider, colliderJoint, accessor, armature);
+		
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
 		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
@@ -46,6 +48,15 @@ public class BasicAttackAnimation extends AttackAnimation {
 	
 	public BasicAttackAnimation(float transitionTime, AnimationAccessor<? extends BasicAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(transitionTime, accessor, armature, phases);
+		
+		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
+		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
+		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
+	}
+	
+	public BasicAttackAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, path, armature, phases);
+		
 		this.addProperty(ActionAnimationProperty.CANCELABLE_MOVE, true);
 		this.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false);
 		this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
@@ -91,7 +102,7 @@ public class BasicAttackAnimation extends AttackAnimation {
 		boolean stiffAttack = EpicFightGameRules.STIFF_COMBO_ATTACKS.getRuleValue(entitypatch.getOriginal().level());
 		
 		if (!isEnd && !nextAnimation.get().isMainFrameAnimation() && entitypatch.isLogicalClient() && !stiffAttack) {
-			float playbackSpeed = EpicFightOptions.A_TICK * this.getPlaySpeed(entitypatch, this);
+			float playbackSpeed = EpicFightSharedConstants.A_TICK * this.getPlaySpeed(entitypatch, this);
 			entitypatch.getClientAnimator().baseLayer.copyLayerTo(entitypatch.getClientAnimator().baseLayer.getLayer(Layer.Priority.HIGHEST), playbackSpeed);
 		}
 	}

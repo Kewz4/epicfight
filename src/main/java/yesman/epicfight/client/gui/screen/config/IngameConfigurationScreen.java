@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
@@ -23,14 +22,12 @@ public class IngameConfigurationScreen extends Screen {
 	
 	@Override
 	protected void init() {
-		EpicFightOptions configs = EpicFightMod.CLIENT_CONFIGS;
-		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.graphics"), (button) -> {
-			Minecraft.getInstance().setScreen(new EpicFightGraphicOptionScreen(this, configs));
+			Minecraft.getInstance().setScreen(new EpicFightGraphicOptionScreen(this));
 		}).pos(this.width / 2 - 165, 42).size(160, 20).build());
 		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.controls"), (button) -> {
-			Minecraft.getInstance().setScreen(new EpicFightControlOptionScreen(this, configs));
+			Minecraft.getInstance().setScreen(new EpicFightControlOptionScreen(this));
 		}).pos(this.width / 2 + 5, 42).size(160, 20).build());
 		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.datapack_edit"), (button) -> {

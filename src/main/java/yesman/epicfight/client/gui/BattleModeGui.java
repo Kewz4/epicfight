@@ -27,8 +27,6 @@ import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec2i;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.EpicFightOptions;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.Skill.ActivateType;
 import yesman.epicfight.skill.SkillContainer;
@@ -50,13 +48,11 @@ public class BattleModeGui extends ModIngameGui {
 	private int sliding;
 	private boolean slidingToggle;
 	private final List<SkillContainer> skillIcons = Lists.newLinkedList();
-	private final EpicFightOptions config;
 
 	public BattleModeGui(Minecraft minecraft) {
 		this.sliding = 29;
 		this.slidingToggle = false;
 		this.font = minecraft.font;
-		this.config = EpicFightMod.CLIENT_CONFIGS;
 	}
 	
 	public void renderGui(LocalPlayerPatch playerpatch, GuiGraphics guiGraphics, float partialTicks) {
@@ -99,7 +95,7 @@ public class BattleModeGui extends ModIngameGui {
 		float stamina = playerpatch.getStamina();
 		
 		if (maxStamina > 0.0F && stamina < maxStamina) {
-			Vec2i pos = this.config.getStaminaPosition(width, height);
+			Vec2i pos = ClientConfig.getStaminaPosition(width, height);
 			float prevStamina = playerpatch.getPrevStamina();
 			float ratio = (prevStamina + (stamina - prevStamina) * partialTicks) / maxStamina;
 
@@ -116,7 +112,7 @@ public class BattleModeGui extends ModIngameGui {
 			int chargeAmount = playerpatch.getChargingSkill().getChargingAmount(playerpatch);
 			int prevChargingAmount = playerpatch.getPrevChargingAmount();
 			float ratio = Math.min((prevChargingAmount + (chargeAmount - prevChargingAmount) * partialTicks) / playerpatch.getChargingSkill().getMaxChargingTicks(), 1.0F);
-			Vec2i pos = this.config.getChargingBarPosition(width, height);
+			Vec2i pos = ClientConfig.getChargingBarPosition(width, height);
 
 			poseStack.pushPose();
 			poseStack.translate(0, this.sliding, 0);
@@ -150,11 +146,11 @@ public class BattleModeGui extends ModIngameGui {
 			this.drawWeaponInnateIcon(playerpatch, playerpatch.getSkill(SkillSlots.WEAPON_INNATE), guiGraphics, partialTicks);
 		}
 
-		ClientConfig.AlignDirection alignDirection = this.config.passivesAlignDirection.getValue();
-		ClientConfig.HorizontalBasis horBasis = this.config.passivesXBase.getValue();
-		ClientConfig.VerticalBasis verBasis = this.config.passivesYBase.getValue();
-		int passiveX = horBasis.positionGetter.apply(width, this.config.passivesX.getValue());
-		int passiveY = verBasis.positionGetter.apply(height, this.config.passivesY.getValue());
+		ClientConfig.AlignDirection alignDirection = ClientConfig.passiveAlignDirection;
+		ClientConfig.HorizontalBasis horBasis = ClientConfig.passiveBaseX;
+		ClientConfig.VerticalBasis verBasis = ClientConfig.passiveBaseY;
+		int passiveX = horBasis.positionGetter.apply(width, ClientConfig.passiveX);
+		int passiveY = verBasis.positionGetter.apply(height, ClientConfig.passiveY);
 		int icons = this.skillIcons.size();
 		Vec2i slotCoord = alignDirection.startCoordGetter.get(passiveX, passiveY, 24, 24, icons, horBasis, verBasis);
 
@@ -189,7 +185,7 @@ public class BattleModeGui extends ModIngameGui {
 		Window sr = Minecraft.getInstance().getWindow();
 		int width = sr.getGuiScaledWidth();
 		int height = sr.getGuiScaledHeight();
-		Vec2i pos = this.config.getWeaponInnatePosition(width, height);
+		Vec2i pos = ClientConfig.getWeaponInnatePosition(width, height);
 
 		poseStack.pushPose();
 		poseStack.translate(0, (float)this.sliding, 0);

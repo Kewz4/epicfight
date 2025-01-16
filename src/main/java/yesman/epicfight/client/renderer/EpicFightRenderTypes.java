@@ -39,6 +39,7 @@ import yesman.epicfight.client.renderer.EpicFightVertexFormat.AnimationVertexFor
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.client.renderer.shader.VanillaAnimationShader;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
@@ -190,9 +191,9 @@ public class EpicFightRenderTypes extends RenderType {
 			Minecraft.getInstance().levelRenderer.allChanged();
 			Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("epicfight.messages.shader_transform_fail", shaderInstance.getName()).withStyle(ChatFormatting.RED));
 			
-			EpicFightMod.CLIENT_CONFIGS.shaderModeSwitchingLocked = true;
-			EpicFightMod.CLIENT_CONFIGS.useAnimationShader.setValue(false);
-			EpicFightMod.CLIENT_CONFIGS.save();
+			ClientConfig.animationShaderLockedByException = true;
+			ClientConfig.activateAnimationShader = false;
+			ClientConfig.saveChanges();
 		}
 		
 		return ANIMATION_SHADERS.get(shaderInstance.getName());
@@ -232,7 +233,7 @@ public class EpicFightRenderTypes extends RenderType {
 		});
 		
 		SHADER_LIBS = ImmutableMap.copyOf(shaderLibs); 
-		EpicFightMod.CLIENT_CONFIGS.shaderModeSwitchingLocked = false;
+		ClientConfig.animationShaderLockedByException = false;
 	}
 	
 	public static void clearAnimationShaderInstance(String shaderName) {

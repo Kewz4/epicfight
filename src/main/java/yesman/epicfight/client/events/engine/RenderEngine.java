@@ -114,6 +114,7 @@ import yesman.epicfight.client.renderer.patched.item.RenderMap;
 import yesman.epicfight.client.renderer.patched.item.RenderShield;
 import yesman.epicfight.client.renderer.patched.item.RenderTrident;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillContainer;
@@ -503,16 +504,16 @@ public class RenderEngine {
 						localPlayerPatch.setModelYRotInGui(livingentity.getYRot());
 						event.getPoseStack().translate(0, 0.1D, 0);
 						
-						boolean usingShader = EpicFightMod.CLIENT_CONFIGS.useAnimationShader.getValue();
+						boolean usingShader = ClientConfig.activateAnimationShader;
 						
 						if (usingShader) {
-							EpicFightMod.CLIENT_CONFIGS.useAnimationShader.setValue(false);
+							ClientConfig.activateAnimationShader = false;
 						}
 						
 						renderEngine.renderEntityArmatureModel(livingentity, entitypatch, event.getRenderer(), event.getMultiBufferSource(), event.getPoseStack(), event.getPackedLight(), event.getPartialTick());
 						
 						if (usingShader) {
-							EpicFightMod.CLIENT_CONFIGS.useAnimationShader.setValue(true);
+							ClientConfig.activateAnimationShader = true;
 						}
 						
 						event.setCanceled(true);
@@ -549,7 +550,7 @@ public class RenderEngine {
 		@SubscribeEvent
 		public static void itemTooltip(ItemTooltipEvent event) {
 			if (event.getEntity() != null && event.getEntity().level().isClientSide) {
-				if (EpicFightMod.CLIENT_CONFIGS.showEpicFightAttributes.getValue()) {
+				if (ClientConfig.showEpicFightAttributesInTooltip) {
 					CapabilityItem cap = EpicFightCapabilities.getItemStackCapabilityOr(event.getItemStack(), null);
 					LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LocalPlayerPatch.class);
 					
@@ -613,7 +614,7 @@ public class RenderEngine {
 		
 		@SubscribeEvent
 		public static void cameraSetupEvent(ViewportEvent.ComputeCameraAngles event) {
-			if (renderEngine.zoomCount > 0 && EpicFightMod.CLIENT_CONFIGS.aimingCorrection.getValue()) {
+			if (renderEngine.zoomCount > 0 && ClientConfig.aimingPovCorrection) {
 				renderEngine.setRangedWeaponThirdPerson(event, renderEngine.minecraft.options.getCameraType(), event.getPartialTick());
 				
 				if (renderEngine.zoomOutStandbyTicks > 0) {
@@ -684,7 +685,7 @@ public class RenderEngine {
 			if (playerpatch != null) {
 				boolean isBattleMode = playerpatch.isBattleMode();
 				
-				if ((isBattleMode || !EpicFightMod.CLIENT_CONFIGS.filterAnimation.getValue()) && EpicFightMod.CLIENT_CONFIGS.firstPersonModel.getValue()) {
+				if ((isBattleMode || !ClientConfig.filterAnimation) && ClientConfig.enableAnimatedFirstPersonModel) {
 					ItemSkin mainhandItemSkin = ItemSkins.getItemSkin(playerpatch.getOriginal().getMainHandItem().getItem());
 					ItemSkin offhandItemSkin = ItemSkins.getItemSkin(playerpatch.getOriginal().getOffhandItem().getItem());
 					boolean useEpicFightModel = (mainhandItemSkin == null || !mainhandItemSkin.forceVanillaFirstPerson()) && (offhandItemSkin == null || !offhandItemSkin.forceVanillaFirstPerson());
@@ -703,7 +704,7 @@ public class RenderEngine {
 		
 		@SubscribeEvent
 		public static void renderWorldLast(RenderLevelStageEvent event) {
-			if (EpicFightMod.CLIENT_CONFIGS.aimingCorrection.getValue() && renderEngine.zoomCount > 0 && renderEngine.minecraft.options.getCameraType() == CameraType.THIRD_PERSON_BACK && event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+			if (ClientConfig.aimingPovCorrection && renderEngine.zoomCount > 0 && renderEngine.minecraft.options.getCameraType() == CameraType.THIRD_PERSON_BACK && event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
 				renderEngine.aimHelper.doRender(event.getPoseStack(), event.getPartialTick());
 			}
 		}

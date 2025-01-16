@@ -46,9 +46,9 @@ import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.entity.eventlistener.AnimationBeginEvent;
@@ -92,7 +92,7 @@ public class StaticAnimation extends DynamicAnimation {
 	}
 	
 	public StaticAnimation(boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
+		this(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
 	}
 	
 	public StaticAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
@@ -158,7 +158,7 @@ public class StaticAnimation extends DynamicAnimation {
 		}
 		
 		playTime = Math.abs(playTime);
-		playTime *= EpicFightOptions.A_TICK;
+		playTime *= EpicFightSharedConstants.A_TICK;
 		
 		float linkTime = transitionTimeModifier > 0.0F ? transitionTimeModifier + this.transitionTime : this.transitionTime;
 		float totalTime = playTime * (int)Math.ceil(linkTime / playTime);

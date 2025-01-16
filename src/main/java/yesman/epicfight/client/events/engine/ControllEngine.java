@@ -26,6 +26,7 @@ import yesman.epicfight.client.gui.screen.SkillEditScreen;
 import yesman.epicfight.client.gui.screen.config.IngameConfigurationScreen;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.skill.ChargeableSkill;
@@ -219,8 +220,8 @@ public class ControllEngine {
 				this.weaponInnatePressCounter = 0;
 			} else {
 				if (EpicFightKeyMappings.WEAPON_INNATE_SKILL.getKey().equals(EpicFightKeyMappings.ATTACK.getKey())) {
-					if (this.weaponInnatePressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
-						if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK && this.playerpatch.getTarget() == null && !EpicFightMod.CLIENT_CONFIGS.noMiningInCombat.getValue()) {
+					if (this.weaponInnatePressCounter > ClientConfig.longPressCounter) {
+						if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK && this.playerpatch.getTarget() == null && !ClientConfig.preventMiningInCombatMode) {
 				            this.minecraft.startAttack();
 				            setKeyBind(EpicFightKeyMappings.ATTACK, true);
 						} else if (this.playerpatch.getSkill(SkillSlots.WEAPON_INNATE).sendExecuteRequest(this.playerpatch, this).shouldReserverKey()) {
@@ -271,7 +272,7 @@ public class ControllEngine {
 				this.sneakPressToggle = false;
 				this.sneakPressCounter = 0;
 			} else {
-				if (this.sneakPressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
+				if (this.sneakPressCounter > ClientConfig.longPressCounter) {
 					this.sneakPressToggle = false;
 					this.sneakPressCounter = 0;
 				} else {
@@ -341,7 +342,7 @@ public class ControllEngine {
 					input.jumping = true;
 				}
 			} else {
-				if (this.moverPressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
+				if (this.moverPressCounter > ClientConfig.longPressCounter) {
 					SkillContainer skill = this.playerpatch.getSkill(SkillSlots.MOVER);
 					skill.sendExecuteRequest(this.playerpatch, this);
 					

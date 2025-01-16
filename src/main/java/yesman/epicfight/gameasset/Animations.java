@@ -107,8 +107,8 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
@@ -499,9 +499,9 @@ public class Animations {
 					return dot < 0.0D ? 1 : 0;
 				},
 				accessor,
-				new DirectStaticAnimation(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_forward"), Armatures.BIPED)
+				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_forward"), Armatures.BIPED)
 					.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.FLYING_CORRECTION),
-				new DirectStaticAnimation(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_backward"), Armatures.BIPED)
+				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_backward"), Armatures.BIPED)
 					.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.FLYING_CORRECTION2)
 			)
 		);
@@ -776,7 +776,7 @@ public class Animations {
 					MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
-					entitypatch.getClientAnimator().resetCompositeMotion(true);
+					entitypatch.getClientAnimator().resumeLivingMotionUpdate(true);
 				}, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
 				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)

@@ -35,14 +35,13 @@ import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.loading.FMLPaths;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.ServerAnimator;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
-import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.model.ItemSkins;
@@ -66,8 +65,8 @@ import yesman.epicfight.compat.ParCoolCompat;
 import yesman.epicfight.compat.SkinLayer3DCompat;
 import yesman.epicfight.compat.VampirismCompat;
 import yesman.epicfight.compat.WerewolvesCompat;
-import yesman.epicfight.config.ConfigManager;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.config.ClientConfig;
+import yesman.epicfight.config.CommonConfig;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.data.loot.EpicFightLootTables;
 import yesman.epicfight.gameasset.ColliderPreset;
@@ -156,7 +155,6 @@ public class EpicFightMod {
 	
 	public static final String CONFIG_FILE_PATH = EpicFightMod.MODID + ".toml";
 	public static final Logger LOGGER = LogManager.getLogger(MODID);
-	public static EpicFightOptions CLIENT_CONFIGS;
 	private static EpicFightMod instance;
 	private static boolean warnAssetExceptions = false;
 	
@@ -177,7 +175,9 @@ public class EpicFightMod {
     public EpicFightMod() {
     	instance = this;
     	
-    	ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ConfigManager.CLIENT_CONFIG);
+    	ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
+    	
 		final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		
 		bus.addListener(this::constructMod);
@@ -216,8 +216,6 @@ public class EpicFightMod {
 		EpicFightPaintingVariants.PAINTING_VARIANTS.register(bus);
 		EpicFightCommandArgumentTypes.COMMAND_ARGUMENT_TYPES.register(bus);
         
-        ConfigManager.loadConfig(ConfigManager.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve(MODID + "-client.toml").toString());
-        ConfigManager.loadConfig(ConfigManager.COMMON_CONFIG, FMLPaths.CONFIGDIR.get().resolve(CONFIG_FILE_PATH).toString());
         ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory(IngameConfigurationScreen::new));
         ModLoadingContext.get().registerExtensionPoint(EpicFightExtensions.class, () -> new EpicFightExtensions(EpicFightCreativeTabs.ITEMS.get()));
         
@@ -332,7 +330,6 @@ public class EpicFightMod {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-        	CLIENT_CONFIGS = new EpicFightOptions();
         	new ClientEngine();
         	
         	EpicFightMod.getInstance().animatorProvider = ClientAnimator::getAnimator;

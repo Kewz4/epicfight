@@ -21,8 +21,8 @@ import yesman.epicfight.api.animation.types.EntityState.StateFactor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public abstract class DynamicAnimation {
@@ -31,7 +31,7 @@ public abstract class DynamicAnimation {
 	protected AnimationClip animationClip;
 	
 	public DynamicAnimation() {
-		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, false);
+		this(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, false);
 	}
 	
 	public DynamicAnimation(float transitionTime, boolean isRepeat) {

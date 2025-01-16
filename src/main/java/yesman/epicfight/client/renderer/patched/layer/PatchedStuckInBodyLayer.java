@@ -14,16 +14,14 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class PatchedStuckInBodyLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends PlayerModel<E>, R extends StuckInBodyLayer<E, M>> extends PatchedLayer<E, T, M, R> {
 	@Override
-	protected void renderLayer(T entitypatch, E entityliving, R vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-			OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
-		int i = Math.min(EpicFightMod.CLIENT_CONFIGS.maxStuckProjectiles.getValue(), this.numStuck(entityliving));
-		
+	protected void renderLayer(T entitypatch, E entityliving, R vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
+		int i = Math.min(ClientConfig.maxStuckProjectiles, this.numStuck(entityliving));
 		RandomSource randomsource = RandomSource.create((long) entityliving.getId());
 		
 		if (i > 0) {

@@ -3,12 +3,12 @@ package yesman.epicfight.api.animation.types;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class MovementAnimation extends StaticAnimation {
 	public MovementAnimation(boolean isRepeat, AnimationAccessor<? extends MovementAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		super(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
+		super(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, isRepeat, accessor, armature);
 	}
 	
 	public MovementAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends MovementAnimation> accessor, AssetAccessor<? extends Armature> armature) {

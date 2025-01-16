@@ -26,7 +26,7 @@ import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.common.loot.LootModifier;
 import net.minecraftforge.fml.ModLoader;
 import yesman.epicfight.api.forgeevent.SkillLootTableRegistryEvent;
-import yesman.epicfight.config.ConfigManager;
+import yesman.epicfight.config.CommonConfig;
 import yesman.epicfight.data.loot.function.SetSkillFunction;
 import yesman.epicfight.world.item.EpicFightItems;
 
@@ -66,7 +66,7 @@ public class SkillBookLootModifier extends LootModifier {
 	public static void createSkillLootTable() {
 		Map<EntityType<?>, LootTable.Builder> builders = Maps.newHashMap();
 		SkillLootTableRegistryEvent lootTableRegistryEvent = new SkillLootTableRegistryEvent(builders);
-		int modifier = ConfigManager.SKILL_BOOK_MOB_DROP_CHANCE_MODIFIER.get();
+		int modifier = CommonConfig.skillBookMobDropChanceModifier;
 		int dropChance = 100 + modifier;
 		int antiDropChance = 100 - modifier;
 		float dropChanceModifier = (antiDropChance == 0) ? Float.MAX_VALUE : dropChance / (float)antiDropChance;

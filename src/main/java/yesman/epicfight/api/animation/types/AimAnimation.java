@@ -10,12 +10,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
-import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
@@ -24,7 +24,7 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AimAnimation extends StaticAnimation {
@@ -34,7 +34,7 @@ public class AimAnimation extends StaticAnimation {
 	public DirectStaticAnimation lying;
 	
 	public AimAnimation(boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
-		this(EpicFightOptions.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, accessor, path1, path2, path3, path4, armature);
+		this(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, repeatPlay, accessor, path1, path2, path3, path4, armature);
 	}
 	
 	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {

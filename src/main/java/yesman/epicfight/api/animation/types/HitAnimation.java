@@ -14,8 +14,8 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class HitAnimation extends MainFrameAnimation {
-	public HitAnimation(float convertTime, AnimationAccessor<? extends HitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, accessor, armature);
+	public HitAnimation(float transitionTime, AnimationAccessor<? extends HitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, accessor, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, Float.MAX_VALUE)
@@ -28,8 +28,8 @@ public class HitAnimation extends MainFrameAnimation {
 			.addState(EntityState.HURT_LEVEL, 1);
 	}
 	
-	public HitAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
-		super(convertTime, path, armature);
+	public HitAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, path, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, Float.MAX_VALUE)
