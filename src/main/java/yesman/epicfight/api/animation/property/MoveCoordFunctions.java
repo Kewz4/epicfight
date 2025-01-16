@@ -14,7 +14,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
@@ -37,7 +36,7 @@ public class MoveCoordFunctions {
 	 */
 	@FunctionalInterface
 	public interface MoveCoordGetter {
-		Vec3f get(DynamicAnimation animation, LivingEntityPatch<?> entitypatch, TransformSheet transformSheet);
+		Vec3f get(DynamicAnimation animation, LivingEntityPatch<?> entitypatch, TransformSheet transformSheet, float prevElapsedTime, float elapsedTime);
 	}
 	
 	/**
@@ -53,15 +52,14 @@ public class MoveCoordFunctions {
 	 *  - Calculates the coordinate gap between previous and current elapsed time
 	 *  - the coordinate doesn't reflect the entity's rotation
 	 */
-	public static final MoveCoordGetter MODEL_COORD = (animation, entitypatch, coord) -> {
+	public static final MoveCoordGetter MODEL_COORD = (animation, entitypatch, coord, prevElapsedTime, elapsedTime) -> {
 		LivingEntity livingentity = entitypatch.getOriginal();
-		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation.getAccessor());
-		JointTransform oJt = coord.getInterpolatedTransform(player.getPrevElapsedTime());
-		JointTransform jt = coord.getInterpolatedTransform(player.getElapsedTime());
+		JointTransform oJt = coord.getInterpolatedTransform(prevElapsedTime);
+		JointTransform jt = coord.getInterpolatedTransform(elapsedTime);
 		
 		TransformSheet animCoord = animation.getCoord();
-		JointTransform oAnimJt = animCoord.getInterpolatedTransform(player.getPrevElapsedTime());
-		JointTransform animJt = animCoord.getInterpolatedTransform(player.getElapsedTime());
+		JointTransform oAnimJt = animCoord.getInterpolatedTransform(prevElapsedTime);
+		JointTransform animJt = animCoord.getInterpolatedTransform(elapsedTime);
 		
 		Vec3f lastCoord = entitypatch.getAnimator().getVariables().get(ActionAnimation.LAST_MODEL_COORD, animation.getRealAnimation());
 		
@@ -102,9 +100,8 @@ public class MoveCoordFunctions {
 	 * - Calculates the coordinate of current elapsed time
 	 * - the coordinate is the world position
 	 */
-	public static final MoveCoordGetter WORLD_COORD = (animation, entitypatch, coord) -> {
-		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation.getAccessor());
-		JointTransform jt = coord.getInterpolatedTransform(player.getElapsedTime());
+	public static final MoveCoordGetter WORLD_COORD = (animation, entitypatch, coord, prevElapsedTime, elapsedTime) -> {
+		JointTransform jt = coord.getInterpolatedTransform(elapsedTime);
 		Vec3 entityPos = entitypatch.getOriginal().position();
 		
 		return jt.translation().copy().sub(Vec3f.fromDoubleVector(entityPos));
@@ -116,17 +113,16 @@ public class MoveCoordFunctions {
 	 *  - especially used by {@link GrapplingAttackAnimation}
 	 *  - read by {@link MoveCoordFunctions#RAW_COORD}
 	 */
-	public static final MoveCoordGetter ATTACHED = (animation, entitypatch, coord) -> {
+	public static final MoveCoordGetter ATTACHED = (animation, entitypatch, coord, prevElapsedTime, elapsedTime) -> {
 		LivingEntity target = entitypatch.getGrapplingTarget();
 		
 		if (target == null) {
-			return MODEL_COORD.get(animation, entitypatch, coord);
+			return MODEL_COORD.get(animation, entitypatch, coord, prevElapsedTime, elapsedTime);
 		}
 		
 		TransformSheet rootCoord = animation.getCoord();
 		LivingEntity livingentity = entitypatch.getOriginal();
-		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation.getAccessor());
-		Vec3f model = rootCoord.getInterpolatedTransform(player.getElapsedTime()).translation();
+		Vec3f model = rootCoord.getInterpolatedTransform(elapsedTime).translation();
 		Vec3f world = OpenMatrix4f.transform3v(OpenMatrix4f.createRotatorDeg(-target.getYRot(), Vec3f.Y_AXIS), model, null);
 		Vec3f dst = Vec3f.fromDoubleVector(target.position()).add(world);
 		entitypatch.setYRot(Mth.wrapDegrees(target.getYRot() + 180.0F));
@@ -158,8 +154,13 @@ public class MoveCoordFunctions {
 		Vec3 destLocation = self.getRealAnimation().get().getProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER).orElse(NO_DEST).get(self, entitypatch);
 		
 		if (destLocation != null) {
-			Vec3 start = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
-			Vec3 toDestWorld = destLocation.subtract(start);
+			Vec3 startInWorld = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
+			
+			if (startInWorld == null) {
+				startInWorld = entitypatch.getOriginal().position();
+			}
+			
+			Vec3 toDestWorld = destLocation.subtract(startInWorld);
 			float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toDestWorld));
 			float entityYRot = MathUtils.rotlerp(entitypatch.getYRot(), yRot, entitypatch.getYRotLimit());
 			
@@ -225,6 +226,11 @@ public class MoveCoordFunctions {
 		}
 		
 		Vec3 startInWorld = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
+		
+		if (startInWorld == null) {
+			startInWorld = entitypatch.getOriginal().position();
+		}
+		
 		Vec3 toTargetInWorld = destInWorld.subtract(startInWorld);
 		float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toTargetInWorld));
 		Optional<YRotProvider> destYRotProvider = self.getRealAnimation().get().getProperty(ActionAnimationProperty.DEST_COORD_YROT_PROVIDER);
@@ -247,8 +253,13 @@ public class MoveCoordFunctions {
 			Keyframe[] coord = transform.getKeyframes();
 			Keyframe[] realAnimationCoord = self.getRealAnimation().get().getCoord().getKeyframes();
 			
-			Vec3 start = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
-			Vec3 toDestWorld = destLocation.subtract(start);
+			Vec3 startInWorld = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
+			
+			if (startInWorld == null) {
+				startInWorld = entitypatch.getOriginal().position();
+			}
+			
+			Vec3 toDestWorld = destLocation.subtract(startInWorld);
 			Vec3f toDestAnim = realAnimationCoord[realAnimationCoord.length - 1].transform().translation();
 			LivingEntity attackTarget = entitypatch.getTarget();
 			
@@ -296,8 +307,13 @@ public class MoveCoordFunctions {
 			Keyframe[] coord = transform.getKeyframes();
 			Keyframe[] realAnimationCoord = self.getRealAnimation().get().getCoord().getKeyframes();
 			
-			Vec3 start = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
-			Vec3 toDestWorld = destLocation.subtract(start);
+			Vec3 startInWorld = entitypatch.getAnimator().getVariables().get(ActionAnimation.BEGINNING_LOCATION, self.getRealAnimation());
+			
+			if (startInWorld == null) {
+				startInWorld = entitypatch.getOriginal().position();
+			}
+			
+			Vec3 toDestWorld = destLocation.subtract(startInWorld);
 			Vec3f toDestAnim = realAnimationCoord[realAnimationCoord.length - 1].transform().translation();
 			
 			//float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toDestWorld));

@@ -60,7 +60,7 @@ public class BattleModeGui extends ModIngameGui {
 	}
 	
 	public void renderGui(LocalPlayerPatch playerpatch, GuiGraphics guiGraphics, float partialTicks) {
-		if (!playerpatch.getOriginal().isAlive() || playerpatch.getOriginal().getVehicle() != null) {
+		if (!playerpatch.getOriginal().isAlive() || playerpatch.getOriginal().isSpectator() || playerpatch.getOriginal().getVehicle() != null) {
 			return;
 		}
 		

@@ -36,6 +36,7 @@ import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
 import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.api.utils.InstantiateInvoker;
+import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
@@ -55,7 +56,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	private final Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> animationByName = Maps.newHashMap();
 	private final Map<AnimationAccessor<? extends StaticAnimation>, StaticAnimation> animations = Maps.newHashMap();
 	
-	private final Map<ResourceLocation, String> resourcepackAnimationCommands = Maps.newHashMap();
+	private final Map<AnimationAccessor<? extends StaticAnimation>, String> resourcepackAnimationCommands = Maps.newHashMap();
 	
 	public AnimationManager() {
 		super(new GsonBuilder().create(), "animmodels/animations");
@@ -116,8 +117,8 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		}
 		
 		this.animations.clear();
-		this.animationById.entrySet().removeIf((entry) -> entry.getValue().resourcepackAnimation());
-		this.animationByName.entrySet().removeIf((entry) -> entry.getValue().resourcepackAnimation());
+		this.animationById.entrySet().removeIf((entry) -> !entry.getValue().inRegistry());
+		this.animationByName.entrySet().removeIf((entry) -> !entry.getValue().inRegistry());
 		this.resourcepackAnimationCommands.clear();
 		
 		return super.prepare(resourceManager, profilerIn);
@@ -158,6 +159,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		SkillManager.reloadAllSkillsAnimations();
 		
 		this.animations.values().stream().reduce(Lists.<AssetAccessor<? extends StaticAnimation>>newArrayList(), (list, anim) -> {
+			list.add(anim.getAccessor());
 			list.addAll(anim.getSubAnimations());
 			return list;
 		}, (list1, list2) -> {
@@ -197,7 +199,8 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	public Stream<CompoundTag> getResourcepackAnimationStream() {
 		return this.resourcepackAnimationCommands.entrySet().stream().map((entry) -> {
 			CompoundTag compTag = new CompoundTag();
-			compTag.putString("registry_name", entry.getKey().toString());
+			compTag.putString("registry_name", entry.getKey().registryName().toString());
+			compTag.putInt("id", entry.getKey().id());
 			compTag.putString("invoke_command", entry.getValue());
 			
 			return compTag;
@@ -205,7 +208,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	/**
-	 * @param mandatoryPack : creates dummy animations for server side animations without animation clips when the server has mandatory resource pack.
+	 * @param mandatoryPack : creates dummy animations for animations from the server without animation clips when the server has mandatory resource pack.
 	 *                        custom weapon types & mob capabilities won't be created because they won't be able to find the animations from the server
 	 *                        dummy animations will be automatically removed right after reloading resourced as the server forces using resource pack
 	 */
@@ -214,21 +217,25 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		if (mandatoryPack) {
 			for (CompoundTag tag : packet.getTags()) {
 				String invocationCommand = tag.getString("invoke_command");
-				ResourceLocation registryName = new ResourceLocation(tag.getString("registry_name"));
-				
-				if (this.animations.containsKey(registryName)) {
+				ResourceLocation registryName = ResourceLocation.tryParse(tag.getString("registry_name"));
+				int id = tag.getInt("id");
+						
+				if (this.animationByName.containsKey(registryName)) {
 					continue;
 				}
 				
-				try {
-					//StaticAnimation animation = InstantiateInvoker.invoke(invocationCommand, StaticAnimation.class).getResult();
-					//this.animationById.put(null, animation);
-					//this.animationByName.put(registryName, null);
-					//this.animations.put(null, animation);
-				} catch (Exception e) {
-					EpicFightMod.LOGGER.warn("Failed at creating animation from server resource pack");
-					e.printStackTrace();
-				}
+				AnimationAccessor<? extends StaticAnimation> accessor = AnimationAccessorImpl.create(registryName, getResourcepackAnimationCount(), false, (accessor$2) -> {
+					try {
+						return InstantiateInvoker.invoke(invocationCommand, StaticAnimation.class).getResult();
+					} catch (Exception e) {
+						EpicFightMod.LOGGER.warn("Failed at creating animation from server resource pack");
+						e.printStackTrace();
+						return Animations.EMPTY_ANIMATION;
+					}
+				});
+				
+				this.animationById.put(id, accessor);
+				this.animationByName.put(registryName, accessor);
 			}
 		}
 		
@@ -317,57 +324,39 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		
 		JsonObject constructorObject = constructorElement.getAsJsonObject();
 		String invocationCommand = constructorObject.get("invocation_command").getAsString();
-		this.resourcepackAnimationCommands.put(rl, invocationCommand);
+		StaticAnimation animation = InstantiateInvoker.invoke(invocationCommand, StaticAnimation.class).getResult();
+		JsonElement propertiesElement = json.getAsJsonObject().get("properties");
 		
-		AnimationAccessor<StaticAnimation> resourcepackAnimationAccessor = AnimationAccessorImpl.create(rl, this.animations.size() + 1, true, (accessor) -> {
-			StaticAnimation animation = null;
+		if (propertiesElement != null) {
+			JsonObject propertiesObject = propertiesElement.getAsJsonObject();
 			
-			try {
-				animation = InstantiateInvoker.invoke(invocationCommand, StaticAnimation.class).getResult();
-			} catch (Exception e) {
-				e.printStackTrace();
+			for (Map.Entry<String, JsonElement> entry : propertiesObject.entrySet()) {
+				AnimationProperty<?> propertyKey = AnimationProperty.getSerializableProperty(entry.getKey());
+				Object value = propertyKey.parseFrom(entry.getValue());
+				animation.addPropertyUnsafe(propertyKey, value);
 			}
-			
-			if (!animation.getRegistryName().equals(rl)) {
-				throw new IllegalStateException("The animation registry name in invocation command is not matching with its path!");
-			}
-			
-			animation.setAccessor(accessor);
-			JsonElement propertiesElement = json.getAsJsonObject().get("properties");
-			
-			if (propertiesElement != null) {
-				JsonObject propertiesObject = propertiesElement.getAsJsonObject();
-				
-				for (Map.Entry<String, JsonElement> entry : propertiesObject.entrySet()) {
-					AnimationProperty<?> propertyKey = AnimationProperty.getSerializableProperty(entry.getKey());
-					Object value = propertyKey.parseFrom(entry.getValue());
-					animation.addPropertyUnsafe(propertyKey, value);
-				}
-			}
-			
-			return animation;
-		});
+		}
 		
-		this.animationById.put(resourcepackAnimationAccessor.id(), resourcepackAnimationAccessor);
-		this.animationByName.put(resourcepackAnimationAccessor.registryName(), resourcepackAnimationAccessor);
-		this.animations.put(resourcepackAnimationAccessor, null);
+		AnimationAccessor<StaticAnimation> accessor = AnimationAccessorImpl.create(rl, this.animations.size() + 1, false, null);
+		animation.setAccessor(accessor);
+		
+		this.resourcepackAnimationCommands.put(accessor, invocationCommand);
+		this.animationById.put(accessor.id(), accessor);
+		this.animationByName.put(accessor.registryName(), accessor);
+		this.animations.put(accessor, animation);
 	}
 	
 	public interface AnimationAccessor<A extends DynamicAnimation> extends AssetAccessor<A> {
 		int id();
-		
-		default boolean resourcepackAnimation() {
-			return false;
-		}
 		
 		default boolean idBetween(AnimationAccessor<? extends StaticAnimation> a1, AnimationAccessor<? extends StaticAnimation> a2) {
 			return a1.id() <= this.id() && a2.id() >= this.id();
 		}
 	}
 	
-	public static record AnimationAccessorImpl<A extends StaticAnimation> (ResourceLocation registryName, int id, boolean resourcepackAnimation, Function<AnimationAccessor<A>, A> onLoad) implements AnimationAccessor<A> {
-		public static <A extends StaticAnimation> AnimationAccessor<A> create(ResourceLocation registryName, int id, boolean resourcepackAnimation, Function<AnimationAccessor<A>, A> onLoad) {
-			return new AnimationAccessorImpl<A> (registryName, id, resourcepackAnimation, onLoad);
+	public static record AnimationAccessorImpl<A extends StaticAnimation> (ResourceLocation registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) implements AnimationAccessor<A> {
+		private static <A extends StaticAnimation> AnimationAccessor<A> create(ResourceLocation registryName, int id, boolean inRegistry, Function<AnimationAccessor<A>, A> onLoad) {
+			return new AnimationAccessorImpl<A> (registryName, id, inRegistry, onLoad);
 		}
 		
 		@Override
@@ -414,7 +403,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		}
 		
 		public <T extends StaticAnimation> AnimationManager.AnimationAccessor<T> nextAccessor(String id, Function<AnimationManager.AnimationAccessor<T>, T> onLoad) {
-			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.tryBuild(this.namespace, id), INSTANCE.animations.size() + 1, false, onLoad);
+			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.tryBuild(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
 			INSTANCE.animationById.put(accessor.id(), accessor);
 			INSTANCE.animationByName.put(accessor.registryName(), accessor);
 			INSTANCE.animations.put(accessor, null);

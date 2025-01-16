@@ -16,7 +16,7 @@ public abstract class EntityPatch<T extends Entity> {
 	protected T original;
 	protected boolean initialized = false;
 	
-	public void beforeUpdate() {
+	public void onOldPosUpdate() {
 	}
 	
 	public void tick(LivingEvent.LivingTickEvent event) {

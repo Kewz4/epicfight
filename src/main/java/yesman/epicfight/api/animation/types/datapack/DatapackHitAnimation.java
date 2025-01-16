@@ -18,6 +18,9 @@ public class DatapackHitAnimation extends HitAnimation implements DatapackAnimat
 	
 	public DatapackHitAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, path, armature);
+		
+		((DatapackAnimation<DatapackHitAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		this.accessor = this;
 	}
 	
 	@Override

@@ -75,8 +75,8 @@ public class BasicAttackAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	public void postInit() {
-		super.postInit();
+	public void loadAnimation() {
+		super.loadAnimation();
 		
 		if (!this.properties.containsKey(AttackAnimationProperty.BASIS_ATTACK_SPEED)) {
 			float basisSpeed = Float.parseFloat(String.format(Locale.US, "%.2f", (1.0F / this.getTotalTime())));

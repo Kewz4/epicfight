@@ -325,10 +325,12 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (accessor) -> ParseUtil.nullOrToString(accessor, accessor$2 -> accessor$2.registryName().toString()), responder);
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public void onClick(double x, double y) {
 			if (this.clickedPopupButton(x, y)) {
 				Set<Pair<ResourceLocation, AssetAccessor<Armature>>> entries = Armatures.entry();
+				DatapackEditScreen.getCurrentScreen().getUserArmatures().entrySet().forEach((entry) -> entries.add(Pair.of(entry.getKey(), (AssetAccessor<Armature>)entry.getValue())));
 				
 				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<> (this.owner, entries, "Armature", (name, item) -> {
 					this._setValue(item);

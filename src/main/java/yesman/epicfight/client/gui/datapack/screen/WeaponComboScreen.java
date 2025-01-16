@@ -18,10 +18,8 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -285,7 +283,7 @@ public class WeaponComboScreen extends Screen {
 			exit:
 			for (PackEntry<String, ListTag> entry : this.styles) {
 				for (Tag tag : entry.getValue()) {
-					if (AnimationManager.byKey(ResourceLocation.tryParse(tag.getAsString())) == null) {
+					if (DatapackEditScreen.animationByKey(tag.getAsString()) == null) {
 						animation = tag.getAsString();
 						style = entry.getKey();
 						allTagsNormal = false;

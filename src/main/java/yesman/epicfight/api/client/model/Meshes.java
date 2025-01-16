@@ -6,9 +6,11 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -38,6 +40,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class Meshes implements PreparableReloadListener {
+	private static final Map<ResourceLocation, MeshAccessor<? extends Mesh>> ACCESSORS = Maps.newHashMap();
 	private static final Map<MeshAccessor<? extends Mesh>, Mesh> MESHES = Maps.newHashMap();
 	private static ResourceManager resourceManager = null;
 	
@@ -81,30 +84,50 @@ public class Meshes implements PreparableReloadListener {
 	
 	public static void reload(ResourceManager resourceManager) {
 		Meshes.resourceManager = resourceManager;
+		
+		ACCESSORS.entrySet().removeIf(entry -> !entry.getValue().inRegistry);
+		
+		MESHES.values().forEach((mesh) -> {
+			if (mesh instanceof SkinnedMesh skinnedMesh) {
+				skinnedMesh.destroy();
+			}
+		});
+		
 		MESHES.clear();
 	}
 	
-	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
-		return MeshAccessor.create(id, jsonLoader);
+	@SuppressWarnings("unchecked")
+	@Nullable
+	public static <M extends Mesh> AssetAccessor<M> get(ResourceLocation id) {
+		return (AssetAccessor<M>) ACCESSORS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends Mesh> Set<AssetAccessor<M>> entry() {
-		Set<AssetAccessor<M>> newset = Sets.newHashSet();
+	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
+		return ACCESSORS.containsKey(id) ? (AssetAccessor<M>)ACCESSORS.get(id) : MeshAccessor.create(id, jsonLoader, false);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <M extends Mesh> Set<AssetAccessor<M>> entry(Class<? extends Mesh> filter) {
+		return ACCESSORS.values().stream().filter((accessor) -> filter.isAssignableFrom(accessor.get().getClass())).map((accessor) -> (AssetAccessor<M>)accessor).collect(Collectors.toSet());
 		
-		for (AssetAccessor<? extends Mesh> accessor : MESHES.keySet()) {
+		/**
+		Set<AssetAccessor<M>> newset = Sets.newHashSet();
+		for (AssetAccessor<? extends Mesh> accessor : ACCESSORS.values()) {
 			try {
 				AssetAccessor<M> casted = (AssetAccessor<M>)accessor;
-				newset.add(casted);
+				if (filter.isAssignableFrom(casted.get().getClass())) {
+					newset.add(casted);
+				}
 			} catch(ClassCastException e) {
 			}
 		}
-		
 		return newset;
+		**/
 	}
 	
 	public static ResourceLocation wrapLocation(ResourceLocation rl) {
-		return rl.getPath().matches("animmodels/.*\\.json") ? rl : new ResourceLocation(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.tryBuild(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
 	}
 	
 	@Override
@@ -121,13 +144,15 @@ public class Meshes implements PreparableReloadListener {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record MeshAccessor<M extends Mesh> (ResourceLocation registryName, Function<JsonAssetLoader, M> jsonLoader) implements AssetAccessor<M>, SoftBodyTranslatable {
+	public static record MeshAccessor<M extends Mesh> (ResourceLocation registryName, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) implements AssetAccessor<M>, SoftBodyTranslatable {
 		public static <M extends Mesh> MeshAccessor<M> create(String namespaceId, String path, Function<JsonAssetLoader, M> jsonLoader) {
-			return create(new ResourceLocation(namespaceId, path), jsonLoader);
+			return create(ResourceLocation.tryBuild(namespaceId, path), jsonLoader, true);
 		}
 		
-		private static <M extends Mesh> MeshAccessor<M> create(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
-			return new MeshAccessor<M> (id, jsonLoader);
+		private static <M extends Mesh> MeshAccessor<M> create(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) {
+			MeshAccessor<M> accessor = new MeshAccessor<M> (id, jsonLoader, inRegistry);
+			ACCESSORS.put(id, accessor);
+			return accessor;
 		}
 		
 		@SuppressWarnings("unchecked")

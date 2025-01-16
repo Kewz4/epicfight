@@ -22,9 +22,9 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
-import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.forgeevent.BattleModeSustainableEvent;
@@ -215,10 +215,6 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		if (maxStamina < stamina) {
 			this.setStamina(maxStamina);
 		}
-		
-		this.xo = this.original.getX();
-		this.yo = this.original.getY();
-		this.zo = this.original.getZ();
 	}
 	
 	@Override
@@ -248,9 +244,9 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			}
 		}
 		
-		super.tick(event);
-		
 		this.modelYRotO = this.modelYRot;
+		
+		super.tick(event);
 		
 		if (this.getEntityState().turningLocked()) {
 			if (!this.useModelYRot) {
@@ -271,6 +267,10 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			float originalYRot = this.isLogicalClient() ? this.original.yBodyRot : this.original.getYRot();
 			this.modelYRot += Mth.clamp(Mth.wrapDegrees(originalYRot - this.modelYRot), -45.0F, 45.0F);
 		}
+		
+		this.xo = this.original.getX();
+		this.yo = this.original.getY();
+		this.zo = this.original.getZ();
 	}
 	
 	public SkillContainer getSkill(Skill skill) {

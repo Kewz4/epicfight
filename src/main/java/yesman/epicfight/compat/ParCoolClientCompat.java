@@ -3,14 +3,13 @@ package yesman.epicfight.compat;
 import java.util.Map;
 
 import com.alrex.parcool.client.animation.impl.ClingToCliffAnimator;
-import com.alrex.parcool.client.animation.impl.CrawlAnimator;
 import com.alrex.parcool.client.animation.impl.DiveAnimationHostAnimator;
 import com.alrex.parcool.client.animation.impl.FastRunningAnimator;
 import com.alrex.parcool.client.animation.impl.HangAnimator;
 import com.alrex.parcool.client.animation.impl.HorizontalWallRunAnimator;
+import com.alrex.parcool.client.animation.impl.JumpChargingAnimator;
 import com.alrex.parcool.client.animation.impl.SlidingAnimator;
 import com.alrex.parcool.client.animation.impl.WallSlideAnimator;
-import com.alrex.parcool.client.input.KeyBindings;
 import com.alrex.parcool.common.action.impl.ClingToCliff;
 import com.alrex.parcool.common.action.impl.HangDown;
 import com.alrex.parcool.common.action.impl.HangDown.BarAxis;
@@ -28,7 +27,8 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.compat.ParCoolCompat.ParcoolLivingMotions;
-import yesman.epicfight.compat.ParCoolCompat.ParcoolUtils;
+import yesman.epicfight.compat.ParCoolCompat.ParCoolUtils;
+import yesman.epicfight.compat.ParCoolCompat.ClingType;
 import yesman.epicfight.mixin.ParCoolMixinAnimation;
 import yesman.epicfight.mixin.ParCoolMixinHorizontalWallRunAnimator;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -45,17 +45,19 @@ public class ParCoolClientCompat implements ICompatModule {
 	public static void buildClientStuff() {
 		PARCOOL_ANIMATOR_MAPPING.clear();
 		
+		PARCOOL_ANIMATOR_MAPPING.put(JumpChargingAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
+			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CAT_LEAP_PREPARATION);
+		});
+		
 		PARCOOL_ANIMATOR_MAPPING.put(ClingToCliffAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
-			switch (parkourability.get(ClingToCliff.class).getFacingDirection()) {
-			case ToWall -> {
+			ClingType clingDirection = livingMotionUpdateEvent.getPlayerPatch().getAnimator().getVariables().getSharedVariable(ParCoolCompat.CLING_TYPE);
+			
+			if (clingDirection == ClingType.OUTER_CORNER) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF_OUTER_CORNER);
+			} else if (clingDirection == ClingType.INNER_CORNER) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF_INNER_CORNER);
+			} else {
 				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF);
-			}
-			case RightAgainstWall -> {
-				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF_RIGHT);
-			}
-			case LeftAgainstWall -> {
-				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CLING_TO_CLIFF_LEFT);
-			}
 			}
 		});
 		
@@ -106,10 +108,11 @@ public class ParCoolClientCompat implements ICompatModule {
 		PARCOOL_ANIMATOR_MAPPING.put(SlidingAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
 			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.SLIDING);
 		});
-		
+		/**
 		PARCOOL_ANIMATOR_MAPPING.put(CrawlAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
 			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.CRAWL);
 		});
+		**/
 	}
 	
 	@Override
@@ -155,16 +158,16 @@ public class ParCoolClientCompat implements ICompatModule {
 			
 			if ((hangDown = (HangDown)parkourability.get(HangDown.class)) != null && hangDown.isDoing()) {
 				if (!playerpatch.getEntityState().inaction()) {
-					float yRot = ParcoolUtils.idealYRotForHanging(hangDown, event.getEntity());
+					float yRot = ParCoolUtils.idealYRotForHanging(hangDown, event.getEntity());
 					BarAxis barAxis = hangDown.getHangingBarAxis();
 					boolean axisMismatches = false;
 					
 					if (hangDown.isOrthogonalToBar()) {
-						if (barAxis == ParcoolUtils.getLookAxis(yRot)) {
+						if (barAxis == ParCoolUtils.getLookBarAxis(yRot)) {
 							axisMismatches = true;
 						}
 					} else {
-						if (barAxis != ParcoolUtils.getLookAxis(yRot)) {
+						if (barAxis != ParCoolUtils.getLookBarAxis(yRot)) {
 							axisMismatches = true;
 						}
 					}
@@ -194,19 +197,17 @@ public class ParCoolClientCompat implements ICompatModule {
 				event.getInput().down = false;
 				event.getInput().forwardImpulse = 0.0F;
 				event.getInput().leftImpulse = 0.0F;
-			} else if ((clingToCliff = (ClingToCliff)parkourability.get(ClingToCliff.class)) != null && clingToCliff.isDoing()) {
+			}
+			
+			if ((clingToCliff = (ClingToCliff)parkourability.get(ClingToCliff.class)) != null && clingToCliff.isDoing()) {
 				if (!playerpatch.getEntityState().inaction()) {
 					if (event.getInput().left) {
-						ParcoolUtils.scanTerrainAndStartClingAction(playerpatch, ParcoolUtils.ClingType.MOVE_LEFT);
+						ParCoolUtils.scanTerrainAndStartClingAction(playerpatch, ParCoolUtils.WallMoveType.MOVE_LEFT);
 					} else if (event.getInput().right) {
-						ParcoolUtils.scanTerrainAndStartClingAction(playerpatch, ParcoolUtils.ClingType.MOVE_RIGHT);
+						ParCoolUtils.scanTerrainAndStartClingAction(playerpatch, ParCoolUtils.WallMoveType.MOVE_RIGHT);
 					}
 				}
 				
-				KeyBindings.getKeyLeft().setDown(false);
-				KeyBindings.getKeyRight().setDown(false);
-				KeyBindings.getKeyForward().setDown(false);
-				KeyBindings.getKeyBack().setDown(false);
 				event.getInput().left = false;
 				event.getInput().right = false;
 				event.getInput().up = false;

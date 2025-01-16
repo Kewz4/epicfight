@@ -95,6 +95,22 @@ public class ActionAnimation extends MainFrameAnimation {
 		super.putOnPlayer(animationPlayer, entitypatch);
 	}
 	
+	protected void initCoordVariables(LivingEntityPatch<?> entitypatch) {
+		Vec3 start = entitypatch.getOriginal().position();
+		
+		if (entitypatch.getTarget() == null) {
+			entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), 1.0F);
+		} else {
+			Vec3 targetTracePosition = entitypatch.getTarget().position();
+			Vec3 toDestWorld = targetTracePosition.subtract(start);
+			float dot = Mth.clamp((float)toDestWorld.normalize().dot(MathUtils.getVectorForRotation(0.0F, entitypatch.getYRot())), 0.0F, 1.0F);
+			
+			entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), dot);
+		}
+		
+		entitypatch.getAnimator().getVariables().put(BEGINNING_LOCATION, this.getAccessor(), start);
+	}
+	
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		super.begin(entitypatch);
@@ -104,19 +120,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
 			entitypatch.beginAction();
 			
-			Vec3 start = entitypatch.getOriginal().position();
-			
-			if (entitypatch.getTarget() == null) {
-				entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), 1.0F);
-			} else {
-				Vec3 targetTracePosition = entitypatch.getTarget().position();
-				Vec3 toDestWorld = targetTracePosition.subtract(start);
-				float dot = Mth.clamp((float)toDestWorld.normalize().dot(MathUtils.getVectorForRotation(0.0F, entitypatch.getYRot())), 0.0F, 1.0F);
-				
-				entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), dot);
-			}
-			
-			entitypatch.getAnimator().getVariables().put(BEGINNING_LOCATION, this.getAccessor(), start);
+			this.initCoordVariables(entitypatch);
 			
 			if (this.getProperty(ActionAnimationProperty.STOP_MOVEMENT).orElse(false)) {
 				entitypatch.getOriginal().setDeltaMovement(0.0D, entitypatch.getOriginal().getDeltaMovement().y, 0.0D);
@@ -270,8 +274,8 @@ public class ActionAnimation extends MainFrameAnimation {
 			for (String jointName : joint1) {
 				Keyframe[] keyframes = new Keyframe[3];
 				keyframes[0] = new Keyframe(0.0F, data1.getOrDefault(jointName, JointTransform.empty()));
-				keyframes[1] = new Keyframe(linkTime, poseData.get(jointName));
-				keyframes[2] = new Keyframe(totalTime, data2.get(jointName));
+				keyframes[1] = new Keyframe(linkTime, poseData.getOrDefault(jointName, JointTransform.empty()));
+				keyframes[2] = new Keyframe(totalTime, data2.getOrDefault(jointName, JointTransform.empty()));
 				
 				TransformSheet sheet = new TransformSheet(keyframes);
 				dest.getAnimationClip().addJointTransform(jointName, sheet);
@@ -280,7 +284,7 @@ public class ActionAnimation extends MainFrameAnimation {
 			for (String jointName : joint1) {
 				Keyframe[] keyframes = new Keyframe[2];
 				keyframes[0] = new Keyframe(0.0F, data1.getOrDefault(jointName, JointTransform.empty()));
-				keyframes[1] = new Keyframe(totalTime, data2.get(jointName));
+				keyframes[1] = new Keyframe(totalTime, data2.getOrDefault(jointName, JointTransform.empty()));
 				
 				TransformSheet sheet = new TransformSheet(keyframes);
 				dest.getAnimationClip().addJointTransform(jointName, sheet);
@@ -311,6 +315,26 @@ public class ActionAnimation extends MainFrameAnimation {
 		}
 	}
 	
+	/**
+	 * Get an expected movement vector in specific time
+	 * 
+	 * @param entitypatch
+	 * @param elapseTime
+	 * @return
+	 */
+	public Vec3 getExpectedMovement(LivingEntityPatch<?> entitypatch, float elapseTime) {
+		this.initCoordVariables(entitypatch);
+		
+		TransformSheet coordTransform = new TransformSheet();
+		MoveCoordSetter moveCoordSetter = this.getProperty(ActionAnimationProperty.COORD_SET_BEGIN).orElse(MoveCoordFunctions.RAW_COORD);
+		moveCoordSetter.set(this, entitypatch, coordTransform);
+		
+		MoveCoordGetter moveGetter = this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD);
+		Vec3f move = moveGetter.get(this, entitypatch, coordTransform, 0.0F, elapseTime);
+		
+		return move.toDoubleVector();
+	}
+	
 	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation);
 		TimePairList coordUpdateTime = this.getProperty(ActionAnimationProperty.COORD_UPDATE_TIME).orElse(null);
@@ -326,7 +350,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		boolean hasNoGravity = entitypatch.getOriginal().isNoGravity();
 		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(this.getProperty(ActionAnimationProperty.COORD).isPresent());
 		MoveCoordGetter moveGetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD) : MoveCoordFunctions.MODEL_COORD;
-		Vec3f move = moveGetter.get(animation.get(), entitypatch, transformSheet);
+		Vec3f move = moveGetter.get(animation.get(), entitypatch, transformSheet, player.getPrevElapsedTime(), player.getElapsedTime());
 		LivingEntity livingentity = entitypatch.getOriginal();
 		Vec3 motion = livingentity.getDeltaMovement();
 		double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();

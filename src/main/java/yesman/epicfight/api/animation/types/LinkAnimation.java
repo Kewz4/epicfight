@@ -221,4 +221,9 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	public int id() {
 		return -1;
 	}
+	
+	@Override
+	public boolean inRegistry() {
+		return false;
+	}
 }

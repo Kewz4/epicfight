@@ -20,11 +20,14 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.exception.AnimationInvokeException;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.ColliderPreset;
+import yesman.epicfight.main.EpicFightMod;
 
 public class InstantiateInvoker {
 	private static final BiMap<String, Class<?>> PRIMITIVE_KEYWORDS = HashBiMap.create();
+	private static final BiMap<Class<?>, Class<?>> RETURN_TYPE_MAPPER = HashBiMap.create();
 	private static final Map<Class<?>, Function<String, Object>> STRING_TO_OBJECT_PARSER = Maps.newHashMap();
 	
 	static {
@@ -37,20 +40,34 @@ public class InstantiateInvoker {
 		registerPrimitive("S", short.class, Short::parseShort);
 		registerPrimitive("Z", boolean.class, Boolean::parseBoolean);
 		
+		registerReturnTypeMapper(Armature.class, AssetAccessor.class);
+		
 		registerKeyword(String.class, (s) -> s);
-		registerKeyword(Collider.class, (s) -> ColliderPreset.get(new ResourceLocation(s)));
+		registerKeyword(Collider.class, (s) -> ColliderPreset.get(ResourceLocation.tryParse(s)));
 		registerKeyword(Joint.class, (s) -> {
 			String[] armature$joint = s.split("\\.");
-			AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(new ResourceLocation(armature$joint[0]), Armature::new);
+			AssetAccessor<? extends Armature> armature = getArmature(armature$joint[0]);
 			return armature.get().searchJointByName(armature$joint[1]);
 		});
-		registerKeyword(Armature.class, (s) -> Armatures.getOrCreate(new ResourceLocation(s), Armature::new));
+		registerKeyword(Armature.class, (s) -> getArmature(s));
 		registerKeyword(InteractionHand.class, InteractionHand::valueOf);
+	}
+	
+	private static AssetAccessor<? extends Armature> getArmature(String id) {
+		if (EpicFightMod.isPhysicalClient()) {
+			return DatapackEditScreen.getCurrentScreen() != null ? DatapackEditScreen.getArmature(id) : Armatures.getOrCreate(ResourceLocation.tryParse(id), Armature::new);
+		} else {
+			return Armatures.getOrCreate(ResourceLocation.tryParse(id), Armature::new);
+		}
 	}
 	
 	public static void registerPrimitive(String keyword, Class<?> clz, Function<String, Object> decoder) {
 		PRIMITIVE_KEYWORDS.put(keyword, clz);
 		STRING_TO_OBJECT_PARSER.put(clz, decoder);
+	}
+	
+	public static void registerReturnTypeMapper(Class<?> clz, Class<?> returnClz) {
+		RETURN_TYPE_MAPPER.put(clz, returnClz);
 	}
 	
 	public static void registerKeyword(Class<?> clz, Function<String, Object> decoder) {
@@ -76,6 +93,10 @@ public class InstantiateInvoker {
 			Class<T> type = (Class<T>)Class.forName(sType);
 			
 			if (STRING_TO_OBJECT_PARSER.containsKey(type)) {
+				if (RETURN_TYPE_MAPPER.containsKey(type)) {
+					return Result.of((Class<T>)RETURN_TYPE_MAPPER.get(type), (T)STRING_TO_OBJECT_PARSER.get(type).apply(sValue));
+				}
+				
 				return Result.of(type, (T)STRING_TO_OBJECT_PARSER.get(type).apply(sValue));
 			}
 			

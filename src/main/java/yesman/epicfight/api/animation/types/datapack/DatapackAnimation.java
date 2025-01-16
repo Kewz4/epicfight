@@ -21,4 +21,9 @@ public interface DatapackAnimation<A extends StaticAnimation> extends AnimationA
 	default int id() {
 		return -1;
 	}
+	
+	@Override
+	default boolean inRegistry() {
+		return false;
+	}
 }

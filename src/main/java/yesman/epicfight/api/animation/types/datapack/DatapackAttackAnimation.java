@@ -90,10 +90,16 @@ public class DatapackAttackAnimation extends AttackAnimation implements Datapack
 	
 	public DatapackAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, ListTag phases) {
 		super(convertTime, path, armature, convertListTagToPhases(phases, armature.get()));
+		
+		((DatapackAnimation<DatapackAttackAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		this.accessor = this;
 	}
 	
 	public DatapackAttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, path, armature, phases);
+		
+		((DatapackAnimation<DatapackAttackAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		this.accessor = this;
 	}
 	
 	@Override

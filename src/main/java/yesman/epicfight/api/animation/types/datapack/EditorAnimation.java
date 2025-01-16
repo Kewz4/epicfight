@@ -343,4 +343,9 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	public int id() {
 		return -1;
 	}
+	
+	@Override
+	public boolean inRegistry() {
+		return false;
+	}
 }

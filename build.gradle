@@ -117,8 +117,14 @@ dependencies {
     
     compileOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5633453")
     compileOnly fg.deobf("curse.maven:citadel-331936:5559513")
-    **/
+    
     compileOnly fg.deobf("curse.maven:parcool-482378:6035545")
+    **/
+    
+    implementation fg.deobf("curse.maven:patchouli-306770:4966125")
+    implementation fg.deobf("curse.maven:azurelib-817423:6004977")
+    implementation fg.deobf("curse.maven:samurai-dynasty-848381:5672395")
+    implementation fg.deobf("curse.maven:curios-309927:6058834")
     
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

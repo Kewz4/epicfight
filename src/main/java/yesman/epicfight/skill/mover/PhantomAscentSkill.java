@@ -32,6 +32,7 @@ public class PhantomAscentSkill extends Skill {
 	private static final UUID EVENT_UUID = UUID.fromString("051a9bb2-7541-11ee-b962-0242ac120002");
 	private final List<AnimationAccessor<? extends StaticAnimation>> animations = new ArrayList<> (2);
 	private int extraJumps;
+	private double jumpPower;
 	
 	public PhantomAscentSkill(SkillBuilder<? extends Skill> builder) {
 		super(builder);
@@ -45,6 +46,7 @@ public class PhantomAscentSkill extends Skill {
 		super.setParams(parameters);
 		this.extraJumps = parameters.getInt("extra_jumps");
 		this.consumption = 0.2F;
+		this.jumpPower = parameters.getDouble("jump_power");
 	}
 	
 	@Override
@@ -97,10 +99,8 @@ public class PhantomAscentSkill extends Skill {
 						Vec3 forwardHorizontal = Vec3.directionFromRotation(new Vec2(0, container.getExecutor().getOriginal().getViewYRot(1.0F)));
 						Vec3 jumpDir = OpenMatrix4f.transform(OpenMatrix4f.createRotatorDeg(-degree, Vec3f.Y_AXIS), forwardHorizontal.scale(0.15D * scale));
 						Vec3 deltaMove = container.getExecutor().getOriginal().getDeltaMovement();
-						
-						container.getExecutor().getOriginal().setDeltaMovement(deltaMove.x + jumpDir.x, 0.6D + container.getExecutor().getOriginal().getJumpBoostPower(), deltaMove.z + jumpDir.z);
-						
-						event.getPlayerPatch().setModelYRot(Minecraft.getInstance().gameRenderer.getMainCamera().getYRot() + degree, true);
+						container.getExecutor().getOriginal().setDeltaMovement(deltaMove.x + jumpDir.x, this.jumpPower + container.getExecutor().getOriginal().getJumpBoostPower(), deltaMove.z + jumpDir.z);
+						event.getPlayerPatch().setModelYRot(container.getExecutor().getOriginal().getYRot() + degree, true);
 						event.getPlayerPatch().playAnimationInClientSide(this.animations.get(vertic < 0 ? 1 : 0), 0.0F);
 					};
 				} else {

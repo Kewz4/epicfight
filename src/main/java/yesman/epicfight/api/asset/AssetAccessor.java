@@ -13,6 +13,8 @@ public interface AssetAccessor<O> extends Supplier<O> {
 	
 	public boolean isPresent();
 	
+	public boolean inRegistry();
+	
 	default O orElse(O whenNull) {
 		return this.isPresent() ? this.get() : whenNull;
 	}

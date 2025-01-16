@@ -130,7 +130,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	protected void initAnimator(Animator animator) {
-		//Do init animator
 		animator.getVariables().putSharedVariable(AttackAnimation.HIT_ENTITIES);
 		animator.getVariables().putSharedVariable(AttackAnimation.HURT_ENTITIES);
 		animator.getVariables().putSharedVariable(ActionAnimation.ACTION_ANIMATION_COORD);
@@ -148,7 +147,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
-	/*public abstract void initAnimator(Animator animator);*/
 	public abstract void updateMotion(boolean considerInaction);
 	
 	public Armature getArmature() {
@@ -216,6 +214,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void updateEntityState() {
 		this.state = this.animator.getEntityState();
+		this.updateMotion(true);
 	}
 	
 	public void cancelAnyAction() {

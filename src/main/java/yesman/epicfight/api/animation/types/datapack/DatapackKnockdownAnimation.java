@@ -18,6 +18,9 @@ public class DatapackKnockdownAnimation extends KnockdownAnimation implements Da
 	
 	public DatapackKnockdownAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, path, armature);
+		
+		((DatapackAnimation<DatapackKnockdownAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		this.accessor = this;
 	}
 	
 	@Override

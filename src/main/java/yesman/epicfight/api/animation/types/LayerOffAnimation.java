@@ -110,4 +110,9 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 	public AnimationAccessor<? extends LayerOffAnimation> getAccessor() {
 		return this;
 	}
+	
+	@Override
+	public boolean inRegistry() {
+		return false;
+	}
 }

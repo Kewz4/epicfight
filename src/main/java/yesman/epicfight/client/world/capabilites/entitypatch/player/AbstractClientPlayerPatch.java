@@ -90,15 +90,6 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 				currentLivingMotion = LivingMotions.SLEEP;
 			} else if (!original.onGround() && original.onClimbable()) {
 				currentLivingMotion = LivingMotions.CLIMB;
-				double y = original.yCloak - original.yCloakO;
-				
-				if (Math.abs(y) < 0.04D) {
-					animator.baseLayer.pause();
-				} else {
-					animator.baseLayer.resume();
-
-					animator.baseLayer.animationPlayer.setReversed(y < 0);
-				}
 			} else if (!original.getAbilities().flying) {
 				if (original.isUnderWater() && (original.yCloak - original.yCloakO) < -0.005)
 					currentLivingMotion = LivingMotions.FLOAT;
@@ -179,7 +170,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	@Override
-	public void beforeUpdate() {
+	public void onOldPosUpdate() {
 		this.modelYRotO2 = this.modelYRotO;
 		this.xPosO2 = (float)this.original.xOld;
 		this.yPosO2 = (float)this.original.yOld;
@@ -255,11 +246,14 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.modelYRotO - this.original.yHeadRotO;
 				float headRot = this.modelYRot - this.original.yHeadRot;
-				float partialHeadRot = MathUtils.lerpBetween(headRotO, headRot, partialTicks);
+				float partialHeadRot = Mth.wrapDegrees(MathUtils.lerpBetween(headRotO, headRot, partialTicks));
+				float xRot = -this.original.getXRot();
+				partialHeadRot = Mth.clamp(partialHeadRot, -90.0F, 90.0F);
+				
 				OpenMatrix4f toOriginalRotation = this.armature.getBindedTransformFor(pose, this.armature.searchJointByName("Head")).removeScale().removeTranslation().invert();
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
-				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
+				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(xRot, xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
 				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}

@@ -137,5 +137,10 @@ public class RemoteAssets {
 		public boolean isPresent() {
 			return this.mesh != null;
 		}
+
+		@Override
+		public boolean inRegistry() {
+			return false;
+		}
 	}
 }

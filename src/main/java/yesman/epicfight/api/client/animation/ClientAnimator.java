@@ -69,6 +69,8 @@ public class ClientAnimator extends Animator {
 		Layer layer = nextAnimation.get().getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(nextAnimation.get().getPriority());
 		layer.paused = false;
 		layer.playAnimation(nextAnimation, this.entitypatch, transitionTimeModifier);
+		
+		System.out.println("Play " + nextAnimation +" "+ this.entitypatch);
 	}
 	
 	@Override
@@ -162,10 +164,12 @@ public class ClientAnimator extends Animator {
 	public void tick() {
 		// Layer debugging
 		/**
-		for (Layer layer : this.getAllLayers()) {
-			System.out.println(layer);
+		if (this.entitypatch instanceof CustomMobPatch) {
+			for (Layer layer : this.getAllLayers()) {
+				System.out.println(layer);
+			}
+			System.out.println();
 		}
-		System.out.println();
 		**/
 		if (this.hardPaused) {
 			return;

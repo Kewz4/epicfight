@@ -20,6 +20,11 @@ public record SelfAccessor<A>(ResourceLocation registryName, A asset) implements
 	public boolean isPresent() {
 		return true;
 	}
+
+	@Override
+	public boolean inRegistry() {
+		return false;
+	}
 	
 	public static class SelfAnimationAccessor<A extends StaticAnimation> implements AnimationAccessor<A> {
 		public static <A extends StaticAnimation> SelfAnimationAccessor<A> createAnimation(ResourceLocation registryName, Function<AnimationAccessor<A>, A> onLoad) {
@@ -48,7 +53,12 @@ public record SelfAccessor<A>(ResourceLocation registryName, A asset) implements
 		public boolean isPresent() {
 			return true;
 		}
-
+		
+		@Override
+		public boolean inRegistry() {
+			return false;
+		}
+		
 		@Override
 		public int id() {
 			return -1;

@@ -1,11 +1,16 @@
 package yesman.epicfight.api.animation.types;
 
 import java.util.List;
+import java.util.Optional;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
@@ -14,6 +19,7 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
+import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -32,12 +38,20 @@ public class AimAnimation extends StaticAnimation {
 	}
 	
 	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
-		super(transitionTime, repeatPlay, path1, armature);
+		super(transitionTime, repeatPlay, accessor, armature);
 		
-		this.lookForward = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path1), armature);
-		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path2), armature);
-		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path3), armature);
-		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, accessor, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path4), armature);
+		this.lookForward = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path1), armature);
+		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path2), armature);
+		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path3), armature);
+		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path4), armature);
+	}
+	
+	@Override
+	public void loadAnimation() {
+		this.lookForward.loadAnimation();
+		this.lookUp.loadAnimation();
+		this.lookDown.loadAnimation();
+		this.lying.loadAnimation();
 	}
 	
 	@Override
@@ -98,6 +112,28 @@ public class AimAnimation extends StaticAnimation {
 	@Override
 	public List<AssetAccessor<? extends StaticAnimation>> getSubAnimations() {
 		return List.of(this.lookForward, this.lookUp, this.lookDown, this.lying);
+	}
+	
+	@Override
+	public <V> Optional<V> getProperty(AnimationProperty<V> propertyType) {
+		return this.lookForward.getProperty(propertyType);
+	}
+	
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public Layer.Priority getPriority() {
+		return this.lookForward.getProperty(ClientAnimationProperties.PRIORITY).orElse(Layer.Priority.LOWEST);
+	}
+	
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public Layer.LayerType getLayerType() {
+		return this.lookForward.getProperty(ClientAnimationProperties.LAYER_TYPE).orElse(Layer.LayerType.BASE_LAYER);
+	}
+	
+	@Override
+	public AnimationClip getAnimationClip() {
+		return this.lookForward.getAnimationClip();
 	}
 	
 	@Override

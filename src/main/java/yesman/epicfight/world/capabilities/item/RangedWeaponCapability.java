@@ -23,11 +23,6 @@ public class RangedWeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public void setConfigFileAttribute(double armorNegation1, double impact1, int maxStrikes1, double armorNegation2, double impact2, int maxStrikes2) {
-		this.addStyleAttributes(Styles.RANGED, armorNegation1, impact1, maxStrikes1);
-	}
-	
-	@Override
 	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingMotionModifier(LivingEntityPatch<?> playerdata, InteractionHand hand) {
 		if (hand == InteractionHand.MAIN_HAND) {
 			return this.rangeAnimationModifiers;

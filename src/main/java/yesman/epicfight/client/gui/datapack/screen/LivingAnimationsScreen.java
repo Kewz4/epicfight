@@ -18,10 +18,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.MainFrameAnimation;
@@ -221,7 +219,7 @@ public class LivingAnimationsScreen extends Screen {
 			exit:
 			for (PackEntry<String, List<ModifiablePair<String, String>>> entry : this.styles) {
 				for (ModifiablePair<String, String> pair : entry.getValue()) {
-					if (AnimationManager.byKey(new ResourceLocation(pair.getSecond())) == null) {
+					if (DatapackEditScreen.animationByKey(pair.getSecond()) == null) {
 						animation = pair.getSecond();
 						style = entry.getKey();
 						allTagsNormal = false;

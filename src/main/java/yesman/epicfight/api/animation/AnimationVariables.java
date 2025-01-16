@@ -26,6 +26,11 @@ public class AnimationVariables {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public <T> T getOrDefaultSharedVariable(SharedAnimationVariableKey<T> key) {
+		return (T)this.animationVariables.getOrDefault(key, key.defaultValue());
+	}
+	
+	@SuppressWarnings("unchecked")
 	public <T> T get(IndependentAnimationVariableKey<T> key, AssetAccessor<? extends StaticAnimation> animation) {
 		if (animation == null) {
 			return null;
@@ -146,7 +151,10 @@ public class AnimationVariables {
 			}
 			
 			Map<ResourceLocation, Object> map = (Map<ResourceLocation, Object>)entry.getValue();
-			map.remove(animation.registryName());
+			
+			if (map != null) {
+				map.remove(animation.registryName());
+			}
 		}
 	}
 	
@@ -162,7 +170,10 @@ public class AnimationVariables {
 		}
 		
 		Map<ResourceLocation, Object> map = (Map<ResourceLocation, Object>)this.animationVariables.get(key);
-		map.remove(animation.registryName());
+		
+		if (map != null) {
+			map.remove(animation.registryName());
+		}
 		
 		if (synchronize && key instanceof SynchedAnimationVariableKey) {
 			SynchedAnimationVariableKey<?> synchedanimationvariablekey = (SynchedAnimationVariableKey<?>)key;

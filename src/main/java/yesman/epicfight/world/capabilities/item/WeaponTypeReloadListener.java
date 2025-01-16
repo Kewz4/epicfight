@@ -51,22 +51,22 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	public static void registerDefaultWeaponTypes() {
 		Map<ResourceLocation, Function<Item, CapabilityItem.Builder>> typeEntry = Maps.newHashMap();
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "axe"), WeaponCapabilityPresets.AXE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "fist"), WeaponCapabilityPresets.FIST);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "hoe"), WeaponCapabilityPresets.HOE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "pickaxe"), WeaponCapabilityPresets.PICKAXE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "shovel"), WeaponCapabilityPresets.SHOVEL);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "sword"), WeaponCapabilityPresets.SWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "spear"), WeaponCapabilityPresets.SPEAR);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "greatsword"), WeaponCapabilityPresets.GREATSWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "uchigatana"), WeaponCapabilityPresets.UCHIGATANA);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "tachi"), WeaponCapabilityPresets.TACHI);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "longsword"), WeaponCapabilityPresets.LONGSWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "dagger"), WeaponCapabilityPresets.DAGGER);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "bow"), WeaponCapabilityPresets.BOW);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "crossbow"), WeaponCapabilityPresets.CROSSBOW);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "trident"), WeaponCapabilityPresets.TRIDENT);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "shield"), WeaponCapabilityPresets.SHIELD);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "axe"), WeaponCapabilityPresets.AXE);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "fist"), WeaponCapabilityPresets.FIST);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "hoe"), WeaponCapabilityPresets.HOE);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "pickaxe"), WeaponCapabilityPresets.PICKAXE);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "shovel"), WeaponCapabilityPresets.SHOVEL);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "sword"), WeaponCapabilityPresets.SWORD);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "spear"), WeaponCapabilityPresets.SPEAR);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "greatsword"), WeaponCapabilityPresets.GREATSWORD);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "uchigatana"), WeaponCapabilityPresets.UCHIGATANA);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "tachi"), WeaponCapabilityPresets.TACHI);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "longsword"), WeaponCapabilityPresets.LONGSWORD);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "dagger"), WeaponCapabilityPresets.DAGGER);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "bow"), WeaponCapabilityPresets.BOW);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "crossbow"), WeaponCapabilityPresets.CROSSBOW);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "trident"), WeaponCapabilityPresets.TRIDENT);
+		typeEntry.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "shield"), WeaponCapabilityPresets.SHIELD);
 		
 		WeaponCapabilityPresetRegistryEvent weaponCapabilityPresetRegistryEvent = new WeaponCapabilityPresetRegistryEvent(typeEntry);
 		ModLoader.get().postEvent(weaponCapabilityPresetRegistryEvent);
@@ -108,7 +108,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> getOrThrow(String typeName) {
-		ResourceLocation rl = new ResourceLocation(typeName);
+		ResourceLocation rl = ResourceLocation.tryParse(typeName);
 		
 		if (!PRESETS.containsKey(rl)) {
 			throw new IllegalArgumentException("Can't find weapon type: " + rl);
@@ -118,7 +118,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> get(String typeName) {
-		ResourceLocation rl = new ResourceLocation(typeName);
+		ResourceLocation rl = ResourceLocation.tryParse(typeName);
 		return PRESETS.get(rl);
 	}
 	
@@ -138,7 +138,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		builder.canBePlacedOffhand(tag.contains("usable_in_offhand") ? tag.getBoolean("usable_in_offhand") : true);
 		
 		if (tag.contains("hit_particle")) {
-			ParticleType<?> particleType = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(tag.getString("hit_particle")));
+			ParticleType<?> particleType = ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(tag.getString("hit_particle")));
 			
 			if (particleType == null) {
 				EpicFightMod.LOGGER.warn("Can't find a particle type " + tag.getString("hit_particle") + " in " + rl);
@@ -150,7 +150,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		}
 		
 		if (tag.contains("swing_sound")) {
-			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("swing_sound")));
+			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("swing_sound")));
 			
 			if (sound == null) {
 				EpicFightMod.LOGGER.warn("Can't find a swing sound " + tag.getString("swing_sound") + " in " + rl);
@@ -160,7 +160,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		}
 		
 		if (tag.contains("hit_sound")) {
-			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("hit_sound")));
+			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("hit_sound")));
 			
 			if (sound == null) {
 				EpicFightMod.LOGGER.warn("Can't find a hit sound " + tag.getString("hit_sound") + " in " + rl);
@@ -216,7 +216,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (Tag offhandTag : caseCompTag.getList("conditions", Tag.TAG_COMPOUND)) {
 				CompoundTag offhandCompound = (CompoundTag)offhandTag;
-				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(offhandCompound.getString("predicate")));
+				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.tryParse(offhandCompound.getString("predicate")));
 				EntityPatchCondition condition = conditionProvider.get();
 				condition.read(offhandCompound);
 				conditionList.add(condition);
@@ -249,7 +249,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (Tag offhandTag : offhandValidatorList) {
 				CompoundTag offhandCompound = (CompoundTag)offhandTag;
-				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(offhandCompound.getString("predicate")));
+				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.tryParse(offhandCompound.getString("predicate")));
 				EntityPatchCondition condition = conditionProvider.get();
 				condition.read(offhandCompound);
 				conditionList.add(condition);
@@ -297,7 +297,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			registerDefaultWeaponTypes();
 			
 			for (CompoundTag tag : packet.getTags()) {
-				ResourceLocation rl = new ResourceLocation(tag.getString("registry_name"));
+				ResourceLocation rl = ResourceLocation.tryParse(tag.getString("registry_name"));
 				
 				PRESETS.put(rl, (itemstack) -> deserializeWeaponCapabilityBuilder(rl, tag));
 			}

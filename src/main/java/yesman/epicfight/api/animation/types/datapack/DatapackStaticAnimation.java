@@ -27,6 +27,9 @@ public class DatapackStaticAnimation extends StaticAnimation implements Datapack
 	
 	public DatapackStaticAnimation(float convertTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, isRepeat, path, armature);
+		
+		((DatapackAnimation<DatapackStaticAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		this.accessor = this;
 	}
 	
 	@Override
@@ -41,9 +44,7 @@ public class DatapackStaticAnimation extends StaticAnimation implements Datapack
 	
 	@Override
 	public void setAnimationClip(AnimationClip clip) {
-		this.animationClip.getJointTransforms().clear();
-		this.animationClip.setClipTime(clip.getClipTime());
-		this.animationClip.getJointTransforms().putAll(clip.getJointTransforms());
+		this.animationClip = clip;
 	}
 	
 	@Override

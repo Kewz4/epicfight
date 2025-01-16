@@ -17,7 +17,7 @@ public abstract class MixinEntity {
 		EntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(self, EntityPatch.class);
 		
 		if (entitypatch != null) {
-			entitypatch.beforeUpdate();
+			entitypatch.onOldPosUpdate();
 		}
 	}
 }

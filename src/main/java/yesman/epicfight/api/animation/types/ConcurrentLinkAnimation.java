@@ -159,4 +159,9 @@ public class ConcurrentLinkAnimation extends DynamicAnimation implements Animati
 	public AnimationAccessor<? extends DynamicAnimation> getAccessor() {
 		return this;
 	}
+
+	@Override
+	public boolean inRegistry() {
+		return false;
+	}
 }

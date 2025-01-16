@@ -143,11 +143,13 @@ public class SelectModelScreen extends Screen {
 			return this.x1 - 6;
 		}
 		
+		@SuppressWarnings("unchecked")
 		public void refreshModelList(String keyward) {
 			this.setScrollAmount(0.0D);
 			this.children().clear();
 			
-			Set<AssetAccessor<SkinnedMesh>> skinnedMeshes = Meshes.entry();
+			Set<AssetAccessor<SkinnedMesh>> skinnedMeshes = Meshes.entry(SkinnedMesh.class);
+			DatapackEditScreen.getCurrentScreen().getUserMeshes().values().forEach((accessor) -> skinnedMeshes.add((AssetAccessor<SkinnedMesh>) accessor));
 			
 			skinnedMeshes.stream().filter((accessor) -> StringUtil.isNullOrEmpty(keyward) ? true : accessor.registryName().toString().contains(keyward)).map((accessor) -> new ModelEntry(accessor.registryName().toString(), accessor))
 														.sorted((entry$1, entry$2) -> entry$1.registryName.compareTo(entry$2.registryName)).forEach(this::addEntry);

@@ -99,7 +99,7 @@ public class JsonAssetLoader {
 				
 				//Still null, throws exception.
 				if (inputStream == null) {
-					throw new AssetLoadingException("Can't find specified file in mod resource " + resourceLocation);
+					throw new AssetLoadingException("Can't find resource file: " + resourceLocation);
 				}
 				
 				BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);

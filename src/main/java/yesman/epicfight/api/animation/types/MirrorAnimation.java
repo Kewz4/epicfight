@@ -4,8 +4,12 @@ import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.client.animation.Layer;
+import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -43,6 +47,18 @@ public class MirrorAnimation extends StaticAnimation {
 	@Override
 	public boolean isClientAnimation() {
 		return true;
+	}
+	
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public Layer.Priority getPriority() {
+		return this.original.getProperty(ClientAnimationProperties.PRIORITY).orElse(Layer.Priority.LOWEST);
+	}
+	
+	@Override
+	@OnlyIn(Dist.CLIENT)
+	public Layer.LayerType getLayerType() {
+		return this.original.getProperty(ClientAnimationProperties.LAYER_TYPE).orElse(Layer.LayerType.BASE_LAYER);
 	}
 	
 	private DirectStaticAnimation checkHandAndReturnAnimation(InteractionHand hand) {

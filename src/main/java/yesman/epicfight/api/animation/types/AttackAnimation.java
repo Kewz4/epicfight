@@ -88,14 +88,14 @@ public class AttackAnimation extends ActionAnimation {
 	}
 	
 	/**
-	 * For internal use
+	 * For resourcepack animation
 	 */
 	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
 	}
 	
 	/**
-	 * For internal use
+	 * For resourcepack animation
 	 */
 	public AttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
 		super(convertTime, 0.0F, path, armature);

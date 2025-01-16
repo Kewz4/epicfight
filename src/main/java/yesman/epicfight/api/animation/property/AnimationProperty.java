@@ -138,6 +138,11 @@ public abstract class AnimationProperty<T> {
 		 * Defines static animations as link animation when the animation is following a specific animation
 		 */
 		public static final StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_TO = new StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> ();
+		
+		/**
+		 * Disable physics while playing animation
+		 */
+		public static final StaticAnimationProperty<Boolean> NO_PHYSICS = new StaticAnimationProperty<Boolean> ("no_physics", Codec.BOOL);
 	}
 	
 	public static class ActionAnimationProperty<T> extends StaticAnimationProperty<T> {

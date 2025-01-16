@@ -270,23 +270,6 @@ public class CapabilityItem {
 		return EpicFightParticles.HIT_BLUNT.get();
 	}
 	
-	public void addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) {
-		Map<Attribute, AttributeModifier> map = this.attributeMap.computeIfAbsent(style, (key) -> Maps.newHashMap());
-		map.put(attributePair.getFirst(), attributePair.getSecond());
-	}
-	
-	public void addStyleAttributes(Style style, double armorNegation, double impact, int maxStrikes) {
-		if (Double.compare(armorNegation, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.ARMOR_NEGATION.get(), EpicFightAttributes.getArmorNegationModifier(armorNegation)));
-		}
-		if (Double.compare(impact, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.IMPACT.get(), EpicFightAttributes.getImpactModifier(impact)));
-		}
-		if (Double.compare(maxStrikes, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.MAX_STRIKES.get(), EpicFightAttributes.getMaxStrikesModifier(maxStrikes)));
-		}
-	}
-	
 	public final Map<Attribute, AttributeModifier> getDamageAttributesInCondition(Style style) {
 		Map<Attribute, AttributeModifier> attributes = this.attributeMap.getOrDefault(style, Maps.newHashMap());
 		this.attributeMap.getOrDefault(Styles.COMMON, Maps.newHashMap()).forEach(attributes::putIfAbsent);
@@ -356,11 +339,6 @@ public class CapabilityItem {
 	
 	public boolean availableOnHorse() {
 		return true;
-	}
-	
-	public void setConfigFileAttribute(double armorNegation1, double impact1, int maxStrikes1, double armorNegation2, double impact2, int maxStrikes2) {
-		this.addStyleAttributes(Styles.ONE_HAND, armorNegation1, impact1, maxStrikes1);
-		this.addStyleAttributes(Styles.TWO_HAND, armorNegation2, impact2, maxStrikes2);
 	}
 	
 	public boolean checkOffhandValid(LivingEntityPatch<?> entitypatch) {

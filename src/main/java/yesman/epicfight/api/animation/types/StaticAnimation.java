@@ -20,6 +20,8 @@ import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.animation.AnimationVariables;
+import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
@@ -54,6 +56,8 @@ import yesman.epicfight.world.entity.eventlistener.AnimationEndEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 public class StaticAnimation extends DynamicAnimation {
+	public static final IndependentAnimationVariableKey<Boolean> HAD_NO_PHYSICS = AnimationVariables.independent(() -> false, true);
+	
 	public static String getFileHash(ResourceLocation rl) {
 		String fileHash;
 		
@@ -73,8 +77,8 @@ public class StaticAnimation extends DynamicAnimation {
 	 * States will bind into animation on {@link AnimationManager#apply}
 	 */
 	protected final StateSpectrum.Blueprint stateSpectrumBlueprint = new StateSpectrum.Blueprint();
-	protected final AssetAccessor<? extends Armature> armature;
 	protected final StateSpectrum stateSpectrum = new StateSpectrum();
+	protected final AssetAccessor<? extends Armature> armature;
 	protected ResourceLocation resourceLocation;
 	protected AnimationAccessor<? extends StaticAnimation> accessor;
 	private final String filehash;
@@ -95,6 +99,7 @@ public class StaticAnimation extends DynamicAnimation {
 		super(transitionTime, isRepeat);
 		
 		this.resourceLocation = ResourceLocation.tryBuild(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
+		
 		this.armature = armature;
 		this.accessor = accessor;
 		this.filehash = getFileHash(this.resourceLocation);
@@ -107,7 +112,7 @@ public class StaticAnimation extends DynamicAnimation {
 		ResourceLocation registryName = ResourceLocation.tryParse(path);
 		this.resourceLocation = ResourceLocation.tryBuild(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
 		this.armature = armature;
-		this.filehash = getFileHash(this.resourceLocation);
+		this.filehash = StringUtil.EMPTY_STRING;
 	}
 	
 	/* Multilayer Constructor */
@@ -122,7 +127,6 @@ public class StaticAnimation extends DynamicAnimation {
 	public void loadAnimation() {
 		if (!this.isMetaAnimation()) {
 			this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
-			AnimationManager.readAnimationProperties(this);
 		}
 	}
 	
@@ -221,6 +225,14 @@ public class StaticAnimation extends DynamicAnimation {
 			}
 		});
 		
+		// Please fix this implementation when minecraft supports any mixinable method that returns noPhysics variable 
+		this.getProperty(StaticAnimationProperty.NO_PHYSICS).ifPresent((val) -> {
+			if (val) {
+				entitypatch.getAnimator().getVariables().put(HAD_NO_PHYSICS, this.getAccessor(), entitypatch.getOriginal().noPhysics);
+				entitypatch.getOriginal().noPhysics = true;
+			}
+		});
+		
 		if (entitypatch.isLogicalClient()) {
 			this.getProperty(ClientAnimationProperties.TRAIL_EFFECT).ifPresent((trailInfos) -> {
 				int idx = 0;
@@ -266,11 +278,23 @@ public class StaticAnimation extends DynamicAnimation {
 			}
 		});
 		
+		this.getProperty(StaticAnimationProperty.NO_PHYSICS).ifPresent((val) -> {
+			if (val) {
+				entitypatch.getOriginal().noPhysics = entitypatch.getAnimator().getVariables().get(HAD_NO_PHYSICS, this.getAccessor());
+			}
+		});
+		
 		entitypatch.getAnimator().getVariables().removeAll(this.getAccessor());
 	}
 	
 	@Override
 	public void tick(LivingEntityPatch<?> entitypatch) {
+		this.getProperty(StaticAnimationProperty.NO_PHYSICS).ifPresent((val) -> {
+			if (val) {
+				entitypatch.getOriginal().noPhysics = true;
+			}
+		});
+		
 		this.getProperty(StaticAnimationProperty.TICK_EVENTS).ifPresent((events) -> {
 			AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 			
@@ -324,10 +348,6 @@ public class StaticAnimation extends DynamicAnimation {
 	
 	@Override
 	public int getId() {
-		if (this.accessor == null) {
-			throw new NullPointerException("I don have accessor " + this.resourceLocation);
-		}
-		
 		return this.accessor.id();
 	}
 	

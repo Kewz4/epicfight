@@ -11,6 +11,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public class MathUtils {
+	public static final Vec3 XP = new Vec3(1.0D, 0.0D, 0.0D);
+	public static final Vec3 XN = new Vec3(-1.0D, 0.0D, 0.0D);
+	public static final Vec3 YP = new Vec3(0.0D, 1.0D, 0.0D);
+	public static final Vec3 YN = new Vec3(0.0D, -1.0D, 0.0D);
+	public static final Vec3 ZP = new Vec3(0.0D, 0.0D, 1.0D);
+	public static final Vec3 ZN = new Vec3(0.0D, 0.0D, -1.0D);
+	
 	public static OpenMatrix4f getModelMatrixIntegral(float xPosO, float xPos, float yPosO, float yPos, float zPosO, float zPos, float xRotO, float pitch, float yRotO, float yRot, float partialTick, float scaleX, float scaleY, float scaleZ) {
 		OpenMatrix4f modelMatrix = new OpenMatrix4f();
 		Vec3f translation = new Vec3f(-(xPosO + (xPos - xPosO) * partialTick), ((yPosO + (yPos - yPosO) * partialTick)), -(zPosO + (zPos - zPosO) * partialTick));
@@ -39,6 +46,14 @@ public class MathUtils {
 		v4 = p4 - p1 + 3.0D * (p2 - p3);
 		
 		return v1 + t * v2 + t * t * v3 + t * t * t * v4;
+	}
+	
+	public static float bezierCurve(float t) {
+		return (float)bezierCurve((double)t);
+	}
+	
+	public static int getSign(double value) {
+		return value >= 0.0F ? 1 : -1;
 	}
 	
 	public static Vec3 getVectorForRotation(float pitch, float yaw) {
@@ -88,7 +103,7 @@ public class MathUtils {
 		
 		return f1;
 	}
-
+	
 	public static float rotWrap(double d) {
 		while (d >= 180.0) {
 			d -= 360.0;
@@ -97,6 +112,21 @@ public class MathUtils {
 			d += 360.0;
 		}
 		return (float)d;
+	}
+	
+	public static float lerpDegree(float from, float to, float progression) {
+		from = Mth.wrapDegrees(from);
+		to = Mth.wrapDegrees(to);
+		
+		if (Math.abs(from - to) > 180.0F) {
+			if (to < 0.0F) {
+				from -= 360.0F;
+			} else if (to > 0.0F) {
+				from += 360.0F;
+			}
+		}
+		
+		return Mth.lerp(progression, from, to);
 	}
 	
 	public static Vec3 getNearestVector(Vec3 from, Vec3... vectors) {

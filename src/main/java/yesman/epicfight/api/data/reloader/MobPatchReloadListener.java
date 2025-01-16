@@ -53,7 +53,6 @@ import yesman.epicfight.data.conditions.Condition;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.data.conditions.entity.HasCustomTag;
 import yesman.epicfight.gameasset.Armatures;
-import yesman.epicfight.gameasset.Armatures.ArmatureAccessor;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.model.armature.HumanoidArmature;
@@ -97,7 +96,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		for (Map.Entry<ResourceLocation, JsonElement> entry : objectIn.entrySet()) {
 			ResourceLocation rl = entry.getKey();
 			String pathString = rl.getPath();
-			ResourceLocation registryName = new ResourceLocation(rl.getNamespace(), pathString);
+			ResourceLocation registryName = ResourceLocation.tryBuild(rl.getNamespace(), pathString);
 			
 			if (!ForgeRegistries.ENTITY_TYPES.containsKey(registryName)) {
 				new NoSuchElementException("Mob Patch Exception: No Entity named " + registryName).printStackTrace();
@@ -114,7 +113,6 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			}
 			
 			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, false, resourceManager));
-			
 			EntityPatchProvider.putCustomEntityPatch(entityType, (entity) -> () -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			TAGMAP.put(entityType, filterClientData(tag));
 			
@@ -171,12 +169,12 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		@SuppressWarnings("rawtypes")
 		@Override
 		public EntityPatch<?> get(Entity entity) {
-			if (this.humanoidCombatBehaviors == null) {
+			if (this.humanoidCombatBehaviors == null && !entity.level().isClientSide()) {
 				EpicFightMod.LOGGER.warn("Custom humanoid mob capability undefined combat behaviors");
 				return null;
 			}
 			
-			if (this.humanoidWeaponMotions == null) {
+			if (this.humanoidWeaponMotions == null && !entity.level().isClientSide()) {
 				EpicFightMod.LOGGER.warn("Custom humanoid mob capability undefined weapon motions");
 				return null;
 			}
@@ -208,8 +206,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		@Override
 		@SuppressWarnings("rawtypes")
 		public EntityPatch<?> get(Entity entity) {
-			if (this.combatBehaviorsBuilder == null) {
-				EpicFightMod.LOGGER.warn("Custom mob capability undefined combat behaviors");
+			if (this.combatBehaviorsBuilder == null && !entity.level().isClientSide()) {
+				EpicFightMod.LOGGER.warn("Combat behavior undefined for mob capability of " + entity.getClass());
 				return null;
 			}
 			
@@ -301,11 +299,11 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			String presetName = tag.getString("preset");
 			Function<Entity, Supplier<EntityPatch<?>>> preset = EntityPatchProvider.get(presetName);
 			
-			ResourceLocation presetId = new ResourceLocation(presetName);
-			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(presetName));
-			ResourceLocation armatureId = new ResourceLocation(presetId.getNamespace(), "entity/" + EntityType.getKey(presetEntityType).getPath());
+			ResourceLocation presetId = ResourceLocation.tryParse(presetName);
+			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(presetName));
+			ResourceLocation armatureId = ResourceLocation.tryBuild(presetId.getNamespace(), "entity/" + EntityType.getKey(presetEntityType).getPath());
 			
-			Armatures.registerEntityTypeArmature(entityType, ArmatureAccessor.create(armatureId, Armature::new));
+			Armatures.registerEntityTypeArmature(entityType, Armatures.getOrCreate(armatureId, Armature::new));
 			MobPatchPresetProvider provider = new MobPatchPresetProvider(preset);
 			
 			return provider;
@@ -313,29 +311,29 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			boolean humanoid = tag.getBoolean("isHumanoid");
 			CustomMobPatchProvider provider = humanoid ? new CustomHumanoidMobPatchProvider() : new CustomMobPatchProvider();
 			provider.attributeValues = deserializeAttributes(tag.getCompound("attributes"));
-			ResourceLocation modelLocation = new ResourceLocation(tag.getString("model"));
-			ResourceLocation armatureId = new ResourceLocation(tag.getString("armature"));
+			ResourceLocation modelLocation = ResourceLocation.tryParse(tag.getString("model"));
+			ResourceLocation armatureId = ResourceLocation.tryParse(tag.getString("armature"));
 			
 			if (EpicFightMod.isPhysicalClient()) {
 				Meshes.getOrCreate(modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
 			}
 			
-			Armatures.registerEntityTypeArmature(entityType, ArmatureAccessor.create(armatureId, Armature::new));
+			Armatures.registerEntityTypeArmature(entityType, Armatures.getOrCreate(armatureId, Armature::new));
 			
 			provider.defaultAnimations = deserializeDefaultAnimations(tag.getCompound("default_livingmotions"));
 			provider.faction = Faction.valueOf(tag.getString("faction").toUpperCase(Locale.ROOT));
 			provider.scale = tag.getCompound("attributes").contains("scale") ? (float)tag.getCompound("attributes").getDouble("scale") : 1.0F;
 			
 			if (tag.contains("swing_sound")) {
-				provider.swingSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("swing_sound")));
+				provider.swingSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("swing_sound")));
 			}
 			
 			if (tag.contains("hit_sound")) {
-				provider.hitSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("hit_sound")));
+				provider.hitSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("hit_sound")));
 			}
 			
 			if (tag.contains("hit_particle")) {
-				provider.hitParticle = (HitParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(tag.getString("hit_particle")));
+				provider.hitParticle = (HitParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(tag.getString("hit_particle")));
 			}
 			
 			if (!clientSide) {
@@ -492,9 +490,9 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		ResourceLocation rl;
 		
 		if (type.contains(":")) {
-			rl = new ResourceLocation(type);
+			rl = ResourceLocation.tryParse(type);
 		} else {
-			rl = new ResourceLocation(EpicFightMod.MODID, type);
+			rl = ResourceLocation.tryBuild(EpicFightMod.MODID, type);
 		}
 		
 		Supplier<Condition<T>> predicateProvider = EpicFightConditions.getConditionOrNull(rl);
@@ -562,18 +560,15 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 				disabled = tag.getBoolean("disabled");
 			}
 			
-			EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(tag.getString("id")));
+			EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(tag.getString("id")));
 			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, true, Minecraft.getInstance().getResourceManager()));
 			EntityPatchProvider.putCustomEntityPatch(entityType, (entity) -> () -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			
 			if (!disabled) {
 				if (tag.contains("preset")) {
-					ResourceLocation presetId = new ResourceLocation(tag.getString("preset"));
-					ResourceLocation armatureId = new ResourceLocation(presetId.getNamespace(), "entity/" + presetId.getPath());
-					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureId, Armature::new);
-					Armatures.registerEntityTypeArmature(entityType, armature);
+					Armatures.registerEntityTypeArmatureByPreset(entityType, tag.getString("preset"));
 				} else {
-					ResourceLocation armatureLocation = new ResourceLocation(tag.getString("armature"));
+					ResourceLocation armatureLocation = ResourceLocation.tryParse(tag.getString("armature"));
 					boolean humanoid = tag.getBoolean("isHumanoid");
 					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
 					Armatures.registerEntityTypeArmature(entityType, armature);

@@ -139,15 +139,34 @@ public class DatapackEditScreen extends Screen {
 		return workingPackScreen != null;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static AssetAccessor<? extends StaticAnimation> animationByKey(String path) {
 		ResourceLocation rl = ResourceLocation.tryParse(path);
 		
 		if (workingPackScreen.userAnimations.containsKey(rl)) {
-			return (AssetAccessor<? extends StaticAnimation>)workingPackScreen.userAnimations.get(rl);
+			return workingPackScreen.userAnimations.get(rl).getValue();
 		}
 		
 		return AnimationManager.byKey(rl);
+	}
+	
+	public static AssetAccessor<? extends SkinnedMesh> getMesh(String path) {
+		ResourceLocation rl = ResourceLocation.tryParse(path);
+		
+		if (workingPackScreen != null && workingPackScreen.userMeshes.containsKey(rl)) {
+			return workingPackScreen.userMeshes.get(rl);
+		}
+		
+		return Meshes.get(rl);
+	}
+	
+	public static AssetAccessor<? extends Armature> getArmature(String path) {
+		ResourceLocation rl = ResourceLocation.tryParse(path);
+		
+		if (workingPackScreen != null && workingPackScreen.userArmatures.containsKey(rl)) {
+			return workingPackScreen.userArmatures.get(rl);
+		}
+		
+		return Armatures.get(rl);
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> getWeaponType(String typeName) {
@@ -160,19 +179,17 @@ public class DatapackEditScreen extends Screen {
 		return WeaponTypeReloadListener.get(typeName);
 	}
 	
-	public static Set<Map.Entry<ResourceLocation, AssetAccessor<? extends SkinnedMesh>>> getUserMeshEntries() {
-		return workingPackScreen == null ? Set.of() : workingPackScreen.userMeshes.entrySet();
-	}
-	
-	public static Set<Map.Entry<ResourceLocation, AssetAccessor<? extends Armature>>> getUserArmatureEntries() {
-		return workingPackScreen == null ? Set.of() : workingPackScreen.userArmatures.entrySet();
-	}
-	
 	public static Set<Map.Entry<ResourceLocation, Function<Item, CapabilityItem.Builder>>> getSerializableWeaponTypes() {
 		return workingPackScreen.weaponTypeTab.packList.stream().reduce(Sets.<Map.Entry<ResourceLocation, Function<Item, CapabilityItem.Builder>>>newHashSet(), (set, entry) -> {
 			try {
 				WeaponCapability.Builder builder = WeaponTypeReloadListener.deserializeWeaponCapabilityBuilder(entry.getKey(), entry.getValue());
-				set.add(PackEntry.ofValue(entry.getKey(), (itemstack) -> builder));
+				Function<Item, CapabilityItem.Builder> provider = (itemstack) -> builder;
+				
+				if (!workingPackScreen.userWeaponTypes.containsKey(entry.getKey())) {
+					workingPackScreen.userWeaponTypes.put(entry.getKey(), provider);
+				}
+				
+				set.add(PackEntry.ofValue(entry.getKey(), provider));
 			} catch (Exception e) {
 				EpicFightMod.LOGGER.error("Can not deserialize weapon type " + entry.getKey());
 				return set;
@@ -538,7 +555,6 @@ public class DatapackEditScreen extends Screen {
 					JsonReader jsonReader = new JsonReader(new InputStreamReader(stream.get(), StandardCharsets.UTF_8));
 					jsonReader.setLenient(true);
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-					
 					ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
 					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
 					SkinnedMesh mesh = null;
@@ -552,11 +568,11 @@ public class DatapackEditScreen extends Screen {
 					} finally {}
 					
 					if (mesh != null) {
-						this.userMeshes.put(rl, SelfAccessor.create(resourceLocation, mesh));
+						this.userMeshes.put(rl, SelfAccessor.create(rl, mesh));
 					}
 					
 					if (armature != null) {
-						this.userArmatures.put(rl, SelfAccessor.create(resourceLocation, armature));
+						this.userArmatures.put(rl, SelfAccessor.create(rl, armature));
 					}
 				} catch (Exception e) {
 					EpicFightMod.LOGGER.error("Failed to read model " + resourceLocation);
@@ -2569,12 +2585,9 @@ public class DatapackEditScreen extends Screen {
 			this.inputComponentsList.setDataBindingComponenets(new Object[] {
 				false,
 				EntityType.byString(tag.getString("preset")).orElse(null),
-				//(MeshProvider<?>)(() -> Meshes.getMeshOrNull(new ResourceLocation(tag.getString("model")))),
-				
-				Meshes.getOrCreate(ResourceLocation.tryParse(tag.getString("model")), (jsonLoader) -> jsonLoader.loadSkinnedMesh(SkinnedMesh::new)),
-				
-				Armatures.getOrCreate(ResourceLocation.tryParse(tag.getString("armature")), Armature::new),
-				ResourceLocation.tryParse(tag.getString("renderer")),
+				DatapackEditScreen.getMesh(tag.getString("model")),
+				DatapackEditScreen.getArmature(tag.getString("armature")),
+				StringUtil.isNullOrEmpty(tag.getString("renderer")) ? null : ResourceLocation.tryParse(tag.getString("renderer")),
 				tag.getBoolean("isHumanoid"),
 				ParseUtil.nullOrApply(tag.get("faction"), (jsonElement) -> Faction.valueOf(jsonElement.getAsString().toUpperCase(Locale.ROOT))),
 				ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("swing_sound"))),

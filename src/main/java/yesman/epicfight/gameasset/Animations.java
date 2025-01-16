@@ -630,7 +630,19 @@ public class Animations {
 		
 		BIPED_CLIMBING = event.nextAccessor("biped/living/climb", (accessor) ->
 			new MovementAnimation(0.16F, true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
+				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
+					if (self.isLinkAnimation()) {
+						return 1.0F;
+					}
+					
+					double y = entitypatch.getOriginal().getY() - entitypatch.getYOld();
+					
+					if (Math.abs(y) < 0.04D) {
+						return 0.0F;
+					} else {
+						return y < 0.0D ? -1.0F : 1.0F;
+					}
+				})
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
@@ -1841,22 +1853,23 @@ public class Animations {
 					SimpleEvent.create((entitypatch, animation, params) -> {
 						List<LivingEntity> hitEnemies = entitypatch.getCurrenltyHurtEntities();
 						Vec3 vec = entitypatch.getOriginal().position().add(Vec3.directionFromRotation(new Vec2(0.0F, entitypatch.getOriginal().getYRot())));
-						AttackAnimation attackAnimation = (AttackAnimation)animation;
-
-						for (LivingEntity e : hitEnemies) {
-							if (e.isAlive()) {
-								LivingEntityPatch<?> targetpatch = EpicFightCapabilities.getEntityPatch(e, LivingEntityPatch.class);
-								
-								if (targetpatch != null) {
-									DamageSource dmgSource = attackAnimation.getEpicFightDamageSource(entitypatch, e, attackAnimation.phases[0]);
+						
+						if (animation.get() instanceof AttackAnimation attackAnimation) {
+							for (LivingEntity e : hitEnemies) {
+								if (e.isAlive()) {
+									LivingEntityPatch<?> targetpatch = EpicFightCapabilities.getEntityPatch(e, LivingEntityPatch.class);
 									
-									if (!targetpatch.tryHurt(dmgSource, 0).resultType.dealtDamage()) {
-										continue;
+									if (targetpatch != null) {
+										DamageSource dmgSource = attackAnimation.getEpicFightDamageSource(entitypatch, e, attackAnimation.phases[0]);
+										
+										if (!targetpatch.tryHurt(dmgSource, 0).resultType.dealtDamage()) {
+											continue;
+										}
 									}
+									
+									Vec3 toAttacker = e.position().subtract(vec).multiply(0.3F, 0.3F, 0.3F);
+									e.setPos(vec.add(toAttacker));
 								}
-								
-								Vec3 toAttacker = e.position().subtract(vec).multiply(0.3F, 0.3F, 0.3F);
-								e.setPos(vec.add(toAttacker));
 							}
 						}
 					}, AnimationEvent.Side.SERVER))

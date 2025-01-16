@@ -210,6 +210,9 @@ public class TransformSheet {
 		//System.out.println("Dest: " + destInWorld);
 		//System.out.println("Dest y rot: " + destYRot);
 		
+		//System.out.println("\nFirst coord");
+		//System.out.println(byDest);
+		
 		byStart.forEach((idx, keyframe) -> {
 			keyframe.transform().translation().sub(this.keyframes[0].transform().translation());
 			keyframe.transform().translation().multiply(1.0F, 1.0F, scale);

@@ -168,7 +168,11 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 		Function<Entity, Supplier<EntityPatch<?>>> provider = CUSTOM_CAPABILITIES.getOrDefault(entity.getType(), CAPABILITIES.get(entity.getType()));
 		
 		if (provider != null) {
-			this.capability = provider.apply(entity).get();
+			try {
+				this.capability = provider.apply(entity).get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		} else if (entity instanceof Mob && EpicFightGameRules.GLOBAL_STUN.getRuleValue(entity.level())) {
 			this.capability = new GlobalMobPatch();
 		}
