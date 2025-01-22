@@ -110,20 +110,6 @@ public class Meshes implements PreparableReloadListener {
 	@SuppressWarnings("unchecked")
 	public static <M extends Mesh> Set<AssetAccessor<M>> entry(Class<? extends Mesh> filter) {
 		return ACCESSORS.values().stream().filter((accessor) -> filter.isAssignableFrom(accessor.get().getClass())).map((accessor) -> (AssetAccessor<M>)accessor).collect(Collectors.toSet());
-		
-		/**
-		Set<AssetAccessor<M>> newset = Sets.newHashSet();
-		for (AssetAccessor<? extends Mesh> accessor : ACCESSORS.values()) {
-			try {
-				AssetAccessor<M> casted = (AssetAccessor<M>)accessor;
-				if (filter.isAssignableFrom(casted.get().getClass())) {
-					newset.add(casted);
-				}
-			} catch(ClassCastException e) {
-			}
-		}
-		return newset;
-		**/
 	}
 	
 	public static ResourceLocation wrapLocation(ResourceLocation rl) {

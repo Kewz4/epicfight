@@ -1,14 +1,15 @@
 package yesman.epicfight.config;
 
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
+import org.apache.commons.compress.utils.Lists;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -17,13 +18,21 @@ import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.Vec2i;
+import yesman.epicfight.client.gui.HealthBarIndicator.HealthBarType;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
+import yesman.epicfight.client.gui.widgets.ColorSlider;
+import yesman.epicfight.epicskins.user.AuthenticationHelper;
+import yesman.epicfight.epicskins.user.AuthenticationHelper.AuthenticationProvider;
 import yesman.epicfight.main.EpicFightMod;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class ClientConfig {
 	private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 	
@@ -84,7 +93,7 @@ public class ClientConfig {
 	
 	public static final ForgeConfigSpec.ConfigValue<String> ACCESS_TOKEN = BUILDER.comment("Web cache data for auto login to epic fight patron server").define("access_token", "");
 	public static final ForgeConfigSpec.ConfigValue<String> REFRESH_TOKNE = BUILDER.define("refresh_token", "");
-	//public static final ForgeConfigSpec.EnumValue<AuthenticationProvider> PROVIDER = BUILDER.defineEnum("provider", AuthenticationProvider.NULL);
+	public static final ForgeConfigSpec.EnumValue<AuthenticationProvider> PROVIDER = BUILDER.defineEnum("provider", AuthenticationProvider.NULL);
 	
 	public static final ForgeConfigSpec SPEC = BUILDER.build();
 	
@@ -92,7 +101,7 @@ public class ClientConfig {
 	public static int maxStuckProjectiles;
 	public static boolean filterAnimation;
 	public static double aimHelperColor;
-	public static int aimHelperPackedColor;
+	public static int aimHelperPackedColor = 0xFFFFFFFF;
 	public static boolean enableAimHelper;
 	public static boolean authSwitchCamera;
 	public static boolean autoPreparation;
@@ -103,8 +112,8 @@ public class ClientConfig {
 	public static boolean activateAnimationShader;
 	public static boolean animationShaderLockedByException = false;
 	public static boolean enableAnimatedFirstPersonModel;
-	public static List<Item> battleModeSwitchingItems;
-	public static List<Item> miningModeSwitchingItems;
+	public static Set<Item> battleModeSwitchingItems;
+	public static Set<Item> miningModeSwitchingItems;
 	
 	// UI configurations
 	public static boolean showTargetIndicator;
@@ -129,9 +138,15 @@ public class ClientConfig {
 	
 	@SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
+		if (event.getConfig().getType() != ModConfig.Type.CLIENT) {
+			return;
+		}
+		
 		longPressCounter = LONG_PRESS_COUNTER.get();
 		maxStuckProjectiles = MAX_STUCK_PROJECTILES.get();
+		filterAnimation = FILTER_ANIMATION.get();
 		aimHelperColor = AIM_HELPER_COLOR.get();
+		aimHelperPackedColor = ColorSlider.rgbColor(aimHelperColor);
 		enableAimHelper = ENABLE_AIM_HELPER.get();
 		authSwitchCamera = AUTO_SWITCH_CAMERA.get();
 		autoPreparation = AUTO_PREPARATION.get();
@@ -144,10 +159,10 @@ public class ClientConfig {
 		
 		battleModeSwitchingItems = BATTLE_MODE_SWITCHING_ITEMS.get().stream()
 				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
-				.collect(Collectors.toList());
+				.collect(Collectors.toSet());
 		miningModeSwitchingItems = MINING_MODE_SWITCHING_ITEMS.get().stream()
 				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
-				.collect(Collectors.toList());
+				.collect(Collectors.toSet());
 		
 		showTargetIndicator = SHOW_TARGET_INDICATOR.get();
 		healthBarType = HEALTH_BAR_TYPE.get();
@@ -168,42 +183,61 @@ public class ClientConfig {
 		chargingBarY = CHARGING_BAR_Y.get();
 		chargingBarBaseX = CHARGING_BAR_BASE_X.get();
 		chargingBarBaseY = CHARGING_BAR_BASE_Y.get();
+		
+		AuthenticationHelper.initialize(ACCESS_TOKEN, REFRESH_TOKNE, PROVIDER);
     }
 	
 	public static void saveChanges() {
-		LONG_PRESS_COUNTER.set(longPressCounter);
-		MAX_STUCK_PROJECTILES.set(maxStuckProjectiles);
-		AIM_HELPER_COLOR.set(aimHelperColor);
-		ENABLE_AIM_HELPER.set(enableAimHelper);
-		AUTO_SWITCH_CAMERA.set(authSwitchCamera);
-		AUTO_PREPARATION.set(autoPreparation);
-		BLOOD_EFFECTS.set(bloodEffects);
-		PREVENT_MINING_IN_COMBAT_MODE.set(preventMiningInCombatMode);
-		AIMING_POV_CORRECTION.set(aimingPovCorrection);
-		SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.set(showEpicFightAttributesInTooltip);
-		ACTIVATE_ANIMATION_SHADER.set(activateAnimationShader);
-		ENABLE_ANIMATED_FIRST_PERSON_MODEL.set(enableAnimatedFirstPersonModel);
-		BATTLE_MODE_SWITCHING_ITEMS.set(Lists.newArrayList(battleModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
-		MINING_MODE_SWITCHING_ITEMS.set(Lists.newArrayList(miningModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).iterator()));
-		SHOW_TARGET_INDICATOR.set(showTargetIndicator);
-		HEALTH_BAR_TYPE.set(healthBarType);
-		STAMINA_BAR_X.set(staminaBarX);
-		STAMINA_BAR_Y.set(staminaBarY);
-		STAMINA_BAR_BASE_X.set(staminaBarBaseX);
-		STAMINA_BAR_BASE_Y.set(staminaBarBaseY);
-		WEAPON_INNATE_X.set(weaponInnateX);
-		WEAPON_INNATE_Y.set(weaponInnateY);
-		WEAPON_INNATE_BASE_X.set(weaponInnateBaseX);
-		WEAPON_INNATE_BASE_Y.set(weaponInnateBaseY);
-		PASSIVE_X.set(passiveX);
-		PASSIVE_Y.set(passiveY);
-		PASSIVE_BASE_X.set(passiveBaseX);
-		PASSIVE_BASE_Y.set(passiveBaseY);
-		PASSIVE_ALIGN_DIRECTION.set(passiveAlignDirection);
-		CHARGING_BAR_X.set(chargingBarX);
-		CHARGING_BAR_Y.set(chargingBarY);
-		CHARGING_BAR_BASE_X.set(chargingBarBaseX);
-		CHARGING_BAR_BASE_Y.set(chargingBarBaseY);
+		if (longPressCounter != LONG_PRESS_COUNTER.get()) LONG_PRESS_COUNTER.set(longPressCounter);
+		if (maxStuckProjectiles != MAX_STUCK_PROJECTILES.get()) MAX_STUCK_PROJECTILES.set(maxStuckProjectiles);
+		if (filterAnimation != FILTER_ANIMATION.get()) FILTER_ANIMATION.set(filterAnimation);
+		if (aimHelperColor != AIM_HELPER_COLOR.get()) {
+			AIM_HELPER_COLOR.set(aimHelperColor);
+			aimHelperPackedColor = ColorSlider.rgbColor(aimHelperColor);
+		}
+		if (enableAimHelper != ENABLE_AIM_HELPER.get()) ENABLE_AIM_HELPER.set(enableAimHelper);
+		if (authSwitchCamera != AUTO_SWITCH_CAMERA.get()) AUTO_SWITCH_CAMERA.set(authSwitchCamera);
+		if (autoPreparation != AUTO_PREPARATION.get()) AUTO_PREPARATION.set(autoPreparation);
+		if (bloodEffects != BLOOD_EFFECTS.get()) BLOOD_EFFECTS.set(bloodEffects);
+		if (preventMiningInCombatMode != PREVENT_MINING_IN_COMBAT_MODE.get()) PREVENT_MINING_IN_COMBAT_MODE.set(preventMiningInCombatMode);
+		if (aimingPovCorrection != AIMING_POV_CORRECTION.get()) AIMING_POV_CORRECTION.set(aimingPovCorrection);
+		if (showEpicFightAttributesInTooltip != SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.get()) SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.set(showEpicFightAttributesInTooltip);
+		if (activateAnimationShader != ACTIVATE_ANIMATION_SHADER.get()) ACTIVATE_ANIMATION_SHADER.set(activateAnimationShader);
+		if (enableAnimatedFirstPersonModel != ENABLE_ANIMATED_FIRST_PERSON_MODEL.get()) ENABLE_ANIMATED_FIRST_PERSON_MODEL.set(enableAnimatedFirstPersonModel);
+		
+		if (!battleModeSwitchingItems.equals(BATTLE_MODE_SWITCHING_ITEMS.get().stream()
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.collect(Collectors.toSet()))
+		) {
+			BATTLE_MODE_SWITCHING_ITEMS.set(battleModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).collect(Collectors.toList()));
+		}
+		
+		if (!miningModeSwitchingItems.equals(MINING_MODE_SWITCHING_ITEMS.get().stream()
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.collect(Collectors.toSet()))
+		) {
+			MINING_MODE_SWITCHING_ITEMS.set(miningModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).collect(Collectors.toList()));
+		}
+		
+		if (showTargetIndicator != SHOW_TARGET_INDICATOR.get()) SHOW_TARGET_INDICATOR.set(showTargetIndicator);
+		if (healthBarType != HEALTH_BAR_TYPE.get()) HEALTH_BAR_TYPE.set(healthBarType);
+		if (staminaBarX != STAMINA_BAR_X.get()) STAMINA_BAR_X.set(staminaBarX);
+		if (staminaBarY != STAMINA_BAR_Y.get()) STAMINA_BAR_Y.set(staminaBarY);
+		if (staminaBarBaseX != STAMINA_BAR_BASE_X.get()) STAMINA_BAR_BASE_X.set(staminaBarBaseX);
+		if (staminaBarBaseY != STAMINA_BAR_BASE_Y.get()) STAMINA_BAR_BASE_Y.set(staminaBarBaseY);
+		if (weaponInnateX != WEAPON_INNATE_X.get()) WEAPON_INNATE_X.set(weaponInnateX);
+		if (weaponInnateX != WEAPON_INNATE_Y.get()) WEAPON_INNATE_Y.set(weaponInnateY);
+		if (weaponInnateBaseX != WEAPON_INNATE_BASE_X.get()) WEAPON_INNATE_BASE_X.set(weaponInnateBaseX);
+		if (weaponInnateBaseY != WEAPON_INNATE_BASE_Y.get()) WEAPON_INNATE_BASE_Y.set(weaponInnateBaseY);
+		if (passiveX != PASSIVE_X.get()) PASSIVE_X.set(passiveX);
+		if (passiveY != PASSIVE_Y.get()) PASSIVE_Y.set(passiveY);
+		if (passiveBaseX != PASSIVE_BASE_X.get()) PASSIVE_BASE_X.set(passiveBaseX);
+		if (passiveBaseY != PASSIVE_BASE_Y.get()) PASSIVE_BASE_Y.set(passiveBaseY);
+		if (passiveAlignDirection != PASSIVE_ALIGN_DIRECTION.get()) PASSIVE_ALIGN_DIRECTION.set(passiveAlignDirection);
+		if (chargingBarX != CHARGING_BAR_X.get()) CHARGING_BAR_X.set(chargingBarX);
+		if (chargingBarY != CHARGING_BAR_Y.get()) CHARGING_BAR_Y.set(chargingBarY);
+		if (chargingBarBaseX != CHARGING_BAR_BASE_X.get()) CHARGING_BAR_BASE_X.set(chargingBarBaseX);
+		if (chargingBarBaseY != CHARGING_BAR_BASE_Y.get()) CHARGING_BAR_BASE_Y.set(chargingBarBaseY);
 	}
 	
 	public static Vec2i getStaminaPosition(int width, int height) {
@@ -222,104 +256,5 @@ public class ClientConfig {
 		int posX = chargingBarBaseX.positionGetter.apply(width, chargingBarX);
 		int posY = chargingBarBaseY.positionGetter.apply(height, chargingBarY);
 		return new Vec2i(posX, posY);
-	}
-	
-	/**
-	 * Screen position calculations
-	 */
-	private static final BiFunction<Integer, Integer, Integer> ORIGIN = ((screenLength, value) -> value);
-	private static final BiFunction<Integer, Integer, Integer> SCREEN_EDGE = ((screenLength, value) -> screenLength - value);
-	private static final BiFunction<Integer, Integer, Integer> CENTER = ((screenLength, value) -> screenLength / 2 + value);
-	private static final BiFunction<Integer, Integer, Integer> CENTER_SAVE = ((screenLength, value) -> value - screenLength / 2);
-	
-	public enum HorizontalBasis {
-		LEFT(ClientConfig.ORIGIN, ClientConfig.ORIGIN), RIGHT(ClientConfig.SCREEN_EDGE, ClientConfig.SCREEN_EDGE), CENTER(ClientConfig.CENTER, ClientConfig.CENTER_SAVE);
-		
-		public BiFunction<Integer, Integer, Integer> positionGetter;
-		public BiFunction<Integer, Integer, Integer> saveCoordGetter;
-		
-		HorizontalBasis(BiFunction<Integer, Integer, Integer> positionGetter, BiFunction<Integer, Integer, Integer> saveCoordGetter) {
-			this.positionGetter = positionGetter;
-			this.saveCoordGetter = saveCoordGetter;
-		}
-	}
-	
-	public enum VerticalBasis {
-		TOP(ClientConfig.ORIGIN, ClientConfig.ORIGIN), BOTTOM(ClientConfig.SCREEN_EDGE, ClientConfig.SCREEN_EDGE), CENTER(ClientConfig.CENTER, ClientConfig.CENTER_SAVE);
-		
-		public BiFunction<Integer, Integer, Integer> positionGetter;
-		public BiFunction<Integer, Integer, Integer> saveCoordGetter;
-		
-		VerticalBasis(BiFunction<Integer, Integer, Integer> positionGetter, BiFunction<Integer, Integer, Integer> saveCoordGetter) {
-			this.positionGetter = positionGetter;
-			this.saveCoordGetter = saveCoordGetter;
-		}
-	}
-	
-	@FunctionalInterface
-	public interface StartCoordGetter {
-		Vec2i get(int x, int y, int width, int height, int icons, HorizontalBasis horBasis, VerticalBasis verBasis);
-	}
-	
-	private static final StartCoordGetter START_HORIZONTAL = (x, y, width, height, icons, horBasis, verBasis) -> {
-		if (horBasis == HorizontalBasis.CENTER) {
-			return new Vec2i(x - width * (icons - 1) / 2, y);
-		} else {
-			return new Vec2i(x, y);
-		}
-	};
-	
-	private static final StartCoordGetter START_VERTICAL = (x, y, width, height, icons, horBasis, verBasis) -> {
-		if (verBasis == VerticalBasis.CENTER) {
-			return new Vec2i(x, y - height * (icons - 1) / 2);
-		} else {
-			return new Vec2i(x, y);
-		}
-	};
-	
-	@FunctionalInterface
-	public interface NextCoordGetter {
-		Vec2i getNext(HorizontalBasis horBasis, VerticalBasis verBasis, Vec2i prevCoord, int width, int height);
-	}
-	
-	private static final NextCoordGetter NEXT_HORIZONTAL = (horBasis, verBasis, oldPos, width, height) -> {
-		if (horBasis == HorizontalBasis.LEFT || horBasis == HorizontalBasis.CENTER) {
-			return new Vec2i(oldPos.x + width, oldPos.y);
-		} else {
-			return new Vec2i(oldPos.x - width, oldPos.y);
-		}
-	};
-	
-	private static final NextCoordGetter NEXT_VERTICAL = (horBasis, verBasis, oldPos, width, height) -> {
-		if (verBasis == VerticalBasis.TOP || verBasis == VerticalBasis.CENTER) {
-			return new Vec2i(oldPos.x, oldPos.y + height);
-		} else {
-			return new Vec2i(oldPos.x, oldPos.y - height);
-		}
-	};
-	
-	public enum AlignDirection {
-		HORIZONTAL(START_HORIZONTAL, NEXT_HORIZONTAL), VERTICAL(START_VERTICAL, NEXT_VERTICAL);
-		
-		public StartCoordGetter startCoordGetter;
-		public NextCoordGetter nextPositionGetter;
-		
-		AlignDirection(StartCoordGetter startCoordGetter, NextCoordGetter nextPositionGetter) {
-			this.startCoordGetter = startCoordGetter;
-			this.nextPositionGetter = nextPositionGetter;
-		}
-	}
-	
-	public enum HealthBarType {
-		NONE, HURT, TARGET;
-		
-		@Override
-		public String toString() {
-			return ParseUtil.toLowerCase(this.name());
-		}
-		
-		public HealthBarType nextEnum() {
-			return HealthBarType.values()[(this.ordinal() + 1) % 3];
-		}
 	}
 }

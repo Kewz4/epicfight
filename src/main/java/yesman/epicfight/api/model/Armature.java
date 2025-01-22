@@ -18,6 +18,7 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 public class Armature {
 	private final String name;
@@ -50,7 +51,7 @@ public class Armature {
 	
 	protected Joint getOrLogException(Map<String, Joint> jointMap, String name) {
 		if (!jointMap.containsKey(name)) {
-			if (EpicFightMod.warnAssetExceptions()) {
+			if (EpicFightSharedConstants.IS_DEV_ENV) {
 				EpicFightMod.LOGGER.debug("Cannot find the joint named " + name + " in " + this.getClass().getCanonicalName());
 			}
 			

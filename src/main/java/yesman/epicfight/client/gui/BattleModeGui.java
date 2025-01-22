@@ -25,6 +25,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec2i;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.skill.Skill;
@@ -146,9 +149,9 @@ public class BattleModeGui extends ModIngameGui {
 			this.drawWeaponInnateIcon(playerpatch, playerpatch.getSkill(SkillSlots.WEAPON_INNATE), guiGraphics, partialTicks);
 		}
 
-		ClientConfig.AlignDirection alignDirection = ClientConfig.passiveAlignDirection;
-		ClientConfig.HorizontalBasis horBasis = ClientConfig.passiveBaseX;
-		ClientConfig.VerticalBasis verBasis = ClientConfig.passiveBaseY;
+		AlignDirection alignDirection = ClientConfig.passiveAlignDirection;
+		HorizontalBasis horBasis = ClientConfig.passiveBaseX;
+		VerticalBasis verBasis = ClientConfig.passiveBaseY;
 		int passiveX = horBasis.positionGetter.apply(width, ClientConfig.passiveX);
 		int passiveY = verBasis.positionGetter.apply(height, ClientConfig.passiveY);
 		int icons = this.skillIcons.size();

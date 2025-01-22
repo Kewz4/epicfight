@@ -20,11 +20,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
 import yesman.epicfight.client.gui.widgets.UIComponent.PassiveUIComponent;
-import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.ClientConfig.AlignDirection;
-import yesman.epicfight.config.ClientConfig.HorizontalBasis;
-import yesman.epicfight.config.ClientConfig.VerticalBasis;
 import yesman.epicfight.config.OptionHandler;
 import yesman.epicfight.main.EpicFightMod;
 
@@ -242,8 +241,8 @@ public class UIComponentPop<T extends UIComponent> extends Screen implements Con
 				texCoords[2] = uv2;
 				texCoords[3] = uv3;
 				
-				if (this.alignDirection.getValue() == ClientConfig.AlignDirection.HORIZONTAL) {
-					if (this.horBasis.getValue() == ClientConfig.HorizontalBasis.LEFT) {
+				if (this.alignDirection.getValue() == AlignDirection.HORIZONTAL) {
+					if (this.horBasis.getValue() == HorizontalBasis.LEFT) {
 						texCoords[0] = uv1;
 						texCoords[1] = uv2;
 						texCoords[2] = uv3;
@@ -255,7 +254,7 @@ public class UIComponentPop<T extends UIComponent> extends Screen implements Con
 						texCoords[3] = uv2;
 					}
 				} else {
-					if (this.verBasis.getValue() == ClientConfig.VerticalBasis.BOTTOM) {
+					if (this.verBasis.getValue() == VerticalBasis.BOTTOM) {
 						texCoords[0] = uv2;
 						texCoords[1] = uv3;
 						texCoords[2] = uv0;

@@ -100,7 +100,7 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	@Override
 	public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		// Bad implementation: Add root joint as coord in loading animation
-		if (this.toAnimation instanceof ActionAnimation actionAnimation) {
+		if (this.toAnimation.get() instanceof ActionAnimation actionAnimation) {
 			if (!this.getTransfroms().containsKey("Coord")) {
 				actionAnimation.correctRootJoint(this, pose, entitypatch, time, partialTicks);
 			}

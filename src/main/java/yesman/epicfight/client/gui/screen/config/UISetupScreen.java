@@ -7,12 +7,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
 import yesman.epicfight.client.gui.widgets.UIComponent;
 import yesman.epicfight.client.gui.widgets.UIComponent.PassiveUIComponent;
 import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.ClientConfig.AlignDirection;
-import yesman.epicfight.config.ClientConfig.HorizontalBasis;
-import yesman.epicfight.config.ClientConfig.VerticalBasis;
 import yesman.epicfight.config.OptionHandler;
 import yesman.epicfight.main.EpicFightMod;
 

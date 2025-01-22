@@ -1,9 +1,8 @@
 package yesman.epicfight.client.gui.screen.config;
 
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import net.minecraft.ChatFormatting;
@@ -42,14 +41,14 @@ public class EditSwitchingItemScreen extends Screen {
 	@Override
 	protected void init() {
 		if (this.battleAutoSwitchItems == null) {
-			this.battleAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID+".gui.to_battle_mode"));
+			this.battleAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID + ".gui.to_battle_mode"));
 			ClientConfig.battleModeSwitchingItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.battleAutoSwitchItems.addEntry(item));
 		} else {
 			this.battleAutoSwitchItems.resize(200, this.height);
 		}
 		
 		if (this.miningAutoSwitchItems == null) {
-			this.miningAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID+".gui.to_mining_mode"));
+			this.miningAutoSwitchItems = new EditSwitchingItemScreen.RegisteredItemList(200, this.height, Component.translatable(EpicFightMod.MODID + ".gui.to_mining_mode"));
 			ClientConfig.miningModeSwitchingItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.miningAutoSwitchItems.addEntry(item));
 		} else {
 			this.miningAutoSwitchItems.resize(200, this.height);
@@ -63,8 +62,8 @@ public class EditSwitchingItemScreen extends Screen {
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
 			ClientConfig.battleModeSwitchingItems.clear();
 			ClientConfig.miningModeSwitchingItems.clear();
-			ClientConfig.battleModeSwitchingItems.addAll(this.battleAutoSwitchItems.toList());
-			ClientConfig.miningModeSwitchingItems.addAll(this.miningAutoSwitchItems.toList());
+			ClientConfig.battleModeSwitchingItems.addAll(this.battleAutoSwitchItems.toSet());
+			ClientConfig.miningModeSwitchingItems.addAll(this.miningAutoSwitchItems.toSet());
 			ClientConfig.saveChanges();
 			this.onClose();
 		}).bounds(this.width / 2 - 80, this.height - 28, 160, 20).build());
@@ -75,7 +74,9 @@ public class EditSwitchingItemScreen extends Screen {
 		this.renderDirtBackground(guiGraphics);
 		this.battleAutoSwitchItems.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.miningAutoSwitchItems.render(guiGraphics, mouseX, mouseY, partialTicks);
+		
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		
 		guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 16, 16777215);
 		
 		if (this.deferredTooltip != null) {
@@ -113,43 +114,35 @@ public class EditSwitchingItemScreen extends Screen {
 			this.x0 = 0;
 			this.x1 = width;
 		}
-
+		
 		@Override
 		protected void renderHeader(GuiGraphics guiGraphics, int x, int y) {
 			Component component = net.minecraft.network.chat.Component.literal("").append(this.title).withStyle(ChatFormatting.UNDERLINE, ChatFormatting.BOLD);
 			guiGraphics.drawString(this.minecraft.font, component, x + this.width / 2 - this.minecraft.font.width(component) / 2, Math.min(this.y0 + 3, y), 16777215, false);
 		}
-
+		
 		@Override
 		public int getRowWidth() {
 			return this.width;
 		}
-
+		
 		@Override
 		protected int getScrollbarPosition() {
 			return this.x1 - 6;
 		}
-
+		
 		protected void addEntry(Item item) {
 			this.children().add(new ItemEntry(item.getDefaultInstance()));
 		}
-
-		protected void removeIfPresent(Item item) {
-			this.children().remove(new ItemEntry(item.getDefaultInstance()));
+		
+		protected void removeEntryHaving(Item item) {
+			this.children().removeIf(entry -> entry.itemStack.getItem().equals(item));
 		}
-
-		protected List<Item> toList() {
-			List<Item> list = Lists.newArrayList();
-			
-			for (ItemEntry entry : this.children()) {
-				if (entry.itemStack != TITLE_STACK) {
-					list.add(entry.itemStack.getItem());
-				}
-			}
-			
-			return list;
+		
+		protected Set<Item> toSet() {
+			return this.children().stream().filter(entry -> entry.itemStack != TITLE_STACK).map(entry -> entry.itemStack.getItem()).collect(Collectors.toSet());
 		}
-
+		
 		@OnlyIn(Dist.CLIENT)
 		class ItemEntry extends ObjectSelectionList.Entry<EditSwitchingItemScreen.RegisteredItemList.ItemEntry> {
 			private static final Set<Item> UNRENDERABLES = Sets.newHashSet();

@@ -39,6 +39,7 @@ import yesman.epicfight.api.utils.InstantiateInvoker;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPCheckAnimationRegistrySync;
 import yesman.epicfight.network.server.SPDatapackSync;
@@ -55,7 +56,6 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	private final Map<Integer, AnimationAccessor<? extends StaticAnimation>> animationById = Maps.newHashMap();
 	private final Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> animationByName = Maps.newHashMap();
 	private final Map<AnimationAccessor<? extends StaticAnimation>, StaticAnimation> animations = Maps.newHashMap();
-	
 	private final Map<AnimationAccessor<? extends StaticAnimation>, String> resourcepackAnimationCommands = Maps.newHashMap();
 	
 	public AnimationManager() {
@@ -112,7 +112,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	
 	@Override
 	protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profilerIn) {
-		if (!EpicFightMod.isPhysicalClient() && serverResourceManager == null) {
+		if (!EpicFightSharedConstants.isPhysicalClient() && serverResourceManager == null) {
 			serverResourceManager = resourceManager;
 		}
 		
@@ -168,7 +168,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		}).forEach((animation) -> {
 			animation.get().postInit();
 			
-			if (EpicFightMod.isPhysicalClient()) {
+			if (EpicFightSharedConstants.isPhysicalClient()) {
 				AnimationManager.readAnimationProperties(animation.get());
 			}
 		});
@@ -189,7 +189,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static ResourceManager getAnimationResourceManager() {
-		return EpicFightMod.isPhysicalClient() ? Minecraft.getInstance().getResourceManager() : serverResourceManager;
+		return EpicFightSharedConstants.isPhysicalClient() ? Minecraft.getInstance().getResourceManager() : serverResourceManager;
 	}
 	
 	public int getResourcepackAnimationCount() {

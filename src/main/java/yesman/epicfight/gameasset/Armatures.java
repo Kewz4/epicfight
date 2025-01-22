@@ -93,7 +93,6 @@ public class Armatures {
 		Armatures.resourceManager = resourceManager;
 		
 		ACCESSORS.entrySet().removeIf(entry -> !entry.getValue().inRegistry);
-		
 		ARMATURES.clear();
 	}
 	

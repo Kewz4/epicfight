@@ -23,7 +23,7 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.ColliderPreset;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 public class InstantiateInvoker {
 	private static final BiMap<String, Class<?>> PRIMITIVE_KEYWORDS = HashBiMap.create();
@@ -54,7 +54,7 @@ public class InstantiateInvoker {
 	}
 	
 	private static AssetAccessor<? extends Armature> getArmature(String id) {
-		if (EpicFightMod.isPhysicalClient()) {
+		if (EpicFightSharedConstants.isPhysicalClient()) {
 			return DatapackEditScreen.getCurrentScreen() != null ? DatapackEditScreen.getArmature(id) : Armatures.getOrCreate(ResourceLocation.tryParse(id), Armature::new);
 		} else {
 			return Armatures.getOrCreate(ResourceLocation.tryParse(id), Armature::new);

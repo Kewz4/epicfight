@@ -207,7 +207,6 @@ public class ActionAnimation extends MainFrameAnimation {
 		worldPosition.y = (this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false) && worldPosition.y > 0.0F) ? 0.0F : worldPosition.y;
 		worldPosition.z = 0.0F;
 		OpenMatrix4f.transform3v(toOrigin, worldPosition, worldPosition);
-		
 		jointPosition.x = worldPosition.x;
 		jointPosition.y = worldPosition.y;
 		jointPosition.z = worldPosition.z;

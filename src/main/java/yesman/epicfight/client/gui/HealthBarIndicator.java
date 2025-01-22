@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
@@ -31,10 +32,10 @@ import yesman.epicfight.world.effect.VisibleMobEffect;
 public class HealthBarIndicator extends EntityIndicator {
 	@Override
 	public boolean shouldDraw(LivingEntity entity, @Nullable LivingEntityPatch<?> entitypatch, LocalPlayerPatch playerpatch) {
-		ClientConfig.HealthBarType healthBarType = ClientConfig.healthBarType;
+		HealthBarType healthBarType = ClientConfig.healthBarType;
 		Minecraft mc = Minecraft.getInstance();
 		
-		if (healthBarType == ClientConfig.HealthBarType.NONE) {
+		if (healthBarType == HealthBarType.NONE) {
 			return false;
 		} else if (!entity.canChangeDimensions() || entity.isInvisible() || entity == playerpatch.getOriginal().getVehicle()) {
 			return false;
@@ -48,7 +49,7 @@ public class HealthBarIndicator extends EntityIndicator {
 			}
 		}
 		
-		if (healthBarType == ClientConfig.HealthBarType.TARGET) {
+		if (healthBarType == HealthBarType.TARGET) {
 			return playerpatch.getTarget() == entity;
 		}
 
@@ -139,5 +140,18 @@ public class HealthBarIndicator extends EntityIndicator {
 		
 		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, -0.5F, -0.1F, barRatio, -0.05F, 1, 5, textureRatio, 10, size);
 		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, barRatio, -0.1F, 0.5F, -0.05F, textureRatio, 0, 63, 5, size);
+	}
+	
+	public enum HealthBarType {
+		NONE, HURT, TARGET;
+		
+		@Override
+		public String toString() {
+			return ParseUtil.toLowerCase(this.name());
+		}
+		
+		public HealthBarType nextEnum() {
+			return HealthBarType.values()[(this.ordinal() + 1) % 3];
+		}
 	}
 }

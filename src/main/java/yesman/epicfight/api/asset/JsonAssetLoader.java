@@ -64,6 +64,7 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.gameasset.Armatures.ArmatureContructor;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 public class JsonAssetLoader {
 	public static final OpenMatrix4f BLENDER_TO_MINECRAFT_COORD = OpenMatrix4f.createRotatorDeg(-90.0F, Vec3f.X_AXIS);
@@ -89,7 +90,7 @@ public class JsonAssetLoader {
 				this.rootJson = Streams.parse(jsonReader).getAsJsonObject();
 			} catch (NoSuchElementException e) {
 				// In this case, reads the animation data from mod.jar (Especially in a server)
-				Class<?> modClass = ModList.get().getModObjectById(resourceLocation.getNamespace()).get().getClass();
+				Class<?> modClass = ModList.get().getModObjectById(resourceLocation.getNamespace()).orElseThrow(() -> new AssetLoadingException("No modid " + resourceLocation)).getClass();
 				InputStream inputStream = modClass.getResourceAsStream("/assets/" + resourceLocation.getNamespace() + "/" + resourceLocation.getPath());
 				
 				if (inputStream == null) {
@@ -125,14 +126,19 @@ public class JsonAssetLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public JsonAssetLoader(InputStream inputstream, ResourceLocation resourceLocation) throws IOException {
+	public JsonAssetLoader(InputStream inputstream, ResourceLocation resourceLocation) throws AssetLoadingException {
 		JsonReader jsonReader = null;
 		this.resourceLocation = resourceLocation;
 		
 		jsonReader = new JsonReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8));
 		jsonReader.setLenient(true);
 		this.rootJson = Streams.parse(jsonReader).getAsJsonObject();
-		jsonReader.close();
+		
+		try {
+			jsonReader.close();
+		} catch (IOException e) {
+			throw new AssetLoadingException("Can't read " + resourceLocation.toString() + ": " + e);
+		}
 		
 		this.filehash = StringUtil.EMPTY_STRING;
 	}
@@ -468,6 +474,10 @@ public class JsonAssetLoader {
 			throw new IllegalStateException("Can't find animation in path: " + animation);
 		}
 		
+		if (animation.getArmature() == null) {
+			EpicFightMod.LOGGER.error("Animation " + animation + " doesn't have an armature.");
+		}
+		
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		boolean action = animation instanceof ActionAnimation;
 		boolean attack = animation instanceof AttackAnimation;
@@ -586,6 +596,11 @@ public class JsonAssetLoader {
 	public AnimationClip loadAllJointsClipForAnimation(StaticAnimation animation) {
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		boolean root = true;
+		
+		if (animation.getArmature() == null) {
+			EpicFightMod.LOGGER.error("Animation " + animation + " doesn't have an armature.");
+		}
+		
 		Armature armature = animation.getArmature().get();
 		AnimationClip clip = new AnimationClip();
 		
@@ -595,7 +610,7 @@ public class JsonAssetLoader {
 			Joint joint = armature.searchJointByName(name);
 			
 			if (joint == null) {
-				if (EpicFightMod.warnAssetExceptions()) {
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
 					EpicFightMod.LOGGER.debug(animation.getRegistryName() + ": No joint named " + name + " in armature");
 				}
 				continue;

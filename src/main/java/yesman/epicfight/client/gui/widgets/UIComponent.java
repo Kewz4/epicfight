@@ -17,12 +17,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.Vec2i;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
 import yesman.epicfight.client.gui.screen.config.UISetupScreen;
 import yesman.epicfight.client.gui.widgets.UIComponentPop.PassivesUIComponentPop;
-import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.ClientConfig.AlignDirection;
-import yesman.epicfight.config.ClientConfig.HorizontalBasis;
-import yesman.epicfight.config.ClientConfig.VerticalBasis;
 import yesman.epicfight.config.OptionHandler;
 
 @OnlyIn(Dist.CLIENT)
@@ -172,24 +171,24 @@ public class UIComponent extends Button {
 		bufferbuilder.vertex(poseStack.last().pose(), screenX, screenYEnd, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 		bufferbuilder.vertex(poseStack.last().pose(), screenX, screenY, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 		
-		if (this.horizontalBasis.getValue() == ClientConfig.HorizontalBasis.CENTER) {
+		if (this.horizontalBasis.getValue() == HorizontalBasis.CENTER) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX + (screenXEnd - screenX) / 2.0F, screenY + (screenYEnd - screenY) / 2.0F, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), this.parentScreen.width / 2, screenY + (screenYEnd - screenY) / 2.0F, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
-		} else if (this.horizontalBasis.getValue() == ClientConfig.HorizontalBasis.LEFT) {
+		} else if (this.horizontalBasis.getValue() == HorizontalBasis.LEFT) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, screenY, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), 0, screenY, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
-		} else if (this.horizontalBasis.getValue() == ClientConfig.HorizontalBasis.RIGHT) {
+		} else if (this.horizontalBasis.getValue() == HorizontalBasis.RIGHT) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, screenY, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), this.parentScreen.width, screenY, 0).color(69, 166, 244, 255).normal(1.0F, 0.0F, 0.0F).endVertex();
 		}
 		
-		if (this.verticalBasis.getValue() == ClientConfig.VerticalBasis.CENTER) {
+		if (this.verticalBasis.getValue() == VerticalBasis.CENTER) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX + (screenXEnd - screenX) / 2.0F, screenY + (screenYEnd - screenY) / 2.0F, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), screenX + (screenXEnd - screenX) / 2.0F, this.parentScreen.height / 2, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
-		} else if (this.verticalBasis.getValue() == ClientConfig.VerticalBasis.TOP) {
+		} else if (this.verticalBasis.getValue() == VerticalBasis.TOP) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, screenY, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, 0, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
-		} else if (this.verticalBasis.getValue() == ClientConfig.VerticalBasis.BOTTOM) {
+		} else if (this.verticalBasis.getValue() == VerticalBasis.BOTTOM) {
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, screenY, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 			bufferbuilder.vertex(poseStack.last().pose(), screenX, this.parentScreen.height, 0).color(69, 166, 244, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
 		}

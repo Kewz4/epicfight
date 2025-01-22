@@ -31,6 +31,7 @@ import yesman.epicfight.client.renderer.LayerRenderer;
 import yesman.epicfight.data.conditions.Condition.EntityPatchCondition;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
@@ -112,7 +113,7 @@ public class LayerUtil {
 					renderer.addCustomLayer(patchedLayer);
 				}
 			} catch (ClassNotFoundException e) {
-				if (EpicFightMod.warnAssetExceptions()) {
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
 					EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
 				}
 			} catch (NoSuchElementException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {

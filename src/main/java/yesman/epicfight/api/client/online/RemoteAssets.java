@@ -1,13 +1,8 @@
-package yesman.epicfight.api.client.epicskins;
+package yesman.epicfight.api.client.online;
 
-import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -23,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.online.texture.RemoteTexture;
 import yesman.epicfight.main.EpicFightMod;
@@ -33,25 +27,17 @@ public class RemoteAssets {
 	public static final String SERVER_URL = "https://epic-fight.com";
 	
 	private static final RemoteAssets INSTANCE = new RemoteAssets();
-	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-															.connectTimeout(Duration.ofMillis(60000))
-															.build();
-	
 	private static final TextureManager TEXTURE_MANAGER = Minecraft.getInstance().getTextureManager();
-	
-	public static HttpClient getHttpClient() {
-		return HTTP_CLIENT;
-	}
 	
 	public static RemoteAssets getInstance() {
 		return INSTANCE;
 	}
 	
-	private final Map<Integer, CachedMeshProvider> cachedMeshes = Maps.newConcurrentMap();
+	private final Map<Integer, RemoteMeshAccessor> cachedMeshes = Maps.newConcurrentMap();
 	
 	public synchronized AssetAccessor<Mesh> getRemoteMesh(int seq, String path, @Nullable Consumer<Mesh> callback) {
 		if (this.cachedMeshes.containsKey(seq)) {
-			CachedMeshProvider cachedMesh = this.cachedMeshes.get(seq);
+			RemoteMeshAccessor cachedMesh = this.cachedMeshes.get(seq);
 			
 			if (callback != null) {
 				if (cachedMesh.get() == null) {
@@ -64,39 +50,26 @@ public class RemoteAssets {
 			return cachedMesh;
 		}
 		
-		HttpRequest request = HttpRequest.newBuilder()
-									     .GET()
-									     .uri(URI.create(SERVER_URL + "/models/" + path))
-									     .build();
+		RemoteMeshAccessor remoteMeshAccessor = new RemoteMeshAccessor();
+		remoteMeshAccessor.addWork(callback);
+		this.cachedMeshes.put(seq, remoteMeshAccessor);
 		
-		CachedMeshProvider meshProvider = new CachedMeshProvider();
-		meshProvider.addWork(callback);
-		this.cachedMeshes.put(seq, meshProvider);
-		
-		HTTP_CLIENT.sendAsync(request, BodyHandlers.ofString()).whenCompleteAsync((response, ex) -> {
-			if (ex != null) {
-				EpicFightMod.LOGGER.error("Failed at loading remote mesh " + seq + ": " + ex.getMessage());
-			} else {
-				if (response.statusCode() == 200) {
-					Minecraft.getInstance().execute(() -> {
-						try {
-							JsonAssetLoader jsonLoader = new JsonAssetLoader(new ByteArrayInputStream(response.body().getBytes()), null);
-							meshProvider.loadMesh(jsonLoader.loadMesh(true));
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					});
+		CompletableFuture.runAsync(() -> {
+			EpicFightServerConnectionHelper.loadRemoteMesh(path, (mesh, exception) -> {
+				if (exception != null) {
+					EpicFightMod.LOGGER.error("Failed at loading remote mesh " + seq + ": " + exception.getMessage());
+					exception.printStackTrace();
 				} else {
-					EpicFightMod.LOGGER.error("Failed at loading remote mesh " + path + ": status: " + response.statusCode() + ", " + response.body());
+					remoteMeshAccessor.load(mesh);
 				}
-			}
+			});
 		});
 		
 		return this.cachedMeshes.get(seq);
 	}
 	
 	public synchronized ResourceLocation getRemoteTexture(String fileName) {
-		ResourceLocation textureLocation = new ResourceLocation(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
+		ResourceLocation textureLocation = ResourceLocation.tryBuild(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
 		AbstractTexture texture = TEXTURE_MANAGER.getTexture(textureLocation, MissingTextureAtlasSprite.getTexture());
 		
 		if (texture == MissingTextureAtlasSprite.getTexture()) {
@@ -108,7 +81,7 @@ public class RemoteAssets {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private class CachedMeshProvider implements AssetAccessor<Mesh> {
+	private class RemoteMeshAccessor implements AssetAccessor<Mesh> {
 		private Queue<Consumer<Mesh>> callback = Queues.newArrayDeque();
 		private Mesh mesh;
 		
@@ -116,11 +89,14 @@ public class RemoteAssets {
 			this.callback.add(callback);
 		}
 		
-		public void loadMesh(Mesh mesh) {
+		public void load(Mesh mesh) {
 			this.mesh = mesh;
-			this.callback.forEach((callback) -> callback.accept(mesh));
-			this.callback.clear();
-			this.callback = null;
+			
+			Minecraft.getInstance().execute(() -> {
+				this.callback.forEach((callback) -> callback.accept(mesh));
+				this.callback.clear();
+				this.callback = null;
+			});
 		}
 		
 		@Override

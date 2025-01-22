@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -2253,18 +2254,40 @@ public class DatapackEditScreen extends Screen {
 			this.modelPreviewer.setColliderJoint(Armatures.BIPED.get().toolR);
 			
 			this.meshPopupBox = new PopupBox.MeshPopupBox(DatapackEditScreen.this, DatapackEditScreen.this.font, 0, 15, 130, 15, HorizontalSizing.LEFT_RIGHT, null, Component.translatable("datapack_edit.weapon_type.model"), (pair) -> {
-				if (this.armaturePopupBox._getValue() != null && pair.getSecond() != null && pair.getSecond().get().getMaxJointCount() > this.armaturePopupBox._getValue().get().getJointNumber()) {
+				if (this.armaturePopupBox._getValue() != null && this.armaturePopupBox._getValue().isPresent() && pair.getSecond() != null && pair.getSecond().isPresent() && pair.getSecond().get().getMaxJointCount() > this.armaturePopupBox._getValue().get().getJointNumber()) {
 					this.meshPopupBox._setValue(null);
-					throw new IllegalArgumentException("The model is incompatible with an armature!");
+					
+					StringBuilder sb = new StringBuilder();
+					sb.append("[");
+					
+					this.armaturePopupBox._getValue().get().rootJoint.iterSubJoints((joint) -> {
+						sb.append(joint.getName() + ", ");
+					});
+					
+					sb.replace(sb.length() - 2, sb.length(), "");
+					sb.append("]");
+					
+					throw new IllegalArgumentException(MessageFormat.format("The model requires {0} joints, but the armature only has {1}. {2}", this.meshPopupBox._getValue().get().getMaxJointCount(), this.armaturePopupBox._getValue().get().getJointNumber(), sb.toString()));
 				}
 				
 				this.packList.get(this.packListGrid.getRowposition()).getValue().putString("model", pair.getFirst());
 			});
 			
 			this.armaturePopupBox = new PopupBox.ArmaturePopupBox(DatapackEditScreen.this, DatapackEditScreen.this.font, 0, 15, 130, 15, HorizontalSizing.LEFT_RIGHT, null, Component.translatable("datapack_edit.weapon_type.armature"), (pair) -> {
-				if (this.meshPopupBox._getValue() != null && pair.getSecond() != null && this.meshPopupBox._getValue().get().getMaxJointCount() > pair.getSecond().get().getJointNumber()) {
+				if (this.meshPopupBox._getValue() != null && this.meshPopupBox._getValue().isPresent() && pair.getSecond() != null && pair.getSecond().isPresent() && this.meshPopupBox._getValue().get().getMaxJointCount() > pair.getSecond().get().getJointNumber()) {
 					this.armaturePopupBox._setValue(null);
-					throw new IllegalArgumentException("The armature is incompatible with a model!");
+					
+					StringBuilder sb = new StringBuilder();
+					sb.append("[");
+					
+					pair.getSecond().get().rootJoint.iterSubJoints((joint) -> {
+						sb.append(joint.getName() + ", ");
+					});
+					
+					sb.replace(sb.length() - 2, sb.length(), "");
+					sb.append("]");
+					
+					throw new IllegalArgumentException(MessageFormat.format("The model requires {0} joints, but the armature only has {1}. {2}", this.meshPopupBox._getValue().get().getMaxJointCount(), pair.getSecond().get().getJointNumber(), sb.toString()));
 				}
 				
 				this.packList.get(this.packListGrid.getRowposition()).getValue().putString("armature", pair.getFirst());

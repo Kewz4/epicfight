@@ -1,7 +1,6 @@
 package yesman.epicfight.main;
 
 import java.nio.file.Path;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,23 +25,17 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoader;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
-import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
-import yesman.epicfight.api.animation.ServerAnimator;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
-import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.client.model.Meshes;
@@ -85,7 +78,6 @@ import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.skill.SkillSlot;
 import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.Styles;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.Style;
@@ -148,37 +140,22 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  @author yesman
  */
-@Mod("epicfight")
+@Mod(EpicFightMod.MODID)
 public class EpicFightMod {
 	public static final String MODID = "epicfight";
 	public static final String EPICSKINS_MODID = "epicskins";
-	
-	public static final String CONFIG_FILE_PATH = EpicFightMod.MODID + ".toml";
 	public static final Logger LOGGER = LogManager.getLogger(MODID);
-	private static EpicFightMod instance;
-	private static boolean warnAssetExceptions = false;
 	
-	public static EpicFightMod getInstance() {
-		return instance;
-	}
-	
-	public static void setWarnAssetExceptions(boolean b) {
-		warnAssetExceptions = b;
-	}
-	
-	public static boolean warnAssetExceptions() {
-		return warnAssetExceptions;
-	}
-	
-	private Function<LivingEntityPatch<?>, Animator> animatorProvider;
-	
-    public EpicFightMod() {
-    	instance = this;
+    public EpicFightMod(FMLJavaModLoadingContext context) {
+    	if (EpicFightSharedConstants.isPhysicalClient()) {
+    		context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+    	}
     	
-    	ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
+    	context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC, EpicFightMod.MODID + ".toml");
+    	context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory(IngameConfigurationScreen::new));
+		context.registerExtensionPoint(EpicFightExtensions.class, () -> new EpicFightExtensions(EpicFightCreativeTabs.ITEMS.get()));
     	
-		final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+		final IEventBus bus = context.getModEventBus();
 		
 		bus.addListener(this::constructMod);
     	bus.addListener(this::doCommonStuff);
@@ -215,9 +192,6 @@ public class EpicFightMod {
 		SynchedAnimationVariableKeys.SYNCHED_ANIMATION_VARIABLE_KEYS.register(bus);
 		EpicFightPaintingVariants.PAINTING_VARIANTS.register(bus);
 		EpicFightCommandArgumentTypes.COMMAND_ARGUMENT_TYPES.register(bus);
-        
-        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory(IngameConfigurationScreen::new));
-        ModLoadingContext.get().registerExtensionPoint(EpicFightExtensions.class, () -> new EpicFightExtensions(EpicFightCreativeTabs.ITEMS.get()));
         
     	if (ModList.get().isLoaded("geckolib")) {
 			ICompatModule.loadCompatModule(GeckolibCompat.class);
@@ -332,7 +306,6 @@ public class EpicFightMod {
         public static void onClientSetup(FMLClientSetupEvent event) {
         	new ClientEngine();
         	
-        	EpicFightMod.getInstance().animatorProvider = ClientAnimator::getAnimator;
     		EntityPatchProvider.registerEntityPatchesClient();
     		SkillBookScreen.registerIconItems();
     		EpicFightItemProperties.registerItemProperties();
@@ -345,14 +318,6 @@ public class EpicFightMod {
     		event.registerReloadListener(AnimationManager.getInstance());
     		event.registerReloadListener(ItemSkins.INSTANCE);
     	}
-    }
-	
-	@Mod.EventBusSubscriber(modid = EpicFightMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.DEDICATED_SERVER)
-    public static class ServerModEvents {
-		@SubscribeEvent
-		public static void doServerStuff(final FMLDedicatedServerSetupEvent event) {
-			EpicFightMod.getInstance().animatorProvider = ServerAnimator::getAnimator;
-		}
     }
 	
 	@Mod.EventBusSubscriber(modid = EpicFightMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.DEDICATED_SERVER)
@@ -388,15 +353,4 @@ public class EpicFightMod {
 			});
 		});
 	}
-	
-	/**
-	 * Epic Fight utils
-	 */
-	public static Animator getAnimator(LivingEntityPatch<?> entitypatch) {
-		return EpicFightMod.getInstance().animatorProvider.apply(entitypatch);
-	}
-	
-	public static boolean isPhysicalClient() {
-    	return FMLEnvironment.dist == Dist.CLIENT;
-    }
 }

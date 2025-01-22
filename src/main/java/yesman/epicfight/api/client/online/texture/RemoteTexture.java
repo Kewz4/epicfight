@@ -54,6 +54,7 @@ public class RemoteTexture extends SimpleTexture {
 		pImage.upload(0, 0, 0, true);
 	}
 	
+	@Override
 	public void load(ResourceManager pResourceManager) throws IOException {
 		if (this.future == null) {
 			this.future = CompletableFuture.runAsync(() -> {

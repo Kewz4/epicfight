@@ -59,7 +59,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Armatures;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPAnimatorControl;
 import yesman.epicfight.network.common.AnimatorControlPacket;
@@ -122,7 +122,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		
 		this.armature = Armatures.getArmatureFor(this);
 		
-		Animator animator = EpicFightMod.getAnimator(this);
+		Animator animator = EpicFightSharedConstants.getAnimator(this);
 		this.animator = animator;
 		
 		this.initAnimator(animator);
@@ -398,7 +398,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public float getAttackDirectionPitch() {
-		float partialTicks = EpicFightMod.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
+		float partialTicks = EpicFightSharedConstants.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
 		float pitch = -this.getOriginal().getViewXRot(partialTicks);
 		float correct = (pitch > 0) ? 0.03333F * (float)Math.pow(pitch, 2) : -0.03333F * (float)Math.pow(pitch, 2);
 		

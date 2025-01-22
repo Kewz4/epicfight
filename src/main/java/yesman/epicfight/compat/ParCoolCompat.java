@@ -89,7 +89,7 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClie
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -875,39 +875,49 @@ public class ParCoolCompat implements ICompatModule {
 		});
 		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(WallJump.class, (playerpatch, action) -> {
-			Parkourability parkourability = Parkourability.get(playerpatch.getOriginal());
-			IStamina stamina = IStamina.get(playerpatch.getOriginal());
-			DUMMY_BUFFER.clear();
+			AssetAccessor<? extends StaticAnimation> currentPlay = playerpatch.getAnimator().getPlayerFor(null).getAnimation().get().getRealAnimation();
 			
-			if (parkourability.get(WallJump.class).canStart(playerpatch.getOriginal(), parkourability, stamina, DUMMY_BUFFER)) {
-				DUMMY_BUFFER.flip();
-				Vec3 jumpDirection = new Vec3(DUMMY_BUFFER.getDouble(), DUMMY_BUFFER.getDouble(), DUMMY_BUFFER.getDouble());
-				Vec3 wallDirection = new Vec3(DUMMY_BUFFER.getDouble(), 0.0D, DUMMY_BUFFER.getDouble());
-				byte animType = DUMMY_BUFFER.get();
+			if (
+				currentPlay == BIPED_CLING_TO_CLIFF ||
+				currentPlay == BIPED_CLING_TO_CLIFF_INNER_CORNER ||
+				currentPlay == BIPED_CLING_TO_CLIFF_OUTER_CORNER
+			) {
+				Parkourability parkourability = Parkourability.get(playerpatch.getOriginal());
+				IStamina stamina = IStamina.get(playerpatch.getOriginal());
+				DUMMY_BUFFER.clear();
 				
-				switch (animType) {
-				case 0 -> {
-					//entitypatch.playAnimationSynchronized(BIPED_JUMP_FROM_BAR_START, 0.0f);
+				if (parkourability.get(ClingToCliff.class).isDoing() && parkourability.get(WallJump.class).canStart(playerpatch.getOriginal(), parkourability, stamina, DUMMY_BUFFER)) {
+					DUMMY_BUFFER.flip();
+					Vec3 jumpDirection = new Vec3(DUMMY_BUFFER.getDouble(), DUMMY_BUFFER.getDouble(), DUMMY_BUFFER.getDouble());
+					Vec3 wallDirection = new Vec3(DUMMY_BUFFER.getDouble(), 0.0D, DUMMY_BUFFER.getDouble());
+					byte animType = DUMMY_BUFFER.get();
+					
+					switch (animType) {
+					case 0 -> {
+						//entitypatch.playAnimationSynchronized(BIPED_JUMP_FROM_BAR_START, 0.0f);
+					}
+					case 1 -> {
+						playerpatch.setModelYRot(playerpatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT) - 90.0F, true);
+						playerpatch.getAnimator().getVariables().put(JUMP_DIRECTION, BIPED_WALL_JUMP_LEFT_START, jumpDirection);
+						playerpatch.getAnimator().getVariables().put(WALL_DIRECTION, BIPED_WALL_JUMP_LEFT_START, wallDirection);
+						playerpatch.playAnimationSynchronized(BIPED_WALL_JUMP_LEFT_START, 0.0F);
+					}
+					case 2 -> {
+						playerpatch.setModelYRot(playerpatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT) + 90.0F, true);
+						playerpatch.getAnimator().getVariables().put(JUMP_DIRECTION, BIPED_WALL_JUMP_RIGHT_START, jumpDirection);
+						playerpatch.getAnimator().getVariables().put(WALL_DIRECTION, BIPED_WALL_JUMP_RIGHT_START, wallDirection);
+						playerpatch.playAnimationSynchronized(BIPED_WALL_JUMP_RIGHT_START, 0.0F);
+					}
+					default -> {
+						throw new UnsupportedOperationException("No matching wall jump animation type " + animType);
+					}
+					}
 				}
-				case 1 -> {
-					playerpatch.setModelYRot(playerpatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT) - 90.0F, true);
-					playerpatch.getAnimator().getVariables().put(JUMP_DIRECTION, BIPED_WALL_JUMP_LEFT_START, jumpDirection);
-					playerpatch.getAnimator().getVariables().put(WALL_DIRECTION, BIPED_WALL_JUMP_LEFT_START, wallDirection);
-					playerpatch.playAnimationSynchronized(BIPED_WALL_JUMP_LEFT_START, 0.0F);
-				}
-				case 2 -> {
-					playerpatch.setModelYRot(playerpatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT) + 90.0F, true);
-					playerpatch.getAnimator().getVariables().put(JUMP_DIRECTION, BIPED_WALL_JUMP_RIGHT_START, jumpDirection);
-					playerpatch.getAnimator().getVariables().put(WALL_DIRECTION, BIPED_WALL_JUMP_RIGHT_START, wallDirection);
-					playerpatch.playAnimationSynchronized(BIPED_WALL_JUMP_RIGHT_START, 0.0F);
-				}
-				default -> {
-					throw new UnsupportedOperationException("No matching wall jump animation type " + animType);
-				}
-				}
+				
+				return true;
+			} else {
+				return false;
 			}
-			
-			return true;
 		});
 		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(ClingToCliff.class, (playerpatch, action) -> {
@@ -924,7 +934,7 @@ public class ParCoolCompat implements ICompatModule {
 			return false;
 		});
 		
-		if (EpicFightMod.isPhysicalClient()) {
+		if (EpicFightSharedConstants.isPhysicalClient()) {
 			ParCoolClientCompat.buildClientStuff();
 		}
 	}

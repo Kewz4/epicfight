@@ -1,6 +1,7 @@
 package yesman.epicfight.api.animation;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 
@@ -42,6 +43,14 @@ public class Joint {
 		this.getSubJoints(list);
 		
 		return list;
+	}
+	
+	public void iterSubJoints(Consumer<Joint> iterTask) {
+		iterTask.accept(this);
+		
+		for (Joint joint : this.subJoints) {
+			joint.iterSubJoints(iterTask);
+		}
 	}
 	
 	private void getSubJoints(List<Joint> list) {

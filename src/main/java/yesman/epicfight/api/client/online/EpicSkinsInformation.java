@@ -1,10 +1,7 @@
-package yesman.epicfight.api.client.epicskins;
+package yesman.epicfight.api.client.online;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
@@ -26,29 +23,36 @@ import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
+import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public record EpicSkinsInformation(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
-	private static final String USER_COSMETICS_ENDPOINT = "/cosmetic/user_cosmetic";
-	
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
-		HttpRequest request = HttpRequest.newBuilder()
-			     .GET()
-			     .uri(URI.create(RemoteAssets.SERVER_URL + USER_COSMETICS_ENDPOINT + "?mc_uuid=" + playerpatch.getOriginal().getUUID().toString().replace("-", "")))
-			     .build();
-		
-		RemoteAssets.getHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString()).whenComplete((response, ex) -> {
-			JsonReader jsonReader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(response.body().getBytes()), StandardCharsets.UTF_8));
-			JsonObject json = Streams.parse(jsonReader).getAsJsonObject();
+		EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
+			if (exception != null) {
+				EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + exception.getMessage());
+			}
 			
-			if (json.entrySet().isEmpty()) {
+			if (response.statusCode() != 200) {
+				EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + response.body());
+			}
+			
+			JsonObject json = null;
+			
+			try {
+				JsonReader jsonReader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(response.body().getBytes()), StandardCharsets.UTF_8));
+				json = Streams.parse(jsonReader).getAsJsonObject();
+			} catch (Exception e) {
+			}
+			
+			if (json == null || json.entrySet().isEmpty()) {
 				playerpatch.getSimulator(SimulationTypes.CLOTH).ifPresent((clothSimulator) -> {
 					SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
 					
 					clothSimulator.runWhenPermanent(
 						  ClothSimulator.PLAYER_CLOAK
 						, Meshes.CLOAK
-						, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED)
+						, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
 						, () -> {
 							  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
 									 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;

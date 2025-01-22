@@ -9,6 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
+import yesman.epicfight.client.gui.datapack.screen.MessageScreen;
+import yesman.epicfight.epicskins.client.screen.AvatarEditScreen;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
@@ -33,6 +35,14 @@ public class IngameConfigurationScreen extends Screen {
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.datapack_edit"), (button) -> {
 			Minecraft.getInstance().setScreen(new DatapackEditScreen(this));
 		}).pos(this.width / 2 - 165, 68).size(160, 20).build());
+		
+		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.EPICSKINS_MODID + ".button.skin_configuration"), (button) -> {
+			if (Minecraft.getInstance().level == null) {
+				Minecraft.getInstance().setScreen(new AvatarEditScreen(this));
+			} else {
+				Minecraft.getInstance().setScreen(new MessageScreen<> ("Warning", "You may not open avatar screen while in the world", this, (button2) -> Minecraft.getInstance().setScreen(this), 300, 70).autoCalculateHeight());
+			}
+		}).pos(this.width / 2 + 5, 68).size(160, 20).build());
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
 			this.minecraft.setScreen(this.parentScreen);

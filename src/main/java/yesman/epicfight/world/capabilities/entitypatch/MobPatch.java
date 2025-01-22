@@ -27,7 +27,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.utils.AttackResult;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPSetAttackTarget;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -200,7 +200,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		Entity attackTarget = this.getTarget();
 		
 		if (attackTarget != null) {
-			float partialTicks = EpicFightMod.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
+			float partialTicks = EpicFightSharedConstants.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
 			Vec3 target = attackTarget.getEyePosition(partialTicks);
 			Vec3 vector3d = this.original.getEyePosition(partialTicks);
 			double d0 = target.x - vector3d.x;

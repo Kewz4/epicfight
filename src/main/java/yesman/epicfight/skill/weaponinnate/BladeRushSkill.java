@@ -11,6 +11,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,6 +24,7 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
 import yesman.epicfight.skill.SkillContainer;
@@ -158,13 +160,14 @@ public class BladeRushSkill extends WeaponInnateSkill {
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void onScreen(LocalPlayerPatch playerpatch, float resolutionX, float resolutionY) {
-		
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void validationFeedback(LocalPlayerPatch playerpatch) {
-		if (!this.checkExecuteCondition(playerpatch)) {
+		Skill skill = playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getInnateSkill(playerpatch, playerpatch.getOriginal().getItemInHand(InteractionHand.MAIN_HAND));
+		
+		if (this.equals(skill) && !this.checkExecuteCondition(playerpatch)) {
 			Minecraft.getInstance().gui.setOverlayMessage(Component.translatable("gui.epicfight.warn.no_target"), false);
 		}
 	}

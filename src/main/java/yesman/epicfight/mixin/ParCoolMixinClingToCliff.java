@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.alrex.parcool.client.input.KeyBindings;
 import com.alrex.parcool.common.action.impl.ClingToCliff;
 import com.alrex.parcool.common.capability.IStamina;
 import com.alrex.parcool.common.capability.Parkourability;
@@ -34,7 +33,7 @@ public class ParCoolMixinClingToCliff {
 	public void epicfight_canContinue(Player player, Parkourability parkourability, IStamina stamina, CallbackInfoReturnable<Boolean> callback) {
 		PlayerPatch<?> playerpatch = EpicFightCapabilities.getEntityPatch(player, PlayerPatch.class);
 		
-		if (playerpatch != null && playerpatch.isBattleMode() && KeyBindings.getKeyGrabWall().isDown()) {
+		if (playerpatch != null && playerpatch.isBattleMode()) {
 			AssetAccessor<? extends StaticAnimation> nowPlaying = playerpatch.getAnimator().getPlayerFor(null).getAnimation().get().getRealAnimation();
 			
 			if (nowPlaying == ParCoolCompat.BIPED_CLING_START ||

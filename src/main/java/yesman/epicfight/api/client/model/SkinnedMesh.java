@@ -45,6 +45,7 @@ import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBuilder> {
@@ -56,11 +57,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	private final int maxJointCount;
 	private int arrayObjectId;
 	
-	private VertexBuffer<Float> positionsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
-	private VertexBuffer<Float> uvsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 2, false, ByteBuffer::putFloat);
-	private VertexBuffer<Byte> normalsBuffer = new VertexBuffer<> (GLConstants.GL_BYTE, 3, true, ByteBuffer::put);
-	private VertexBuffer<Short> jointsBuffer = new VertexBuffer<> (GLConstants.GL_SHORT, 3, false, ByteBuffer::putShort);
-	private VertexBuffer<Float> weightsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
+	private VertexBuffer<Float> positionsBuffer;
+	private VertexBuffer<Float> uvsBuffer;
+	private VertexBuffer<Byte> normalsBuffer;
+	private VertexBuffer<Short> jointsBuffer;
+	private VertexBuffer<Float> weightsBuffer;
 	
 	public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
@@ -104,6 +105,21 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		}
 		
 		this.maxJointCount = maxJointId;
+		
+		if (RenderSystem.isOnRenderThread()) {
+			this.initBuffers();
+		} else {
+			RenderSystem.recordRenderCall(this::initBuffers);
+		}
+	}
+	
+	public void initBuffers() {
+		this.positionsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
+		this.uvsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 2, false, ByteBuffer::putFloat);
+		this.normalsBuffer = new VertexBuffer<> (GLConstants.GL_BYTE, 3, true, ByteBuffer::put);
+		this.jointsBuffer = new VertexBuffer<> (GLConstants.GL_SHORT, 3, false, ByteBuffer::putShort);
+		this.weightsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
+		
 		this.arrayObjectId = GlStateManager._glGenVertexArrays();
 		
 		List<Float> positionList = Lists.newArrayList();
@@ -178,7 +194,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	@Override
 	protected SkinnedMeshPart getOrLogException(Map<String, SkinnedMeshPart> parts, String name) {
 		if (!parts.containsKey(name)) {
-			if (EpicFightMod.warnAssetExceptions()) {
+			if (EpicFightSharedConstants.IS_DEV_ENV) {
 				EpicFightMod.LOGGER.debug("Cannot find the mesh part named " + name + " in " + this.getClass().getCanonicalName());
 			}
 			

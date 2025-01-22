@@ -55,6 +55,7 @@ import yesman.epicfight.data.conditions.entity.HasCustomTag;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.network.server.SPDatapackSync;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -116,7 +117,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			EntityPatchProvider.putCustomEntityPatch(entityType, (entity) -> () -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			TAGMAP.put(entityType, filterClientData(tag));
 			
-			if (EpicFightMod.isPhysicalClient()) {
+			if (EpicFightSharedConstants.isPhysicalClient()) {
 				ClientEngine.getInstance().renderEngine.registerCustomEntityRenderer(entityType, tag.contains("preset") ? tag.getString("preset") : tag.getString("renderer"), tag);
 			}
 		}
@@ -314,7 +315,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			ResourceLocation modelLocation = ResourceLocation.tryParse(tag.getString("model"));
 			ResourceLocation armatureId = ResourceLocation.tryParse(tag.getString("armature"));
 			
-			if (EpicFightMod.isPhysicalClient()) {
+			if (EpicFightSharedConstants.isPhysicalClient()) {
 				Meshes.getOrCreate(modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
 			}
 			

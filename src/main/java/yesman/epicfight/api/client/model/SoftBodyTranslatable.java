@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.Meshes.MeshAccessor;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationProvider;
@@ -17,7 +18,11 @@ public interface SoftBodyTranslatable extends SimulationProvider<ClothSimulatabl
 	boolean canStartSoftBodySimulation();
 	
 	default StaticMesh<?, ?> getSoftBodyMesh() {
-		return (StaticMesh<?, ?>)this;
+		if (this instanceof MeshAccessor<?> meshAccessor) {
+			return (StaticMesh<?, ?>)meshAccessor.get();
+		} else {
+			return (StaticMesh<?, ?>)this;
+		}
 	}
 	
 	default Mesh getAsMesh() {
