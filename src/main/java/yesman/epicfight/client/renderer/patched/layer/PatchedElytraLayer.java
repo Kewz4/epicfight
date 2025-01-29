@@ -22,10 +22,8 @@ public class PatchedElytraLayer<E extends LivingEntity, T extends LivingEntityPa
 			vanillaLayer.getParentModel().copyPropertiesTo(vanillaLayer.elytraModel);
 			OpenMatrix4f modelMatrix = new OpenMatrix4f();
 			modelMatrix.scale(new Vec3f(-0.9F, -0.9F, 0.9F)).translate(new Vec3f(0.0F, -0.5F, -0.1F)).mulFront(poses[8]);
-			OpenMatrix4f transpose = OpenMatrix4f.transpose(modelMatrix, null);
 			poseStack.pushPose();
-			MathUtils.translateStack(poseStack, modelMatrix);
-			MathUtils.rotateStack(poseStack, transpose);
+			MathUtils.mulStack(poseStack, modelMatrix);
 			vanillaLayer.render(poseStack, buffer, packedLight, livingentity, livingentity.walkAnimation.position(), livingentity.walkAnimation.speed(), partialTicks, bob, yRot, xRot);
 			poseStack.popPose();
 		}

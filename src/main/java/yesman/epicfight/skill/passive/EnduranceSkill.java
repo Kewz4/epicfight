@@ -14,7 +14,6 @@ import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
@@ -47,19 +46,19 @@ public class EnduranceSkill extends PassiveSkill {
 				if (container.getExecutor().consumeForSkill(this, Skill.Resource.STAMINA, staminaConsume)) {
 					FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 					buf.writeFloat(staminaConsume);
-					this.executeOnServer((ServerPlayerPatch)container.getExecutor(), buf);
+					this.executeOnServer(container, buf);
 				}
 			}
 		});
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		super.executeOnServer(container, args);
 		
 		float staminaConsume = args.readFloat();
-		executer.setMaxStunShield(staminaConsume);
-		executer.setStunShield(staminaConsume);
+		container.getExecutor().setMaxStunShield(staminaConsume);
+		container.getExecutor().setStunShield(staminaConsume);
 	}
 	
 	@Override
@@ -70,11 +69,11 @@ public class EnduranceSkill extends PassiveSkill {
 	}
 	
 	@Override
-	public void cancelOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.setStunShield(0.0F);
-		executer.setMaxStunShield(0.0F);
+	public void cancelOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.getExecutor().setStunShield(0.0F);
+		container.getExecutor().setMaxStunShield(0.0F);
 		
-		super.cancelOnServer(executer, args);
+		super.cancelOnServer(container, args);
 	}
 	
 	@OnlyIn(Dist.CLIENT)

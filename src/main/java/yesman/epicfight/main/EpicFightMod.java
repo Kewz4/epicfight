@@ -194,50 +194,50 @@ public class EpicFightMod {
 		EpicFightCommandArgumentTypes.COMMAND_ARGUMENT_TYPES.register(bus);
         
     	if (ModList.get().isLoaded("geckolib")) {
-			ICompatModule.loadCompatModule(GeckolibCompat.class);
+			ICompatModule.loadCompatModule(context, GeckolibCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("azurelib")) {
-			ICompatModule.loadCompatModule(AzureLibCompat.class);
+			ICompatModule.loadCompatModule(context, AzureLibCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("azurelibarmor")) {
-			ICompatModule.loadCompatModule(AzureLibArmorCompat.class);
+			ICompatModule.loadCompatModule(context, AzureLibArmorCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("firstperson")) {
-			ICompatModule.loadCompatModule(FirstPersonCompat.class);
+			ICompatModule.loadCompatModule(context, FirstPersonCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("skinlayers3d")) {
-			ICompatModule.loadCompatModule(SkinLayer3DCompat.class);
+			ICompatModule.loadCompatModule(context, SkinLayer3DCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("oculus")) {
-			ICompatModule.loadCompatModule(IRISCompat.class);
+			ICompatModule.loadCompatModule(context, IRISCompat.class);
 		}
 		
 		if (ModList.get().isLoaded("vampirism")) {
-			ICompatModule.loadCompatModule(VampirismCompat.class);
+			ICompatModule.loadCompatModule(context, VampirismCompat.class);
 		}
         
         if (ModList.get().isLoaded("werewolves")) {
-			ICompatModule.loadCompatModule(WerewolvesCompat.class);
+			ICompatModule.loadCompatModule(context, WerewolvesCompat.class);
 		}
         
         if (ModList.get().isLoaded("iceandfire")) {
-			ICompatModule.loadCompatModule(IceAndFireCompat.class);
+			ICompatModule.loadCompatModule(context, IceAndFireCompat.class);
 		}
         
         if (ModList.get().isLoaded("parcool")) {
-			ICompatModule.loadCompatModule(ParCoolCompat.class);
+			ICompatModule.loadCompatModule(context, ParCoolCompat.class);
 		} else {
 			AnimationManager.addNoWarningModId("parcool");
 		}
         
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
         	if (ModList.get().isLoaded("parcool")) {
-        		ICompatModule.loadCompatModule(ParCoolClientCompat.class);
+        		ICompatModule.loadCompatModule(context, ParCoolClientCompat.class);
         	}
         });
 	}

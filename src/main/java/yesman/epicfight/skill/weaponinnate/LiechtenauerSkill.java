@@ -23,7 +23,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.client.events.engine.ControllEngine;
-import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -33,7 +32,6 @@ import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -55,9 +53,9 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 	@Override
 	public void onInitiate(SkillContainer container) {
 		container.getExecutor().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
-			if (container.isActivated() && !container.isDisabled()) {
+			if (this.isActivated(container) && !this.isDisabled(container)) {
 				if (event.getAttackDamage() > event.getTarget().getHealth()) {
-					this.setDurationSynchronize(event.getPlayerPatch(), Math.min(this.maxDuration, container.getRemainDuration() + this.returnDuration));
+					this.setDurationSynchronize(container, Math.min(this.maxDuration, container.getRemainDuration() + this.returnDuration));
 				}
 			}
 		});
@@ -65,8 +63,8 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 		container.getExecutor().getEventListener().addEventListener(EventType.HURT_EVENT_PRE, EVENT_UUID, (event) -> {
 			int phaseLevel = event.getPlayerPatch().getEntityState().getLevel();
 			
-			if (event.getAmount() > 0.0F && container.isActivated() && !container.isDisabled() && phaseLevel > 0 && phaseLevel < 3 && 
-				this.canExecute(event.getPlayerPatch()) && isBlockableSource(event.getDamageSource())) {
+			if (event.getAmount() > 0.0F && this.isActivated(container) && !this.isDisabled(container) && phaseLevel > 0 && phaseLevel < 3 && 
+				this.canExecute(container) && isBlockableSource(event.getDamageSource())) {
 				DamageSource damageSource = event.getDamageSource();
 				boolean isFront = false;
 				Vec3 sourceLocation = damageSource.getSourcePosition();
@@ -109,9 +107,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 		}, 0);
 		
 		container.getExecutor().getEventListener().addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
-			SkillContainer skillContainer = event.getPlayerPatch().getSkill(this);
-			
-			if (skillContainer.isActivated()) {
+			if (this.isActivated(container)) {
 				LocalPlayer clientPlayer = event.getPlayerPatch().getOriginal();
 				clientPlayer.setSprinting(false);
 				clientPlayer.sprintTriggerTime = -1;
@@ -123,52 +119,54 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
+		super.onRemoved(container);
+		
 		container.getExecutor().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID, 0);
 		container.getExecutor().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
 		container.getExecutor().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playSound(SoundEvents.ARMOR_EQUIP_IRON, 0.0F, 0.0F);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.getExecutor().playSound(SoundEvents.ARMOR_EQUIP_IRON, 0.0F, 0.0F);
 		
-		if (executer.getSkill(this).isActivated()) {
-			this.cancelOnServer(executer, args);
+		if (this.isActivated(container)) {
+			this.cancelOnServer(container, args);
 		} else {
-			super.executeOnServer(executer, args);
-			executer.getSkill(this).activate();
-			executer.modifyLivingMotionByCurrentItem(false);
-			executer.playAnimationSynchronized(Animations.BIPED_LIECHTENAUER_READY, 0.0F);
+			super.executeOnServer(container, args);
+			container.activate();
+			container.getServerExecutor().modifyLivingMotionByCurrentItem(false);
+			container.getExecutor().playAnimationSynchronized(Animations.BIPED_LIECHTENAUER_READY, 0.0F);
 		}
 	}
 	
 	@Override
-	public void cancelOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.getSkill(this).deactivate();
-		super.cancelOnServer(executer, args);
-		executer.modifyLivingMotionByCurrentItem(false);
+	public void cancelOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.deactivate();
+		super.cancelOnServer(container, args);
+		container.getServerExecutor().modifyLivingMotionByCurrentItem(false);
 	}
 	
 	@Override
-	public void executeOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		super.executeOnClient(executer, args);
-		executer.getSkill(this).activate();
+	public void executeOnClient(SkillContainer container, FriendlyByteBuf args) {
+		super.executeOnClient(container, args);
+		container.activate();
 	}
 	
 	@Override
-	public void cancelOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		super.cancelOnClient(executer, args);
-		executer.getSkill(this).deactivate();
+	public void cancelOnClient(SkillContainer container, FriendlyByteBuf args) {
+		super.cancelOnClient(container, args);
+		container.deactivate();
 	}
 	
 	@Override
-	public boolean canExecute(PlayerPatch<?> executer) {
-		if (executer.isLogicalClient()) {
-			return super.canExecute(executer);
+	public boolean canExecute(SkillContainer container) {
+		if (container.getExecutor().isLogicalClient()) {
+			return super.canExecute(container);
 		} else {
-			ItemStack itemstack = executer.getOriginal().getMainHandItem();
+			ItemStack itemstack = container.getExecutor().getOriginal().getMainHandItem();
 			
-			return EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(executer, itemstack) == this && executer.getOriginal().getVehicle() == null;
+			return EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(container.getExecutor(), itemstack) == this && container.getExecutor().getOriginal().getVehicle() == null;
 		}
 	}
 	

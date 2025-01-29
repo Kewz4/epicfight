@@ -21,6 +21,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.api.client.online.EpicFightServerConnectionHelper;
 import yesman.epicfight.api.utils.math.Vec2i;
 import yesman.epicfight.client.gui.HealthBarIndicator.HealthBarType;
 import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
@@ -184,7 +185,9 @@ public class ClientConfig {
 		chargingBarBaseX = CHARGING_BAR_BASE_X.get();
 		chargingBarBaseY = CHARGING_BAR_BASE_Y.get();
 		
-		AuthenticationHelper.initialize(ACCESS_TOKEN, REFRESH_TOKNE, PROVIDER);
+		if (EpicFightServerConnectionHelper.SUPPORTS) {
+			AuthenticationHelper.initialize(ACCESS_TOKEN, REFRESH_TOKNE, PROVIDER);
+		}
     }
 	
 	public static void saveChanges() {

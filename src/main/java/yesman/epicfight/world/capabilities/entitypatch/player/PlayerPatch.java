@@ -1,6 +1,7 @@
 package yesman.epicfight.world.capabilities.entitypatch.player;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -273,12 +274,25 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		this.zo = this.original.getZ();
 	}
 	
+	/**
+	 * @Deprecated
+	 * Use {@link getSkillContainerFor} instead to ensure null checking
+	 **/
+	@Deprecated
 	public SkillContainer getSkill(Skill skill) {
 		if (skill == null) {
 			return null;
 		}
 		
 		return this.getSkillCapability().getSkillContainer(skill);
+	}
+	
+	public Optional<SkillContainer> getSkillContainerFor(Skill skill) {
+		if (skill == null) {
+			return Optional.empty();
+		}
+		
+		return Optional.ofNullable(this.getSkillCapability().getSkillContainer(skill));
 	}
 	
 	public SkillContainer getSkill(SkillSlot slot) {
@@ -404,8 +418,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public void cancelAnyAction() {
-		super.cancelAnyAction();
+	public void cancelItemUse() {
+		super.cancelItemUse();
 		this.resetSkillCharging();
 	}
 	
@@ -452,6 +466,13 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	 * Use this 
 	 */
 	public boolean consumeForSkill(Skill skill, Skill.Resource consumeResource, float amount, boolean activateConsumeForce) {
+		Optional<SkillContainer> oContainer = this.getSkillContainerFor(skill);
+		
+		if (oContainer.isEmpty()) {
+			return false;
+		}
+		
+		SkillContainer skillContainer = oContainer.get();
 		SkillConsumeEvent skillConsumeEvent = new SkillConsumeEvent(this, skill, consumeResource, amount);
 		this.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, skillConsumeEvent);
 		
@@ -459,15 +480,15 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			return false;
 		}
 		
-		if (skillConsumeEvent.getResourceType().predicate.canExecute(skill, this, amount)) {
+		if (skillConsumeEvent.getResourceType().predicate.canExecute(skillContainer, this, amount)) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skill, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
 			}
 			
 			return true;
 		} else if (activateConsumeForce) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skill, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
 			}
 		}
 		
@@ -482,10 +503,17 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.tickSinceLastAction;
 	}
 	
-	public void startSkillCharging(ChargeableSkill chargingSkill) {
-		chargingSkill.startCharging(this);
-		this.lastChargingTick = this.original.tickCount;
-		this.chargingSkill = chargingSkill;
+	public boolean startSkillCharging(ChargeableSkill chargingSkill) {
+		Optional<SkillContainer> containerOptional = this.getSkillContainerFor(chargingSkill.asSkill());
+		
+		if (containerOptional.isEmpty()) {
+			return false;
+		} else {
+			chargingSkill.startCharging(this);
+			this.lastChargingTick = this.original.tickCount;
+			this.chargingSkill = chargingSkill;
+			return true;
+		}
 	}
 
 	public void resetSkillCharging() {

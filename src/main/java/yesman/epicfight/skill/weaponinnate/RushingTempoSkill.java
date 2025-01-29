@@ -20,7 +20,6 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class RushingTempoSkill extends WeaponInnateSkill {
@@ -40,20 +39,20 @@ public class RushingTempoSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		AssetAccessor<? extends DynamicAnimation> animation = executer.getAnimator().getPlayerFor(null).getAnimation();
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		AssetAccessor<? extends DynamicAnimation> animation = container.getExecutor().getAnimator().getPlayerFor(null).getAnimation();
 		
 		if (this.comboAnimation.containsKey(animation)) {
-			executer.playAnimationSynchronized(this.comboAnimation.get(animation), 0.0F);
-			super.executeOnServer(executer, args);
+			container.getExecutor().playAnimationSynchronized(this.comboAnimation.get(animation), 0.0F);
+			super.executeOnServer(container, args);
 		}
 	}
 	
 	@Override
-	public boolean checkExecuteCondition(PlayerPatch<?> executer) {
-		EntityState playerState = executer.getEntityState();
+	public boolean checkExecuteCondition(SkillContainer container) {
+		EntityState playerState = container.getExecutor().getEntityState();
 		
-		return this.comboAnimation.containsKey(executer.getAnimator().getPlayerFor(null).getAnimation()) && playerState.canUseSkill() && playerState.inaction();
+		return this.comboAnimation.containsKey(container.getExecutor().getAnimator().getPlayerFor(null).getAnimation()) && playerState.canUseSkill() && playerState.inaction();
 	}
 	
 	@Override

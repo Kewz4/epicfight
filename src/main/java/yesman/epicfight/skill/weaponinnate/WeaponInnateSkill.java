@@ -18,6 +18,7 @@ import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -38,14 +39,14 @@ public abstract class WeaponInnateSkill extends Skill {
 	}
 	
 	@Override
-	public boolean canExecute(PlayerPatch<?> executer) {
-		if (executer.isLogicalClient()) {
-			return super.canExecute(executer);
+	public boolean canExecute(SkillContainer container) {
+		if (container.getExecutor().isLogicalClient()) {
+			return super.canExecute(container);
 		} else {
-			ItemStack itemstack = executer.getOriginal().getMainHandItem();
+			ItemStack itemstack = container.getExecutor().getOriginal().getMainHandItem();
 			
-			return super.canExecute(executer) && EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(executer, itemstack) == this
-					&& executer.getOriginal().getVehicle() == null && (!executer.getSkill(this).isActivated() || this.activateType == ActivateType.TOGGLE);
+			return super.canExecute(container) && EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(container.getExecutor(), itemstack) == this && container.getExecutor().getOriginal().getVehicle() == null &&
+					(!this.isActivated(container) || this.activateType == ActivateType.TOGGLE);
 		}
 	}
 	

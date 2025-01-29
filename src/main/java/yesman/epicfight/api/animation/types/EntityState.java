@@ -32,7 +32,9 @@ public class EntityState {
 	public static final StateFactor<Boolean> ATTACKING = new StateFactor<>("attacking", false);
 	public static final StateFactor<Boolean> CAN_BASIC_ATTACK = new StateFactor<>("canBasicAttack", true);
 	public static final StateFactor<Boolean> CAN_SKILL_EXECUTION = new StateFactor<>("canExecuteSkill", true);
-	public static final StateFactor<Boolean> INACTION = new StateFactor<>("inaction", false);
+	public static final StateFactor<Boolean> INACTION = new StateFactor<>("takingAction", false);
+	//public static final StateFactor<Boolean> CAN_USE_ITEM = new StateFactor<>("canSwitchHandItem", false);
+	//public static final StateFactor<Boolean> CAN_SWITCH_HAND_ITEM = new StateFactor<>("canSwitchHandItem", false);
 	public static final StateFactor<Boolean> KNOCKDOWN = new StateFactor<>("knockdown", false);
 	public static final StateFactor<Boolean> LOCKON_ROTATE = new StateFactor<>("lockonRotate", false);
 	public static final StateFactor<Boolean> UPDATE_LIVING_MOTION = new StateFactor<>("updateLivingMotion", true);
@@ -40,7 +42,7 @@ public class EntityState {
 	public static final StateFactor<Integer> PHASE_LEVEL = new StateFactor<>("phaseLevel", 0);
 	public static final StateFactor<Function<DamageSource, AttackResult.ResultType>> ATTACK_RESULT = new StateFactor<>("attackResultModifier", (damagesource) -> AttackResult.ResultType.SUCCESS);
 	
-	TypeFlexibleHashMap<StateFactor<?>> stateMap;
+	private final TypeFlexibleHashMap<StateFactor<?>> stateMap;
 	
 	public EntityState(TypeFlexibleHashMap<StateFactor<?>> states) {
 		this.stateMap = states;

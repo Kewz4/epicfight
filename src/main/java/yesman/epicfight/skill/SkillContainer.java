@@ -174,11 +174,11 @@ public class SkillContainer {
 			if (executor.isChargingSkill(this.containingSkill)) {
 				executor.disableModelYRot(true);
 				
-				packet = this.containingSkill.getExecutionPacket(executor, this.containingSkill.gatherArguments(executor, controllEngine));
+				packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 				executor.resetSkillCharging();
 			} else {
 				if (!this.canExecute(executor, event)) {
-					this.containingSkill.validationFeedback(executor);
+					this.containingSkill.validationFeedback(this);
 					return event;
 				}
 				
@@ -188,12 +188,12 @@ public class SkillContainer {
 			}
 		} else {
 			if (!this.canExecute(executor, event)) {
-				this.containingSkill.validationFeedback(executor);
+				this.containingSkill.validationFeedback(this);
 				return event;
 			}
 			
 			executor.disableModelYRot(true);
-			packet = this.containingSkill.getExecutionPacket(executor, this.containingSkill.gatherArguments(executor, controllEngine));
+			packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 		}
 		
 		if (packet != null) {
@@ -207,7 +207,7 @@ public class SkillContainer {
 		SkillExecuteEvent event = new SkillExecuteEvent(executor, this);
 		
 		if (this.canExecute(executor, event)) {
-			this.containingSkill.executeOnServer(executor, buf);
+			this.containingSkill.executeOnServer(this, buf);
 			return true;
 		}
 		
@@ -216,7 +216,7 @@ public class SkillContainer {
 	
 	public boolean requestCancel(ServerPlayerPatch executor, FriendlyByteBuf buf) {
 		if (this.containingSkill != null) {
-			this.containingSkill.cancelOnServer(executor, buf);
+			this.containingSkill.cancelOnServer(this, buf);
 			return true;
 		}
 		
@@ -232,7 +232,7 @@ public class SkillContainer {
 				executor.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, consumeEvent);
 				
 				if (!consumeEvent.isCanceled()) {
-					consumeEvent.getResourceType().consumer.consume(this.containingSkill, executor, consumeEvent.getAmount());
+					consumeEvent.getResourceType().consumer.consume(this, executor, consumeEvent.getAmount());
 				}
 				
 				executor.startSkillCharging(chargeableSkill);
@@ -269,7 +269,7 @@ public class SkillContainer {
 			}
 			
 			event.setResourcePredicate(this.containingSkill.resourcePredicate(executor) || (this.isActivated() && this.containingSkill.activateType == ActivateType.DURATION));
-			event.setSkillExecutable(this.containingSkill.canExecute(executor));
+			event.setSkillExecutable(this.containingSkill.canExecute(this));
 			event.setStateExecutable(this.containingSkill.isExecutableState(executor));
 			executor.getEventListener().triggerEvents(EventType.SKILL_EXECUTE_EVENT, event);
 			

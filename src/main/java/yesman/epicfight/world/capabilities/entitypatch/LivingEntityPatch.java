@@ -216,7 +216,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.state = this.animator.getEntityState();
 	}
 	
-	public void cancelAnyAction() {
+	public void cancelItemUse() {
 		this.original.stopUsingItem();
 		ForgeEventFactory.onUseItemStop(this.original, this.original.getUseItem(), this.original.getUseItemRemainingTicks());
 	}

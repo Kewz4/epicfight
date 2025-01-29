@@ -55,7 +55,7 @@ public class DeathHarvestOrb extends Entity {
 				
 				if (playerpatch != null) {
 					SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
-					container.getSkill().setConsumptionSynchronize(playerpatch, container.getResource() + this.value);
+					container.getSkill().setConsumptionSynchronize(container, container.getResource() + this.value);
 				}
 				
 				this.discard();

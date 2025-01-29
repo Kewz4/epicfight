@@ -113,7 +113,7 @@ public class RevelationSkill extends Skill {
 				if (container.getExecutor().getTarget() != null) {
 					LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(container.getExecutor().getTarget(), LivingEntityPatch.class);
 					
-					if (entitypatch != null && container.isActivated()) {
+					if (entitypatch != null && this.isActivated(container)) {
 						if (container.sendExecuteRequest((LocalPlayerPatch)container.getExecutor(), ClientEngine.getInstance().controllEngine).isExecutable()) {
 							container.setDuration(0);
 							event.setCanceled(true);
@@ -149,7 +149,7 @@ public class RevelationSkill extends Skill {
 		}, -1);
 		
 		listener.addEventListener(EventType.TARGET_INDICATOR_ALERT_CHECK_EVENT, EVENT_UUID, (event) -> {
-			if (container.isActivated()) {
+			if (this.isActivated(container)) {
 				event.setCanceled(false);
 			}
 		});
@@ -157,6 +157,7 @@ public class RevelationSkill extends Skill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
+		super.onRemoved(container);
 		container.getExecutor().getEventListener().removeListener(EventType.SKILL_EXECUTE_EVENT, EVENT_UUID);
 		container.getExecutor().getEventListener().removeListener(EventType.SET_TARGET_EVENT, EVENT_UUID);
 		container.getExecutor().getEventListener().removeListener(EventType.DODGE_SUCCESS_EVENT, EVENT_UUID);
@@ -165,13 +166,13 @@ public class RevelationSkill extends Skill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		super.executeOnServer(container, args);
 		
-		CapabilityItem holdingItem = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND);
-		AnimationAccessor<? extends StaticAnimation> animation = this.motions.containsKey(holdingItem.getWeaponCategory()) ? this.motions.get(holdingItem.getWeaponCategory()).apply(holdingItem, executer) : Animations.REVELATION_ONEHAND;
+		CapabilityItem holdingItem = container.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND);
+		AnimationAccessor<? extends StaticAnimation> animation = this.motions.containsKey(holdingItem.getWeaponCategory()) ? this.motions.get(holdingItem.getWeaponCategory()).apply(holdingItem, container.getExecutor()) : Animations.REVELATION_ONEHAND;
 		
-		executer.playAnimationSynchronized(animation, 0.0F);
+		container.getExecutor().playAnimationSynchronized(animation, 0.0F);
 	}
 	
 	public void checkStackAndActivate(SkillContainer container, ServerPlayerPatch playerpatch, LivingEntity target, int stacks, int addStacks) {
@@ -181,8 +182,8 @@ public class RevelationSkill extends Skill {
 		if (plusStack < maxStackSize) {
 			container.getDataManager().setDataSync(SkillDataKeys.STACKS.get(), plusStack, playerpatch.getOriginal());
 		} else {
-			if (!container.isActivated()) {
-				this.setDurationSynchronize(playerpatch, this.maxDuration);
+			if (!this.isActivated(container)) {
+				this.setDurationSynchronize(container, this.maxDuration);
 			}
 			
 			container.getDataManager().setDataSync(SkillDataKeys.STACKS.get(), 0, playerpatch.getOriginal());

@@ -66,30 +66,29 @@ public class BasicAttack extends Skill {
 	}
 	
 	@Override
-	public boolean isExecutableState(PlayerPatch<?> executer) {
-		EntityState playerState = executer.getEntityState();
-		Player player = executer.getOriginal();
-		
-		return !(player.isSpectator() || executer.isInAir() || !playerState.canBasicAttack());
+	public boolean isExecutableState(PlayerPatch<?> executor) {
+		EntityState playerState = executor.getEntityState();
+		Player player = executor.getOriginal();
+		return !(player.isSpectator() || executor.isInAir() || !playerState.canBasicAttack());
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		SkillConsumeEvent event = new SkillConsumeEvent(executer, this, this.resource);
-		executer.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, event);
+	public void executeOnServer(SkillContainer skillContainer, FriendlyByteBuf args) {
+		ServerPlayerPatch executor = skillContainer.getServerExecutor();
+		SkillConsumeEvent event = new SkillConsumeEvent(executor, this, this.resource);
+		executor.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, event);
 		
 		if (!event.isCanceled()) {
-			event.getResourceType().consumer.consume(this, executer, event.getAmount());
+			event.getResourceType().consumer.consume(skillContainer, executor, event.getAmount());
 		}
 		
-		if (executer.getEventListener().triggerEvents(EventType.BASIC_ATTACK_EVENT, new BasicAttackEvent(executer))) {
+		if (executor.getEventListener().triggerEvents(EventType.BASIC_ATTACK_EVENT, new BasicAttackEvent(executor))) {
 			return;
 		}
 		
-		CapabilityItem cap = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND);
+		CapabilityItem cap = executor.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		AnimationAccessor<? extends AttackAnimation> attackMotion = null;
-		ServerPlayer player = executer.getOriginal();
-		SkillContainer skillContainer = executer.getSkill(this);
+		ServerPlayer player = executor.getOriginal();
 		SkillDataManager dataManager = skillContainer.getDataManager();
 		int comboCounter = dataManager.getDataValue(SkillDataKeys.COMBO_COUNTER.get());
 		
@@ -102,7 +101,7 @@ public class BasicAttack extends Skill {
 				comboCounter++;
 			}
 		} else {
-			List<AnimationAccessor<? extends AttackAnimation>> combo = cap.getAutoAttackMotion(executer);
+			List<AnimationAccessor<? extends AttackAnimation>> combo = cap.getAutoAttackMotion(executor);
 			int comboSize = combo.size();
 			boolean dashAttack = player.isSprinting();
 			
@@ -116,14 +115,14 @@ public class BasicAttack extends Skill {
 			comboCounter = dashAttack ? 0 : comboCounter + 1;
 		}
 		
-		setComboCounterWithEvent(ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION, executer, skillContainer, attackMotion, comboCounter);
+		setComboCounterWithEvent(ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION, executor, skillContainer, attackMotion, comboCounter);
 		
 		if (attackMotion != null) {
-			executer.playAnimationSynchronized(attackMotion, 0.0F);
+			executor.playAnimationSynchronized(attackMotion, 0.0F);
 			dataManager.setData(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get(), true);
 		}
 		
-		executer.updateEntityState();
+		executor.updateEntityState();
 	}
 	
 	@Override

@@ -102,14 +102,14 @@ public abstract class Skill {
 		return !executor.getOriginal().isSpectator() && !executor.isInAir() && executor.getEntityState().canUseSkill();
 	}
 	
-	public boolean canExecute(PlayerPatch<?> executor) {
-		return this.checkExecuteCondition(executor);
+	public boolean canExecute(SkillContainer container) {
+		return this.checkExecuteCondition(container);
 	}
 	
 	/**
 	 * This makes the skill icon white if it returns false
 	 */
-	public boolean checkExecuteCondition(PlayerPatch<?> executor) {
+	public boolean checkExecuteCondition(SkillContainer container) {
 		return true;
 	}
 	
@@ -117,7 +117,7 @@ public abstract class Skill {
 	 * Notify the executor unmet conditions to cast the skill
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public void validationFeedback(LocalPlayerPatch playerpatch) {
+	public void validationFeedback(SkillContainer container) {
 		
 	}
 	
@@ -125,35 +125,37 @@ public abstract class Skill {
 	 * Get a packet to send to the server
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public Object getExecutionPacket(LocalPlayerPatch executor, FriendlyByteBuf args) {
-		return new CPExecuteSkill(executor.getSkill(this).getSlotId(), CPExecuteSkill.WorkType.ACTIVATE, args);
+	public Object getExecutionPacket(SkillContainer container, FriendlyByteBuf args) {
+		return new CPExecuteSkill(container.getSlotId(), CPExecuteSkill.WorkType.ACTIVATE, args);
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public FriendlyByteBuf gatherArguments(LocalPlayerPatch executor, ControllEngine controllEngine) {
+	public FriendlyByteBuf gatherArguments(SkillContainer container, ControllEngine controllEngine) {
 		return null;
 	}
-
-	public void executeOnServer(ServerPlayerPatch executor, FriendlyByteBuf args) {
-		SPSkillExecutionFeedback feedbackPacket = SPSkillExecutionFeedback.executed(executor.getSkill(this).getSlotId());
+	
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		SPSkillExecutionFeedback feedbackPacket = SPSkillExecutionFeedback.executed(container.getSlotId());
+		ServerPlayerPatch executor = container.getServerExecutor();
 		
 		if (executor.isChargingSkill()) {
 			if (this instanceof ChargeableSkill chargingSkill) {
 				feedbackPacket.getBuffer().writeInt(executor.getAccumulatedChargeAmount());
-				chargingSkill.castSkill(executor, executor.getSkill(this), executor.getAccumulatedChargeAmount(), feedbackPacket, false);
+				chargingSkill.castSkill(executor, container, executor.getAccumulatedChargeAmount(), feedbackPacket, false);
 				executor.resetSkillCharging();
 				EpicFightNetworkManager.sendToPlayer(feedbackPacket, executor.getOriginal());
 			}
 		} else {
-			executor.getSkill(this).activate();
+			container.activate();
 			EpicFightNetworkManager.sendToPlayer(feedbackPacket, executor.getOriginal());
 		}
 	}
 	
-	public void cancelOnServer(ServerPlayerPatch executor, FriendlyByteBuf args) {
-		SkillCancelEvent skillCancelEvent = new SkillCancelEvent(executor, executor.getSkill(this));
+	public void cancelOnServer(SkillContainer container, FriendlyByteBuf args) {
+		ServerPlayerPatch executor = container.getServerExecutor();
+		SkillCancelEvent skillCancelEvent = new SkillCancelEvent(executor, container);
 		executor.getEventListener().triggerEvents(EventType.SKILL_CANCEL_EVENT, skillCancelEvent);
-		EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(executor.getSkill(this).getSlotId()), executor.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(container.getSlotId()), executor.getOriginal());
 	}
 	
 	public final float getDefaultConsumptionAmount(PlayerPatch<?> executer) {
@@ -171,21 +173,22 @@ public abstract class Skill {
 	
 	/**
 	 * Instant feedback when the skill is executed successfully
-	 * @param executor
+	 * @param container
 	 * @param args
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public void executeOnClient(LocalPlayerPatch executor, FriendlyByteBuf args) {
+	public void executeOnClient(SkillContainer container, FriendlyByteBuf args) {
 	}
 	
 	/**
 	 * Called when the duration ends.
-	 * @param executor
+	 * @param container
 	 * @param args
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public void cancelOnClient(LocalPlayerPatch executor, FriendlyByteBuf args) {
-		SkillCancelEvent skillCancelEvent = new SkillCancelEvent(executor, executor.getSkill(this));
+	public void cancelOnClient(SkillContainer container, FriendlyByteBuf args) {
+		LocalPlayerPatch executor = container.getClientExecutor();
+		SkillCancelEvent skillCancelEvent = new SkillCancelEvent(executor, container);
 		executor.getEventListener().triggerEvents(EventType.SKILL_CANCEL_EVENT, skillCancelEvent);
 	}
 	
@@ -268,7 +271,7 @@ public abstract class Skill {
 			
 			if (isEnd) {
 				if (!container.getExecutor().isLogicalClient() && this.activateType != ActivateType.CHARGING) {
-					this.cancelOnServer(container.getServerExecutor(), null);
+					this.cancelOnServer(container, null);
 				}
 				
 				container.deactivate();
@@ -283,7 +286,7 @@ public abstract class Skill {
 				container.getExecutor().resetActionTick();
 				
 				if (container.getExecutor().getSkillChargingTicks(1.0F) > chargingSkill.getAllowedMaxChargingTicks()) {
-					SPSkillExecutionFeedback feedbackPacket = SPSkillExecutionFeedback.executed(container.getExecutor().getSkill(this).getSlotId());
+					SPSkillExecutionFeedback feedbackPacket = SPSkillExecutionFeedback.executed(container.getSlotId());
 					feedbackPacket.getBuffer().writeInt(container.getExecutor().getAccumulatedChargeAmount());
 					chargingSkill.castSkill(container.getServerExecutor(), container, container.getExecutor().getAccumulatedChargeAmount(), feedbackPacket, true);
 					container.getExecutor().resetSkillCharging();
@@ -292,61 +295,75 @@ public abstract class Skill {
 			}
 		}
 	}
-
-	public void setConsumptionSynchronize(ServerPlayerPatch executer, float amount) {
-		setConsumptionSynchronize(executer, this, amount);
+	
+	public boolean isActivated(SkillContainer container) {
+		return this.equals(container.getSkill()) ? container.isActivated() : false;
 	}
 	
-	public void setMaxDurationSynchronize(ServerPlayerPatch executer, int amount) {
-		setMaxDurationSynchronize(executer, this, amount);
+	public boolean isDisabled(SkillContainer container) {
+		return this.equals(container.getSkill()) ? container.isDisabled() : true;
 	}
 	
-	public void setDurationSynchronize(ServerPlayerPatch executer, int amount) {
-		setDurationSynchronize(executer, this, amount);
+	/**
+	 * Make sure this method is called in a server side.
+	 */
+	public void setConsumptionSynchronize(SkillContainer container, float amount) {
+		if (this.equals(container.containingSkill)) {
+			setSkillConsumptionSynchronize(container, amount);
+		}
 	}
 	
-	public void setStackSynchronize(ServerPlayerPatch executer, int amount) {
-		setStackSynchronize(executer, this, amount);
+	public void setMaxDurationSynchronize(SkillContainer container, int amount) {
+		if (this.equals(container.containingSkill)) {
+			setSkillMaxDurationSynchronize(container, amount);
+		}
 	}
 	
-	public void setMaxResourceSynchronize(ServerPlayerPatch executer, float amount) {
-		setMaxResourceSynchronize(executer, this, amount);
+	public void setDurationSynchronize(SkillContainer container, int amount) {
+		if (this.equals(container.containingSkill)) {
+			setSkillDurationSynchronize(container, amount);
+		}
 	}
 	
-	public static void setConsumptionSynchronize(ServerPlayerPatch executer, Skill skill, float amount) {
-		SkillContainer skillContainer = executer.getSkill(skill);
+	public void setStackSynchronize(SkillContainer container, int amount) {
+		if (this.equals(container.containingSkill)) {
+			setSkillStackSynchronize(container, amount);
+		}
+	}
+	
+	public void setMaxResourceSynchronize(SkillContainer container, float amount) {
+		if (this.equals(container.containingSkill)) {
+			setSkillMaxResourceSynchronize(container, amount);
+		}
+	}
+	
+	public static void setSkillConsumptionSynchronize(SkillContainer skillContainer, float amount) {
 		skillContainer.setResource(amount);
-		
-		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.RESOURCE, skillContainer.getSlotId(), amount, false), executer.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.RESOURCE, skillContainer.getSlotId(), amount, false), skillContainer.getServerExecutor().getOriginal());
 	}
 	
-	public static void setDurationSynchronize(ServerPlayerPatch executer, Skill skill, int amount) {
-		SkillContainer skillContainer = executer.getSkill(skill);
+	public static void setSkillDurationSynchronize(SkillContainer skillContainer, int amount) {
 		skillContainer.setDuration(amount);
-		
-		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.DURATION, skillContainer.getSlotId(), amount, false), executer.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.DURATION, skillContainer.getSlotId(), amount, false), skillContainer.getServerExecutor().getOriginal());
 	}
 	
-	public static void setMaxDurationSynchronize(ServerPlayerPatch executer, Skill skill, int amount) {
-		SkillContainer skillContainer = executer.getSkill(skill);
+	public static void setSkillMaxDurationSynchronize(SkillContainer skillContainer, int amount) {
 		skillContainer.setMaxDuration(amount);
-		
-		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.MAX_DURATION, skillContainer.getSlotId(), amount, false), executer.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.MAX_DURATION, skillContainer.getSlotId(), amount, false), skillContainer.getServerExecutor().getOriginal());
 	}
 	
-	public static void setStackSynchronize(ServerPlayerPatch executer, Skill skill, int amount) {
-		SkillContainer skillContainer = executer.getSkill(skill);
+	public static void setSkillStackSynchronize(SkillContainer skillContainer, int amount) {
 		skillContainer.setStack(amount);
-		
-		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.STACK, skillContainer.getSlotId(), amount, false), executer.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.STACK, skillContainer.getSlotId(), amount, false), skillContainer.getServerExecutor().getOriginal());
 	}
 	
-	public static void setMaxResourceSynchronize(ServerPlayerPatch executer, Skill skill, float amount) {
-		SkillContainer skillContainer = executer.getSkill(skill);
+	public static void setSkillMaxResourceSynchronize(SkillContainer skillContainer, float amount) {
 		skillContainer.setMaxResource(amount);
-		
-		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.MAX_RESOURCE, skillContainer.getSlotId(), amount, false), executer.getOriginal());
+		EpicFightNetworkManager.sendToPlayer(new SPSetSkillValue(Target.MAX_RESOURCE, skillContainer.getSlotId(), amount, false), skillContainer.getServerExecutor().getOriginal());
 	}
+	/**
+	 * Make sure this method is called in a server side.
+	 */
 	
 	public ResourceLocation getRegistryName() {
 		return this.registryName;
@@ -466,35 +483,35 @@ public abstract class Skill {
 	
 	public enum Resource {
 		NONE(
-			(skill, playerpatch, amount) -> true,
-			(skill, playerpatch, amount) -> {}
+			(skillContainer, playerpatch, amount) -> true,
+			(skillContainer, playerpatch, amount) -> {}
 		),
 		
 		WEAPON_CHARGE(
-			(skill, playerpatch, amount) -> playerpatch.getSkill(skill).getStack() >= amount,
-			(skill, playerpatch, amount) -> {
-				skill.setStackSynchronize(playerpatch, playerpatch.getSkill(skill).getStack() - 1);
+			(skillContainer, playerpatch, amount) -> skillContainer.getStack() >= amount,
+			(skillContainer, playerpatch, amount) -> {
+				Skill.setSkillStackSynchronize(skillContainer, skillContainer.getStack() - 1);
 			}
 		),
 		
 		COOLDOWN(
-			(skill, playerpatch, amount) -> playerpatch.getSkill(skill).getStack() >= amount,
-			(skill, playerpatch, amount) -> {
-				skill.setStackSynchronize(playerpatch, playerpatch.getSkill(skill).getStack() - 1);
+			(skillContainer, playerpatch, amount) -> skillContainer.getStack() >= amount,
+			(skillContainer, playerpatch, amount) -> {
+				Skill.setSkillStackSynchronize(skillContainer, skillContainer.getStack() - 1);
 			}
 		),
 		
 		STAMINA(
-			(skill, playerpatch, amount) -> playerpatch.hasStamina(amount),
-			(skill, playerpatch, amount) -> {
+			(skillContainer, playerpatch, amount) -> playerpatch.hasStamina(amount),
+			(skillContainer, playerpatch, amount) -> {
 				playerpatch.resetActionTick();
 				playerpatch.setStamina(playerpatch.getStamina() - amount);
 			}
 		),
 		
 		HEALTH(
-			(skill, playerpatch, amount) -> playerpatch.getOriginal().getHealth() > amount,
-			(skill, playerpatch, amount) -> {
+			(skillContainer, playerpatch, amount) -> playerpatch.getOriginal().getHealth() > amount,
+			(skillContainer, playerpatch, amount) -> {
 				playerpatch.getOriginal().setHealth(playerpatch.getOriginal().getHealth() - amount);
 			}
 		);
@@ -509,12 +526,12 @@ public abstract class Skill {
 		
 		@FunctionalInterface
 		public interface ResourcePredicate {
-			boolean canExecute(Skill skill, PlayerPatch<?> playerpatch, float amount);
+			boolean canExecute(SkillContainer skillContainer, PlayerPatch<?> playerpatch, float amount);
 		}
 		
 		@FunctionalInterface
 		public interface ResourceConsumer {
-			void consume(Skill skill, ServerPlayerPatch playerpatch, float amount);
+			void consume(SkillContainer skillContainer, ServerPlayerPatch playerpatch, float amount);
 		}
 	}
 }

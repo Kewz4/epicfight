@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import yesman.epicfight.client.gui.BattleModeGui;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
-import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.skill.Skill;
@@ -34,7 +33,7 @@ public class HyperVitalitySkill extends PassiveSkill {
 		super.onInitiate(container);
 		
 		container.getExecutor().getEventListener().addEventListener(EventType.SKILL_CONSUME_EVENT, EVENT_UUID, (event) -> {
-			if (!container.getExecutor().getSkill(event.getSkill()).isDisabled() && event.getSkill().getCategory() == SkillCategories.WEAPON_INNATE) {
+			if (!this.isDisabled(container) && event.getSkill().getCategory() == SkillCategories.WEAPON_INNATE) {
 				PlayerPatch<?> playerpatch = event.getPlayerPatch();
 				
 				if (playerpatch.getSkill(SkillSlots.WEAPON_INNATE).getStack() < 1) {
@@ -57,11 +56,11 @@ public class HyperVitalitySkill extends PassiveSkill {
 		}, 1);
 		
 		container.getExecutor().getEventListener().addEventListener(EventType.SKILL_CANCEL_EVENT, EVENT_UUID, (event) -> {
-			if (!container.getExecutor().isLogicalClient() && !container.getExecutor().getOriginal().isCreative() && event.getSkillContainer().getSkill().getCategory() == SkillCategories.WEAPON_INNATE && container.isActivated()) {
+			if (!container.getExecutor().isLogicalClient() && !container.getExecutor().getOriginal().isCreative() && event.getSkillContainer().getSkill().getCategory() == SkillCategories.WEAPON_INNATE && this.isActivated(container)) {
 				container.setResource(0.0F);
 				container.deactivate();
 				ServerPlayerPatch serverPlayerPatch = (ServerPlayerPatch)container.getExecutor();
-				this.setStackSynchronize(serverPlayerPatch, container.getStack() - 1);
+				this.setStackSynchronize(container, container.getStack() - 1);
 				EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.executed(container.getSlotId()), serverPlayerPatch.getOriginal());
 			}
 		});
@@ -76,20 +75,20 @@ public class HyperVitalitySkill extends PassiveSkill {
 	}
 	
 	@Override
-	public void executeOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		super.executeOnClient(executer, args);
-		executer.getSkill(this).activate();
+	public void executeOnClient(SkillContainer container, FriendlyByteBuf args) {
+		super.executeOnClient(container, args);
+		container.activate();
 	}
 	
 	@Override
-	public void cancelOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		super.cancelOnClient(executer, args);
-		executer.getSkill(this).deactivate();
+	public void cancelOnClient(SkillContainer container, FriendlyByteBuf args) {
+		super.cancelOnClient(container, args);
+		container.deactivate();
 	}
 	
 	@Override
 	public boolean shouldDraw(SkillContainer container) {
-		return container.isActivated() || container.getStack() == 0;
+		return this.isActivated(container) || container.getStack() == 0;
 	}
 	
 	@Override
@@ -99,7 +98,7 @@ public class HyperVitalitySkill extends PassiveSkill {
 		poseStack.translate(0, (float) gui.getSlidingProgression(), 0);
 		guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
 		
-		if (!container.isActivated()) {
+		if (!this.isActivated(container)) {
 			String remainTime = String.format("%.0f", container.getMaxResource() - container.getResource());
 			guiGraphics.drawString(gui.font, remainTime, (x + 12 - 4 * (remainTime.length())), y + 6, 16777215, true);
 		}

@@ -32,7 +32,7 @@ public class ForbiddenStrengthSkill extends PassiveSkill {
 					float healthConsumeAmount = event.getAmount() - container.getExecutor().getStamina();
 					event.setAmount(healthConsumeAmount);
 					
-					if (!container.getExecutor().isLogicalClient() && event.getResourceType().predicate.canExecute(this, container.getExecutor(), healthConsumeAmount)) {
+					if (!container.getExecutor().isLogicalClient() && event.getResourceType().predicate.canExecute(container, container.getExecutor(), healthConsumeAmount)) {
 						container.getExecutor().setStamina(0.0F);
 						
 						Player player = container.getExecutor().getOriginal();

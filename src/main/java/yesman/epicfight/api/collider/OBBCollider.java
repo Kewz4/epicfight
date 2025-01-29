@@ -332,11 +332,8 @@ public class OBBCollider extends Collider {
 			poseMatrix = armature.getBindedTransformFor(interpolatedPose, joint);
 		}
 		
-		OpenMatrix4f transpose = new OpenMatrix4f();
-		OpenMatrix4f.transpose(poseMatrix, transpose);
 		poseStack.pushPose();
-		MathUtils.translateStack(poseStack, poseMatrix);
-        MathUtils.rotateStack(poseStack, transpose);
+        MathUtils.mulStack(poseStack, poseMatrix);
         Matrix4f matrix = poseStack.last().pose();
         Vec3 vec = this.modelVertex[1];
         float maxX = (float)(this.modelCenter.x + vec.x);

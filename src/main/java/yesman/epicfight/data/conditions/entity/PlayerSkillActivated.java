@@ -2,6 +2,7 @@ package yesman.epicfight.data.conditions.entity;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import com.ibm.icu.text.MessageFormat;
 
@@ -47,12 +48,12 @@ public class PlayerSkillActivated extends EntityPatchCondition {
 	@Override
 	public boolean predicate(LivingEntityPatch<?> target) {
 		if (target instanceof PlayerPatch<?> playerpatch) {
-			SkillContainer skill = playerpatch.getSkill(this.skill);
+			Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(this.skill);
 			
-			if (skill == null) {
+			if (skill.isEmpty()) {
 				return false;
 			} else {
-				return skill.isActivated();
+				return skill.get().isActivated();
 			}
 		}
 		

@@ -13,7 +13,6 @@ import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
@@ -54,9 +53,9 @@ public class GraspingSpireSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playAnimationSynchronized(this.first, 0.0F);
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.getExecutor().playAnimationSynchronized(this.first, 0.0F);
+		super.executeOnServer(container, args);
 	}
 	
 	@Override

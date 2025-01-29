@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -24,6 +22,7 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 
 import io.netty.util.internal.StringUtil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -79,6 +78,10 @@ public class JsonAssetLoader {
 		JsonReader jsonReader = null;
 		this.resourceLocation = resourceLocation;
 		
+		if (resourceManager == null && EpicFightSharedConstants.IS_DEV_ENV) {
+			resourceManager = Minecraft.getInstance().getResourceManager();
+		}
+		
 		try {
 			try {
 				Resource resource = resourceManager.getResource(resourceLocation).orElseThrow();
@@ -122,7 +125,7 @@ public class JsonAssetLoader {
 			}
 		}
 		
-		this.filehash = getSHA256Hash(this.rootJson.toString());
+		this.filehash = ParseUtil.getBytesSHA256Hash(this.rootJson.toString().getBytes());
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -734,26 +737,4 @@ public class JsonAssetLoader {
 		TransformSheet sheet = new TransformSheet(keyframeList);
 		return sheet;
 	}
-	
-	public static String getSHA256Hash(String str){
-		String hashStream = "";
-		
-		try {
-			MessageDigest sh = MessageDigest.getInstance("SHA-256");
-			sh.update(str.getBytes());
-			byte byteData[] = sh.digest();
-			StringBuffer sb = new StringBuffer();
-			
-			for (int i = 0; i < byteData.length; i++) {
-				sb.append(Integer.toString((byteData[i] & 0xFF) + 0x100, 16).substring(1));
-			}
-			
-			hashStream = sb.toString();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			hashStream = null;
-		}
-		
-		return hashStream;
-    }
 }

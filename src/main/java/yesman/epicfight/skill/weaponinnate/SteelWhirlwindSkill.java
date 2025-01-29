@@ -110,9 +110,9 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 	
 	@Override
 	public void castSkill(ServerPlayerPatch caster, SkillContainer skillContainer, int chargingTicks, SPSkillExecutionFeedback feedbackPacket, boolean onMaxTick) {
-		caster.getSkill(this).getDataManager().setDataSync(SkillDataKeys.CHARGING_POWER.get(), chargingTicks, caster.getOriginal());
+		skillContainer.getDataManager().setDataSync(SkillDataKeys.CHARGING_POWER.get(), chargingTicks, caster.getOriginal());
 		caster.playAnimationSynchronized(this.attackAnimation, 0.0F);
-		this.cancelOnServer(caster, null);
+		this.cancelOnServer(skillContainer, null);
 	}
 	
 	@Override

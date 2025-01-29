@@ -2,6 +2,7 @@ package yesman.epicfight.api.utils.math;
 
 import java.util.List;
 
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -153,18 +154,30 @@ public class MathUtils {
 		return getNearestVector(from, vectors.toArray(new Vec3[0]));
 	}
 	
+	private static final Matrix4f BUFFER = new Matrix4f();
+	private static final OpenMatrix4f OPEN_MATRIX_BUFFER = new OpenMatrix4f();
+	
+	@Deprecated(forRemoval = true)
 	public static void translateStack(PoseStack poseStack, OpenMatrix4f mat) {
-		Vector3f vector = new Vector3f(mat.m30, mat.m31, mat.m32);
-		poseStack.translate(vector.x(), vector.y(), vector.z());
+		poseStack.translate(mat.m30, mat.m31, mat.m32);
 	}
 	
+	@Deprecated(forRemoval = true)
 	public static void rotateStack(PoseStack poseStack, OpenMatrix4f mat) {
-		poseStack.mulPose(getQuaternionFromMatrix(mat));
+		OpenMatrix4f.transpose(mat, OPEN_MATRIX_BUFFER);
+		poseStack.mulPose(getQuaternionFromMatrix(OPEN_MATRIX_BUFFER));
 	}
 	
+	@Deprecated(forRemoval = true)
 	public static void scaleStack(PoseStack poseStack, OpenMatrix4f mat) {
-		Vector3f vector = getScaleVectorFromMatrix(mat);
+		OpenMatrix4f.transpose(mat, OPEN_MATRIX_BUFFER);
+		Vector3f vector = getScaleVectorFromMatrix(OPEN_MATRIX_BUFFER);
 		poseStack.scale(vector.x(), vector.y(), vector.z());
+	}
+	
+	public static void mulStack(PoseStack poseStack, OpenMatrix4f mat) {
+		OpenMatrix4f.exportToMojangMatrix(mat, BUFFER);
+		poseStack.mulPoseMatrix(BUFFER);
 	}
 	
 	public static double getAngleBetween(Vec3f a, Vec3f b) {

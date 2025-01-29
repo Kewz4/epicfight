@@ -32,7 +32,6 @@ import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.effect.EpicFightMobEffects;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -74,7 +73,7 @@ public class BladeRushSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public FriendlyByteBuf gatherArguments(LocalPlayerPatch executer, ControllEngine controllEngine) {
+	public FriendlyByteBuf gatherArguments(SkillContainer container, ControllEngine controllEngine) {
 		FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 		buf.writeBoolean(true);
 		
@@ -100,8 +99,8 @@ public class BladeRushSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		LivingEntity target = executer.getTarget();
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		LivingEntity target = container.getExecutor().getTarget();
 		boolean instaKill = false;
 		
 		if (target != null) {
@@ -119,19 +118,19 @@ public class BladeRushSkill extends WeaponInnateSkill {
 		}
 		
 		if (instaKill) {
-			executer.getSkill(this).getDataManager().setData(SkillDataKeys.COMBO_COUNTER.get(), 0);
-			executer.getAnimator().getVariables().put(SynchedAnimationVariableKeys.TARGET_ENTITY.get(), Animations.BLADE_RUSH_TRY, target.getId());
-			executer.playAnimationSynchronized(Animations.BLADE_RUSH_TRY, 0);
+			container.getDataManager().setData(SkillDataKeys.COMBO_COUNTER.get(), 0);
+			container.getExecutor().getAnimator().getVariables().put(SynchedAnimationVariableKeys.TARGET_ENTITY.get(), Animations.BLADE_RUSH_TRY, target.getId());
+			container.getExecutor().playAnimationSynchronized(Animations.BLADE_RUSH_TRY, 0);
 		} else {
-			int counter = executer.getSkill(this).getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get());
+			int counter = container.getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get());
 			AnimationAccessor<? extends StaticAnimation> animation = this.comboAnimations.get(counter);
 			
-			executer.getSkill(this).getDataManager().setDataF(SkillDataKeys.COMBO_COUNTER.get(), (v) -> (v + 1) % this.comboAnimations.size());
-			executer.getAnimator().getVariables().put(SynchedAnimationVariableKeys.TARGET_ENTITY.get(), animation, target.getId());
-			executer.playAnimationSynchronized(animation, 0);
+			container.getDataManager().setDataF(SkillDataKeys.COMBO_COUNTER.get(), (v) -> (v + 1) % this.comboAnimations.size());
+			container.getExecutor().getAnimator().getVariables().put(SynchedAnimationVariableKeys.TARGET_ENTITY.get(), animation, target.getId());
+			container.getExecutor().playAnimationSynchronized(animation, 0);
 		}
 		
-		super.executeOnServer(executer, args);
+		super.executeOnServer(container, args);
 	}
 	
 	@Override
@@ -153,8 +152,8 @@ public class BladeRushSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public boolean checkExecuteCondition(PlayerPatch<?> executer) {
-		return executer.getTarget() != null && executer.getTarget().isAlive();
+	public boolean checkExecuteCondition(SkillContainer container) {
+		return container.getExecutor().getTarget() != null && container.getExecutor().getTarget().isAlive();
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -164,10 +163,10 @@ public class BladeRushSkill extends WeaponInnateSkill {
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public void validationFeedback(LocalPlayerPatch playerpatch) {
-		Skill skill = playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getInnateSkill(playerpatch, playerpatch.getOriginal().getItemInHand(InteractionHand.MAIN_HAND));
+	public void validationFeedback(SkillContainer container) {
+		Skill skill = container.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND).getInnateSkill(container.getExecutor(), container.getExecutor().getOriginal().getItemInHand(InteractionHand.MAIN_HAND));
 		
-		if (this.equals(skill) && !this.checkExecuteCondition(playerpatch)) {
+		if (this.equals(skill) && !this.checkExecuteCondition(container)) {
 			Minecraft.getInstance().gui.setOverlayMessage(Component.translatable("gui.epicfight.warn.no_target"), false);
 		}
 	}

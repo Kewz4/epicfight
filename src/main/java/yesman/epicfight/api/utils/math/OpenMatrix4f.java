@@ -801,11 +801,19 @@ public class OpenMatrix4f {
 	}
 	
 	public static Matrix4f exportToMojangMatrix(OpenMatrix4f src) {
+		return exportToMojangMatrix(src, null);
+	}
+	
+	public static Matrix4f exportToMojangMatrix(OpenMatrix4f src, Matrix4f dest) {
+		if (dest == null) {
+			dest = new Matrix4f();
+		}
+		
 		MATRIX_TRANSFORMER.position(0);
 		src.store(MATRIX_TRANSFORMER);
 		MATRIX_TRANSFORMER.position(0);
 		
-		return new Matrix4f(MATRIX_TRANSFORMER);
+		return dest.set(MATRIX_TRANSFORMER);
 	}
 	
 	public static OpenMatrix4f importFromMojangMatrix(Matrix4f src) {

@@ -33,7 +33,6 @@ import yesman.epicfight.network.server.SPChangeSkill;
 import yesman.epicfight.network.server.SPModifyPlayerData;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.skill.ChargeableSkill;
-import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillCategory;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKey;
@@ -80,7 +79,7 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 					float value = container.getResource() + playerevent.getAttackDamage();
 					
 					if (value > 0.0F) {
-						this.getSkill(SkillSlots.WEAPON_INNATE).getSkill().setConsumptionSynchronize(this, value);
+						container.getSkill().setConsumptionSynchronize(container, value);
 					}
 				}
 			}
@@ -120,11 +119,12 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	@Override
 	public void updateHeldItem(CapabilityItem fromCap, CapabilityItem toCap, ItemStack from, ItemStack to, InteractionHand hand) {
 		if (this.isChargingSkill()) {
-			Skill skill = this.chargingSkill.asSkill();
-			skill.cancelOnServer(this, null);
-			this.resetSkillCharging();
+			this.getSkillContainerFor(this.chargingSkill.asSkill()).ifPresent((container) -> {
+				container.getSkill().cancelOnServer(container, null);
+				EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(container.getSlotId()), this.original);
+			});
 			
-			EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(this.getSkill(skill).getSlotId()), this.original);
+			this.resetSkillCharging();
 		}
 		
 		CapabilityItem mainHandCap = (hand == InteractionHand.MAIN_HAND) ? toCap : this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
@@ -300,9 +300,13 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public void startSkillCharging(ChargeableSkill chargingSkill) {
-		super.startSkillCharging(chargingSkill);
-		EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.chargingBegin(this.getSkill((Skill)chargingSkill).getSlotId()), this.getOriginal());
+	public boolean startSkillCharging(ChargeableSkill chargingSkill) {
+		if (super.startSkillCharging(chargingSkill)) {
+			EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.chargingBegin(this.getSkillContainerFor(chargingSkill.asSkill()).get().getSlotId()), this.getOriginal());
+			return true;
+		}
+		
+		return false;
 	}
 
 	@Override

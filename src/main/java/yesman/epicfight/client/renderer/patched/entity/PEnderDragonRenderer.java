@@ -97,10 +97,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 			modelMatrix = entitypatch.getModelMatrix(partialTicks).scale(-1.0F, 1.0F, -1.0F);
 		}
 		
-        OpenMatrix4f transpose = new OpenMatrix4f(modelMatrix).transpose();
-        MathUtils.translateStack(matStack, modelMatrix);
-        MathUtils.rotateStack(matStack, transpose);
-        MathUtils.scaleStack(matStack, transpose);
+		MathUtils.mulStack(matStack, modelMatrix);
 	}
 	
 	protected int getOverlayCoord(EnderDragon entity, EnderDragonPatch entitypatch, float partialTicks) {

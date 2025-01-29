@@ -24,9 +24,9 @@ import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKeys;
-import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
+import yesman.epicfight.world.entity.eventlistener.SkillExecuteEvent;
 
 public class PhantomAscentSkill extends Skill {
 	private static final UUID EVENT_UUID = UUID.fromString("051a9bb2-7541-11ee-b962-0242ac120002");
@@ -74,6 +74,13 @@ public class PhantomAscentSkill extends Skill {
 				
 				if (jumpCounter > 0 || event.getPlayerPatch().currentLivingMotion == LivingMotions.FALL) {
 					if (jumpCounter < (this.extraJumps + 1)) {
+						SkillExecuteEvent skillexecuteevent = new SkillExecuteEvent(container.getExecutor(), container);
+						container.getExecutor().getEventListener().triggerEvents(EventType.SKILL_EXECUTE_EVENT, skillexecuteevent);
+						
+						if (skillexecuteevent.isCanceled()) {
+							return;
+						}
+						
 						container.setResource(0.0F);
 						
 						if (jumpCounter == 0 && event.getPlayerPatch().currentLivingMotion == LivingMotions.FALL) {
@@ -143,7 +150,7 @@ public class PhantomAscentSkill extends Skill {
 	}
 	
 	@Override
-	public boolean canExecute(PlayerPatch<?> executer) {
+	public boolean canExecute(SkillContainer container) {
 		return false;
 	}
 	

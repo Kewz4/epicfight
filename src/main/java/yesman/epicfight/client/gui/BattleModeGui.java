@@ -195,7 +195,7 @@ public class BattleModeGui extends ModIngameGui {
 		
 		boolean creative = playerpatch.getOriginal().isCreative();
 		boolean fullstack = creative || container.isFull();
-		boolean canUse = !container.isDisabled() && container.getSkill().checkExecuteCondition(playerpatch);
+		boolean canUse = !container.isDisabled() && container.getSkill().checkExecuteCondition(container);
 		float cooldownRatio = (fullstack || container.isActivated()) ? 1.0F : container.getResource(partialTicks);
 		int vertexNum = 0;
 		float iconSize = 32.0F;

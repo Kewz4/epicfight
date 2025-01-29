@@ -45,7 +45,7 @@ public class HitAnimation extends MainFrameAnimation {
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		super.begin(entitypatch);
-		entitypatch.cancelAnyAction();
+		entitypatch.cancelItemUse();
 	}
 	
 	@Override

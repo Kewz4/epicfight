@@ -115,7 +115,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		super.begin(entitypatch);
 		
-		entitypatch.cancelAnyAction();
+		entitypatch.cancelItemUse();
 		
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
 			entitypatch.beginAction();

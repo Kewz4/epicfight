@@ -54,7 +54,7 @@ public class ParCoolMixinClingToCliff {
 		}
 	}
 	
-	@Inject(at = @At(value = "TAIL"), method = "onWorkingTickInLocalClient(Lnet/minecraft/world/entity/player/Player;Lcom/alrex/parcool/common/capability/Parkourability;Lcom/alrex/parcool/common/capability/IStamina;)Z", cancellable = true, remap = false)
+	@Inject(at = @At(value = "TAIL"), method = "onWorkingTickInLocalClient(Lnet/minecraft/world/entity/player/Player;Lcom/alrex/parcool/common/capability/Parkourability;Lcom/alrex/parcool/common/capability/IStamina;)V", cancellable = true, remap = false)
 	public void epicfight_onWorkingTickInLocalClient(Player player, Parkourability parkourability, IStamina stamina, CallbackInfo callback) {
 		PlayerPatch<?> playerpatch = EpicFightCapabilities.getEntityPatch(player, PlayerPatch.class);
 		

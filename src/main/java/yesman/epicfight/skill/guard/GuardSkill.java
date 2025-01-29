@@ -212,7 +212,7 @@ public class GuardSkill extends Skill {
 			container.getDataManager().setDataSync(SkillDataKeys.PENALTY.get(), penalty, event.getPlayerPatch().getOriginal());
 			
 			BlockType blockType = canAfford ? BlockType.GUARD : BlockType.GUARD_BREAK;
-			AnimationAccessor<? extends StaticAnimation> animation = this.getGuardMotion(event.getPlayerPatch(), itemCapability, blockType);
+			AnimationAccessor<? extends StaticAnimation> animation = this.getGuardMotion(container, event.getPlayerPatch(), itemCapability, blockType);
 			
 			if (animation != null) {
 				event.getPlayerPatch().playAnimationSynchronized(animation, 0.0F);
@@ -288,7 +288,7 @@ public class GuardSkill extends Skill {
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
-	protected AnimationAccessor<? extends StaticAnimation> getGuardMotion(PlayerPatch<?> playerpatch, CapabilityItem itemCapability, BlockType blockType) {
+	protected AnimationAccessor<? extends StaticAnimation> getGuardMotion(SkillContainer container, PlayerPatch<?> playerpatch, CapabilityItem itemCapability, BlockType blockType) {
 		AnimationAccessor<? extends StaticAnimation> animation = itemCapability.getGuardMotion(this, blockType, playerpatch);
 		
 		if (animation != null) {

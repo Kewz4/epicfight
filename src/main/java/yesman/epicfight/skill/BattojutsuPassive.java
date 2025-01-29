@@ -18,8 +18,8 @@ public class BattojutsuPassive extends Skill {
 		super.onInitiate(container);
 		
 		container.getExecutor().getEventListener().addEventListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID, (event) -> {
-			container.getSkill().setConsumptionSynchronize(event.getPlayerPatch(), 0.0F);
-			container.getSkill().setStackSynchronize(event.getPlayerPatch(), 0);
+			container.getSkill().setConsumptionSynchronize(container, 0.0F);
+			container.getSkill().setStackSynchronize(container, 0);
 		});
 		
 		container.getExecutor().getEventListener().addEventListener(EventType.SERVER_ITEM_USE_EVENT, EVENT_UUID, (event) -> {
@@ -29,6 +29,8 @@ public class BattojutsuPassive extends Skill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
+		super.onRemoved(container);
+		
 		container.getExecutor().getEventListener().removeListener(EventType.ACTION_EVENT_SERVER, EVENT_UUID);
 		container.getExecutor().getEventListener().removeListener(EventType.SERVER_ITEM_USE_EVENT, EVENT_UUID);
 	}
@@ -39,7 +41,7 @@ public class BattojutsuPassive extends Skill {
 			if (container.getDataManager().getDataValue(SkillDataKeys.SHEATH.get())) {
 				container.getDataManager().setDataSync(SkillDataKeys.SHEATH.get(), false, container.getServerExecutor().getOriginal());
 				container.getServerExecutor().modifyLivingMotionByCurrentItem(false);
-				container.getSkill().setConsumptionSynchronize(container.getServerExecutor(), 0);
+				container.getSkill().setConsumptionSynchronize(container, 0);
 			}
 		}
 	}

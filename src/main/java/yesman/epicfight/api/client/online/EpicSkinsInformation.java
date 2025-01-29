@@ -28,90 +28,98 @@ import yesman.epicfight.main.EpicFightMod;
 @OnlyIn(Dist.CLIENT)
 public record EpicSkinsInformation(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
-		EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
-			if (exception != null) {
-				EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + exception.getMessage());
-			}
-			
-			if (response.statusCode() != 200) {
-				EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + response.body());
-			}
-			
-			JsonObject json = null;
-			
-			try {
-				JsonReader jsonReader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(response.body().getBytes()), StandardCharsets.UTF_8));
-				json = Streams.parse(jsonReader).getAsJsonObject();
-			} catch (Exception e) {
-			}
-			
-			if (json == null || json.entrySet().isEmpty()) {
-				playerpatch.getSimulator(SimulationTypes.CLOTH).ifPresent((clothSimulator) -> {
-					SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
-					
-					clothSimulator.runWhenPermanent(
-						  ClothSimulator.PLAYER_CLOAK
-						, Meshes.CLOAK
-						, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
-						, () -> {
-							  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
-									 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
-						  }
-					);
-					
-					playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(() -> playerpatch.getOriginal().getCloakTextureLocation(), 1.0F, 1.0F, 1.0F));
-				});
-			} else {
-				int cloakType = GsonHelper.getAsInt(json, "cloakTypeId");
-				int colorColor = GsonHelper.getAsInt(json, "cloakColor");
-				boolean useVanillaTexture = GsonHelper.getAsBoolean(json, "cloakVanillaTexture");
-				boolean colorConfigurable = GsonHelper.getAsBoolean(json, "colorConfigurable");
-				boolean textureConfigurable = GsonHelper.getAsBoolean(json, "textureConfigurable");
-				String cloakFile = GsonHelper.getAsString(json, "fileLocation");
-				
-				Supplier<ResourceLocation> cloakTextureProvider = null;
-				
-				if (useVanillaTexture && textureConfigurable) {
-					cloakTextureProvider = () -> playerpatch.getOriginal().getCloakTextureLocation();
-				} else {
-					ResourceLocation remoteCloakTexture = RemoteAssets.getInstance().getRemoteTexture(GsonHelper.getAsString(json, "textureLocation"));
-					cloakTextureProvider = () -> remoteCloakTexture;
+		if (EpicFightServerConnectionHelper.SUPPORTS) {
+			EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
+				if (exception != null) {
+					EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + exception.getMessage());
 				}
 				
-				final Supplier<ResourceLocation> fCloakTextureProvider = cloakTextureProvider;
+				if (response.statusCode() != 200) {
+					EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + response.body());
+				}
 				
-				RemoteAssets.getInstance().getRemoteMesh(cloakType, cloakFile, (mesh) -> {
-					playerpatch.getSimulator(SimulationTypes.CLOTH).ifPresent((clothSimulator) -> {
-						SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
-						
-						clothSimulator.runWhenPermanent(
-							  ClothSimulator.PLAYER_CLOAK
-							, (SoftBodyTranslatable)mesh
-							, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED)
-							, () -> {
-								  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
-										 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
-							  }
-						);
-						
-						if (colorConfigurable && !useVanillaTexture) {
-							double brightness = (colorColor & 255) / 255.0F;
-							double saturation = ((colorColor & 65280) >> 8) / 255.0F;
-							double hue = ((colorColor & 16711680) >> 16) / 255.0F;
-							int hueColor = ColorSlider.rgbColor(hue);
-							int saturationApplied = ColorSlider.sliderPositionToColor(saturation, new int[] { hueColor, 0xFFFFFFFF } );
-							int brightnessApplied = ColorSlider.sliderPositionToColor(brightness, new int[] { saturationApplied, 0xFF000000 } );
-							float r = ((brightnessApplied & 16711680) >> 16) / 255.0F;
-							float g = ((brightnessApplied & 65280) >> 8) / 255.0F;
-							float b = (brightnessApplied & 255) / 255.0F;
+				JsonObject json = null;
+				
+				try {
+					JsonReader jsonReader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(response.body().getBytes()), StandardCharsets.UTF_8));
+					json = Streams.parse(jsonReader).getAsJsonObject();
+				} catch (Exception e) {
+				}
+				
+				if (json == null || json.entrySet().isEmpty()) {
+					initDefaultCape(playerpatch);
+				} else {
+					int cloakType = GsonHelper.getAsInt(json, "cloakTypeId");
+					int colorColor = GsonHelper.getAsInt(json, "cloakColor");
+					boolean useVanillaTexture = GsonHelper.getAsBoolean(json, "cloakVanillaTexture");
+					boolean colorConfigurable = GsonHelper.getAsBoolean(json, "colorConfigurable");
+					boolean textureConfigurable = GsonHelper.getAsBoolean(json, "textureConfigurable");
+					String cloakFile = GsonHelper.getAsString(json, "fileLocation");
+					
+					Supplier<ResourceLocation> cloakTextureProvider = null;
+					
+					if (useVanillaTexture && textureConfigurable) {
+						cloakTextureProvider = () -> playerpatch.getOriginal().getCloakTextureLocation();
+					} else {
+						ResourceLocation remoteCloakTexture = RemoteAssets.getInstance().getRemoteTexture(GsonHelper.getAsString(json, "textureLocation"));
+						cloakTextureProvider = () -> remoteCloakTexture;
+					}
+					
+					final Supplier<ResourceLocation> fCloakTextureProvider = cloakTextureProvider;
+					
+					RemoteAssets.getInstance().getRemoteMesh(cloakType, cloakFile, (mesh) -> {
+						playerpatch.getSimulator(SimulationTypes.CLOTH).ifPresent((clothSimulator) -> {
+							SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
 							
-							playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, r, g, b));
-						} else {
-							playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, 1.0F, 1.0F, 1.0F));
-						}
+							clothSimulator.runWhenPermanent(
+								  ClothSimulator.PLAYER_CLOAK
+								, (SoftBodyTranslatable)mesh
+								, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED)
+								, () -> {
+									  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
+											 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
+								  }
+							);
+							
+							if (colorConfigurable && !useVanillaTexture) {
+								double brightness = (colorColor & 255) / 255.0F;
+								double saturation = ((colorColor & 65280) >> 8) / 255.0F;
+								double hue = ((colorColor & 16711680) >> 16) / 255.0F;
+								int hueColor = ColorSlider.rgbColor(hue);
+								int saturationApplied = ColorSlider.sliderPositionToColor(saturation, new int[] { hueColor, 0xFFFFFFFF } );
+								int brightnessApplied = ColorSlider.sliderPositionToColor(brightness, new int[] { saturationApplied, 0xFF000000 } );
+								float r = ((brightnessApplied & 16711680) >> 16) / 255.0F;
+								float g = ((brightnessApplied & 65280) >> 8) / 255.0F;
+								float b = (brightnessApplied & 255) / 255.0F;
+								
+								playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, r, g, b));
+							} else {
+								playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, 1.0F, 1.0F, 1.0F));
+							}
+						});
 					});
-				});
-			}
+				}
+			});
+		} else {
+			initDefaultCape(playerpatch);
+		}
+	}
+	
+	public static void initDefaultCape(AbstractClientPlayerPatch<?> playerpatch) {
+		playerpatch.getSimulator(SimulationTypes.CLOTH).ifPresent((clothSimulator) -> {
+			SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.add(playerpatch);
+			
+			clothSimulator.runWhenPermanent(
+				  ClothSimulator.PLAYER_CLOAK
+				, Meshes.CLOAK
+				, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
+				, () -> {
+					  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
+							 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
+				  }
+			);
+			
+			playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(() -> playerpatch.getOriginal().getCloakTextureLocation(), 1.0F, 1.0F, 1.0F));
 		});
 	}
 }

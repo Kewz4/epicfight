@@ -18,6 +18,7 @@ import yesman.epicfight.network.client.CPExecuteSkill;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
@@ -46,9 +47,10 @@ public class DodgeSkill extends Skill {
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public Object getExecutionPacket(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		Input input = executer.getOriginal().input;
-		float pulse = Mth.clamp(0.3F + EnchantmentHelper.getSneakingSpeedBonus(executer.getOriginal()), 0.0F, 1.0F);
+	public Object getExecutionPacket(SkillContainer skillContainer, FriendlyByteBuf args) {
+		LocalPlayerPatch executor = skillContainer.getClientExecutor();
+		Input input = executor.getOriginal().input;
+		float pulse = Mth.clamp(0.3F + EnchantmentHelper.getSneakingSpeedBonus(executor.getOriginal()), 0.0F, 1.0F);
 		input.tick(false, pulse);
 		
         int forward = input.up ? 1 : 0;
@@ -60,7 +62,7 @@ public class DodgeSkill extends Skill {
 		float yRot = Minecraft.getInstance().gameRenderer.getMainCamera().getYRot();
 		float degree = -(90 * horizon * (1 - Math.abs(vertic)) + 45 * vertic * horizon) + yRot;
 		
-		CPExecuteSkill packet = new CPExecuteSkill(executer.getSkill(this).getSlotId());
+		CPExecuteSkill packet = new CPExecuteSkill(skillContainer.getSlotId());
 		packet.getBuffer().writeInt(vertic >= 0 ? 0 : 1);
 		packet.getBuffer().writeFloat(degree);
 		
@@ -74,13 +76,15 @@ public class DodgeSkill extends Skill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer skillContainer, FriendlyByteBuf args) {
+		super.executeOnServer(skillContainer, args);
+		
+		ServerPlayerPatch executor = skillContainer.getServerExecutor();
 		int i = args.readInt();
 		float yRot = args.readFloat();
 		
-		executer.playAnimationSynchronized(this.animations[i], 0);
-		executer.setModelYRot(yRot, true);
+		executor.playAnimationSynchronized(this.animations[i], 0);
+		executor.setModelYRot(yRot, true);
 	}
 	
 	@Override

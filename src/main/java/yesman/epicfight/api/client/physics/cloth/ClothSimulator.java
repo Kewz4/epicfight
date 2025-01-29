@@ -129,8 +129,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		private static final int SUB_STEPS = 15;
 		private static final float YROT_LIMIT = 5.0F;
 		private static final double MAX_VELOCITY_FORCE = 6.0D;
-		
-		
 		private static final Vec3f SCALED_FORCE = new Vec3f();
 		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(HumanoidArmature.JOINTS);
 		private static final OpenMatrix4f COLLIDER_TRANSFORM = new OpenMatrix4f();
@@ -219,6 +217,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			}
 			**/
 			
+			// Remove entity pos translation
 			poseStack.popPose();
 			
 			if (this.provider instanceof CompositeMesh compositeMesh) {
@@ -346,11 +345,11 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					
 					// Apply animation transform
 					if (influenceInv > 0.0) {
-						p.vertexBuilder.getVertexPosition((StaticMesh<?, ?>)ClothObject.this.provider.getSoftBodyMesh(), POSITION, poses);
+						p.vertexBuilder.getVertexPosition(ClothObject.this.provider.getSoftBodyMesh(), POSITION, poses);
 						VEC3F.set(POSITION.x, POSITION.y, POSITION.z);
 						
 						OpenMatrix4f.transform3v(clothRootTransform, VEC3F, TRASNFORMED);
-						Vec3f.interpolate(p.position, TRASNFORMED, 1.0F, TRASNFORMED);
+						Vec3f.interpolate(p.position, TRASNFORMED, influenceInv, TRASNFORMED);
 						p.position.set(TRASNFORMED);
 					}
 					

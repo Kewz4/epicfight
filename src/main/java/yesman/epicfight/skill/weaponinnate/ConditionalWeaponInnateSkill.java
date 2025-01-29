@@ -13,16 +13,16 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	public static class Builder extends SkillBuilder<ConditionalWeaponInnateSkill> {
-		protected Function<ServerPlayerPatch, Integer> selector;
+		protected Function<PlayerPatch<?>, Integer> selector;
 		protected AnimationAccessor<? extends AttackAnimation>[] animations;
 		
-		public Builder setSelector(Function<ServerPlayerPatch, Integer> selector) {
+		public Builder setSelector(Function<PlayerPatch<?>, Integer> selector) {
 			this.selector = selector;
 			return this;
 		}
@@ -39,7 +39,7 @@ public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	}
 	
 	protected final AnimationAccessor<? extends AttackAnimation>[] attackAnimations;
-	protected final Function<ServerPlayerPatch, Integer> selector;
+	protected final Function<PlayerPatch<?>, Integer> selector;
 	
 	public ConditionalWeaponInnateSkill(ConditionalWeaponInnateSkill.Builder builder) {
 		super(builder);
@@ -70,16 +70,16 @@ public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		this.playSkillAnimation(executer);
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer containter, FriendlyByteBuf args) {
+		this.playSkillAnimation(containter.getExecutor());
+		super.executeOnServer(containter, args);
 	}
 	
-	protected int getAnimationInCondition(ServerPlayerPatch executer) {
-		return this.selector.apply(executer);
+	protected int getAnimationInCondition(PlayerPatch<?> executor) {
+		return this.selector.apply(executor);
 	}
 	
-	protected void playSkillAnimation(ServerPlayerPatch executer) {
-		executer.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executer)], 0);
+	protected void playSkillAnimation(PlayerPatch<?> executor) {
+		executor.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executor)], 0);
 	}
 }

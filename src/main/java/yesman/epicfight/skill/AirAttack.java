@@ -9,7 +9,6 @@ import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 public class AirAttack extends Skill {
 	public static SkillBuilder<AirAttack> createAirAttackBuilder() {
@@ -28,13 +27,13 @@ public class AirAttack extends Skill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		List<AnimationAccessor<? extends AttackAnimation>> motions = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(executer);
+	public void executeOnServer(SkillContainer skillContainer, FriendlyByteBuf args) {
+		List<AnimationAccessor<? extends AttackAnimation>> motions = skillContainer.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(skillContainer.getExecutor());
 		AnimationAccessor<? extends AttackAnimation> attackMotion = motions.get(motions.size() - 1);
 		
 		if (attackMotion != null) {
-			super.executeOnServer(executer, args);
-			executer.playAnimationSynchronized(attackMotion, 0);
+			super.executeOnServer(skillContainer, args);
+			skillContainer.getExecutor().playAnimationSynchronized(attackMotion, 0);
 		}
 	}
 }

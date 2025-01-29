@@ -24,11 +24,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-import yesman.epicfight.compat.ParCoolCompat.ParcoolLivingMotions;
-import yesman.epicfight.compat.ParCoolCompat.ParCoolUtils;
 import yesman.epicfight.compat.ParCoolCompat.ClingType;
+import yesman.epicfight.compat.ParCoolCompat.ParCoolUtils;
+import yesman.epicfight.compat.ParCoolCompat.ParcoolLivingMotions;
 import yesman.epicfight.mixin.ParCoolMixinAnimation;
 import yesman.epicfight.mixin.ParCoolMixinHorizontalWallRunAnimator;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -62,7 +63,9 @@ public class ParCoolClientCompat implements ICompatModule {
 		});
 		
 		PARCOOL_ANIMATOR_MAPPING.put(DiveAnimationHostAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
-			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.DIVE);
+			if (!livingMotionUpdateEvent.getPlayerPatch().getOriginal().isFallFlying()) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.DIVE);
+			}
 		});
 		
 		PARCOOL_ANIMATOR_MAPPING.put(WallSlideAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
@@ -92,7 +95,9 @@ public class ParCoolClientCompat implements ICompatModule {
 		});
 		
 		PARCOOL_ANIMATOR_MAPPING.put(FastRunningAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
-			livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.FAST_RUN);
+			if (livingMotionUpdateEvent.getMotion() == LivingMotions.RUN) {
+				livingMotionUpdateEvent.setMotion(ParcoolLivingMotions.FAST_RUN);
+			}
 		});
 		
 		PARCOOL_ANIMATOR_MAPPING.put(HangAnimator.class, (animator, parkourability, livingMotionUpdateEvent) -> {
@@ -154,7 +159,6 @@ public class ParCoolClientCompat implements ICompatModule {
 			
 			Parkourability parkourability = Parkourability.get(event.getEntity());
 			HangDown hangDown;
-			ClingToCliff clingToCliff;
 			
 			if ((hangDown = (HangDown)parkourability.get(HangDown.class)) != null && hangDown.isDoing()) {
 				if (!playerpatch.getEntityState().inaction()) {
@@ -199,7 +203,7 @@ public class ParCoolClientCompat implements ICompatModule {
 				event.getInput().leftImpulse = 0.0F;
 			}
 			
-			if ((clingToCliff = (ClingToCliff)parkourability.get(ClingToCliff.class)) != null && clingToCliff.isDoing()) {
+			if (parkourability.get(ClingToCliff.class).isDoing()) {
 				if (!playerpatch.getEntityState().inaction()) {
 					if (event.getInput().left) {
 						ParCoolUtils.scanTerrainAndStartClingAction(playerpatch, ParCoolUtils.WallMoveType.MOVE_LEFT);

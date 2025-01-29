@@ -57,6 +57,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	private final int maxJointCount;
 	private int arrayObjectId;
 	
+	private boolean bufferInitialized;
 	private VertexBuffer<Float> positionsBuffer;
 	private VertexBuffer<Float> uvsBuffer;
 	private VertexBuffer<Byte> normalsBuffer;
@@ -114,6 +115,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	}
 	
 	public void initBuffers() {
+		this.bufferInitialized = true;
 		this.positionsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
 		this.uvsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 2, false, ByteBuffer::putFloat);
 		this.normalsBuffer = new VertexBuffer<> (GLConstants.GL_BYTE, 3, true, ByteBuffer::put);
@@ -169,6 +171,10 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	}
 	
 	public void destroy() {
+		if (!this.bufferInitialized) {
+			return;
+		}
+		
 		this.positionsBuffer.destroy();
 		this.uvsBuffer.destroy();
 		this.normalsBuffer.destroy();

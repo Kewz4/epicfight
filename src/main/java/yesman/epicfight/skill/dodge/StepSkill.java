@@ -5,7 +5,6 @@ import java.util.UUID;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.client.CPExecuteSkill;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.entity.eventlistener.ComboCounterHandleEvent;
@@ -34,7 +33,7 @@ public class StepSkill extends DodgeSkill {
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public Object getExecutionPacket(LocalPlayerPatch executer, FriendlyByteBuf args) {
+	public Object getExecutionPacket(SkillContainer container, FriendlyByteBuf args) {
 		int forward = args.readInt();
 		int backward = args.readInt();
 		int left = args.readInt();
@@ -54,7 +53,7 @@ public class StepSkill extends DodgeSkill {
 			animation = vertic >= 0 ? 0 : 1;
 		}
 		
-		CPExecuteSkill packet = new CPExecuteSkill(executer.getSkill(this).getSlotId());
+		CPExecuteSkill packet = new CPExecuteSkill(container.getSlotId());
 		packet.getBuffer().writeInt(animation);
 		packet.getBuffer().writeFloat(degree);
 		

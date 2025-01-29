@@ -312,8 +312,10 @@
 	
 	"inventory.epicfight.guide_innate_tooltip": "[%s] to see Innate skill",
 	
-	"key.epicfight.gui": "Epic Fight GUI",
 	"key.epicfight.combat": "Epic Fight Combat",
+	"key.epicfight.gui": "Epic Fight GUI",
+	"key.epicfight.system": "Epic Fight System",
+	
 	"key.epicfight.show_tooltip": "Show Weapon Innate Skill Tooltip",
 	"key.epicfight.switch_mode": "Toggle Battle/Mining Mode",
 	"key.epicfight.attack": "Attack",
@@ -323,6 +325,7 @@
 	"key.epicfight.lock_on": "Lock On",
 	"key.epicfight.mover_skill": "Mobility Skill",
 	"key.epicfight.config": "Open Configuration Screen",
+	"key.epicfight.switch_vanilla_model_debug": "Switch Vanilla Model Debugging",
 	
 	"skill.epicfight.dancing_edge": "Dancing Edge",
 	"skill.epicfight.dancing_edge.tooltip": "Cut down enemies with a lethal flourish! It strikes 3 times",

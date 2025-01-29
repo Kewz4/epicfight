@@ -145,10 +145,7 @@ public class LineCollider extends Collider {
 			poseMatrix = armature.getBindedTransformFor(interpolatedPose, joint);
 		}
 		
-		OpenMatrix4f transpose = new OpenMatrix4f();
-		OpenMatrix4f.transpose(poseMatrix, transpose);
-		MathUtils.translateStack(poseStack, poseMatrix);
-        MathUtils.rotateStack(poseStack, transpose);
+		MathUtils.mulStack(poseStack, poseMatrix);
         Matrix4f matrix = poseStack.last().pose();
         float startX = (float)this.modelCenter.x;
         float startY = (float)this.modelCenter.y;

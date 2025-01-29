@@ -1,47 +1,89 @@
 package yesman.epicfight.api.client.online;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import net.minecraft.Util;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.Mesh;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
+@OnlyIn(Dist.CLIENT)
 public class EpicFightServerConnectionHelper {
 	public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(60000)).build();
+	public static final boolean SUPPORTS;
 	
 	static {
-		InputStream inputstream = EpicFightMod.class.getResourceAsStream("/ServerCommunicationHelper.dll");
-		String javaLibPath = System.getProperty("java.library.path");
-		List<String> paths = List.of(javaLibPath.split(";"));
-		File file = new File(paths.get(0) + "/ServerCommunicationHelper.dll");
-		boolean exist = file.exists();
-		boolean created = false;
+		SupportedOS os = SupportedOS.getOS();
 		
-		if (!exist) {
-			try {
-				file.createNewFile();
-				FileOutputStream fos = new FileOutputStream(file);
-				byte[] bytes = inputstream.readAllBytes();
-				fos.write(bytes, 0, bytes.length);
-				created = true;
-				fos.flush();
-				fos.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+		if (os != null) {
+			String libpath = MessageFormat.format("/assets/epicfight/nativelib/{0}/ServerCommunicationHelper{1}", os.telemetryName(), os.libExtension());
+			InputStream inputstream = EpicFightMod.class.getResourceAsStream(libpath);
+			
+			if (inputstream != null) {
+				String javaLibPath = System.getProperty("java.library.path");
+				List<String> paths = List.of(javaLibPath.split(";"));
+				File file = new File(paths.get(0) + "/ServerCommunicationHelper" + os.libExtension());
+				boolean shouldCreate;
+				
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
+					shouldCreate = false;
+				} else {
+					if (file.exists()) {
+						try {
+							String sha256 = ParseUtil.getBytesSHA256Hash(new FileInputStream(file).readAllBytes());
+							shouldCreate = !sha256.equals(os.SHA256());
+						} catch (IOException e) {
+							shouldCreate = true;
+						}
+					} else {
+						shouldCreate = true;
+					}
+				}
+				
+				if (shouldCreate) {
+					try {
+						EpicFightMod.LOGGER.info("Created temporary lib file at: " + file.getPath());
+						file.delete();
+						file.createNewFile();
+						FileOutputStream fos = new FileOutputStream(file);
+						byte[] bytes = inputstream.readAllBytes();
+						fos.write(bytes, 0, bytes.length);
+						fos.flush();
+						fos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				boolean exceptionOccurred = false;
+				
+				try {
+					System.loadLibrary("ServerCommunicationHelper");
+				} catch (UnsatisfiedLinkError e) {
+					e.printStackTrace();
+					exceptionOccurred = true;
+				}
+				
+				SUPPORTS = !exceptionOccurred;
+			} else {
+				SUPPORTS = false;
+				throw new IllegalArgumentException("Cannot find library file in " + libpath);
 			}
-		}
-		
-		System.loadLibrary("ServerCommunicationHelper");
-		
-		if (created) {
-			file.delete();
+		} else {
+			SUPPORTS = false;
 		}
 	}
 	
@@ -59,4 +101,42 @@ public class EpicFightServerConnectionHelper {
 	
 	/* Warn: this function doesn't behave as async */
 	public static native void loadRemoteMesh(String path, BiConsumer<Mesh, Exception> onResponse);
+	
+	public enum SupportedOS {
+		//LINUX("linux", ".so", ""),
+		//SOLARIS("solaris", ".so", ""),
+		WINDOWS("windows", ".dll", "d889700cddbc10a3214cb56928f555d679d8f3262f921eb5ae7bcf883ea3e1cc"),
+		//OSX("mac", ".dylib", "")
+		;
+		
+		public static SupportedOS getOS() {
+			try {
+				return SupportedOS.valueOf(Util.getPlatform().name());
+			} catch (IllegalArgumentException ex) {
+				return null;
+			}
+		}
+		
+		private final String telemetryName;
+		private final String libExtension;
+		private final String SHA256;
+		
+		SupportedOS(String telemetryName, String libExtension, String SHA256) {
+			this.telemetryName = telemetryName;
+			this.libExtension = libExtension;
+			this.SHA256 = SHA256;
+		}
+		
+		String telemetryName() {
+			return this.telemetryName;
+		}
+		
+		String libExtension() {
+			return this.libExtension;
+		}
+		
+		Object SHA256() {
+			return this.SHA256;
+		}
+	}
 }

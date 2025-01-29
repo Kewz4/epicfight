@@ -436,16 +436,11 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 					ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
 					ItemStack itemstack = new ItemStack(this.item);
-					
 					OpenMatrix4f correction = new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS);
 					OpenMatrix4f handTransform = correction.mulFront(this.entitypatch.getArmature().getBindedTransformFor(pose, this.getArmature().get().searchJointByName("Tool_R")));
-					OpenMatrix4f transposed = handTransform.transpose(null);
 					
 					guiGraphics.pose().pushPose();
-					
-					MathUtils.translateStack(guiGraphics.pose(), handTransform);
-					MathUtils.rotateStack(guiGraphics.pose(), transposed);
-					MathUtils.scaleStack(guiGraphics.pose(), transposed);
+					MathUtils.mulStack(guiGraphics.pose(), handTransform);
 					
 					BakedModel model = itemRenderer.getItemModelShaper().getItemModel(this.item);
 					BakedModel overridedModel = model.getOverrides().resolve(model, itemstack, null, null, 0);
@@ -713,7 +708,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public void cancelAnyAction() {
+		public void cancelItemUse() {
 		}
 		
 		@Override

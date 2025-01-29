@@ -80,6 +80,11 @@ public class SkillEditScreen extends Screen {
 								
 								this.skills.skillContainers[skillSlot.universalOrdinal()].setSkill(learnedSkill);
 								EpicFightNetworkManager.sendToServer(new CPChangeSkill(skillSlot.universalOrdinal(), -1, learnedSkill.toString(), !this.minecraft.player.isCreative()));
+								
+								if (!this.skills.getLearnedSkills(skillSlot.category()).contains(learnedSkill)) {
+									this.skills.addLearnedSkill(learnedSkill);
+								}
+								
 								this.onClose();
 							}
 						}).setActive(this.skills.getSkillContainer(learnedSkill) == null));

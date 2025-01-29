@@ -22,6 +22,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import yesman.epicfight.api.animation.types.EntityState;
+import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.screen.SkillEditScreen;
 import yesman.epicfight.client.gui.screen.config.IngameConfigurationScreen;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
@@ -96,8 +97,13 @@ public class ControllEngine {
 			}
 		}
 		
-		if (keyPressed(EpicFightKeyMappings.CONFIG, false)) {
+		if (keyPressed(EpicFightKeyMappings.OPEN_CONFIG_SCREEN, false)) {
 			Minecraft.getInstance().setScreen(new IngameConfigurationScreen(null));
+		}
+		
+		if (keyPressed(EpicFightKeyMappings.SWITCH_VANILLA_MODEL_DEBUGGING, false)) {
+			boolean flag = ClientEngine.getInstance().switchVanillaModelDebuggingMode();
+			this.minecraft.keyboardHandler.debugFeedbackTranslated(flag ? "debug.vanilla_model_debugging.on" : "debug.vanilla_model_debugging.off");
 		}
 		
 		while (keyPressed(EpicFightKeyMappings.ATTACK, true)) {

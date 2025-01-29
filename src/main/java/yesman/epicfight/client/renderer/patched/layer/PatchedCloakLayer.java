@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import org.joml.Matrix4f;
 
+import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -18,17 +19,21 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.Mesh;
+import yesman.epicfight.api.client.online.EpicSkinsInformation;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationTypes;
+import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
@@ -53,10 +58,11 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS).scale(scale, scale, scale);
 	            };
 	            
-				clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
 				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
 				
 				if (cloakTexture != null) {
+					clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
+					
 					double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
 					double entityY = Mth.lerp((double)partialTick, entityliving.yOld, entityliving.getY());
 					double entityZ = Mth.lerp((double)partialTick, entityliving.zOld, entityliving.getZ());
@@ -68,17 +74,30 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					Matrix4f inverted = posestack$2.last().pose().invert();
 					
 					poseStack.pushPose();
+					
+					if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
+						poseStack.pushPose();
+						OpenMatrix4f poseMat = poses[Armatures.BIPED.get().chest.getId()];
+						
+						poseStack.translate(poseMat.m30, poseMat.m31, poseMat.m32);
+						poseStack.scale(1.1F, 1.1F, 1.1F);
+						poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
+					}
+					
 					poseStack.mulPoseMatrix(inverted);
-					poseStack.translate(-lastpose.m30(), -lastpose.m31(), -lastpose.m32());
-					poseStack.translate(-entityX, -entityY, -entityZ);
+					poseStack.translate(-lastpose.m30() - entityX, -lastpose.m31() - entityY, -lastpose.m32() - entityZ);
 					
 					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(cloakTexture)));
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
-						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, entitypatch.getEpicSkinsInformation().r(), entitypatch.getEpicSkinsInformation().g(), entitypatch.getEpicSkinsInformation().b(),
-											1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+						EpicSkinsInformation epicskinsInfo = entitypatch.getEpicSkinsInformation();
+						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					} else {
 						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+					}
+					
+					if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
+						poseStack.popPose();
 					}
 					
 					poseStack.popPose();

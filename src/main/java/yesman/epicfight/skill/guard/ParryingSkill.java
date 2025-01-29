@@ -106,7 +106,7 @@ public class ParryingSkill extends GuardSkill {
 				boolean canAfford = event.getPlayerPatch().consumeForSkill(this, Skill.Resource.STAMINA, consumeAmount);
 				
 				BlockType blockType = successParrying ? BlockType.ADVANCED_GUARD : (canAfford ? BlockType.GUARD : BlockType.GUARD_BREAK);
-				AnimationAccessor<? extends StaticAnimation> animation = this.getGuardMotion(event.getPlayerPatch(), itemCapability, blockType);
+				AnimationAccessor<? extends StaticAnimation> animation = this.getGuardMotion(container, event.getPlayerPatch(), itemCapability, blockType);
 				
 				if (animation != null) {
 					event.getPlayerPatch().playAnimationSynchronized(animation, 0);
@@ -132,7 +132,7 @@ public class ParryingSkill extends GuardSkill {
 	
 	@SuppressWarnings("unchecked")
 	@Nullable
-	protected AnimationAccessor<? extends StaticAnimation> getGuardMotion(PlayerPatch<?> playerpatch, CapabilityItem itemCapability, BlockType blockType) {
+	protected AnimationAccessor<? extends StaticAnimation> getGuardMotion(SkillContainer container, PlayerPatch<?> playerpatch, CapabilityItem itemCapability, BlockType blockType) {
 		AnimationAccessor<? extends StaticAnimation> animation = itemCapability.getGuardMotion(this, blockType, playerpatch);
 		
 		if (animation != null) {
@@ -143,7 +143,7 @@ public class ParryingSkill extends GuardSkill {
 			List<AnimationAccessor<? extends StaticAnimation>> motions = (List<AnimationAccessor<? extends StaticAnimation>>)this.getGuradMotionMap(blockType).getOrDefault(itemCapability.getWeaponCategory(), (a, b) -> null).apply(itemCapability, playerpatch);
 			
 			if (motions != null) {
-				SkillDataManager dataManager = playerpatch.getSkill(this).getDataManager();
+				SkillDataManager dataManager = container.getDataManager();
 				int motionCounter = dataManager.getDataValue(SkillDataKeys.PARRY_MOTION_COUNTER.get());
 				dataManager.setDataF(SkillDataKeys.PARRY_MOTION_COUNTER.get(), (v) -> v + 1);
 				motionCounter %= motions.size();
@@ -152,7 +152,7 @@ public class ParryingSkill extends GuardSkill {
 			}
 		}
 		
-		return super.getGuardMotion(playerpatch, itemCapability, blockType);
+		return super.getGuardMotion(container, playerpatch, itemCapability, blockType);
 	}
 	
 	@Override

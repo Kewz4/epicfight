@@ -10,8 +10,8 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class SimpleWeaponInnateSkill extends WeaponInnateSkill {
@@ -37,9 +37,9 @@ public class SimpleWeaponInnateSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playAnimationSynchronized(this.attackAnimation, 0);
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.getExecutor().playAnimationSynchronized(this.attackAnimation, 0);
+		super.executeOnServer(container, args);
 	}
 	
 	@Override

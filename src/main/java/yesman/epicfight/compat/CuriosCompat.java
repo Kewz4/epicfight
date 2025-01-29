@@ -30,7 +30,6 @@ import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class CuriosCompat implements ICompatModule {
-	@SuppressWarnings("unchecked")
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void onModEventBusClient(IEventBus eventBus) {

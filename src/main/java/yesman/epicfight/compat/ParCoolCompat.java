@@ -4,10 +4,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
 
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -28,6 +31,7 @@ import com.alrex.parcool.common.action.impl.Vault;
 import com.alrex.parcool.common.action.impl.WallJump;
 import com.alrex.parcool.common.capability.IStamina;
 import com.alrex.parcool.common.capability.Parkourability;
+import com.alrex.parcool.common.capability.capabilities.Capabilities;
 import com.alrex.parcool.config.ParCoolConfig;
 import com.alrex.parcool.utilities.EntityUtil;
 import com.alrex.parcool.utilities.VectorUtil;
@@ -58,8 +62,14 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingException;
+import net.minecraftforge.fml.ModLoadingStage;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
+import net.minecraftforge.forgespi.language.IModInfo;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.animation.AnimationVariables;
@@ -81,6 +91,7 @@ import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.MovementAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.TimePairList;
@@ -89,19 +100,23 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClie
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
+import yesman.epicfight.gameasset.EpicFightSkills;
 import yesman.epicfight.main.EpicFightSharedConstants;
+import yesman.epicfight.mixin.ParCoolMixinAnimation;
+import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
+import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 public class ParCoolCompat implements ICompatModule {
 	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF;
 	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF_INNER_CORNER;
 	public static AnimationAccessor<StaticAnimation> BIPED_CLING_TO_CLIFF_OUTER_CORNER;
 	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_LEFT_START;
-	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_LEFT;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_JUMP_LEFT;
 	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_RIGHT_START;
-	public static AnimationAccessor<ActionAnimation> BIPED_WALL_JUMP_RIGHT;
+	public static AnimationAccessor<StaticAnimation> BIPED_WALL_JUMP_RIGHT;
 	
 	public static AnimationAccessor<StaticAnimation> BIPED_DIVE;
 	public static AnimationAccessor<StaticAnimation> BIPED_WALL_SLIDE_LEFT;
@@ -152,6 +167,7 @@ public class ParCoolCompat implements ICompatModule {
 	public static final Map<Class<? extends com.alrex.parcool.common.action.Action>, BiFunction<PlayerPatch<?>, Action, Boolean>> PARCOOL_ACTION_CANCEL_EVENTS = Maps.newHashMap();
 	
 	private static final ByteBuffer DUMMY_BUFFER = ByteBuffer.allocate(128);
+	private static final String LEAST_VERSION = "3.3.1.0";
 	
 	public static final SharedAnimationVariableKey<ClingType> CLING_TYPE = AnimationVariables.shared(() -> ClingType.STRAIGHT, true);
 	public static final IndependentAnimationVariableKey<Vec3> JUMP_DIRECTION = AnimationVariables.independent(() -> new Vec3(0.0D, 0.0D, 0.0D), true);
@@ -175,8 +191,10 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(SimpleEvent.create((entitypatch, animation, params) -> {
 					entitypatch.setYRot(entitypatch.getAnimator().getVariables().getOrDefaultSharedVariable(CLIFF_Y_ROT));
 				}, Side.LOCAL_CLIENT))
-				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, true));
+				.newTimePair(0.0F, 10.0F)
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_CLING_TO_CLIFF_INNER_CORNER = event.nextAccessor("biped/cling_to_cliff_inner_corner", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
@@ -186,8 +204,10 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(SimpleEvent.create((entitypatch, animation, params) -> {
 					entitypatch.setYRot(entitypatch.getAnimator().getVariables().getOrDefaultSharedVariable(CLIFF_Y_ROT));
 				}, Side.LOCAL_CLIENT))
-				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, true));
+				.newTimePair(0.0F, 10.0F)
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_CLING_TO_CLIFF_OUTER_CORNER = event.nextAccessor("biped/cling_to_cliff_outer_corner", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
@@ -197,8 +217,10 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(SimpleEvent.create((entitypatch, animation, params) -> {
 					entitypatch.setYRot(entitypatch.getAnimator().getVariables().getOrDefaultSharedVariable(CLIFF_Y_ROT));
 				}, Side.LOCAL_CLIENT))
-				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, true));
+				.newTimePair(0.0F, 10.0F)
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_WALL_JUMP_LEFT_START = event.nextAccessor("biped/wall_jump_left_start", (accessor) ->
 			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
@@ -207,12 +229,18 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS,
 					SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT),
-					SimpleEvent.create(ParCoolUtils.WALL_JUMP, Side.CLIENT)));
+					SimpleEvent.create(ParCoolUtils.WALL_JUMP, Side.CLIENT)
+				));
 		
 		BIPED_WALL_JUMP_LEFT = event.nextAccessor("biped/wall_jump_left", (accessor) ->
-			new ActionAnimation(0.15F, 0.7F, accessor, Armatures.BIPED)
-				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, false));
+			new StaticAnimation(0.15F, false, accessor, Armatures.BIPED)
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true)
+				.addStateRemoveOld(EntityState.UPDATE_LIVING_MOTION, false));
 		
 		BIPED_WALL_JUMP_RIGHT_START = event.nextAccessor("biped/wall_jump_right_start", (accessor) ->
 			new ActionAnimation(0.05F, accessor, Armatures.BIPED)
@@ -225,9 +253,14 @@ public class ParCoolCompat implements ICompatModule {
 				));
 		
 		BIPED_WALL_JUMP_RIGHT = event.nextAccessor("biped/wall_jump_right", (accessor) ->
-			new ActionAnimation(0.15F, 0.7F, accessor, Armatures.BIPED)
-				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
-				.addStateRemoveOld(EntityState.TURNING_LOCKED, false));
+			new StaticAnimation(0.15F, false, accessor, Armatures.BIPED)
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true)
+				.addStateRemoveOld(EntityState.UPDATE_LIVING_MOTION, false));
 		
 		BIPED_DIVE = event.nextAccessor("biped/dive", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED).addProperty(StaticAnimationProperty.POSE_MODIFIER,
@@ -254,19 +287,31 @@ public class ParCoolCompat implements ICompatModule {
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_WALL_SLIDE_LEFT = event.nextAccessor("biped/wall_slide_left", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, Float.MAX_VALUE)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_WALL_SLIDE_RIGHT = event.nextAccessor("biped/wall_slide_right", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, Float.MAX_VALUE)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_WALL_RUN_LEFT = event.nextAccessor("biped/wall_run_left", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
@@ -292,7 +337,10 @@ public class ParCoolCompat implements ICompatModule {
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addState(EntityState.UPDATE_LIVING_MOTION, false));
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.UPDATE_LIVING_MOTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_CAT_LEAP_PREPARATION = event.nextAccessor("biped/cat_leap_preparation", (accessor) ->
 			new StaticAnimation(0.15F, true, accessor, Armatures.BIPED)
@@ -311,13 +359,19 @@ public class ParCoolCompat implements ICompatModule {
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_HANG_DOWN_ORTHOGONAL = event.nextAccessor("biped/hang_down_orthogonal", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_JUMP_FROM_BAR = event.nextAccessor("biped/jump_from_bar", (accessor) ->
 			new StaticAnimation(false, accessor, Armatures.BIPED)
@@ -326,22 +380,33 @@ public class ParCoolCompat implements ICompatModule {
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.addEvents(SimpleEvent.create((entitypatch, animation, param) -> {
 					KeyBindings.getKeyHangDown().setDown(false);
-				}, Side.LOCAL_CLIENT)));
+				}, Side.LOCAL_CLIENT))
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_SLIDE = event.nextAccessor("biped/slide", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BIPED_CLIMB_UP = event.nextAccessor("biped/climb_up", (accessor) ->
 			new StaticAnimation(false, accessor, Armatures.BIPED)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
-				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addState(EntityState.UPDATE_LIVING_MOTION, false)
-				.addState(EntityState.INACTION, true));
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.UPDATE_LIVING_MOTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_CRAWL = event.nextAccessor("biped/crawl", (accessor) ->
 			new MovementAnimation(true, accessor, Armatures.BIPED)
@@ -842,7 +907,6 @@ public class ParCoolCompat implements ICompatModule {
 		
 		PARCOOL_ACTION_MAPPING.put(ClimbUp.class, (playerpatch, startEvent) -> {
 			playerpatch.setModelYRot(playerpatch.getAnimator().getVariables().getSharedVariable(CLIFF_Y_ROT), true);
-			
 			return BIPED_CLIMB_UP;
 		});
 		
@@ -861,9 +925,11 @@ public class ParCoolCompat implements ICompatModule {
 				} else {
 					playerpatch.playAnimationSynchronized(BIPED_JUMP_FROM_BAR_START, 0.0F);
 				}
+				
+				return true;
 			}
 			
-			return true;
+			return false;
 		});
 		
 		PARCOOL_ACTION_CANCEL_EVENTS.put(Vault.class, (playerpatch, action) -> {
@@ -916,6 +982,31 @@ public class ParCoolCompat implements ICompatModule {
 				
 				return true;
 			} else {
+				Parkourability parkourability = Parkourability.get(playerpatch.getOriginal());
+				IStamina stamina = IStamina.get(playerpatch.getOriginal());
+				DUMMY_BUFFER.clear();
+				
+				if (parkourability.get(WallJump.class).canStart(playerpatch.getOriginal(), parkourability, stamina, DUMMY_BUFFER)) {
+					DUMMY_BUFFER.flip();
+					DUMMY_BUFFER.getDouble();
+					DUMMY_BUFFER.getDouble();
+					DUMMY_BUFFER.getDouble();
+					DUMMY_BUFFER.getDouble();
+					DUMMY_BUFFER.getDouble();
+					byte animType = DUMMY_BUFFER.get();
+					
+					switch (animType) {
+					case 0 -> {
+					}
+					case 1 -> {
+						playerpatch.playAnimationInClientSide(BIPED_WALL_JUMP_LEFT, 0.0F);
+					}
+					case 2 -> {
+						playerpatch.playAnimationInClientSide(BIPED_WALL_JUMP_RIGHT, 0.0F);
+					}
+					}
+				}
+				
 				return false;
 			}
 		});
@@ -941,6 +1032,15 @@ public class ParCoolCompat implements ICompatModule {
 	
 	@Override
 	public void onModEventBus(IEventBus eventBus) {
+		ModContainer mc = ModList.get().getModContainerById(ParCool.MOD_ID).orElseThrow();
+		IModInfo mInfo = mc.getModInfo();
+		ArtifactVersion currentVersion = mc.getModInfo().getVersion();
+		ArtifactVersion target = new DefaultArtifactVersion(LEAST_VERSION);
+		
+		if (currentVersion.compareTo(target) < 0) {
+			throw new ModLoadingException(mInfo, ModLoadingStage.COMMON_SETUP, "Epic Fight requires Parcool " + LEAST_VERSION + " or over", null);
+		}
+		
 		eventBus.<FMLConstructModEvent>addListener((event) -> {
 			LivingMotion.ENUM_MANAGER.registerEnumCls(ParCool.MOD_ID, ParcoolLivingMotions.class);
 		});
@@ -1008,9 +1108,49 @@ public class ParCoolCompat implements ICompatModule {
 	public void onModEventBusClient(IEventBus eventBus) {
 	}
 	
+	private static final UUID EVENT_UUID = UUID.fromString("bc79276d-a0d1-4e58-867f-6bdd25d1ba23");
+	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void onForgeEventBusClient(IEventBus eventBus) {
+		eventBus.<EntityJoinLevelEvent>addListener((event) -> {
+			PlayerPatch<?> playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), PlayerPatch.class);
+			
+			if (playerpatch == null) {
+				return;
+			}
+			
+			playerpatch.getEventListener().addEventListener(EventType.SKILL_EXECUTE_EVENT, EVENT_UUID, (skillexecuteevent) -> {
+				if (skillexecuteevent.getSkillContainer().getSkill() == EpicFightSkills.PHANTOM_ASCENT) {
+					Parkourability parkourability = Parkourability.get(playerpatch.getOriginal());
+					
+					if (parkourability.get(ClingToCliff.class).isDoing()) {
+						skillexecuteevent.setCanceled(true);
+						return;
+					}
+					
+					DUMMY_BUFFER.clear();
+					boolean canstart = parkourability.get(WallJump.class).canStart(playerpatch.getOriginal(), parkourability, IStamina.get(playerpatch.getOriginal()), DUMMY_BUFFER);
+					
+					if (canstart) {
+						DUMMY_BUFFER.flip();
+						skillexecuteevent.setCanceled(true);
+						skillexecuteevent.getSkillContainer().getDataManager().setData(SkillDataKeys.JUMP_KEY_PRESSED_LAST_TICK.get(), true);
+					}
+				}
+			});
+		});
+		
+		eventBus.<RenderEpicFightPlayerEvent>addListener((event) -> {
+			event.getPlayerPatch().getOriginal().getCapability(Capabilities.ANIMATION_CAPABILITY).ifPresent((animation) -> {
+				ParCoolMixinAnimation animationAccessor = (ParCoolMixinAnimation)animation;
+				com.alrex.parcool.client.animation.Animator animator = animationAccessor.getAnimator();
+				
+				if (animator != null && !event.getPlayerPatch().isBattleMode()) {
+					event.setShouldRender(false);
+				}
+			});
+		});
 	}
 	
 	public enum ParcoolLivingMotions implements LivingMotion {
@@ -1381,6 +1521,15 @@ public class ParCoolCompat implements ICompatModule {
 	    }
 	    
 	    public static ScanResult getGrabbableWall(Entity entity, Vec3 moveVec) {
+	    	double baseLine1 = entity.getEyeHeight() + (entity.getBbHeight() - entity.getEyeHeight()) / 2;
+			double baseLine2 = entity.getBbHeight() + (entity.getBbHeight() - entity.getEyeHeight()) / 2;
+			
+			ScanResult wall1 = getGrabbableWall(entity, moveVec, baseLine1);
+			if (wall1 != null) return wall1;
+			return getGrabbableWall(entity, moveVec, baseLine2);
+	    }
+	    
+	    public static ScanResult getGrabbableWall(Entity entity, Vec3 moveVec, double hangHeight) {
 	    	Vec3 pos = entity.position();
 	    	Level level = entity.getCommandSenderWorld();
 	    	boolean posChanged = false;
@@ -1390,7 +1539,6 @@ public class ParCoolCompat implements ICompatModule {
     			posChanged = true;
 	    	}
 	    	
-	    	double hangHeight = entity.getBbHeight() + (entity.getBbHeight() - entity.getEyeHeight()) * 0.5D;
 	    	double expandingSize = entity.getBbWidth() * 0.49D;
 	    	Vec3 start = entity.position();
 	    	
@@ -1544,7 +1692,7 @@ public class ParCoolCompat implements ICompatModule {
 				playerpatch.playAnimation(startAnimation, 0.0F);
 			}
 			case MOVE_LEFT, MOVE_RIGHT -> {
-				ClingType currentDirection = playerpatch.getAnimator().getVariables().getSharedVariable(CLING_TYPE);
+				ClingType currentDirection = playerpatch.getAnimator().getVariables().getOrDefaultSharedVariable(CLING_TYPE);
 				
 				switch (currentDirection) {
 				case INNER_CORNER -> {

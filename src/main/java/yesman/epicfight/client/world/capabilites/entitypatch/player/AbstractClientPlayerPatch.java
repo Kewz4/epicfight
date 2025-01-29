@@ -217,7 +217,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
-		this.cancelAnyAction();
+		this.cancelItemUse();
 		
 		this.getClientAnimator().getAllLayers().forEach((layer) -> layer.animationPlayer.getAnimation().get().getRealAnimation().get().getProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT).ifPresent((event) -> {
 			event.params(mainHandCap, offHandCap);

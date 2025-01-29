@@ -17,7 +17,6 @@ import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
 import yesman.epicfight.skill.SkillContainer;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -67,7 +66,7 @@ public class EmergencyEscapeSkill extends PassiveSkill {
 			if (event.getSkill().getCategory() == SkillCategories.DODGE) {
 				if (!container.getExecutor().getOriginal().isCreative() && event.getSkill().getConsumption() > container.getExecutor().getStamina() && container.getStack() > 0) {
 					if (!container.getExecutor().isLogicalClient()) {
-						this.setStackSynchronize((ServerPlayerPatch)container.getExecutor(), container.getStack() - 1);
+						this.setStackSynchronize(container, container.getStack() - 1);
 					}
 					
 					event.setResourceType(Skill.Resource.NONE);

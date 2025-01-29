@@ -3,6 +3,7 @@ package yesman.epicfight.client.gui.screen;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -166,16 +167,16 @@ public class SkillBookScreen extends Screen {
 	
 	@Override
 	protected void init() {
-		SkillContainer thisSkill = this.playerpatch.getSkill(this.skill);
-		SkillContainer priorSkill = this.skill == null ? null : this.playerpatch.getSkill(this.skill.getPriorSkill());
+		Optional<SkillContainer> thisSkill = this.playerpatch.getSkillContainerFor(this.skill);
+		Optional<SkillContainer> priorSkill = this.skill == null ? null : this.playerpatch.getSkillContainerFor(this.skill.getPriorSkill());
 		
-		boolean isUsing = thisSkill != null;
-		boolean condition = this.skill == null ? false : this.skill.getPriorSkill() == null || priorSkill != null;
+		boolean isUsing = thisSkill.isPresent();
+		boolean condition = this.skill == null ? false : this.skill.getPriorSkill() == null || priorSkill.isPresent();
 		Component tooltip = CommonComponents.EMPTY;
 		
 		if (!isUsing) {
 			if (condition) {
-				if (thisSkill != null) {
+				if (thisSkill.isPresent()) {
 					tooltip = Component.translatable("gui." + EpicFightMod.MODID + ".replace", Component.translatable(this.skill.getTranslationKey()).getString());
 				}
 			} else {

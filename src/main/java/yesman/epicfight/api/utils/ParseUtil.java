@@ -1,5 +1,7 @@
 package yesman.epicfight.api.utils;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -307,6 +309,28 @@ public class ParseUtil {
 	
 	public static String toLowerCase(String s) {
 		return s.toLowerCase(Locale.ROOT);
+	}
+	
+	public static String getBytesSHA256Hash(byte[] bytes) {
+		String hashString = "";
+		
+		try {
+			MessageDigest sh = MessageDigest.getInstance("SHA-256");
+			sh.update(bytes);
+			byte byteData[] = sh.digest();
+			StringBuffer sb = new StringBuffer();
+			
+			for (int i = 0; i < byteData.length; i++) {
+				sb.append(Integer.toString((byteData[i] & 0xFF) + 0x100, 16).substring(1));
+			}
+			
+			hashString = sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			hashString = null;
+		}
+		
+		return hashString;
 	}
 	
 	private ParseUtil() {}

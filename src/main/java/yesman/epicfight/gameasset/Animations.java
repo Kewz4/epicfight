@@ -1,6 +1,7 @@
 package yesman.epicfight.gameasset;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.joml.Quaternionf;
@@ -646,7 +647,11 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+				.newTimePair(0.0F, 10000.0F)
+				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+				.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_SLEEPING = event.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
 		
@@ -1151,10 +1156,10 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (0.2F > elapsedTime) {
 						if (entitypatch instanceof PlayerPatch<?> playerpatch) {
-							SkillContainer skill = playerpatch.getSkill(EpicFightSkills.METEOR_STRIKE);
+							Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.METEOR_STRIKE);
 
-							if (skill != null) {
-								return (float)Math.sqrt(7.0F / MeteorSlamSkill.getFallDistance(skill));
+							if (skill.isPresent()) {
+								return (float)Math.sqrt(7.0F / MeteorSlamSkill.getFallDistance(skill.get()));
 							}
 						}
 					}
@@ -2197,10 +2202,10 @@ public class Animations {
 		
 		public static final AnimationEvent.E3<Vec3f, Joint, Float> FRACTURE_METEOR_STRIKE = (entitypatch, animation, params) -> {
 			if (entitypatch instanceof PlayerPatch<?> playerpatch) {
-				SkillContainer skill = playerpatch.getSkill(EpicFightSkills.METEOR_STRIKE);
+				Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.METEOR_STRIKE);
 				
-				if (skill != null) {
-					double slamRadius = Math.log(MeteorSlamSkill.getFallDistance(skill) * entitypatch.getOriginal().getAttributeValue(EpicFightAttributes.IMPACT.get()));
+				if (skill.isPresent()) {
+					double slamRadius = Math.log(MeteorSlamSkill.getFallDistance(skill.get()) * entitypatch.getOriginal().getAttributeValue(EpicFightAttributes.IMPACT.get()));
 					FRACTURE_GROUND_SIMPLE.fire(entitypatch, animation, AnimationParameters.of(params.first(), params.second(), Double.valueOf(slamRadius), params.third()));
 				}
 			}

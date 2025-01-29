@@ -94,7 +94,7 @@ public class CapabilitySkill {
 		return null;
 	}
 	
-	public CompoundTag toNBT() {
+	public CompoundTag serialize() {
 		CompoundTag nbt = new CompoundTag();
 		
 		for (SkillContainer container : this.skillContainers) {
@@ -119,12 +119,12 @@ public class CapabilitySkill {
 		return nbt;
 	}
 	
-	public void fromNBT(CompoundTag nbt) {
+	public void deserialize(CompoundTag compound) {
 		for (SkillContainer container : this.skillContainers) {
 			String key = container.getSlot().toString().toLowerCase(Locale.ROOT);
 			
-			if (nbt.contains(key)) {
-				Skill skill = SkillManager.getSkill(nbt.getString(key));
+			if (compound.contains(key)) {
+				Skill skill = SkillManager.getSkill(compound.getString(key));
 				
 				if (skill != null) {
 					container.setSkill(skill);
@@ -134,8 +134,8 @@ public class CapabilitySkill {
 		}
 		
 		for (SkillCategory category : SkillCategory.ENUM_MANAGER.universalValues()) {
-			if (nbt.contains("learned:" + category.toString().toLowerCase(Locale.ROOT))) {
-				CompoundTag learnedNBT = nbt.getCompound("learned:" + category.toString().toLowerCase(Locale.ROOT));
+			if (compound.contains("learned:" + category.toString().toLowerCase(Locale.ROOT))) {
+				CompoundTag learnedNBT = compound.getCompound("learned:" + category.toString().toLowerCase(Locale.ROOT));
 				
 				for (String key : learnedNBT.getAllKeys()) {
 					Skill skill = SkillManager.getSkill(learnedNBT.getString(key));
@@ -147,8 +147,8 @@ public class CapabilitySkill {
 			}
 		}
 		
-		if (nbt.contains("playerMode")) {
-			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(nbt.getString("playerMode").toUpperCase(Locale.ROOT)), true);
+		if (compound.contains("playerMode")) {
+			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(compound.getString("playerMode").toUpperCase(Locale.ROOT)), true);
 		} else {
 			this.skillContainers[0].getExecutor().toMiningMode(true);
 		}

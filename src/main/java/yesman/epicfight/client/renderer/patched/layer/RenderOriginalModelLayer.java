@@ -28,12 +28,10 @@ public class RenderOriginalModelLayer<E extends LivingEntity, T extends LivingEn
 	
 	@Override
 	protected void renderLayer(T entitypatch, E entityliving, RenderLayer<E, M> vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
-		OpenMatrix4f modelMatrix = new OpenMatrix4f().mulFront(poses[entitypatch.getArmature().searchJointByName(this.parentJoint).getId()]);
-		OpenMatrix4f transpose = OpenMatrix4f.transpose(modelMatrix, null);
+		OpenMatrix4f modelMatrix = poses[entitypatch.getArmature().searchJointByName(this.parentJoint).getId()];
 		
 		poseStack.pushPose();
-		MathUtils.translateStack(poseStack, modelMatrix);
-		MathUtils.rotateStack(poseStack, transpose);
+		MathUtils.mulStack(poseStack, modelMatrix);
 		poseStack.translate(this.vec.x, this.vec.y, this.vec.z);
 		poseStack.mulPose(Axis.YP.rotationDegrees(this.rot.y));
 		poseStack.mulPose(Axis.XP.rotationDegrees(this.rot.x));
