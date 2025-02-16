@@ -4,9 +4,9 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import net.minecraft.resources.ResourceLocation;
-import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
+import yesman.epicfight.api.physics.SimulationObject.SimulationObjectBuilder;
 
-public interface PhysicsSimulator<B extends SimulationBuilder, PV extends SimulationProvider<O, T, B, PV>, O, T extends SimulationObject<B, PV, O>> {
+public interface PhysicsSimulator<B extends SimulationObjectBuilder, PV extends SimulationProvider<O, T, B, PV>, O, T extends SimulationObject<B, PV, O>> {
 	public void tick(O object);
 	
 	public boolean isRunning(ResourceLocation key);

@@ -15,14 +15,15 @@ import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
+import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	public static class Builder extends SkillBuilder<ConditionalWeaponInnateSkill> {
-		protected Function<PlayerPatch<?>, Integer> selector;
+		protected Function<ServerPlayerPatch, Integer> selector;
 		protected AnimationAccessor<? extends AttackAnimation>[] animations;
 		
-		public Builder setSelector(Function<PlayerPatch<?>, Integer> selector) {
+		public Builder setSelector(Function<ServerPlayerPatch, Integer> selector) {
 			this.selector = selector;
 			return this;
 		}
@@ -39,7 +40,7 @@ public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	}
 	
 	protected final AnimationAccessor<? extends AttackAnimation>[] attackAnimations;
-	protected final Function<PlayerPatch<?>, Integer> selector;
+	protected final Function<ServerPlayerPatch, Integer> selector;
 	
 	public ConditionalWeaponInnateSkill(ConditionalWeaponInnateSkill.Builder builder) {
 		super(builder);
@@ -71,15 +72,15 @@ public class ConditionalWeaponInnateSkill extends WeaponInnateSkill {
 	
 	@Override
 	public void executeOnServer(SkillContainer containter, FriendlyByteBuf args) {
-		this.playSkillAnimation(containter.getExecutor());
+		this.playSkillAnimation(containter.getServerExecutor());
 		super.executeOnServer(containter, args);
 	}
 	
-	protected int getAnimationInCondition(PlayerPatch<?> executor) {
+	protected int getAnimationInCondition(ServerPlayerPatch executor) {
 		return this.selector.apply(executor);
 	}
 	
-	protected void playSkillAnimation(PlayerPatch<?> executor) {
+	protected void playSkillAnimation(ServerPlayerPatch executor) {
 		executor.playAnimationSynchronized(this.attackAnimations[this.getAnimationInCondition(executor)], 0);
 	}
 }

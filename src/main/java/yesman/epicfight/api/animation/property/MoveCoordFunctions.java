@@ -358,7 +358,7 @@ public class MoveCoordFunctions {
 		Vec3 pos = entitypatch.getOriginal().position();
 		Vec3 targetpos = entitypatch.getTarget().position();
 		float verticalDistance = (float) (targetpos.y - pos.y);
-		Quaternionf rotator = Vec3f.getRotatorBetween(new Vec3f(0.0F, -verticalDistance, (float)targetpos.subtract(pos).horizontalDistance()), new Vec3f(0.0F, 0.0F, 1.0F));
+		Quaternionf rotator = Vec3f.getRotatorBetween(new Vec3f(0.0F, -verticalDistance, (float)targetpos.subtract(pos).horizontalDistance()), new Vec3f(0.0F, 0.0F, 1.0F), null);
 		
 		for (int i = startFrame; i <= endFrame; i++) {
 			Vec3f translation = keyframes[i].transform().translation();

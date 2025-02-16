@@ -730,8 +730,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public boolean valid() {
-			return true;
+		public boolean invalid() {
+			return false;
 		}
 		
 		@Override
@@ -777,6 +777,16 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		@Override
 		public float getScale() {
 			return 1.0F;
+		}
+
+		@Override
+		public Animator getSimulatableAnimator() {
+			return this.animator;
+		}
+
+		@Override
+		public float getGravity() {
+			return 9.8F;
 		}
 	}
 	

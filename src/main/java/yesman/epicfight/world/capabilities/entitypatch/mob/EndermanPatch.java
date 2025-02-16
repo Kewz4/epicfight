@@ -247,7 +247,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 			for (int i = 0; i < 100; i++) {
 				RandomSource rand = original.getRandom();
 				Vec3f vec = new Vec3f(rand.nextInt(), rand.nextInt(), rand.nextInt());
-				vec.normalise().scale(0.5F);
+				vec.normalize().scale(0.5F);
 				Minecraft minecraft = Minecraft.getInstance();
 				minecraft.particleEngine.createParticle(EpicFightParticles.ENDERMAN_DEATH_EMIT.get(), this.original.getX(), this.original.getY() + this.original.getDimensions(net.minecraft.world.entity.Pose.STANDING).height / 2, this.original.getZ(), vec.x, vec.y, vec.z);
 			}
@@ -326,7 +326,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	        
 			if (this.delayCounter-- < 0 && !this.mobpatch.getEntityState().inaction()) {
 				Vec3f vec = new Vec3f((float)(mob.getX() - target.getX()), 0, (float)(mob.getZ() - target.getZ()));
-	        	vec.normalise().scale(1.414F);
+	        	vec.normalize().scale(1.414F);
 	        	boolean flag = mob.randomTeleport(target.getX() + vec.x, target.getY(), target.getZ() + vec.z, true);
 	        	
 				if (flag) {

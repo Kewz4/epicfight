@@ -1,8 +1,11 @@
 package yesman.epicfight.api.utils.math;
 
-import net.minecraft.world.phys.Vec3;
+import java.util.Collection;
+
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.main.EpicFightMod;
 
 public class Vec3f extends Vec2f {
@@ -170,6 +173,21 @@ public class Vec3f extends Vec2f {
 		return OpenMatrix4f.transform3v(OpenMatrix4f.createRotatorDeg(degree, axis), src, dest);
 	}
 	
+	private static final Vector3f SRC = new Vector3f();
+	private static final Vector3f TRANSFORM_RESULT = new Vector3f();
+	
+	public static Vec3f rotate(Quaternionf rot, Vec3f src, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		SRC.set(src.x, src.y, src.z);
+		rot.transform(SRC, TRANSFORM_RESULT);
+		dest.set(TRANSFORM_RESULT.x, TRANSFORM_RESULT.y, TRANSFORM_RESULT.z);
+		
+		return dest;
+	}
+	
 	public static float dot(Vec3f left, Vec3f right) {
 		return left.x * right.x + left.y * right.y + left.z * right.z;
 	}
@@ -188,8 +206,12 @@ public class Vec3f extends Vec2f {
 		return (float) Math.acos(Math.min(1.0F, Vec3f.dot(a, b) / (a.length() * b.length())));
 	}
 	
-	public static Quaternionf getRotatorBetween(Vec3f a, Vec3f b) {
-		Vec3f axis = Vec3f.cross(a, b, null).normalise();
+	public static Quaternionf getRotatorBetween(Vec3f a, Vec3f b, Quaternionf dest) {
+		if (dest == null) {
+			dest = new Quaternionf();
+		}
+		
+		Vec3f axis = Vec3f.cross(a, b, null).normalize();
 		float dotDivLength = Vec3f.dot(a, b) / (a.length() * b.length());
 		
 		if (!Float.isFinite(dotDivLength)) {
@@ -199,8 +221,9 @@ public class Vec3f extends Vec2f {
 		}
 		
 		float radian = (float)Math.acos(Math.min(1.0F, dotDivLength));
+		dest.setAngleAxis(radian, axis.x, axis.y, axis.z);
 		
-		return QuaternionUtils.rotation(axis.toMojangVector(), radian);
+		return dest;
 	}
 	
 	public static Vec3f interpolate(Vec3f from, Vec3f to, float interpolation, Vec3f dest) {
@@ -215,24 +238,87 @@ public class Vec3f extends Vec2f {
 		return dest;
 	}
 	
-	public Vec3f normalise() {
-		float norm = (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-		if (norm > 1E-5F) {
-			this.x /= norm;
-			this.y /= norm;
-			this.z /= norm;
-		} else {
-			this.x = 0;
-			this.y = 0;
-			this.z = 0;
+	public Vec3f normalize() {
+		return normalize(this, this);
+	}
+	
+	public static Vec3f normalize(Vec3f src, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
 		}
 		
-		return this;
+		float norm = (float) Math.sqrt(src.x * src.x + src.y * src.y + src.z * src.z);
+		
+		if (norm > 1E-5F) {
+			dest.x = src.x / norm;
+			dest.y = src.y / norm;
+			dest.z = src.z / norm;
+		} else {
+			dest.x = 0;
+			dest.y = 0;
+			dest.z = 0;
+		}
+		
+		return dest;
 	}
 	
 	@Override
 	public String toString() {
 		return "[" + this.x + ", " + this.y + ", " + this.z + "]";
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		} else if (o instanceof Vec3f vec3f) {
+			return Float.compare(this.x, vec3f.x) == 0 && Float.compare(this.y, vec3f.y) == 0 && Float.compare(this.z, vec3f.z) == 0;
+		}
+		
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		int j = Float.floatToIntBits(this.x);
+		int i = (int) (j ^ j >>> 32);
+		j = Float.floatToIntBits(this.y);
+		i = 31 * i + (int) (j ^ j >>> 32);
+		j = Float.floatToIntBits(this.z);
+		
+		return 31 * i + (int) (j ^ j >>> 32);
+	}
+	
+	public static Vec3f average(Collection<Vec3f> vectors, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.set(0.0F, 0.0F, 0.0F);
+		
+		for (Vec3f v : vectors) {
+			dest.add(v);
+		}
+		
+		dest.scale(1.0F / vectors.size());
+		
+		return dest;
+	}
+	
+	public static Vec3f average(Vec3f dest, Vec3f... vectors) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.set(0.0F, 0.0F, 0.0F);
+		
+		for (Vec3f v : vectors) {
+			dest.add(v);
+		}
+		
+		dest.scale(vectors.length);
+		
+		return dest;
 	}
 	
 	public Vector3f toMojangVector() {

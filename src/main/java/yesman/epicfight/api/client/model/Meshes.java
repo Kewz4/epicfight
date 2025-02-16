@@ -44,9 +44,10 @@ public class Meshes implements PreparableReloadListener {
 	private static final Map<MeshAccessor<? extends Mesh>, Mesh> MESHES = Maps.newHashMap();
 	private static ResourceManager resourceManager = null;
 	
+	//For resource reloader
 	public static final Meshes INSTANCE = new Meshes();
 	
-	//Entities
+	// Entities
 	public static final MeshAccessor<HumanoidMesh> ALEX = MeshAccessor.create(EpicFightMod.MODID, "entity/biped_slim_arm", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
 	public static final MeshAccessor<HumanoidMesh> BIPED = MeshAccessor.create(EpicFightMod.MODID, "entity/biped", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
 	public static final MeshAccessor<HumanoidMesh> BIPED_OLD_TEX = MeshAccessor.create(EpicFightMod.MODID, "entity/biped_old_texture", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
@@ -66,7 +67,7 @@ public class Meshes implements PreparableReloadListener {
 	public static final MeshAccessor<DragonMesh> DRAGON = MeshAccessor.create(EpicFightMod.MODID, "entity/dragon", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(DragonMesh::new));
 	public static final MeshAccessor<WitherMesh> WITHER = MeshAccessor.create(EpicFightMod.MODID, "entity/wither", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(WitherMesh::new));
 	
-	//Particles
+	// Armors
 	public static final MeshAccessor<SkinnedMesh> HELMET = MeshAccessor.create(EpicFightMod.MODID, "armor/helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	public static final MeshAccessor<SkinnedMesh> HELMET_PIGLIN = MeshAccessor.create(EpicFightMod.MODID, "armor/piglin_helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	public static final MeshAccessor<SkinnedMesh> HELMET_VILLAGER = MeshAccessor.create(EpicFightMod.MODID, "armor/villager_helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
@@ -74,13 +75,27 @@ public class Meshes implements PreparableReloadListener {
 	public static final MeshAccessor<SkinnedMesh> LEGGINS = MeshAccessor.create(EpicFightMod.MODID, "armor/leggins", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	public static final MeshAccessor<SkinnedMesh> BOOTS = MeshAccessor.create(EpicFightMod.MODID, "armor/boots", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	
-	//Armors
+	// Particles
 	public static final MeshAccessor<ClassicMesh> AIR_BURST = MeshAccessor.create(EpicFightMod.MODID, "particle/air_burst", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
 	public static final MeshAccessor<ClassicMesh> FORCE_FIELD = MeshAccessor.create(EpicFightMod.MODID, "particle/force_field", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
 	public static final MeshAccessor<ClassicMesh> LASER = MeshAccessor.create(EpicFightMod.MODID, "particle/laser", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
 	
-	//Layers
-	public static MeshAccessor<SkinnedMesh> CLOAK = MeshAccessor.create(EpicFightMod.MODID, "layer/cloak", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	// Layers
+	public static final MeshAccessor<SkinnedMesh> CLOAK = MeshAccessor.create(EpicFightMod.MODID, "layer/cloak", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	
+	
+	/**
+	 * @deprecated TEST CODE
+	
+	public static final MeshAccessor<Mesh> KING_CAPE = MeshAccessor.create(EpicFightMod.MODID, "layer/king_cape", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
+	/**
+	 * @deprecated TEST CODE
+	
+	public static final MeshAccessor<Mesh> CAPE = MeshAccessor.create(EpicFightMod.MODID, "layer/cape", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
+	/**
+	 * @deprecated TEST CODE
+	
+	public static final MeshAccessor<Mesh> BENDING_TEST = MeshAccessor.create(EpicFightMod.MODID, "layer/bending_test", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
 	
 	public static void reload(ResourceManager resourceManager) {
 		Meshes.resourceManager = resourceManager;

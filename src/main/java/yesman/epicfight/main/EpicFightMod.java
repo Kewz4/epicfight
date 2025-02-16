@@ -22,7 +22,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.common.Mod;
@@ -53,15 +52,15 @@ import yesman.epicfight.compat.GeckolibCompat;
 import yesman.epicfight.compat.ICompatModule;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.compat.IceAndFireCompat;
-import yesman.epicfight.compat.ParCoolClientCompat;
-import yesman.epicfight.compat.ParCoolCompat;
 import yesman.epicfight.compat.SkinLayer3DCompat;
 import yesman.epicfight.compat.VampirismCompat;
 import yesman.epicfight.compat.WerewolvesCompat;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.config.CommonConfig;
+import yesman.epicfight.config.ServerConfig;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.data.loot.EpicFightLootTables;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.network.EpicFightDataSerializers;
@@ -151,7 +150,11 @@ public class EpicFightMod {
     		context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
     	}
     	
-    	context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC, EpicFightMod.MODID + ".toml");
+    	if (!EpicFightSharedConstants.isPhysicalClient()) {
+    		context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+    	}
+    	
+    	context.registerConfig(ModConfig.Type.COMMON, CommonConfig.SPEC);
     	context.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> new ConfigScreenHandler.ConfigScreenFactory(IngameConfigurationScreen::new));
 		context.registerExtensionPoint(EpicFightExtensions.class, () -> new EpicFightExtensions(EpicFightCreativeTabs.ITEMS.get()));
     	
@@ -228,18 +231,6 @@ public class EpicFightMod {
         if (ModList.get().isLoaded("iceandfire")) {
 			ICompatModule.loadCompatModule(context, IceAndFireCompat.class);
 		}
-        
-        if (ModList.get().isLoaded("parcool")) {
-			ICompatModule.loadCompatModule(context, ParCoolCompat.class);
-		} else {
-			AnimationManager.addNoWarningModId("parcool");
-		}
-        
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-        	if (ModList.get().isLoaded("parcool")) {
-        		ICompatModule.loadCompatModule(context, ParCoolClientCompat.class);
-        	}
-        });
 	}
     
     /**
@@ -252,11 +243,14 @@ public class EpicFightMod {
     	event.enqueueWork(Style.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(WeaponCategory.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(() -> {
-    		ModLoader.get().postEvent(new AnimationRegistryEvent());
+			AnimationRegistryEvent animationregistryevent = new AnimationRegistryEvent();
+    		ModLoader.get().postEvent(animationregistryevent);
+    		animationregistryevent.getBuilders().stream().sorted((b1, b2) -> b1.namespace().compareTo(b2.namespace())).forEach((builder) -> builder.task().accept(builder));
     	});
     }
     
 	private void doCommonStuff(final FMLCommonSetupEvent event) {
+		event.enqueueWork(Armatures::registerEntityTypes);
 		event.enqueueWork(EpicFightCommandArgumentTypes::registerArgumentTypes);
 		event.enqueueWork(EpicFightPotions::addRecipes);
 		event.enqueueWork(EpicFightNetworkManager::registerPackets);

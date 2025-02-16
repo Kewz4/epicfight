@@ -44,6 +44,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.AnimationManager.AnimationBuilder;
 import yesman.epicfight.api.animation.AnimationManager.AnimationRegistryEvent;
 import yesman.epicfight.api.animation.AnimationVariables;
 import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
@@ -484,13 +485,15 @@ public class Animations {
 	
 	@SubscribeEvent
 	public static void registerAnimations(AnimationRegistryEvent event) {
-		event.startsWith(EpicFightMod.MODID);
-		
-		BIPED_IDLE = event.nextAccessor("biped/living/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK = event.nextAccessor("biped/living/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_FLYING = event.nextAccessor("biped/living/fly", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_CREATIVE_IDLE = event.nextAccessor("biped/living/creative_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_CREATIVE_FLYING = event.nextAccessor("biped/living/creative_fly", (accessor) ->
+		event.newBuilder(EpicFightMod.MODID, Animations::build);
+	}
+	
+	public static void build(AnimationBuilder builder) {
+		BIPED_IDLE = builder.nextAccessor("biped/living/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK = builder.nextAccessor("biped/living/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_FLYING = builder.nextAccessor("biped/living/fly", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_CREATIVE_IDLE = builder.nextAccessor("biped/living/creative_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_CREATIVE_FLYING = builder.nextAccessor("biped/living/creative_fly", (accessor) ->
 			new SelectiveAnimation((entitypatch) -> {
 					Vec3 view = entitypatch.getOriginal().getViewVector(1.0F);
 					Vec3 move = entitypatch.getOriginal().getDeltaMovement();
@@ -507,58 +510,58 @@ public class Animations {
 			)
 		);
 		
-		BIPED_HOLD_CROSSBOW = event.nextAccessor("biped/living/hold_crossbow", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_MAP_TWOHAND = event.nextAccessor("biped/living/hold_map_twohand", (accessor) ->
+		BIPED_HOLD_CROSSBOW = builder.nextAccessor("biped/living/hold_crossbow", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_MAP_TWOHAND = builder.nextAccessor("biped/living/hold_map_twohand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
-		BIPED_HOLD_MAP_OFFHAND = event.nextAccessor("biped/living/hold_map_offhand", (accessor) ->
+		BIPED_HOLD_MAP_OFFHAND = builder.nextAccessor("biped/living/hold_map_offhand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
-		BIPED_HOLD_MAP_MAINHAND = event.nextAccessor("biped/living/hold_map_mainhand", (accessor) ->
+		BIPED_HOLD_MAP_MAINHAND = builder.nextAccessor("biped/living/hold_map_mainhand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
-		BIPED_HOLD_MAP_TWOHAND_MOVE = event.nextAccessor("biped/living/hold_map_twohand_move", (accessor) ->
+		BIPED_HOLD_MAP_TWOHAND_MOVE = builder.nextAccessor("biped/living/hold_map_twohand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
-		BIPED_HOLD_MAP_OFFHAND_MOVE = event.nextAccessor("biped/living/hold_map_offhand_move", (accessor) ->
+		BIPED_HOLD_MAP_OFFHAND_MOVE = builder.nextAccessor("biped/living/hold_map_offhand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
-		BIPED_HOLD_MAP_MAINHAND_MOVE = event.nextAccessor("biped/living/hold_map_mainhand_move", (accessor) ->
+		BIPED_HOLD_MAP_MAINHAND_MOVE = builder.nextAccessor("biped/living/hold_map_mainhand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
 		
-		BIPED_RUN = event.nextAccessor("biped/living/run", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_SNEAK = event.nextAccessor("biped/living/sneak", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_SWIM = event.nextAccessor("biped/living/swim", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_FLOAT = event.nextAccessor("biped/living/float", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_KNEEL = event.nextAccessor("biped/living/kneel", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_FALL = event.nextAccessor("biped/living/fall", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_MOUNT = event.nextAccessor("biped/living/mount", (accessor) ->
+		BIPED_RUN = builder.nextAccessor("biped/living/run", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_SNEAK = builder.nextAccessor("biped/living/sneak", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_SWIM = builder.nextAccessor("biped/living/swim", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_FLOAT = builder.nextAccessor("biped/living/float", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_KNEEL = builder.nextAccessor("biped/living/kneel", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_FALL = builder.nextAccessor("biped/living/fall", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_MOUNT = builder.nextAccessor("biped/living/mount", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_SIT = event.nextAccessor("biped/living/sit", (accessor) ->
+		BIPED_SIT = builder.nextAccessor("biped/living/sit", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
 		
-		BIPED_DIG = event.nextAccessor("biped/living/dig", (accessor) ->
+		BIPED_DIG = builder.nextAccessor("biped/living/dig", (accessor) ->
 			new SelectiveAnimation((entitypatch) -> entitypatch.getOriginal().swingingArm == InteractionHand.OFF_HAND ? 1 : 0, accessor,
 									new DirectStaticAnimation(0.1F, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
 									new DirectStaticAnimation(0.1F, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)));
 		
-		BIPED_BOW_AIM = event.nextAccessor("biped/living/bow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
-		BIPED_BOW_SHOT = event.nextAccessor("biped/living/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));
-		BIPED_DRINK = event.nextAccessor("biped/living/drink", (accessor) ->
+		BIPED_BOW_AIM = builder.nextAccessor("biped/living/bow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
+		BIPED_BOW_SHOT = builder.nextAccessor("biped/living/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));
+		BIPED_DRINK = builder.nextAccessor("biped/living/drink", (accessor) ->
 			new MirrorAnimation(0.35F, true, accessor, "biped/living/drink_mainhand", "biped/living/drink_offhand", Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
-		BIPED_EAT = event.nextAccessor("biped/living/eat", (accessor) ->
+		BIPED_EAT = builder.nextAccessor("biped/living/eat", (accessor) ->
 			new MirrorAnimation(0.35F, true, accessor, "biped/living/eat_mainhand", "biped/living/eat_offhand", Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
 		
-		BIPED_SPYGLASS_USE = event.nextAccessor("biped/living/spyglass", (accessor) ->
+		BIPED_SPYGLASS_USE = builder.nextAccessor("biped/living/spyglass", (accessor) ->
 			new MirrorAnimation(0.15F, true, accessor, "biped/living/spyglass_mainhand", "biped/living/spyglass_offhand", Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (self.isLinkAnimation()) {
@@ -593,43 +596,43 @@ public class Animations {
 				})
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
 		
-		BIPED_CROSSBOW_AIM = event.nextAccessor("biped/combat/crossbow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/crossbow_aim_mid", "biped/combat/crossbow_aim_up", "biped/combat/crossbow_aim_down", "biped/combat/crossbow_aim_lying", Armatures.BIPED));
-		BIPED_CROSSBOW_SHOT = event.nextAccessor("biped/living/crossbow_shot", (accessor) -> new ReboundAnimation(false, accessor, "biped/combat/crossbow_shot_mid", "biped/combat/crossbow_shot_up", "biped/combat/crossbow_shot_down", "biped/combat/crossbow_shot_lying", Armatures.BIPED));
-		BIPED_CROSSBOW_RELOAD = event.nextAccessor("biped/combat/crossbow_reload", (accessor) -> new StaticAnimation(false, accessor, Armatures.BIPED));
-		BIPED_JUMP = event.nextAccessor("biped/living/jump", (accessor) -> new StaticAnimation(0.083F, false, accessor, Armatures.BIPED));
-		BIPED_RUN_SPEAR = event.nextAccessor("biped/living/run_spear", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_BLOCK = event.nextAccessor("biped/living/shield", (accessor) -> new MirrorAnimation(0.25F, true, accessor, "biped/living/shield_mainhand", "biped/living/shield_offhand", Armatures.BIPED));
-		BIPED_HOLD_GREATSWORD = event.nextAccessor("biped/living/hold_greatsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_UCHIGATANA_SHEATHING = event.nextAccessor("biped/living/hold_uchigatana_sheath", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_UCHIGATANA = event.nextAccessor("biped/living/hold_uchigatana", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_TACHI = event.nextAccessor("biped/living/hold_tachi", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_LONGSWORD = event.nextAccessor("biped/living/hold_longsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_SPEAR = event.nextAccessor("biped/living/hold_spear", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_DUAL_WEAPON = event.nextAccessor("biped/living/hold_dual", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		BIPED_HOLD_LIECHTENAUER = event.nextAccessor("biped/living/hold_liechtenauer", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_CROSSBOW_AIM = builder.nextAccessor("biped/combat/crossbow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/crossbow_aim_mid", "biped/combat/crossbow_aim_up", "biped/combat/crossbow_aim_down", "biped/combat/crossbow_aim_lying", Armatures.BIPED));
+		BIPED_CROSSBOW_SHOT = builder.nextAccessor("biped/living/crossbow_shot", (accessor) -> new ReboundAnimation(false, accessor, "biped/combat/crossbow_shot_mid", "biped/combat/crossbow_shot_up", "biped/combat/crossbow_shot_down", "biped/combat/crossbow_shot_lying", Armatures.BIPED));
+		BIPED_CROSSBOW_RELOAD = builder.nextAccessor("biped/combat/crossbow_reload", (accessor) -> new StaticAnimation(false, accessor, Armatures.BIPED));
+		BIPED_JUMP = builder.nextAccessor("biped/living/jump", (accessor) -> new StaticAnimation(0.083F, false, accessor, Armatures.BIPED));
+		BIPED_RUN_SPEAR = builder.nextAccessor("biped/living/run_spear", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_BLOCK = builder.nextAccessor("biped/living/shield", (accessor) -> new MirrorAnimation(0.25F, true, accessor, "biped/living/shield_mainhand", "biped/living/shield_offhand", Armatures.BIPED));
+		BIPED_HOLD_GREATSWORD = builder.nextAccessor("biped/living/hold_greatsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_UCHIGATANA_SHEATHING = builder.nextAccessor("biped/living/hold_uchigatana_sheath", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_UCHIGATANA = builder.nextAccessor("biped/living/hold_uchigatana", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_TACHI = builder.nextAccessor("biped/living/hold_tachi", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_LONGSWORD = builder.nextAccessor("biped/living/hold_longsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_SPEAR = builder.nextAccessor("biped/living/hold_spear", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_DUAL_WEAPON = builder.nextAccessor("biped/living/hold_dual", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		BIPED_HOLD_LIECHTENAUER = builder.nextAccessor("biped/living/hold_liechtenauer", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
 		
-		BIPED_WALK_GREATSWORD = event.nextAccessor("biped/living/walk_greatsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_SPEAR = event.nextAccessor("biped/living/walk_spear", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_UCHIGATANA_SHEATHING = event.nextAccessor("biped/living/walk_uchigatana_sheath", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_UCHIGATANA = event.nextAccessor("biped/living/walk_uchigatana", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_TWOHAND = event.nextAccessor("biped/living/walk_twohand", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_LONGSWORD = event.nextAccessor("biped/living/walk_longsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_WALK_LIECHTENAUER = event.nextAccessor("biped/living/walk_liechtenauer", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_GREATSWORD = builder.nextAccessor("biped/living/walk_greatsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_SPEAR = builder.nextAccessor("biped/living/walk_spear", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_UCHIGATANA_SHEATHING = builder.nextAccessor("biped/living/walk_uchigatana_sheath", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_UCHIGATANA = builder.nextAccessor("biped/living/walk_uchigatana", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_TWOHAND = builder.nextAccessor("biped/living/walk_twohand", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_LONGSWORD = builder.nextAccessor("biped/living/walk_longsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_WALK_LIECHTENAUER = builder.nextAccessor("biped/living/walk_liechtenauer", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
 		
-		BIPED_RUN_GREATSWORD = event.nextAccessor("biped/living/run_greatsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_RUN_UCHIGATANA = event.nextAccessor("biped/living/run_uchigatana", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_RUN_UCHIGATANA_SHEATHING = event.nextAccessor("biped/living/run_uchigatana_sheath", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_RUN_DUAL = event.nextAccessor("biped/living/run_dual", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		BIPED_RUN_LONGSWORD = event.nextAccessor("biped/living/run_longsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_RUN_GREATSWORD = builder.nextAccessor("biped/living/run_greatsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_RUN_UCHIGATANA = builder.nextAccessor("biped/living/run_uchigatana", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_RUN_UCHIGATANA_SHEATHING = builder.nextAccessor("biped/living/run_uchigatana_sheath", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_RUN_DUAL = builder.nextAccessor("biped/living/run_dual", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		BIPED_RUN_LONGSWORD = builder.nextAccessor("biped/living/run_longsword", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
 		
-		BIPED_UCHIGATANA_SCRAP = event.nextAccessor("biped/living/uchigatana_scrap", (accessor) ->
+		BIPED_UCHIGATANA_SCRAP = builder.nextAccessor("biped/living/uchigatana_scrap", (accessor) ->
 			new StaticAnimation(0.05F, false, accessor, Armatures.BIPED)
 				.addEvents(InTimeEvent.create(0.15F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(EpicFightSounds.SWORD_IN.get())));
-		BIPED_LIECHTENAUER_READY = event.nextAccessor("biped/living/liechtenauer_ready", (accessor) -> new StaticAnimation(0.1F, false, accessor, Armatures.BIPED));
+		BIPED_LIECHTENAUER_READY = builder.nextAccessor("biped/living/liechtenauer_ready", (accessor) -> new StaticAnimation(0.1F, false, accessor, Armatures.BIPED));
 		
-		BIPED_HIT_SHIELD = event.nextAccessor("biped/combat/hit_shield", (accessor) -> new MirrorAnimation(0.05F, false, accessor, "biped/combat/hit_shield_mainhand", "biped/combat/hit_shield_offhand", Armatures.BIPED));
+		BIPED_HIT_SHIELD = builder.nextAccessor("biped/combat/hit_shield", (accessor) -> new MirrorAnimation(0.05F, false, accessor, "biped/combat/hit_shield_mainhand", "biped/combat/hit_shield_offhand", Armatures.BIPED));
 		
-		BIPED_CLIMBING = event.nextAccessor("biped/living/climb", (accessor) ->
+		BIPED_CLIMBING = builder.nextAccessor("biped/living/climb", (accessor) ->
 			new MovementAnimation(0.16F, true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (self.isLinkAnimation()) {
@@ -653,116 +656,116 @@ public class Animations {
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
 				.addStateRemoveOld(EntityState.INACTION, true));
 		
-		BIPED_SLEEPING = event.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
+		BIPED_SLEEPING = builder.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
 		
-		BIPED_JAVELIN_AIM = event.nextAccessor("biped/combat/javelin_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/javelin_aim_mid", "biped/combat/javelin_aim_up", "biped/combat/javelin_aim_down", "biped/combat/javelin_aim_lying", Armatures.BIPED));
-		BIPED_JAVELIN_THROW = event.nextAccessor("biped/combat/javelin_throw", (accessor) -> new ReboundAnimation(0.08F, false, accessor, "biped/combat/javelin_throw_mid", "biped/combat/javelin_throw_up", "biped/combat/javelin_throw_down", "biped/combat/javelin_throw_lying", Armatures.BIPED));
+		BIPED_JAVELIN_AIM = builder.nextAccessor("biped/combat/javelin_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/javelin_aim_mid", "biped/combat/javelin_aim_up", "biped/combat/javelin_aim_down", "biped/combat/javelin_aim_lying", Armatures.BIPED));
+		BIPED_JAVELIN_THROW = builder.nextAccessor("biped/combat/javelin_throw", (accessor) -> new ReboundAnimation(0.08F, false, accessor, "biped/combat/javelin_throw_mid", "biped/combat/javelin_throw_up", "biped/combat/javelin_throw_down", "biped/combat/javelin_throw_lying", Armatures.BIPED));
 		
-		OFF_ANIMATION_HIGHEST = event.nextAccessor("common/off_highest", (accessor) -> new OffAnimation(accessor));
-		OFF_ANIMATION_MIDDLE = event.nextAccessor("common/off_middle", (accessor) -> new OffAnimation(accessor));
-		OFF_ANIMATION_LOWEST = event.nextAccessor("common/off_lowest", (accessor) -> new OffAnimation(accessor));
+		OFF_ANIMATION_HIGHEST = builder.nextAccessor("common/off_highest", (accessor) -> new OffAnimation(accessor));
+		OFF_ANIMATION_MIDDLE = builder.nextAccessor("common/off_middle", (accessor) -> new OffAnimation(accessor));
+		OFF_ANIMATION_LOWEST = builder.nextAccessor("common/off_lowest", (accessor) -> new OffAnimation(accessor));
 		
-		ZOMBIE_IDLE = event.nextAccessor("zombie/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		ZOMBIE_WALK = event.nextAccessor("zombie/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		ZOMBIE_CHASE = event.nextAccessor("zombie/chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		ZOMBIE_IDLE = builder.nextAccessor("zombie/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		ZOMBIE_WALK = builder.nextAccessor("zombie/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		ZOMBIE_CHASE = builder.nextAccessor("zombie/chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
 		
-		CREEPER_IDLE = event.nextAccessor("creeper/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.CREEPER));
-		CREEPER_WALK = event.nextAccessor("creeper/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.CREEPER));
+		CREEPER_IDLE = builder.nextAccessor("creeper/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.CREEPER));
+		CREEPER_WALK = builder.nextAccessor("creeper/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.CREEPER));
 		
-		ENDERMAN_IDLE = event.nextAccessor("enderman/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.ENDERMAN));
-		ENDERMAN_WALK = event.nextAccessor("enderman/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.ENDERMAN));
-		ENDERMAN_RAGE_IDLE = event.nextAccessor("enderman/rage_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.ENDERMAN));
-		ENDERMAN_RAGE_WALK = event.nextAccessor("enderman/rage_walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.ENDERMAN));
+		ENDERMAN_IDLE = builder.nextAccessor("enderman/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.ENDERMAN));
+		ENDERMAN_WALK = builder.nextAccessor("enderman/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.ENDERMAN));
+		ENDERMAN_RAGE_IDLE = builder.nextAccessor("enderman/rage_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.ENDERMAN));
+		ENDERMAN_RAGE_WALK = builder.nextAccessor("enderman/rage_walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.ENDERMAN));
 		
-		WITHER_SKELETON_WALK = event.nextAccessor("wither_skeleton/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		WITHER_SKELETON_CHASE = event.nextAccessor("wither_skeleton/chase", (accessor) -> new MovementAnimation(0.36F, true, accessor, Armatures.BIPED));
-		WITHER_SKELETON_IDLE = event.nextAccessor("wither_skeleton/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		WITHER_SKELETON_SPECIAL_SPAWN = event.nextAccessor("wither_skeleton/special_spawn", (accessor) -> new InvincibleAnimation(0.0F, accessor, Armatures.BIPED));
+		WITHER_SKELETON_WALK = builder.nextAccessor("wither_skeleton/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		WITHER_SKELETON_CHASE = builder.nextAccessor("wither_skeleton/chase", (accessor) -> new MovementAnimation(0.36F, true, accessor, Armatures.BIPED));
+		WITHER_SKELETON_IDLE = builder.nextAccessor("wither_skeleton/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		WITHER_SKELETON_SPECIAL_SPAWN = builder.nextAccessor("wither_skeleton/special_spawn", (accessor) -> new InvincibleAnimation(0.0F, accessor, Armatures.BIPED));
 		
-		SPIDER_IDLE = event.nextAccessor("spider/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.SPIDER));
-		SPIDER_CRAWL = event.nextAccessor("spider/crawl", (accessor) -> new MovementAnimation(true, accessor, Armatures.SPIDER));
+		SPIDER_IDLE = builder.nextAccessor("spider/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.SPIDER));
+		SPIDER_CRAWL = builder.nextAccessor("spider/crawl", (accessor) -> new MovementAnimation(true, accessor, Armatures.SPIDER));
 		
-		GOLEM_IDLE = event.nextAccessor("iron_golem/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.IRON_GOLEM));
-		GOLEM_WALK = event.nextAccessor("iron_golem/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.IRON_GOLEM));
+		GOLEM_IDLE = builder.nextAccessor("iron_golem/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.IRON_GOLEM));
+		GOLEM_WALK = builder.nextAccessor("iron_golem/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.IRON_GOLEM));
 		
-		HOGLIN_IDLE = event.nextAccessor("hoglin/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.HOGLIN));
-		HOGLIN_WALK = event.nextAccessor("hoglin/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.HOGLIN));
+		HOGLIN_IDLE = builder.nextAccessor("hoglin/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.HOGLIN));
+		HOGLIN_WALK = builder.nextAccessor("hoglin/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.HOGLIN));
 		
-		ILLAGER_IDLE = event.nextAccessor("illager/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		ILLAGER_WALK = event.nextAccessor("illager/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		VINDICATOR_IDLE_AGGRESSIVE = event.nextAccessor("illager/idle_aggressive", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		VINDICATOR_CHASE = event.nextAccessor("illager/chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
-		EVOKER_CAST_SPELL = event.nextAccessor("illager/spellcast", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		ILLAGER_IDLE = builder.nextAccessor("illager/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		ILLAGER_WALK = builder.nextAccessor("illager/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		VINDICATOR_IDLE_AGGRESSIVE = builder.nextAccessor("illager/idle_aggressive", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		VINDICATOR_CHASE = builder.nextAccessor("illager/chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
+		EVOKER_CAST_SPELL = builder.nextAccessor("illager/spellcast", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
 		
-		RAVAGER_IDLE = event.nextAccessor("ravager/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.RAVAGER));
-		RAVAGER_WALK = event.nextAccessor("ravager/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.RAVAGER));
+		RAVAGER_IDLE = builder.nextAccessor("ravager/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.RAVAGER));
+		RAVAGER_WALK = builder.nextAccessor("ravager/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.RAVAGER));
 		
-		VEX_IDLE = event.nextAccessor("vex/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.VEX));
-		VEX_FLIPPING = event.nextAccessor("vex/flip", (accessor) -> new StaticAnimation(0.05F, true, accessor, Armatures.VEX));
+		VEX_IDLE = builder.nextAccessor("vex/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.VEX));
+		VEX_FLIPPING = builder.nextAccessor("vex/flip", (accessor) -> new StaticAnimation(0.05F, true, accessor, Armatures.VEX));
 		
-		PIGLIN_IDLE = event.nextAccessor("piglin/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_WALK = event.nextAccessor("piglin/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_ZOMBIFIED_IDLE = event.nextAccessor("piglin/zombified_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_ZOMBIFIED_WALK = event.nextAccessor("piglin/zombified_walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_ZOMBIFIED_CHASE = event.nextAccessor("piglin/zombified_chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_CELEBRATE1 = event.nextAccessor("piglin/celebrate1", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_CELEBRATE2 = event.nextAccessor("piglin/celebrate2", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_CELEBRATE3 = event.nextAccessor("piglin/celebrate3", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
-		PIGLIN_ADMIRE = event.nextAccessor("piglin/admire", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_IDLE = builder.nextAccessor("piglin/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_WALK = builder.nextAccessor("piglin/walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_ZOMBIFIED_IDLE = builder.nextAccessor("piglin/zombified_idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_ZOMBIFIED_WALK = builder.nextAccessor("piglin/zombified_walk", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_ZOMBIFIED_CHASE = builder.nextAccessor("piglin/zombified_chase", (accessor) -> new MovementAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_CELEBRATE1 = builder.nextAccessor("piglin/celebrate1", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_CELEBRATE2 = builder.nextAccessor("piglin/celebrate2", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_CELEBRATE3 = builder.nextAccessor("piglin/celebrate3", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
+		PIGLIN_ADMIRE = builder.nextAccessor("piglin/admire", (accessor) -> new StaticAnimation(true, accessor, Armatures.PIGLIN));
 		
-		WITHER_IDLE = event.nextAccessor("wither/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.WITHER));
+		WITHER_IDLE = builder.nextAccessor("wither/idle", (accessor) -> new StaticAnimation(true, accessor, Armatures.WITHER));
 		
-		SPEAR_GUARD = event.nextAccessor("biped/skill/guard_spear", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		SWORD_GUARD = event.nextAccessor("biped/skill/guard_sword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		SWORD_DUAL_GUARD = event.nextAccessor("biped/skill/guard_dualsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
-		GREATSWORD_GUARD = event.nextAccessor("biped/skill/guard_greatsword", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
-		UCHIGATANA_GUARD = event.nextAccessor("biped/skill/guard_uchigatana", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
-		LONGSWORD_GUARD = event.nextAccessor("biped/skill/guard_longsword", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
+		SPEAR_GUARD = builder.nextAccessor("biped/skill/guard_spear", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		SWORD_GUARD = builder.nextAccessor("biped/skill/guard_sword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		SWORD_DUAL_GUARD = builder.nextAccessor("biped/skill/guard_dualsword", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
+		GREATSWORD_GUARD = builder.nextAccessor("biped/skill/guard_greatsword", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
+		UCHIGATANA_GUARD = builder.nextAccessor("biped/skill/guard_uchigatana", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
+		LONGSWORD_GUARD = builder.nextAccessor("biped/skill/guard_longsword", (accessor) -> new StaticAnimation(0.25F, true, accessor, Armatures.BIPED));
 		
-		STEEL_WHIRLWIND_CHARGING = event.nextAccessor("biped/skill/steel_whirlwind_charging", (accessor) ->
+		STEEL_WHIRLWIND_CHARGING = builder.nextAccessor("biped/skill/steel_whirlwind_charging", (accessor) ->
 			new StaticAnimation(0.15F, false, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CHARGING));
 		
 		/**
 		 * Main Frame Animations
 		 **/
-		BIPED_ROLL_FORWARD = event.nextAccessor("biped/skill/roll_forward", (accessor) ->
+		BIPED_ROLL_FORWARD = builder.nextAccessor("biped/skill/roll_forward", (accessor) ->
 			new DodgeAnimation(0.1F, accessor, 0.6F, 0.8F, Armatures.BIPED)
 				.addEvents(InTimeEvent.create(0.0F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.SERVER).params(EpicFightSounds.ROLL.get())));
 		
-		BIPED_ROLL_BACKWARD = event.nextAccessor("biped/skill/roll_backward", (accessor) ->
+		BIPED_ROLL_BACKWARD = builder.nextAccessor("biped/skill/roll_backward", (accessor) ->
 			new DodgeAnimation(0.1F, accessor, 0.6F, 0.8F, Armatures.BIPED)
 				.addEvents(InTimeEvent.create(0.0F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.SERVER).params(EpicFightSounds.ROLL.get())));
 		
-		BIPED_STEP_FORWARD = event.nextAccessor("biped/skill/step_forward", (accessor) ->
+		BIPED_STEP_FORWARD = builder.nextAccessor("biped/skill/step_forward", (accessor) ->
 			new DodgeAnimation(0.1F, 0.35F, accessor, 0.6F, 1.65F, Armatures.BIPED)
 				.addState(EntityState.LOCKON_ROTATE, true)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
-		BIPED_STEP_BACKWARD = event.nextAccessor("biped/skill/step_backward", (accessor) ->
+		BIPED_STEP_BACKWARD = builder.nextAccessor("biped/skill/step_backward", (accessor) ->
 			new DodgeAnimation(0.1F, 0.35F, accessor, 0.6F, 1.65F, Armatures.BIPED)
 				.addState(EntityState.LOCKON_ROTATE, true)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
-		BIPED_STEP_LEFT = event.nextAccessor("biped/skill/step_left", (accessor) ->
+		BIPED_STEP_LEFT = builder.nextAccessor("biped/skill/step_left", (accessor) ->
 			new DodgeAnimation(0.1F, 0.35F, accessor, 0.6F, 1.65F, Armatures.BIPED)
 				.addState(EntityState.LOCKON_ROTATE, true)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
-		BIPED_STEP_RIGHT = event.nextAccessor("biped/skill/step_right", (accessor) ->
+		BIPED_STEP_RIGHT = builder.nextAccessor("biped/skill/step_right", (accessor) ->
 			new DodgeAnimation(0.1F, 0.35F, accessor, 0.6F, 1.65F, Armatures.BIPED)
 				.addState(EntityState.LOCKON_ROTATE, true)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
-		BIPED_KNOCKDOWN_WAKEUP_LEFT = event.nextAccessor("biped/skill/knockdown_wakeup_left", (accessor) -> new DodgeAnimation(0.1F, accessor, 0.8F, 0.6F, Armatures.BIPED));
-		BIPED_KNOCKDOWN_WAKEUP_RIGHT = event.nextAccessor("biped/skill/knockdown_wakeup_right", (accessor) -> new DodgeAnimation(0.1F, accessor, 0.8F, 0.6F, Armatures.BIPED));
+		BIPED_KNOCKDOWN_WAKEUP_LEFT = builder.nextAccessor("biped/skill/knockdown_wakeup_left", (accessor) -> new DodgeAnimation(0.1F, accessor, 0.8F, 0.6F, Armatures.BIPED));
+		BIPED_KNOCKDOWN_WAKEUP_RIGHT = builder.nextAccessor("biped/skill/knockdown_wakeup_right", (accessor) -> new DodgeAnimation(0.1F, accessor, 0.8F, 0.6F, Armatures.BIPED));
 		
-		BIPED_DEMOLITION_LEAP_CHARGING = event.nextAccessor("biped/skill/demolition_leap_charge", (accessor) ->
+		BIPED_DEMOLITION_LEAP_CHARGING = builder.nextAccessor("biped/skill/demolition_leap_charge", (accessor) ->
 			new ActionAnimation(0.15F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CHARGING)
@@ -787,9 +790,9 @@ public class Animations {
 				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true));
 		
-		BIPED_DEMOLITION_LEAP = event.nextAccessor("biped/skill/demolition_leap", (accessor) -> new ActionAnimation(0.05F, 0.45F, accessor, Armatures.BIPED));
+		BIPED_DEMOLITION_LEAP = builder.nextAccessor("biped/skill/demolition_leap", (accessor) -> new ActionAnimation(0.05F, 0.45F, accessor, Armatures.BIPED));
 		
-		BIPED_PHANTOM_ASCENT_FORWARD = event.nextAccessor("biped/skill/phantom_ascent_forward", (accessor) ->
+		BIPED_PHANTOM_ASCENT_FORWARD = builder.nextAccessor("biped/skill/phantom_ascent_forward", (accessor) ->
 				new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.newTimePair(0.0F, 0.5F)
@@ -800,7 +803,7 @@ public class Animations {
 					entitypatch.playSound(EpicFightSounds.ROLL.get(), 0, 0);
 					entitypatch.getOriginal().level().addAlwaysVisibleParticle(EpicFightParticles.AIR_BURST.get(), pos.x, pos.y + entitypatch.getOriginal().getBbHeight() * 0.5D, pos.z, 0, -1, 2);
 				}, Side.CLIENT)));
-		BIPED_PHANTOM_ASCENT_BACKWARD = event.nextAccessor("biped/skill/phantom_ascent_backward", (accessor) ->
+		BIPED_PHANTOM_ASCENT_BACKWARD = builder.nextAccessor("biped/skill/phantom_ascent_backward", (accessor) ->
 			new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.newTimePair(0.0F, 0.5F)
@@ -812,170 +815,170 @@ public class Animations {
 					entitypatch.getOriginal().level().addAlwaysVisibleParticle(EpicFightParticles.AIR_BURST.get(), pos.x, pos.y + entitypatch.getOriginal().getBbHeight() * 0.5D, pos.z, 0, -1, 2);
 				}, Side.CLIENT)));
 		
-		FIST_AUTO1 = event.nextAccessor("biped/combat/fist_auto1", (accessor) ->
+		FIST_AUTO1 = builder.nextAccessor("biped/combat/fist_auto1", (accessor) ->
 			new BasicAttackAnimation(0.08F, 0.05F, 0.15F, 0.15F, InteractionHand.OFF_HAND, null, Armatures.BIPED.get().toolL, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 3.2F));
-		FIST_AUTO2 = event.nextAccessor("biped/combat/fist_auto2", (accessor) ->
+		FIST_AUTO2 = builder.nextAccessor("biped/combat/fist_auto2", (accessor) ->
 			new BasicAttackAnimation(0.08F, 0.05F, 0.15F, 0.15F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 3.2F));
-		FIST_AUTO3 = event.nextAccessor("biped/combat/fist_auto3", (accessor) ->
+		FIST_AUTO3 = builder.nextAccessor("biped/combat/fist_auto3", (accessor) ->
 			new BasicAttackAnimation(0.08F, 0.05F, 0.15F, 0.5F, InteractionHand.OFF_HAND, null, Armatures.BIPED.get().toolL, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 3.2F));
-		FIST_DASH = event.nextAccessor("biped/combat/fist_dash", (accessor) ->
+		FIST_DASH = builder.nextAccessor("biped/combat/fist_dash", (accessor) ->
 			new DashAttackAnimation(0.06F, 0.05F, 0.15F, 0.3F, 0.7F, null, Armatures.BIPED.get().shoulderR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE));
 		
-		SWORD_AUTO1 = event.nextAccessor("biped/combat/sword_auto1", (accessor) ->
+		SWORD_AUTO1 = builder.nextAccessor("biped/combat/sword_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.0F, 0.1F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F));
-		SWORD_AUTO2 = event.nextAccessor("biped/combat/sword_auto2", (accessor) ->
+		SWORD_AUTO2 = builder.nextAccessor("biped/combat/sword_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.05F, 0.15F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F));
-		SWORD_AUTO3 = event.nextAccessor("biped/combat/sword_auto3", (accessor) ->
+		SWORD_AUTO3 = builder.nextAccessor("biped/combat/sword_auto3", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.05F, 0.15F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F));
-		SWORD_DASH = event.nextAccessor("biped/combat/sword_dash", (accessor) ->
+		SWORD_DASH = builder.nextAccessor("biped/combat/sword_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.1F, 0.1F, 0.2F, 0.65F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F));
 		
-		GREATSWORD_AUTO1 = event.nextAccessor("biped/combat/greatsword_auto1", (accessor) ->
+		GREATSWORD_AUTO1 = builder.nextAccessor("biped/combat/greatsword_auto1", (accessor) ->
 			new BasicAttackAnimation(0.25F, 0.15F, 0.25F, 0.65F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F));
-		GREATSWORD_AUTO2 = event.nextAccessor("biped/combat/greatsword_auto2", (accessor) ->
+		GREATSWORD_AUTO2 = builder.nextAccessor("biped/combat/greatsword_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.5F, 0.65F, 1.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F));
-		GREATSWORD_DASH = event.nextAccessor("biped/combat/greatsword_dash", (accessor) ->
+		GREATSWORD_DASH = builder.nextAccessor("biped/combat/greatsword_dash", (accessor) ->
 			new DashAttackAnimation(0.2F, 0.2F, 0.35F, 0.6F, 1.2F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, false)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.FINISHER))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addEvents(InTimeEvent.create(0.4F, Animations.ReusableSources.FRACTURE_GROUND_SIMPLE, Side.CLIENT).params(new Vec3f(0.0F, -0.24F, -2.0F), Armatures.BIPED.get().toolR, 1.1D, 0.55F)));
 		
-		SPEAR_ONEHAND_AUTO = event.nextAccessor("biped/combat/spear_onehand_auto", (accessor) ->
+		SPEAR_ONEHAND_AUTO = builder.nextAccessor("biped/combat/spear_onehand_auto", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.35F, 0.45F, 0.75F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		SPEAR_TWOHAND_AUTO1 = event.nextAccessor("biped/combat/spear_twohand_auto1", (accessor) ->
+		SPEAR_TWOHAND_AUTO1 = builder.nextAccessor("biped/combat/spear_twohand_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.2F, 0.3F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		SPEAR_TWOHAND_AUTO2 = event.nextAccessor("biped/combat/spear_twohand_auto2", (accessor) ->
+		SPEAR_TWOHAND_AUTO2 = builder.nextAccessor("biped/combat/spear_twohand_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.2F, 0.3F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		SPEAR_DASH = event.nextAccessor("biped/combat/spear_dash", (accessor) ->
+		SPEAR_DASH = builder.nextAccessor("biped/combat/spear_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.25F, 0.3F, 0.4F, 0.8F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
 		
-		TOOL_AUTO1 = event.nextAccessor("biped/combat/tool_auto1", (accessor) ->
+		TOOL_AUTO1 = builder.nextAccessor("biped/combat/tool_auto1", (accessor) ->
 			new BasicAttackAnimation(0.13F, 0.05F, 0.15F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.setResourceLocation(EpicFightMod.MODID, "biped/combat/sword_auto1"));
-		TOOL_AUTO2 = event.nextAccessor("biped/combat/sword_auto4", (accessor) ->
+		TOOL_AUTO2 = builder.nextAccessor("biped/combat/sword_auto4", (accessor) ->
 			new BasicAttackAnimation(0.13F, 0.05F, 0.15F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		TOOL_DASH = event.nextAccessor("biped/combat/tool_dash", (accessor) ->
+		TOOL_DASH = builder.nextAccessor("biped/combat/tool_dash", (accessor) ->
 			new DashAttackAnimation(0.16F, 0.08F, 0.15F, 0.25F, 0.58F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(1)));
 		
-		AXE_DASH = event.nextAccessor("biped/combat/axe_dash", (accessor) ->
+		AXE_DASH = builder.nextAccessor("biped/combat/axe_dash", (accessor) ->
 			new DashAttackAnimation(0.25F, 0.08F, 0.4F, 0.46F, 0.9F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true));
 		
-		SWORD_DUAL_AUTO1 = event.nextAccessor("biped/combat/sword_dual_auto1", (accessor) ->
+		SWORD_DUAL_AUTO1 = builder.nextAccessor("biped/combat/sword_dual_auto1", (accessor) ->
 			new BasicAttackAnimation(0.08F, 0.1F, 0.2F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
-		SWORD_DUAL_AUTO2 = event.nextAccessor("biped/combat/sword_dual_auto2", (accessor) ->
+		SWORD_DUAL_AUTO2 = builder.nextAccessor("biped/combat/sword_dual_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.1F, 0.2F, 0.3F, InteractionHand.OFF_HAND, null, Armatures.BIPED.get().toolL, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.newTimePair(0.0F, 0.2F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
-		SWORD_DUAL_AUTO3 = event.nextAccessor("biped/combat/sword_dual_auto3", (accessor) ->
+		SWORD_DUAL_AUTO3 = builder.nextAccessor("biped/combat/sword_dual_auto3", (accessor) ->
 			new BasicAttackAnimation(0.1F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.25F, 0.25F, 0.35F, 0.6F, Float.MAX_VALUE, InteractionHand.MAIN_HAND, AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolR, null), AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolL, null)))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F));
-		SWORD_DUAL_DASH = event.nextAccessor("biped/combat/sword_dual_dash", (accessor) ->
+		SWORD_DUAL_DASH = builder.nextAccessor("biped/combat/sword_dual_dash", (accessor) ->
 			new DashAttackAnimation(0.16F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.05F, 0.05F, 0.3F, 0.75F, Float.MAX_VALUE, InteractionHand.MAIN_HAND, AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolR, null), AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolL, null)))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null));
 		
-		UCHIGATANA_AUTO1 = event.nextAccessor("biped/combat/uchigatana_auto1", (accessor) ->
+		UCHIGATANA_AUTO1 = builder.nextAccessor("biped/combat/uchigatana_auto1", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.15F, 0.25F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F));
-		UCHIGATANA_AUTO2 = event.nextAccessor("biped/combat/uchigatana_auto2", (accessor) ->
+		UCHIGATANA_AUTO2 = builder.nextAccessor("biped/combat/uchigatana_auto2", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.2F, 0.3F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F));
-		UCHIGATANA_AUTO3 = event.nextAccessor("biped/combat/uchigatana_auto3", (accessor) ->
+		UCHIGATANA_AUTO3 = builder.nextAccessor("biped/combat/uchigatana_auto3", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.15F, 0.25F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F));
-		UCHIGATANA_DASH = event.nextAccessor("biped/combat/uchigatana_dash", (accessor) ->
+		UCHIGATANA_DASH = builder.nextAccessor("biped/combat/uchigatana_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.05F, 0.05F, 0.15F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F));
-		UCHIGATANA_SHEATHING_AUTO = event.nextAccessor("biped/combat/uchigatana_sheath_auto", (accessor) ->
+		UCHIGATANA_SHEATHING_AUTO = builder.nextAccessor("biped/combat/uchigatana_sheath_auto", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.0F, 0.1F, 0.65F, ColliderPreset.BATTOJUTSU, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.ARMOR_NEGATION_MODIFIER, ValueModifier.adder(30.0F))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(2.0F))
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(3))
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get()));
-		UCHIGATANA_SHEATHING_DASH = event.nextAccessor("biped/combat/uchigatana_sheath_dash", (accessor) ->
+		UCHIGATANA_SHEATHING_DASH = builder.nextAccessor("biped/combat/uchigatana_sheath_dash", (accessor) ->
 			new DashAttackAnimation(0.05F, 0.05F, 0.2F, 0.35F, 0.65F, ColliderPreset.BATTOJUTSU_DASH, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.ARMOR_NEGATION_MODIFIER, ValueModifier.adder(30.0F))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(2.0F))
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(3))
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get()));
 		
-		AXE_AUTO1 = event.nextAccessor("biped/combat/axe_auto1", (accessor) -> new BasicAttackAnimation(0.15F, 0.05F, 0.15F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		AXE_AUTO2 = event.nextAccessor("biped/combat/axe_auto2", (accessor) -> new BasicAttackAnimation(0.15F, 0.05F, 0.15F, 0.85F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		AXE_AUTO1 = builder.nextAccessor("biped/combat/axe_auto1", (accessor) -> new BasicAttackAnimation(0.15F, 0.05F, 0.15F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		AXE_AUTO2 = builder.nextAccessor("biped/combat/axe_auto2", (accessor) -> new BasicAttackAnimation(0.15F, 0.05F, 0.15F, 0.85F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 		
-		LONGSWORD_AUTO1 = event.nextAccessor("biped/combat/longsword_auto1", (accessor) ->
+		LONGSWORD_AUTO1 = builder.nextAccessor("biped/combat/longsword_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.25F, 0.35F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		LONGSWORD_AUTO2 = event.nextAccessor("biped/combat/longsword_auto2", (accessor) ->
+		LONGSWORD_AUTO2 = builder.nextAccessor("biped/combat/longsword_auto2", (accessor) ->
 			new BasicAttackAnimation(0.15F, 0.2F, 0.3F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		LONGSWORD_AUTO3 = event.nextAccessor("biped/combat/longsword_auto3", (accessor) ->
+		LONGSWORD_AUTO3 = builder.nextAccessor("biped/combat/longsword_auto3", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.2F, 0.3F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		LONGSWORD_DASH = event.nextAccessor("biped/combat/longsword_dash", (accessor) ->
+		LONGSWORD_DASH = builder.nextAccessor("biped/combat/longsword_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.1F, 0.25F, 0.4F, 0.75F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
 		
-		LONGSWORD_LIECHTENAUER_AUTO1 = event.nextAccessor("biped/combat/longsword_liechtenauer_auto1", (accessor) ->
+		LONGSWORD_LIECHTENAUER_AUTO1 = builder.nextAccessor("biped/combat/longsword_liechtenauer_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.15F, 0.25F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		LONGSWORD_LIECHTENAUER_AUTO2 = event.nextAccessor("biped/combat/longsword_liechtenauer_auto2", (accessor) ->
+		LONGSWORD_LIECHTENAUER_AUTO2 = builder.nextAccessor("biped/combat/longsword_liechtenauer_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.2F, 0.3F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		LONGSWORD_LIECHTENAUER_AUTO3 = event.nextAccessor("biped/combat/longsword_liechtenauer_auto3", (accessor) ->
+		LONGSWORD_LIECHTENAUER_AUTO3 = builder.nextAccessor("biped/combat/longsword_liechtenauer_auto3", (accessor) ->
 			new BasicAttackAnimation(0.25F, 0.1F, 0.2F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
 		
-		TACHI_AUTO1 = event.nextAccessor("biped/combat/tachi_auto1", (accessor) ->
+		TACHI_AUTO1 = builder.nextAccessor("biped/combat/tachi_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.35F, 0.4F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 3));
-		TACHI_AUTO2 = event.nextAccessor("biped/combat/tachi_auto2", (accessor) ->
+		TACHI_AUTO2 = builder.nextAccessor("biped/combat/tachi_auto2", (accessor) ->
 			new BasicAttackAnimation(0.15F, 0.2F, 0.3F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		TACHI_AUTO3 = event.nextAccessor("biped/combat/tachi_auto3", (accessor) ->
+		TACHI_AUTO3 = builder.nextAccessor("biped/combat/tachi_auto3", (accessor) ->
 			new BasicAttackAnimation(0.15F, 0.2F, 0.3F, 0.85F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
-		TACHI_DASH = event.nextAccessor("biped/combat/tachi_dash", (accessor) ->
+		TACHI_DASH = builder.nextAccessor("biped/combat/tachi_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.3F, 0.3F, 0.4F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
 		
-		DAGGER_AUTO1 = event.nextAccessor("biped/combat/dagger_auto1", (accessor) ->
+		DAGGER_AUTO1 = builder.nextAccessor("biped/combat/dagger_auto1", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.05F, 0.15F, 0.25F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_AUTO2 = event.nextAccessor("biped/combat/dagger_auto2", (accessor) ->
+		DAGGER_AUTO2 = builder.nextAccessor("biped/combat/dagger_auto2", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.0F, 0.1F, 0.25F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_AUTO3 = event.nextAccessor("biped/combat/dagger_auto3", (accessor) ->
+		DAGGER_AUTO3 = builder.nextAccessor("biped/combat/dagger_auto3", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.2F, 0.25F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DASH = event.nextAccessor("biped/combat/dagger_dash", (accessor) ->
+		DAGGER_DASH = builder.nextAccessor("biped/combat/dagger_dash", (accessor) ->
 			new DashAttackAnimation(0.05F, 0.1F, 0.2F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F)
 				.newTimePair(0.0F, 0.4F)
@@ -984,156 +987,156 @@ public class Animations {
 					.addConditionalState(0, EntityState.CAN_BASIC_ATTACK, false)
 					.addConditionalState(1, EntityState.CAN_BASIC_ATTACK, true));
 		
-		DAGGER_DUAL_AUTO1 = event.nextAccessor("biped/combat/dagger_dual_auto1", (accessor) ->
+		DAGGER_DUAL_AUTO1 = builder.nextAccessor("biped/combat/dagger_dual_auto1", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.1F, 0.2F, 0.25F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DUAL_AUTO2 = event.nextAccessor("biped/combat/dagger_dual_auto2", (accessor) ->
+		DAGGER_DUAL_AUTO2 = builder.nextAccessor("biped/combat/dagger_dual_auto2", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.0F, 0.1F, 0.16F, InteractionHand.OFF_HAND, null, Armatures.BIPED.get().toolL, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DUAL_AUTO3 = event.nextAccessor("biped/combat/dagger_dual_auto3", (accessor) ->
+		DAGGER_DUAL_AUTO3 = builder.nextAccessor("biped/combat/dagger_dual_auto3", (accessor) ->
 			new BasicAttackAnimation(0.05F, 0.0F, 0.1F, 0.2F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DUAL_AUTO4 = event.nextAccessor("biped/combat/dagger_dual_auto4", (accessor) ->
+		DAGGER_DUAL_AUTO4 = builder.nextAccessor("biped/combat/dagger_dual_auto4", (accessor) ->
 			new BasicAttackAnimation(0.15F, accessor, Armatures.BIPED,
 					  new Phase(0.0F, 0.1F, 0.1F, 0.2F, 0.2F, 0.2F, InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL, null)
 					, new Phase(0.2F, 0.2F, 0.3F, 0.6F, 0.6F, Armatures.BIPED.get().toolR, null))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DUAL_DASH = event.nextAccessor("biped/combat/dagger_dual_dash", (accessor) ->
+		DAGGER_DUAL_DASH = builder.nextAccessor("biped/combat/dagger_dual_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, accessor, Armatures.BIPED,
 					  new Phase(0.0F, 0.1F, 0.2F, 0.3F, 0.65F, Float.MAX_VALUE, InteractionHand.MAIN_HAND, AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolR, null), AttackAnimation.JointColliderPair.of(Armatures.BIPED.get().toolL, null)))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true));
 		
-		TRIDENT_AUTO1 = event.nextAccessor("biped/combat/trident_auto1", (accessor) -> new BasicAttackAnimation(0.3F, 0.05F, 0.16F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		TRIDENT_AUTO2 = event.nextAccessor("biped/combat/trident_auto2", (accessor) -> new BasicAttackAnimation(0.05F, 0.25F, 0.36F, 0.55F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		TRIDENT_AUTO3 = event.nextAccessor("biped/combat/trident_auto3", (accessor) -> new BasicAttackAnimation(0.2F, 0.3F, 0.46F, 0.9F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		TRIDENT_AUTO1 = builder.nextAccessor("biped/combat/trident_auto1", (accessor) -> new BasicAttackAnimation(0.3F, 0.05F, 0.16F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		TRIDENT_AUTO2 = builder.nextAccessor("biped/combat/trident_auto2", (accessor) -> new BasicAttackAnimation(0.05F, 0.25F, 0.36F, 0.55F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		TRIDENT_AUTO3 = builder.nextAccessor("biped/combat/trident_auto3", (accessor) -> new BasicAttackAnimation(0.2F, 0.3F, 0.46F, 0.9F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 		
-		SWORD_AIR_SLASH = event.nextAccessor("biped/combat/sword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		SWORD_DUAL_AIR_SLASH = event.nextAccessor("biped/combat/sword_dual_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.5F, ColliderPreset.DUAL_SWORD_AIR_SLASH, Armatures.BIPED.get().torso, accessor, Armatures.BIPED));
-		UCHIGATANA_AIR_SLASH = event.nextAccessor("biped/combat/uchigatana_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.05F, 0.16F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		UCHIGATANA_SHEATH_AIR_SLASH = event.nextAccessor("biped/combat/uchigatana_sheath_airslash", (accessor) ->
+		SWORD_AIR_SLASH = builder.nextAccessor("biped/combat/sword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		SWORD_DUAL_AIR_SLASH = builder.nextAccessor("biped/combat/sword_dual_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.5F, ColliderPreset.DUAL_SWORD_AIR_SLASH, Armatures.BIPED.get().torso, accessor, Armatures.BIPED));
+		UCHIGATANA_AIR_SLASH = builder.nextAccessor("biped/combat/uchigatana_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.05F, 0.16F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		UCHIGATANA_SHEATH_AIR_SLASH = builder.nextAccessor("biped/combat/uchigatana_sheath_airslash", (accessor) ->
 			new AirSlashAnimation(0.1F, 0.1F, 0.16F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.ARMOR_NEGATION_MODIFIER, ValueModifier.adder(30.0F))
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(2))
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get())
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F));
-		SPEAR_ONEHAND_AIR_SLASH = event.nextAccessor("biped/combat/spear_onehand_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		SPEAR_TWOHAND_AIR_SLASH = event.nextAccessor("biped/combat/spear_twohand_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.25F, 0.36F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+		SPEAR_ONEHAND_AIR_SLASH = builder.nextAccessor("biped/combat/spear_onehand_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		SPEAR_TWOHAND_AIR_SLASH = builder.nextAccessor("biped/combat/spear_twohand_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.25F, 0.36F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.FINISHER)));
-		LONGSWORD_AIR_SLASH = event.nextAccessor("biped/combat/longsword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.3F, 0.41F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		GREATSWORD_AIR_SLASH = event.nextAccessor("biped/combat/greatsword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.5F, 0.55F, 0.71F, 0.75F, false, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+		LONGSWORD_AIR_SLASH = builder.nextAccessor("biped/combat/longsword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.3F, 0.41F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		GREATSWORD_AIR_SLASH = builder.nextAccessor("biped/combat/greatsword_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.5F, 0.55F, 0.71F, 0.75F, false, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.FINISHER)));
-		FIST_AIR_SLASH = event.nextAccessor("biped/combat/fist_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+		FIST_AIR_SLASH = builder.nextAccessor("biped/combat/fist_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 4.0F));
-		DAGGER_AIR_SLASH = event.nextAccessor("biped/combat/dagger_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+		DAGGER_AIR_SLASH = builder.nextAccessor("biped/combat/dagger_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
-		DAGGER_DUAL_AIR_SLASH = event.nextAccessor("biped/combat/dagger_dual_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, ColliderPreset.DUAL_DAGGER_AIR_SLASH, Armatures.BIPED.get().torso, accessor, Armatures.BIPED)
+		DAGGER_DUAL_AIR_SLASH = builder.nextAccessor("biped/combat/dagger_dual_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.15F, 0.26F, 0.4F, ColliderPreset.DUAL_DAGGER_AIR_SLASH, Armatures.BIPED.get().torso, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.0F)
 				.setResourceLocation(EpicFightMod.MODID, "biped/combat/sword_dual_airslash"));
-		AXE_AIRSLASH = event.nextAccessor("biped/combat/axe_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.3F, 0.4F, 0.65F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		AXE_AIRSLASH = builder.nextAccessor("biped/combat/axe_airslash", (accessor) -> new AirSlashAnimation(0.1F, 0.3F, 0.4F, 0.65F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 		
-		SWORD_MOUNT_ATTACK = event.nextAccessor("biped/combat/sword_mount_attack", (accessor) -> new MountAttackAnimation(0.16F, 0.1F, 0.2F, 0.25F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		SPEAR_MOUNT_ATTACK = event.nextAccessor("biped/combat/spear_mount_attack", (accessor) ->
+		SWORD_MOUNT_ATTACK = builder.nextAccessor("biped/combat/sword_mount_attack", (accessor) -> new MountAttackAnimation(0.16F, 0.1F, 0.2F, 0.25F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		SPEAR_MOUNT_ATTACK = builder.nextAccessor("biped/combat/spear_mount_attack", (accessor) ->
 			new MountAttackAnimation(0.16F, 0.38F, 0.38F, 0.45F, 0.8F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_ONEHAND1 = event.nextAccessor("biped/combat/mob_onehand1", (accessor) ->
+		BIPED_MOB_ONEHAND1 = builder.nextAccessor("biped/combat/mob_onehand1", (accessor) ->
 			new AttackAnimation(0.08F, 0.45F, 0.55F, 0.66F, 0.95F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_ONEHAND2 = event.nextAccessor("biped/combat/mob_onehand2", (accessor) ->
+		BIPED_MOB_ONEHAND2 = builder.nextAccessor("biped/combat/mob_onehand2", (accessor) ->
 			new AttackAnimation(0.08F, 0.45F, 0.5F, 0.61F, 0.95F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_GREATSWORD = event.nextAccessor("biped/combat/mob_greatsword1", (accessor) ->
+		BIPED_MOB_GREATSWORD = builder.nextAccessor("biped/combat/mob_greatsword1", (accessor) ->
 			new AttackAnimation(0.15F, 0.45F, 0.85F, 0.95F, 2.2F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_TACHI = event.nextAccessor("biped/combat/mob_tachi_special", (accessor) ->
+		BIPED_MOB_TACHI = builder.nextAccessor("biped/combat/mob_tachi_special", (accessor) ->
 			new AttackAnimation(0.15F, 0.15F, 0.25F, 0.35F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_SPEAR_ONEHAND = event.nextAccessor("biped/combat/mob_spear_onehand", (accessor) ->
+		BIPED_MOB_SPEAR_ONEHAND = builder.nextAccessor("biped/combat/mob_spear_onehand", (accessor) ->
 			new AttackAnimation(0.15F, 0.15F, 0.4F, 0.5F, 1.1F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_SPEAR_TWOHAND1 = event.nextAccessor("biped/combat/mob_spear_twohand1", (accessor) ->
+		BIPED_MOB_SPEAR_TWOHAND1 = builder.nextAccessor("biped/combat/mob_spear_twohand1", (accessor) ->
 			new AttackAnimation(0.15F, 0.15F, 0.4F, 0.5F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_SPEAR_TWOHAND2 = event.nextAccessor("biped/combat/mob_spear_twohand2", (accessor) ->
+		BIPED_MOB_SPEAR_TWOHAND2 = builder.nextAccessor("biped/combat/mob_spear_twohand2", (accessor) ->
 			new AttackAnimation(0.15F, 0.15F, 0.4F, 0.5F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_SPEAR_TWOHAND3 = event.nextAccessor("biped/combat/mob_spear_twohand3", (accessor) ->
+		BIPED_MOB_SPEAR_TWOHAND3 = builder.nextAccessor("biped/combat/mob_spear_twohand3", (accessor) ->
 			new AttackAnimation(0.15F, 0.15F, 0.4F, 0.5F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_SWORD_DUAL1 = event.nextAccessor("biped/combat/mob_sword_dual1", (accessor) ->
+		BIPED_MOB_SWORD_DUAL1 = builder.nextAccessor("biped/combat/mob_sword_dual1", (accessor) ->
 			new AttackAnimation(0.1F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.35F, 0.4F, 0.5F, 0.55F, 0.55F, InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL, null), new Phase(0.55F, 0.55F, 0.65F, 0.75F, 1.15F, Float.MAX_VALUE, Armatures.BIPED.get().toolR, null))
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_SWORD_DUAL2 = event.nextAccessor("biped/combat/mob_sword_dual2", (accessor) ->
+		BIPED_MOB_SWORD_DUAL2 = builder.nextAccessor("biped/combat/mob_sword_dual2", (accessor) ->
 			new AttackAnimation(0.1F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.3F, 0.3F, 0.45F, 0.55F, 0.55F, InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL, null), new Phase(0.55F, 0.55F, 0.65F, 0.75F, 1.15F, Float.MAX_VALUE, Armatures.BIPED.get().toolR, null))
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_SWORD_DUAL3 = event.nextAccessor("biped/combat/mob_sword_dual3", (accessor) ->
+		BIPED_MOB_SWORD_DUAL3 = builder.nextAccessor("biped/combat/mob_sword_dual3", (accessor) ->
 			new AttackAnimation(0.1F, 0.25F, 0.85F, 0.95F, 1.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true));
 		
-		BIPED_MOB_LONGSWORD1 = event.nextAccessor("biped/combat/mob_longsword1", (accessor) ->
+		BIPED_MOB_LONGSWORD1 = builder.nextAccessor("biped/combat/mob_longsword1", (accessor) ->
 			new AttackAnimation(0.15F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.15F, 0.25F, 0.35F, 0.45F, 0.65F, Armatures.BIPED.get().toolR, null), new Phase(0.65F, 0.85F, 1.0F, 1.1F, 1.55F, Float.MAX_VALUE, Armatures.BIPED.get().toolR, null))
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_LONGSWORD2 = event.nextAccessor("biped/combat/mob_longsword2", (accessor) ->
+		BIPED_MOB_LONGSWORD2 = builder.nextAccessor("biped/combat/mob_longsword2", (accessor) ->
 			new AttackAnimation(0.25F, 0.3F, 0.45F, 0.55F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_UCHIGATANA1 = event.nextAccessor("biped/combat/mob_uchigatana1", (accessor) ->
+		BIPED_MOB_UCHIGATANA1 = builder.nextAccessor("biped/combat/mob_uchigatana1", (accessor) ->
 			new AttackAnimation(0.05F, 0.3F, 0.2F, 0.3F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_UCHIGATANA2 = event.nextAccessor("biped/combat/mob_uchigatana2", (accessor) ->
+		BIPED_MOB_UCHIGATANA2 = builder.nextAccessor("biped/combat/mob_uchigatana2", (accessor) ->
 			new AttackAnimation(0.15F, 0.01F, 0.01F, 0.1F, 0.55F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_UCHIGATANA3 = event.nextAccessor("biped/combat/mob_uchigatana3", (accessor) ->
+		BIPED_MOB_UCHIGATANA3 = builder.nextAccessor("biped/combat/mob_uchigatana3", (accessor) ->
 			new AttackAnimation(0.15F, 0.01F, 0.1F, 0.2F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		BIPED_MOB_DAGGER_ONEHAND1 = event.nextAccessor("biped/combat/mob_dagger_onehand1", (accessor) ->
+		BIPED_MOB_DAGGER_ONEHAND1 = builder.nextAccessor("biped/combat/mob_dagger_onehand1", (accessor) ->
 			new AttackAnimation(0.1F, 0.05F, 0.15F, 0.25F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_DAGGER_ONEHAND2 = event.nextAccessor("biped/combat/mob_dagger_onehand2", (accessor) ->
+		BIPED_MOB_DAGGER_ONEHAND2 = builder.nextAccessor("biped/combat/mob_dagger_onehand2", (accessor) ->
 			new AttackAnimation(0.1F, 0.05F, 0.01F, 0.1F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_DAGGER_ONEHAND3 = event.nextAccessor("biped/combat/mob_dagger_onehand3", (accessor) ->
+		BIPED_MOB_DAGGER_ONEHAND3 = builder.nextAccessor("biped/combat/mob_dagger_onehand3", (accessor) ->
 			new AttackAnimation(0.1F, 0.3F, 0.5F, 0.6F, 0.9F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_DAGGER_TWOHAND1 = event.nextAccessor("biped/combat/mob_dagger_twohand1", (accessor) ->
+		BIPED_MOB_DAGGER_TWOHAND1 = builder.nextAccessor("biped/combat/mob_dagger_twohand1", (accessor) ->
 			new AttackAnimation(0.15F, accessor, Armatures.BIPED,
 					  new Phase(0.0F, 0.0F, 0.05F, 0.15F, 0.3F, 0.3F, Armatures.BIPED.get().toolR, null)
 					, new Phase(0.3F, 0.3F, 0.3F, 0.4F, 0.5F, 0.5F, InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL, null)
 					, new Phase(0.5F, 0.5F, 0.55F, 0.65F, 1.0F, Float.MAX_VALUE, Armatures.BIPED.get().toolR, null))
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_DAGGER_TWOHAND2 = event.nextAccessor("biped/combat/mob_dagger_twohand2", (accessor) ->
+		BIPED_MOB_DAGGER_TWOHAND2 = builder.nextAccessor("biped/combat/mob_dagger_twohand2", (accessor) ->
 			new AttackAnimation(0.1F, 0.25F, 0.75F, 0.85F, 1.0F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		BIPED_MOB_THROW = event.nextAccessor("biped/combat/mob_throw", (accessor) -> new RangedAttackAnimation(0.11F, 0.1F, 0.45F, 0.49F, 0.95F, null, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED));
+		BIPED_MOB_THROW = builder.nextAccessor("biped/combat/mob_throw", (accessor) -> new RangedAttackAnimation(0.11F, 0.1F, 0.45F, 0.49F, 0.95F, null, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED));
 		
-		SWORD_GUARD_HIT = event.nextAccessor("biped/skill/guard_sword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		SWORD_GUARD_ACTIVE_HIT1 = event.nextAccessor("biped/skill/guard_sword_hit_active1", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
-		SWORD_GUARD_ACTIVE_HIT2 = event.nextAccessor("biped/skill/guard_sword_hit_active2", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
-		SWORD_GUARD_ACTIVE_HIT3 = event.nextAccessor("biped/skill/guard_sword_hit_active3", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
+		SWORD_GUARD_HIT = builder.nextAccessor("biped/skill/guard_sword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		SWORD_GUARD_ACTIVE_HIT1 = builder.nextAccessor("biped/skill/guard_sword_hit_active1", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
+		SWORD_GUARD_ACTIVE_HIT2 = builder.nextAccessor("biped/skill/guard_sword_hit_active2", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
+		SWORD_GUARD_ACTIVE_HIT3 = builder.nextAccessor("biped/skill/guard_sword_hit_active3", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
 		
-		LONGSWORD_GUARD_ACTIVE_HIT1 = event.nextAccessor("biped/skill/guard_longsword_hit_active1", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
-		LONGSWORD_GUARD_ACTIVE_HIT2 = event.nextAccessor("biped/skill/guard_longsword_hit_active2", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
+		LONGSWORD_GUARD_ACTIVE_HIT1 = builder.nextAccessor("biped/skill/guard_longsword_hit_active1", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
+		LONGSWORD_GUARD_ACTIVE_HIT2 = builder.nextAccessor("biped/skill/guard_longsword_hit_active2", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
 		
-		SWORD_DUAL_GUARD_HIT = event.nextAccessor("biped/skill/guard_dualsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		BIPED_COMMON_NEUTRALIZED = event.nextAccessor("biped/skill/guard_break1", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
-		GREATSWORD_GUARD_BREAK = event.nextAccessor("biped/skill/guard_break2", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
+		SWORD_DUAL_GUARD_HIT = builder.nextAccessor("biped/skill/guard_dualsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		BIPED_COMMON_NEUTRALIZED = builder.nextAccessor("biped/skill/guard_break1", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
+		GREATSWORD_GUARD_BREAK = builder.nextAccessor("biped/skill/guard_break2", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
 		
-		LONGSWORD_GUARD_HIT = event.nextAccessor("biped/skill/guard_longsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		SPEAR_GUARD_HIT = event.nextAccessor("biped/skill/guard_spear_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		GREATSWORD_GUARD_HIT = event.nextAccessor("biped/skill/guard_greatsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		UCHIGATANA_GUARD_HIT = event.nextAccessor("biped/skill/guard_uchigatana_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		LONGSWORD_GUARD_HIT = builder.nextAccessor("biped/skill/guard_longsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		SPEAR_GUARD_HIT = builder.nextAccessor("biped/skill/guard_spear_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		GREATSWORD_GUARD_HIT = builder.nextAccessor("biped/skill/guard_greatsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
+		UCHIGATANA_GUARD_HIT = builder.nextAccessor("biped/skill/guard_uchigatana_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
 		
-		METEOR_SLAM = event.nextAccessor("biped/skill/greatsword_slam", (accessor) ->
+		METEOR_SLAM = builder.nextAccessor("biped/skill/greatsword_slam", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.2F, 0.3F, 1.0F, ColliderPreset.GREATSWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.NO_SOUND.get())
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
@@ -1172,7 +1175,7 @@ public class Animations {
 				.addEvents(InTimeEvent.create(0.25F, Animations.ReusableSources.FRACTURE_METEOR_STRIKE, Side.SERVER)
 										.params(new Vec3f(0.0F, -0.2F, -1.8F), Armatures.BIPED.get().toolR, 0.3F)));
 		
-		REVELATION_ONEHAND = event.nextAccessor("biped/skill/revelation_normal", (accessor) ->
+		REVELATION_ONEHAND = builder.nextAccessor("biped/skill/revelation_normal", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.05F, 0.1F, 0.35F, ColliderPreset.FIST, Armatures.BIPED.get().legR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH.get())
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
@@ -1188,7 +1191,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE));
 		
-		REVELATION_TWOHAND = event.nextAccessor("biped/skill/revelation_twohand", (accessor) ->
+		REVELATION_TWOHAND = builder.nextAccessor("biped/skill/revelation_twohand", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.05F, 0.1F, 0.35F, ColliderPreset.FIST_FIXED, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH.get())
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.HIT_BLUNT)
@@ -1204,49 +1207,49 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE));
 		
-		BIPED_HIT_SHORT = event.nextAccessor("biped/combat/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.BIPED));
-		BIPED_HIT_LONG = event.nextAccessor("biped/combat/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED));
-		BIPED_HIT_ON_MOUNT = event.nextAccessor("biped/combat/hit_on_mount", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED)
+		BIPED_HIT_SHORT = builder.nextAccessor("biped/combat/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.BIPED));
+		BIPED_HIT_LONG = builder.nextAccessor("biped/combat/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED));
+		BIPED_HIT_ON_MOUNT = builder.nextAccessor("biped/combat/hit_on_mount", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_LANDING = event.nextAccessor("biped/living/landing", (accessor) -> new LongHitAnimation(0.03F, accessor, Armatures.BIPED));
-		BIPED_KNOCKDOWN = event.nextAccessor("biped/combat/knockdown", (accessor) -> new KnockdownAnimation(0.08F, accessor, Armatures.BIPED));
-		BIPED_DEATH = event.nextAccessor("biped/living/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.BIPED));
+		BIPED_LANDING = builder.nextAccessor("biped/living/landing", (accessor) -> new LongHitAnimation(0.03F, accessor, Armatures.BIPED));
+		BIPED_KNOCKDOWN = builder.nextAccessor("biped/combat/knockdown", (accessor) -> new KnockdownAnimation(0.08F, accessor, Armatures.BIPED));
+		BIPED_DEATH = builder.nextAccessor("biped/living/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.BIPED));
 		
-		CREEPER_HIT_SHORT = event.nextAccessor("creeper/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.CREEPER));
-		CREEPER_HIT_LONG = event.nextAccessor("creeper/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.CREEPER));
-		CREEPER_DEATH = event.nextAccessor("creeper/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.CREEPER));
+		CREEPER_HIT_SHORT = builder.nextAccessor("creeper/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.CREEPER));
+		CREEPER_HIT_LONG = builder.nextAccessor("creeper/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.CREEPER));
+		CREEPER_DEATH = builder.nextAccessor("creeper/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.CREEPER));
 		
-		ENDERMAN_HIT_SHORT = event.nextAccessor("enderman/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.ENDERMAN));
-		ENDERMAN_HIT_LONG = event.nextAccessor("enderman/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.ENDERMAN));
-		ENDERMAN_NEUTRALIZED = event.nextAccessor("enderman/neutralized", (accessor) -> new LongHitAnimation(0.18F, accessor, Armatures.ENDERMAN));
-		ENDERMAN_CONVERT_RAGE = event.nextAccessor("enderman/convert_rage", (accessor) -> new InvincibleAnimation(0.16F, accessor, Armatures.ENDERMAN));
-		ENDERMAN_TP_KICK1 = event.nextAccessor("enderman/tp_kick1", (accessor) -> new AttackAnimation(0.06F, 0.15F, 0.3F, 0.4F, 1.0F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
-		ENDERMAN_TP_KICK2 = event.nextAccessor("enderman/tp_kick2", (accessor) -> new AttackAnimation(0.16F, 0.15F, 0.25F, 0.45F, 1.0F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
-		ENDERMAN_KICK1 = event.nextAccessor("enderman/rush_kick", (accessor) ->
+		ENDERMAN_HIT_SHORT = builder.nextAccessor("enderman/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.ENDERMAN));
+		ENDERMAN_HIT_LONG = builder.nextAccessor("enderman/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.ENDERMAN));
+		ENDERMAN_NEUTRALIZED = builder.nextAccessor("enderman/neutralized", (accessor) -> new LongHitAnimation(0.18F, accessor, Armatures.ENDERMAN));
+		ENDERMAN_CONVERT_RAGE = builder.nextAccessor("enderman/convert_rage", (accessor) -> new InvincibleAnimation(0.16F, accessor, Armatures.ENDERMAN));
+		ENDERMAN_TP_KICK1 = builder.nextAccessor("enderman/tp_kick1", (accessor) -> new AttackAnimation(0.06F, 0.15F, 0.3F, 0.4F, 1.0F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
+		ENDERMAN_TP_KICK2 = builder.nextAccessor("enderman/tp_kick2", (accessor) -> new AttackAnimation(0.16F, 0.15F, 0.25F, 0.45F, 1.0F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
+		ENDERMAN_KICK1 = builder.nextAccessor("enderman/rush_kick", (accessor) ->
 			new AttackAnimation(0.16F, 0.66F, 0.7F, 0.81F, 1.6F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legL, accessor, Armatures.ENDERMAN)
 				.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.setter(4.0F)));
-		ENDERMAN_KICK2 = event.nextAccessor("enderman/jump_kick", (accessor) -> new AttackAnimation(0.16F, 0.8F, 0.8F, 0.9F, 1.3F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
-		ENDERMAN_KNEE = event.nextAccessor("enderman/knee", (accessor) ->
+		ENDERMAN_KICK2 = builder.nextAccessor("enderman/jump_kick", (accessor) -> new AttackAnimation(0.16F, 0.8F, 0.8F, 0.9F, 1.3F, ColliderPreset.ENDERMAN_LIMB, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN));
+		ENDERMAN_KNEE = builder.nextAccessor("enderman/knee", (accessor) ->
 			new AttackAnimation(0.16F, 0.25F, 0.25F, 0.31F, 1.0F, ColliderPreset.FIST, Armatures.ENDERMAN.get().legR, accessor, Armatures.ENDERMAN)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.LONG));
-		ENDERMAN_KICK_COMBO = event.nextAccessor("enderman/kick_twice", (accessor) ->
+		ENDERMAN_KICK_COMBO = builder.nextAccessor("enderman/kick_twice", (accessor) ->
 			new AttackAnimation(0.1F, accessor, Armatures.ENDERMAN,
 					new Phase(0.0F, 0.15F, 0.15F, 0.21F, 0.46F, 0.6F, Armatures.ENDERMAN.get().legR, ColliderPreset.ENDERMAN_LIMB),
 					new Phase(0.6F, 0.75F, 0.75F, 0.81F, 1.6F, Float.MAX_VALUE, Armatures.ENDERMAN.get().legL, ColliderPreset.ENDERMAN_LIMB))
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
-		ENDERMAN_GRASP = event.nextAccessor("enderman/grasp", (accessor) ->
+		ENDERMAN_GRASP = builder.nextAccessor("enderman/grasp", (accessor) ->
 			new AttackAnimation(0.06F, 0.5F, 0.45F, 1.0F, 1.0F, ColliderPreset.ENDERMAN_LIMB, Armatures.BIPED.get().toolR, accessor, Armatures.ENDERMAN)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		ENDERMAN_DEATH = event.nextAccessor("enderman/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.ENDERMAN));
-		ENDERMAN_TP_EMERGENCE = event.nextAccessor("enderman/teleport", (accessor) ->
+		ENDERMAN_DEATH = builder.nextAccessor("enderman/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.ENDERMAN));
+		ENDERMAN_TP_EMERGENCE = builder.nextAccessor("enderman/teleport", (accessor) ->
 			new ActionAnimation(0.05F, accessor, Armatures.ENDERMAN)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
 		
-		DRAGON_IDLE = event.nextAccessor("dragon/idle", (accessor) -> new StaticAnimation(0.6F, true, accessor, Armatures.DRAGON));
-		DRAGON_WALK = event.nextAccessor("dragon/walk", (accessor) ->
+		DRAGON_IDLE = builder.nextAccessor("dragon/idle", (accessor) -> new StaticAnimation(0.6F, true, accessor, Armatures.DRAGON));
+		DRAGON_WALK = builder.nextAccessor("dragon/walk", (accessor) ->
 			new EnderDragonWalkAnimation(0.35F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, Armatures.DRAGON.get().legFrontR3, IntIntPair.of(0, 3), 0.12F, 0, new boolean[] {true, true, true}),
@@ -1254,11 +1257,11 @@ public class Animations {
 					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, Armatures.DRAGON.get().legBackR3, IntIntPair.of(2, 5), 0.1344F, 4, new boolean[] {true, true, true}),
 					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, Armatures.DRAGON.get().legBackL3, IntIntPair.of(0, 3), 0.1344F, 2, new boolean[] {true, true, true})
 				}));
-		DRAGON_FLY = event.nextAccessor("dragon/fly", (accessor) -> new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
+		DRAGON_FLY = builder.nextAccessor("dragon/fly", (accessor) -> new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
 				.addEvents(InTimeEvent.create(0.4F, Animations.ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT)));
-		DRAGON_DEATH = event.nextAccessor("dragon/death", (accessor) -> new EnderDragonDeathAnimation(1.0F, accessor, Armatures.DRAGON));
+		DRAGON_DEATH = builder.nextAccessor("dragon/death", (accessor) -> new EnderDragonDeathAnimation(1.0F, accessor, Armatures.DRAGON));
 		
-		DRAGON_GROUND_TO_FLY = event.nextAccessor("dragon/ground_to_fly", (accessor) -> 
+		DRAGON_GROUND_TO_FLY = builder.nextAccessor("dragon/ground_to_fly", (accessor) -> 
 			new EnderDragonActionAnimation(0.25F, accessor, Armatures.DRAGON, new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false}),
 					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false}),
@@ -1277,7 +1280,7 @@ public class Animations {
 					}, AnimationEvent.Side.BOTH)
 				));
 		
-		DRAGON_FLY_TO_GROUND = event.nextAccessor("dragon/fly_to_ground", (accessor) ->
+		DRAGON_FLY_TO_GROUND = builder.nextAccessor("dragon/fly_to_ground", (accessor) ->
 			new EnderDragonDynamicActionAnimation(0.35F, accessor, Armatures.DRAGON, new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true}),
 					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true}),
@@ -1324,7 +1327,7 @@ public class Animations {
 					}, AnimationEvent.Side.SERVER)
 				));
 		
-		DRAGON_ATTACK1 = event.nextAccessor("dragon/attack1", (accessor) ->
+		DRAGON_ATTACK1 = builder.nextAccessor("dragon/attack1", (accessor) ->
 			new EnderDragonAttackAnimation(0.35F, 0.4F, 0.65F, 0.76F, 1.9F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON, new IKInfo[] {
 				IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(2, 4), 0.12F, 0, new boolean[] {true, true}),
 				IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {false, false, false, false, true}),
@@ -1342,7 +1345,7 @@ public class Animations {
 				}
 			}, AnimationEvent.Side.CLIENT)));
 		
-		DRAGON_ATTACK2 = event.nextAccessor("dragon/attack2", (accessor) ->
+		DRAGON_ATTACK2 = builder.nextAccessor("dragon/attack2", (accessor) ->
 			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true}),
@@ -1350,7 +1353,7 @@ public class Animations {
 					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
 				}));
 		
-		DRAGON_ATTACK3 = event.nextAccessor("dragon/attack3", (accessor) ->
+		DRAGON_ATTACK3 = builder.nextAccessor("dragon/attack3", (accessor) ->
 			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontL3, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true}),
@@ -1358,7 +1361,7 @@ public class Animations {
 					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
 				}));
 		
-		DRAGON_ATTACK4 = event.nextAccessor("dragon/attack4", (accessor) ->
+		DRAGON_ATTACK4 = builder.nextAccessor("dragon/attack4", (accessor) ->
 			new EnderDragonAttackAnimation(0.35F, 0.5F, 1.15F, 1.26F, 1.9F, ColliderPreset.DRAGON_BODY, Armatures.DRAGON.get().rootJoint, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 7), 0.12F, 0, new boolean[] {false, false, false, false, true, true, true}),
@@ -1383,7 +1386,7 @@ public class Animations {
 				}, AnimationEvent.Side.BOTH))
 			);
 		
-		DRAGON_ATTACK4_RECOVERY = event.nextAccessor("dragon/attack4_recovery", (accessor) ->
+		DRAGON_ATTACK4_RECOVERY = builder.nextAccessor("dragon/attack4_recovery", (accessor) ->
 			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, false, true, true}),
@@ -1392,7 +1395,7 @@ public class Animations {
 					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, false, false})
 				}));
 		
-		DRAGON_FIREBALL = event.nextAccessor("dragon/fireball", (accessor) ->
+		DRAGON_FIREBALL = builder.nextAccessor("dragon/fireball", (accessor) ->
 			new EnderDragonActionAnimation(0.16F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, true, true}),
@@ -1424,11 +1427,11 @@ public class Animations {
 				}, Side.SERVER))
 			);
 		
-		DRAGON_AIRSTRIKE = event.nextAccessor("dragon/airstrike", (accessor) ->
+		DRAGON_AIRSTRIKE = builder.nextAccessor("dragon/airstrike", (accessor) ->
 			new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
 				.addEvents(InTimeEvent.create(0.3F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT)));
 		
-		DRAGON_BACKJUMP_PREPARE = event.nextAccessor("dragon/backjump_prepare", (accessor) ->
+		DRAGON_BACKJUMP_PREPARE = builder.nextAccessor("dragon/backjump_prepare", (accessor) ->
 			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
@@ -1440,7 +1443,7 @@ public class Animations {
 				entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_MOVE);
 			}, Side.BOTH)));
 		
-		DRAGON_BACKJUMP_MOVE = event.nextAccessor("dragon/backjump_move", (accessor) ->
+		DRAGON_BACKJUMP_MOVE = builder.nextAccessor("dragon/backjump_move", (accessor) ->
 			new AttackAnimation(0.0F, 10.0F, 10.0F, 10.0F, 10.0F, ColliderPreset.FIST, Armatures.DRAGON.get().rootJoint, accessor, Armatures.DRAGON)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
@@ -1448,7 +1451,7 @@ public class Animations {
 					entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_RECOVERY);
 				}, Side.BOTH)));
 		
-		DRAGON_BACKJUMP_RECOVERY = event.nextAccessor("dragon/backjump_recovery", (accessor) ->
+		DRAGON_BACKJUMP_RECOVERY = builder.nextAccessor("dragon/backjump_recovery", (accessor) ->
 			new EnderDragonActionAnimation(0.0F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {false, true, true, true}),
@@ -1469,7 +1472,7 @@ public class Animations {
 				}, AnimationEvent.Side.CLIENT))
 			);
 		
-		DRAGON_CRYSTAL_LINK = event.nextAccessor("dragon/crystal_link", (accessor) ->
+		DRAGON_CRYSTAL_LINK = builder.nextAccessor("dragon/crystal_link", (accessor) ->
 			new EnderDragonActionAnimation(0.5F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 2), 0.12F, 0, new boolean[] {true, true}),
@@ -1493,7 +1496,7 @@ public class Animations {
 				}, AnimationEvent.Side.CLIENT))
 			);
 		
-		DRAGON_NEUTRALIZED = event.nextAccessor("dragon/neutralized", (accessor) ->
+		DRAGON_NEUTRALIZED = builder.nextAccessor("dragon/neutralized", (accessor) ->
 			new EnderDragonActionAnimation(0.1F, accessor, Armatures.DRAGON,
 				new IKInfo[] {
 					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
@@ -1505,7 +1508,7 @@ public class Animations {
 				entitypatch.getAnimator().playAnimation(DRAGON_NEUTRALIZED_RECOVERY, 0);
 			}, AnimationEvent.Side.BOTH)));
 		
-		DRAGON_NEUTRALIZED_RECOVERY = event.nextAccessor("dragon/neutralized_recovery", (accessor) ->
+		DRAGON_NEUTRALIZED_RECOVERY = builder.nextAccessor("dragon/neutralized_recovery", (accessor) ->
 			new EnderDragonActionAnimation(0.05F, accessor, Armatures.DRAGON, new IKInfo[] {
 				IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, false, true}),
 				IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, false, true, true, true}),
@@ -1518,48 +1521,48 @@ public class Animations {
 				}
 			}, AnimationEvent.Side.SERVER)));
 		
-		SPIDER_ATTACK = event.nextAccessor("spider/attack", (accessor) -> new AttackAnimation(0.15F, 0.31F, 0.31F, 0.36F, 0.44F, ColliderPreset.SPIDER, Armatures.SPIDER.get().head, accessor, Armatures.SPIDER));
-		SPIDER_JUMP_ATTACK = event.nextAccessor("spider/jump_attack", (accessor) ->
+		SPIDER_ATTACK = builder.nextAccessor("spider/attack", (accessor) -> new AttackAnimation(0.15F, 0.31F, 0.31F, 0.36F, 0.44F, ColliderPreset.SPIDER, Armatures.SPIDER.get().head, accessor, Armatures.SPIDER));
+		SPIDER_JUMP_ATTACK = builder.nextAccessor("spider/jump_attack", (accessor) ->
 			new AttackAnimation(0.15F, 0.25F, 0.5F, 0.6F, 1.0F,  ColliderPreset.SPIDER, Armatures.SPIDER.get().head, accessor, Armatures.SPIDER)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true));
-		SPIDER_HIT = event.nextAccessor("spider/hit", (accessor) -> new HitAnimation(0.08F, accessor, Armatures.SPIDER));
-		SPIDER_NEUTRALIZED = event.nextAccessor("spider/neutralized", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.SPIDER));
-		SPIDER_DEATH = event.nextAccessor("spider/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.SPIDER));
+		SPIDER_HIT = builder.nextAccessor("spider/hit", (accessor) -> new HitAnimation(0.08F, accessor, Armatures.SPIDER));
+		SPIDER_NEUTRALIZED = builder.nextAccessor("spider/neutralized", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.SPIDER));
+		SPIDER_DEATH = builder.nextAccessor("spider/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.SPIDER));
 		
-		GOLEM_ATTACK1 = event.nextAccessor("iron_golem/attack1", (accessor) ->
+		GOLEM_ATTACK1 = builder.nextAccessor("iron_golem/attack1", (accessor) ->
 			new AttackAnimation(0.2F, 0.1F, 0.15F, 0.25F, 0.9F, ColliderPreset.HEAD, Armatures.IRON_GOLEM.get().head, accessor, Armatures.IRON_GOLEM)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN));
-		GOLEM_ATTACK2 = event.nextAccessor("iron_golem/attack2", (accessor) ->
+		GOLEM_ATTACK2 = builder.nextAccessor("iron_golem/attack2", (accessor) ->
 			new AttackAnimation(0.34F, 0.1F, 0.4F, 0.6F, 1.3F, ColliderPreset.GOLEM_SMASHDOWN, Armatures.IRON_GOLEM.get().LA4, accessor, Armatures.IRON_GOLEM)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.FINISHER)));
-		GOLEM_ATTACK3 = event.nextAccessor("iron_golem/attack3", (accessor) ->
+		GOLEM_ATTACK3 = builder.nextAccessor("iron_golem/attack3", (accessor) ->
 			new AttackAnimation(0.16F, 0.4F, 0.4F, 0.5F, 0.9F, ColliderPreset.GOLEM_SWING_ARM, Armatures.IRON_GOLEM.get().RA4, accessor, Armatures.IRON_GOLEM)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		GOLEM_ATTACK4 = event.nextAccessor("iron_golem/attack4", (accessor) ->
+		GOLEM_ATTACK4 = builder.nextAccessor("iron_golem/attack4", (accessor) ->
 			new AttackAnimation(0.16F, 0.4F, 0.4F, 0.5F, 0.9F, ColliderPreset.GOLEM_SWING_ARM, Armatures.IRON_GOLEM.get().LA4, accessor, Armatures.IRON_GOLEM)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		GOLEM_DEATH = event.nextAccessor("iron_golem/death", (accessor) -> new LongHitAnimation(0.11F, accessor, Armatures.IRON_GOLEM));
+		GOLEM_DEATH = builder.nextAccessor("iron_golem/death", (accessor) -> new LongHitAnimation(0.11F, accessor, Armatures.IRON_GOLEM));
 		
-		VINDICATOR_SWING_AXE1 = event.nextAccessor("illager/swing_axe1", (accessor) -> new AttackAnimation(0.2F, 0.2F, 0.3F, 0.4F, 0.9F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		VINDICATOR_SWING_AXE2 = event.nextAccessor("illager/swing_axe2", (accessor) -> new AttackAnimation(0.1F, 0.2F, 0.3F, 0.4F, 0.9F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
-		VINDICATOR_SWING_AXE3 = event.nextAccessor("illager/swing_axe3", (accessor) -> new AttackAnimation(0.1F, 0.15F, 0.45F, 0.55F, 1.05F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		VINDICATOR_SWING_AXE1 = builder.nextAccessor("illager/swing_axe1", (accessor) -> new AttackAnimation(0.2F, 0.2F, 0.3F, 0.4F, 0.9F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		VINDICATOR_SWING_AXE2 = builder.nextAccessor("illager/swing_axe2", (accessor) -> new AttackAnimation(0.1F, 0.2F, 0.3F, 0.4F, 0.9F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		VINDICATOR_SWING_AXE3 = builder.nextAccessor("illager/swing_axe3", (accessor) -> new AttackAnimation(0.1F, 0.15F, 0.45F, 0.55F, 1.05F, ColliderPreset.TOOLS, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 		
-		PIGLIN_DEATH = event.nextAccessor("piglin/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.PIGLIN));
+		PIGLIN_DEATH = builder.nextAccessor("piglin/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.PIGLIN));
 		
-		HOGLIN_DEATH = event.nextAccessor("hoglin/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.HOGLIN));
-		HOGLIN_ATTACK = event.nextAccessor("hoglin/attack", (accessor) -> new AttackAnimation(0.16F, 0.25F, 0.25F, 0.45F, 1.0F, ColliderPreset.GOLEM_SWING_ARM, Armatures.HOGLIN.get().head, accessor, Armatures.HOGLIN));
+		HOGLIN_DEATH = builder.nextAccessor("hoglin/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.HOGLIN));
+		HOGLIN_ATTACK = builder.nextAccessor("hoglin/attack", (accessor) -> new AttackAnimation(0.16F, 0.25F, 0.25F, 0.45F, 1.0F, ColliderPreset.GOLEM_SWING_ARM, Armatures.HOGLIN.get().head, accessor, Armatures.HOGLIN));
 		
-		RAVAGER_DEATH = event.nextAccessor("ravager/death", (accessor) -> new LongHitAnimation(0.11F, accessor, Armatures.RAVAGER));
-		RAVAGER_STUN = event.nextAccessor("ravager/groggy", (accessor) ->
+		RAVAGER_DEATH = builder.nextAccessor("ravager/death", (accessor) -> new LongHitAnimation(0.11F, accessor, Armatures.RAVAGER));
+		RAVAGER_STUN = builder.nextAccessor("ravager/groggy", (accessor) ->
 			new ActionAnimation(0.16F, accessor, Armatures.RAVAGER)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
-		RAVAGER_ATTACK1 = event.nextAccessor("ravager/attack1", (accessor) -> new AttackAnimation(0.16F, 0.2F, 0.4F, 0.5F, 0.55F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
-		RAVAGER_ATTACK2 = event.nextAccessor("ravager/attack2", (accessor) -> new AttackAnimation(0.16F, 0.2F, 0.4F, 0.5F, 1.3F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
-		RAVAGER_ATTACK3 = event.nextAccessor("ravager/attack3", (accessor) -> new AttackAnimation(0.16F, 0.0F, 1.1F, 1.16F, 1.6F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
+		RAVAGER_ATTACK1 = builder.nextAccessor("ravager/attack1", (accessor) -> new AttackAnimation(0.16F, 0.2F, 0.4F, 0.5F, 0.55F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
+		RAVAGER_ATTACK2 = builder.nextAccessor("ravager/attack2", (accessor) -> new AttackAnimation(0.16F, 0.2F, 0.4F, 0.5F, 1.3F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
+		RAVAGER_ATTACK3 = builder.nextAccessor("ravager/attack3", (accessor) -> new AttackAnimation(0.16F, 0.0F, 1.1F, 1.16F, 1.6F, ColliderPreset.HEADBUTT_RAVAGER, Armatures.RAVAGER.get().head, accessor, Armatures.RAVAGER));
 		
-		VEX_HIT = event.nextAccessor("vex/hit", (accessor) -> new HitAnimation(0.048F, accessor, Armatures.VEX));
-		VEX_DEATH = event.nextAccessor("vex/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.VEX));
-		VEX_CHARGE = event.nextAccessor("vex/charge", (accessor) ->
+		VEX_HIT = builder.nextAccessor("vex/hit", (accessor) -> new HitAnimation(0.048F, accessor, Armatures.VEX));
+		VEX_DEATH = builder.nextAccessor("vex/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.VEX));
+		VEX_CHARGE = builder.nextAccessor("vex/charge", (accessor) ->
 			new AttackAnimation(0.11F, 0.3F, 0.3F, 0.5F, 1.2F, ColliderPreset.VEX_CHARGE, Armatures.VEX.get().rootJoint, accessor, Armatures.VEX)
 				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, (entitypatch) -> entitypatch.getLastAttackPosition())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.VEX_TRACE)
@@ -1567,21 +1570,21 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> entitypatch.setLastAttackPosition(), Side.SERVER)));
 		
-		VEX_NEUTRALIZED = event.nextAccessor("vex/neutralized", (accessor) -> new LongHitAnimation(0.1F, accessor, Armatures.VEX));
+		VEX_NEUTRALIZED = builder.nextAccessor("vex/neutralized", (accessor) -> new LongHitAnimation(0.1F, accessor, Armatures.VEX));
 		
-		WITCH_DRINKING = event.nextAccessor("witch/drink", (accessor) -> new StaticAnimation(0.16F, false, accessor, Armatures.BIPED).addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
+		WITCH_DRINKING = builder.nextAccessor("witch/drink", (accessor) -> new StaticAnimation(0.16F, false, accessor, Armatures.BIPED).addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
 		
-		WITHER_SKELETON_ATTACK1 = event.nextAccessor("wither_skeleton/sword_attack1", (accessor) ->
+		WITHER_SKELETON_ATTACK1 = builder.nextAccessor("wither_skeleton/sword_attack1", (accessor) ->
 			new AttackAnimation(0.16F, 0.2F, 0.3F, 0.41F, 0.7F, ColliderPreset.SWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		WITHER_SKELETON_ATTACK2 = event.nextAccessor("wither_skeleton/sword_attack2", (accessor) ->
+		WITHER_SKELETON_ATTACK2 = builder.nextAccessor("wither_skeleton/sword_attack2", (accessor) ->
 			new AttackAnimation(0.16F, 0.25F, 0.25F, 0.36F, 0.7F, ColliderPreset.SWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		WITHER_SKELETON_ATTACK3 = event.nextAccessor("wither_skeleton/sword_attack3", (accessor) ->
+		WITHER_SKELETON_ATTACK3 = builder.nextAccessor("wither_skeleton/sword_attack3", (accessor) ->
 			new AttackAnimation(0.16F, 0.25F, 0.25F, 0.36F, 0.7F, ColliderPreset.SWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		WITHER_CHARGE = event.nextAccessor("wither/rush", (accessor) ->
+		WITHER_CHARGE = builder.nextAccessor("wither/rush", (accessor) ->
 			new AttackAnimation(0.35F, 0.35F, 0.35F, 0.66F, 2.05F, ColliderPreset.WITHER_CHARGE, Armatures.WITHER.get().rootJoint, accessor, Armatures.WITHER)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.BIG_ENTITY_MOVE.get())
 				.addProperty(AttackPhaseProperty.HIT_SOUND, EpicFightSounds.BLUNT_HIT_HARD.get())
@@ -1605,7 +1608,7 @@ public class Animations {
 						Vec3f prevPosition = Vec3f.sub(keyLast, keyOrigin, null);
 						Vec3f newPosition = new Vec3f(keyLast.x, verticalDistance, -horizontalDistance);
 						float scale = Math.min(newPosition.length() / prevPosition.length(), 5.0F);
-						Quaternionf rotator = Vec3f.getRotatorBetween(newPosition, keyLast);
+						Quaternionf rotator = Vec3f.getRotatorBetween(newPosition, keyLast, null);
 						
 						for (int i = startFrame; i <= endFrame; i++) {
 							Vec3f translation = keyframes[i].transform().translation();
@@ -1644,8 +1647,8 @@ public class Animations {
 					}, Side.CLIENT)
 				));
 		
-		WITHER_DEATH = event.nextAccessor("wither/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.WITHER));
-		WITHER_NEUTRALIZED = event.nextAccessor("wither/neutralized", (accessor) ->
+		WITHER_DEATH = builder.nextAccessor("wither/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.WITHER));
+		WITHER_NEUTRALIZED = builder.nextAccessor("wither/neutralized", (accessor) ->
 			new LongHitAnimation(0.05F, accessor, Armatures.WITHER)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS,
@@ -1655,7 +1658,7 @@ public class Animations {
 					}, Side.CLIENT)
 				));
 		
-		WITHER_SPELL_ARMOR = event.nextAccessor("wither/spell_wither_armor", (accessor) ->
+		WITHER_SPELL_ARMOR = builder.nextAccessor("wither/spell_wither_armor", (accessor) ->
 			new InvincibleAnimation(0.35F, accessor, Armatures.WITHER)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS,
@@ -1670,7 +1673,7 @@ public class Animations {
 					}, Side.SERVER))
 				);
 		
-		WITHER_BLOCKED = event.nextAccessor("wither/charging_blocked", (accessor) ->
+		WITHER_BLOCKED = builder.nextAccessor("wither/charging_blocked", (accessor) ->
 			new ActionAnimation(0.05F, accessor, Armatures.WITHER)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS,
 						SimpleEvent.create((entitypatch, animation, params) -> {
@@ -1692,15 +1695,15 @@ public class Animations {
 					}, Side.SERVER))
 				);
 		
-		WITHER_GHOST_STANDBY = event.nextAccessor("wither/ghost_stand", (accessor) -> new InvincibleAnimation(0.16F, accessor, Armatures.WITHER));
+		WITHER_GHOST_STANDBY = builder.nextAccessor("wither/ghost_stand", (accessor) -> new InvincibleAnimation(0.16F, accessor, Armatures.WITHER));
 		
-		WITHER_SWIRL = event.nextAccessor("wither/swirl", (accessor) ->
+		WITHER_SWIRL = builder.nextAccessor("wither/swirl", (accessor) ->
 			new AttackAnimation(0.2F, 0.05F, 0.4F, 0.51F, 1.6F, ColliderPreset.WITHER_CHARGE, Armatures.WITHER.get().torso, accessor, Armatures.WITHER)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_BIG.get())
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.setter(3))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.setter(6.0F)));
 		
-		WITHER_BEAM = event.nextAccessor("wither/laser", (accessor) ->
+		WITHER_BEAM = builder.nextAccessor("wither/laser", (accessor) ->
 			new ActionAnimation(0.05F, accessor, Armatures.WITHER)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addEvents(
@@ -1803,7 +1806,7 @@ public class Animations {
 				}, Side.SERVER)
 			));
 		
-		WITHER_BACKFLIP = event.nextAccessor("wither/backflip", (accessor) ->
+		WITHER_BACKFLIP = builder.nextAccessor("wither/backflip", (accessor) ->
 			new AttackAnimation(0.2F, 0.3F, 0.5F, 0.66F, 2.1F, ColliderPreset.WITHER_CHARGE, Armatures.WITHER.get().torso, accessor, Armatures.WITHER)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.BIG_ENTITY_MOVE.get())
 				.addProperty(AttackPhaseProperty.HIT_SOUND, EpicFightSounds.BLUNT_HIT_HARD.get())
@@ -1813,22 +1816,22 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null));
 		
-		ZOMBIE_ATTACK1 = event.nextAccessor("zombie/attack1", (accessor) ->
+		ZOMBIE_ATTACK1 = builder.nextAccessor("zombie/attack1", (accessor) ->
 			new AttackAnimation(0.1F, 0.3F, 0.4F, 0.6F, 0.85F, ColliderPreset.FIST, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		ZOMBIE_ATTACK2 = event.nextAccessor("zombie/attack2", (accessor) ->
+		ZOMBIE_ATTACK2 = builder.nextAccessor("zombie/attack2", (accessor) ->
 			new AttackAnimation(0.1F, 0.3F, 0.4F, 0.6F, 0.85F, ColliderPreset.FIST, Armatures.BIPED.get().toolL, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
-		ZOMBIE_ATTACK3 = event.nextAccessor("zombie/attack3", (accessor) ->
+		ZOMBIE_ATTACK3 = builder.nextAccessor("zombie/attack3", (accessor) ->
 			new AttackAnimation(0.1F, 0.5F, 0.5F, 0.6F, 1.15F, ColliderPreset.HEAD, Armatures.BIPED.get().head, accessor, Armatures.BIPED));
 		
-		SWEEPING_EDGE = event.nextAccessor("biped/skill/sweeping_edge", (accessor) ->
+		SWEEPING_EDGE = builder.nextAccessor("biped/skill/sweeping_edge", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.15F, 0.3F, 0.8F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 1)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		DANCING_EDGE = event.nextAccessor("biped/skill/dancing_edge", (accessor) ->
+		DANCING_EDGE = builder.nextAccessor("biped/skill/dancing_edge", (accessor) ->
 			new AttackAnimation(0.1F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.25F, 0.4F, 0.4F, 0.4F, Armatures.BIPED.get().toolR, null),
 					new Phase(0.4F, 0.4F, 0.5F, 0.55F, 0.6F, InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL, null),
@@ -1836,12 +1839,12 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true));
 		
-		THE_GUILLOTINE = event.nextAccessor("biped/skill/the_guillotine", (accessor) ->
+		THE_GUILLOTINE = builder.nextAccessor("biped/skill/the_guillotine", (accessor) ->
 			new AttackAnimation(0.15F, 0.2F, 0.7F, 0.75F, 1.1F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE));
 		
-		HEARTPIERCER = event.nextAccessor("biped/skill/heartpiercer", (accessor) ->
+		HEARTPIERCER = builder.nextAccessor("biped/skill/heartpiercer", (accessor) ->
 			new AttackAnimation(0.11F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.3F, 0.36F, 0.5F, 0.5F, Armatures.BIPED.get().toolR, null),
 					new Phase(0.5F, 0.5F, 0.56F, 0.75F, 0.75F, Armatures.BIPED.get().toolR, null),
@@ -1849,7 +1852,7 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		GRASPING_SPIRAL_FIRST = event.nextAccessor("biped/skill/grasping_spire_first", (accessor) ->
+		GRASPING_SPIRAL_FIRST = builder.nextAccessor("biped/skill/grasping_spire_first", (accessor) ->
 			new AttackAnimation(0.1F, 0.25F, 0.3F, 0.4F, 0.8F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER)
@@ -1886,12 +1889,12 @@ public class Animations {
 					}, AnimationEvent.Side.SERVER)
 				));
 		
-		GRASPING_SPIRAL_SECOND = event.nextAccessor("biped/skill/grasping_spire_second", (accessor) ->
+		GRASPING_SPIRAL_SECOND = builder.nextAccessor("biped/skill/grasping_spire_second", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.5F, 0.6F, 0.95F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER));
 		
-		STEEL_WHIRLWIND = event.nextAccessor("biped/skill/steel_whirlwind", (accessor) ->
+		STEEL_WHIRLWIND = builder.nextAccessor("biped/skill/steel_whirlwind", (accessor) ->
 			new AttackAnimation(0.15F, accessor, Armatures.BIPED,
 				new Phase(0.0F, 0.0F, 0.0F, 0.2F, 0.45F, 0.45F, Armatures.BIPED.get().rootJoint, ColliderPreset.STEEL_WHIRLWIND), new Phase(0.45F, 0.45F, 0.45F, 0.65F, 1.0F, 1.0F, Armatures.BIPED.get().rootJoint, ColliderPreset.STEEL_WHIRLWIND),
 				new Phase(1.0F, 1.0F, 1.0F, 1.2F, 2.55F, Float.MAX_VALUE, Armatures.BIPED.get().rootJoint, ColliderPreset.STEEL_WHIRLWIND))
@@ -1921,13 +1924,13 @@ public class Animations {
 				.newTimePair(0.0F, 2.55F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
-		BATTOJUTSU = event.nextAccessor("biped/skill/battojutsu", (accessor) ->
+		BATTOJUTSU = builder.nextAccessor("biped/skill/battojutsu", (accessor) ->
 			new AttackAnimation(0.15F, 0.0F, 0.75F, 0.8F, 1.2F, ColliderPreset.BATTOJUTSU, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get())
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.addEvents(InTimeEvent.create(0.05F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.SERVER).params(EpicFightSounds.SWORD_IN.get())));
 		
-		BATTOJUTSU_DASH = event.nextAccessor("biped/skill/battojutsu_dash", (accessor) ->
+		BATTOJUTSU_DASH = builder.nextAccessor("biped/skill/battojutsu_dash", (accessor) ->
 			new AttackAnimation(0.15F, 0.43F, 0.7F, 0.8F, 1.4F, ColliderPreset.BATTOJUTSU_DASH, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.WHOOSH_SHARP.get())
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
@@ -1946,21 +1949,21 @@ public class Animations {
 					}, Side.CLIENT)
 				));
 		
-		RUSHING_TEMPO1 = event.nextAccessor("biped/skill/rushing_tempo1", (accessor) ->
+		RUSHING_TEMPO1 = builder.nextAccessor("biped/skill/rushing_tempo1", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.15F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 2)
 				.addProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER, false)
 				.newTimePair(0.0F, 0.25F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
-		RUSHING_TEMPO2 = event.nextAccessor("biped/skill/rushing_tempo2", (accessor) ->
+		RUSHING_TEMPO2 = builder.nextAccessor("biped/skill/rushing_tempo2", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.15F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 2)
 				.addProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER, false)
 				.newTimePair(0.0F, 0.25F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
-		RUSHING_TEMPO3 = event.nextAccessor("biped/skill/rushing_tempo3", (accessor) ->
+		RUSHING_TEMPO3 = builder.nextAccessor("biped/skill/rushing_tempo3", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.2F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 2)
@@ -1968,7 +1971,7 @@ public class Animations {
 				.newTimePair(0.0F, 0.25F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
 		
-		RELENTLESS_COMBO = event.nextAccessor("biped/skill/relentless_combo", (accessor) ->
+		RELENTLESS_COMBO = builder.nextAccessor("biped/skill/relentless_combo", (accessor) ->
 			new AttackAnimation(0.05F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.016F, 0.066F, 0.133F, 0.133F, InteractionHand.OFF_HAND, Armatures.BIPED.get().rootJoint, ColliderPreset.FIST_FIXED),
 					new Phase(0.133F, 0.133F, 0.183F, 0.25F, 0.25F, Armatures.BIPED.get().rootJoint, ColliderPreset.FIST_FIXED),
@@ -1980,20 +1983,20 @@ public class Animations {
 					new Phase(0.833F, 0.833F, 0.883F, 1.1F, 1.1F, Armatures.BIPED.get().rootJoint, ColliderPreset.FIST_FIXED))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 4.0F));
 		
-		EVISCERATE_FIRST = event.nextAccessor("biped/skill/eviscerate_first", (accessor) ->
+		EVISCERATE_FIRST = builder.nextAccessor("biped/skill/eviscerate_first", (accessor) ->
 			new AttackAnimation(0.08F, 0.0F, 0.05F, 0.15F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, null) 
 				.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_LOCATION_ROTATION)
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST));
 		
-		EVISCERATE_SECOND = event.nextAccessor("biped/skill/eviscerate_second", (accessor) -> 
+		EVISCERATE_SECOND = builder.nextAccessor("biped/skill/eviscerate_second", (accessor) -> 
 			new AttackAnimation(0.15F, 0.0F, 0.04F, 0.05F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.HIT_SOUND, EpicFightSounds.EVISCERATE.get())
 				.addProperty(AttackPhaseProperty.PARTICLE, EpicFightParticles.EVISCERATE)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 2.4F));
 		
-		BLADE_RUSH_COMBO1 = event.nextAccessor("biped/skill/blade_rush_combo1", (accessor) ->
+		BLADE_RUSH_COMBO1 = builder.nextAccessor("biped/skill/blade_rush_combo1", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.15F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
@@ -2011,7 +2014,7 @@ public class Animations {
 				.newTimePair(0.0F, 0.65F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
-		BLADE_RUSH_COMBO2 = event.nextAccessor("biped/skill/blade_rush_combo2", (accessor) ->
+		BLADE_RUSH_COMBO2 = builder.nextAccessor("biped/skill/blade_rush_combo2", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.15F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
@@ -2029,7 +2032,7 @@ public class Animations {
 				.newTimePair(0.0F, 0.65F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
-		BLADE_RUSH_COMBO3 = event.nextAccessor("biped/skill/blade_rush_combo3", (accessor) ->
+		BLADE_RUSH_COMBO3 = builder.nextAccessor("biped/skill/blade_rush_combo3", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.2F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.HIT_PRIORITY, Priority.TARGET)
 				.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F)
@@ -2047,11 +2050,11 @@ public class Animations {
 				.newTimePair(0.0F, 0.6F)
 				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
-		BLADE_RUSH_HIT = event.nextAccessor("biped/interact/blade_rush_hit", (accessor) ->
+		BLADE_RUSH_HIT = builder.nextAccessor("biped/interact/blade_rush_hit", (accessor) ->
 			new LongHitAnimation(0.1F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.IS_DEATH_ANIMATION, true));
 		
-		BLADE_RUSH_EXECUTE_BIPED = event.nextAccessor("biped/skill/blade_rush_execute", (accessor) ->
+		BLADE_RUSH_EXECUTE_BIPED = builder.nextAccessor("biped/skill/blade_rush_execute", (accessor) ->
 			new GrapplingAttackAnimation(0.5F, 1.5F, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.EXECUTION))
 				.addProperty(ActionAnimationProperty.COORD_UPDATE_TIME, TimePairList.create(0.0F, 0.5F))
@@ -2073,25 +2076,25 @@ public class Animations {
 					}, Side.CLIENT)
 				));
 		
-		BLADE_RUSH_FAILED = event.nextAccessor("biped/skill/blade_rush_failed", (accessor) ->
+		BLADE_RUSH_FAILED = builder.nextAccessor("biped/skill/blade_rush_failed", (accessor) ->
 			new ActionAnimation(0.0F, 0.85F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.0F, 0.0F)));
 		
-		BLADE_RUSH_TRY = event.nextAccessor("biped/skill/blade_rush_try", (accessor) -> 
+		BLADE_RUSH_TRY = builder.nextAccessor("biped/skill/blade_rush_try", (accessor) -> 
 			new GrapplingTryAnimation(0.1F, 0.0F, 0.4F, 0.4F, 0.45F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, BLADE_RUSH_HIT, BLADE_RUSH_EXECUTE_BIPED, BLADE_RUSH_FAILED, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.COORD_START_KEYFRAME_INDEX, 1)
 				.addProperty(ActionAnimationProperty.NO_GRAVITY_TIME, TimePairList.create(0.15F, 0.35F))
 				.addProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER, MoveCoordFunctions.ENTITY_VARIABLE));
 		
-		WRATHFUL_LIGHTING = event.nextAccessor("biped/skill/wrathful_lighting", (accessor) ->
+		WRATHFUL_LIGHTING = builder.nextAccessor("biped/skill/wrathful_lighting", (accessor) ->
 			new AttackAnimation(0.15F, accessor, Armatures.BIPED,
 					new Phase(0.0F, 0.0F, 0.3F, 0.36F, 1.0F, Float.MAX_VALUE, Armatures.BIPED.get().toolR, null),
 					new Phase(InteractionHand.MAIN_HAND, Armatures.BIPED.get().rootJoint, null))
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.addEvents(InTimeEvent.create(0.35F, ReusableSources.SUMMON_THUNDER, AnimationEvent.Side.SERVER)));
 		
-		TSUNAMI = event.nextAccessor("biped/skill/tsunami", (accessor) ->
+		TSUNAMI = builder.nextAccessor("biped/skill/tsunami", (accessor) ->
 			new AttackAnimation(0.2F, 0.2F, 0.35F, 1.0F, 1.8F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD)
@@ -2117,7 +2120,7 @@ public class Animations {
 					entitypatch.setAirborneState(true);
 				}, AnimationEvent.Side.SERVER)));
 		
-		TSUNAMI_REINFORCED = event.nextAccessor("biped/skill/tsunami_reinforced", (accessor) -> 
+		TSUNAMI_REINFORCED = builder.nextAccessor("biped/skill/tsunami_reinforced", (accessor) -> 
 			new AttackAnimation(0.2F, 0.2F, 0.35F, 0.65F, 1.3F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(10))
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD_WITH_X_ROT)
@@ -2144,14 +2147,14 @@ public class Animations {
 					entitypatch.setAirborneState(true);
 				}, AnimationEvent.Side.SERVER)));
 		
-		EVERLASTING_ALLEGIANCE_CALL = event.nextAccessor("biped/skill/everlasting_allegiance_call", (accessor) ->
+		EVERLASTING_ALLEGIANCE_CALL = builder.nextAccessor("biped/skill/everlasting_allegiance_call", (accessor) ->
 			new ActionAnimation(0.1F, 0.55F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
-		EVERLASTING_ALLEGIANCE_CATCH = event.nextAccessor("biped/skill/everlasting_allegiance_catch", (accessor) ->
+		EVERLASTING_ALLEGIANCE_CATCH = builder.nextAccessor("biped/skill/everlasting_allegiance_catch", (accessor) ->
 			new ActionAnimation(0.05F, 0.8F, accessor, Armatures.BIPED)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
 		
-		SHARP_STAB = event.nextAccessor("biped/skill/sharp_stab", (accessor) -> new AttackAnimation(0.15F, 0.05F, 0.1F, 0.15F, 0.7F, ColliderPreset.LONGSWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+		SHARP_STAB = builder.nextAccessor("biped/skill/sharp_stab", (accessor) -> new AttackAnimation(0.15F, 0.05F, 0.1F, 0.15F, 0.7F, ColliderPreset.LONGSWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 	}
 	
 	public static class ReusableSources {

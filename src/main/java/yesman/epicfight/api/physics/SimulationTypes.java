@@ -6,7 +6,7 @@ import yesman.epicfight.api.client.model.SoftBodyTranslatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 
-public interface SimulationTypes<O, PV extends SimulationProvider<O, DATA, B, PV>, B extends SimulationObject.SimulationBuilder, DATA extends SimulationObject<B, PV, O>, SIM extends PhysicsSimulator<B, PV, O, DATA>> {
+public interface SimulationTypes<O, PV extends SimulationProvider<O, DATA, B, PV>, B extends SimulationObject.SimulationObjectBuilder, DATA extends SimulationObject<B, PV, O>, SIM extends PhysicsSimulator<B, PV, O, DATA>> {
 	@OnlyIn(Dist.CLIENT)
 	public static final SimulationTypes<ClothSimulatable, SoftBodyTranslatable, ClothSimulator.ClothObjectBuilder, ClothSimulator.ClothObject, ClothSimulator> CLOTH = new SimulationTypes<> () {};
 	

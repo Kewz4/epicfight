@@ -26,7 +26,7 @@ import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClie
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public record EpicSkinsInformation(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
+public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
 		if (EpicFightServerConnectionHelper.SUPPORTS) {
 			EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
@@ -92,9 +92,9 @@ public record EpicSkinsInformation(Supplier<ResourceLocation> cloakTexture, floa
 								float g = ((brightnessApplied & 65280) >> 8) / 255.0F;
 								float b = (brightnessApplied & 255) / 255.0F;
 								
-								playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, r, g, b));
+								playerpatch.setEpicSkinsInformation(new EpicSkins(fCloakTextureProvider, r, g, b));
 							} else {
-								playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(fCloakTextureProvider, 1.0F, 1.0F, 1.0F));
+								playerpatch.setEpicSkinsInformation(new EpicSkins(fCloakTextureProvider, 1.0F, 1.0F, 1.0F));
 							}
 						});
 					});
@@ -113,13 +113,10 @@ public record EpicSkinsInformation(Supplier<ResourceLocation> cloakTexture, floa
 				  ClothSimulator.PLAYER_CLOAK
 				, Meshes.CLOAK
 				, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
-				, () -> {
-					  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
-							 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
-				  }
+				, () -> playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE) && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA
 			);
 			
-			playerpatch.setEpicSkinsInformation(new EpicSkinsInformation(() -> playerpatch.getOriginal().getCloakTextureLocation(), 1.0F, 1.0F, 1.0F));
+			playerpatch.setEpicSkinsInformation(new EpicSkins(() -> playerpatch.getOriginal().getCloakTextureLocation(), 1.0F, 1.0F, 1.0F));
 		});
 	}
 }

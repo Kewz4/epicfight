@@ -28,6 +28,9 @@ public class EpicFightServerConnectionHelper {
 	static {
 		SupportedOS os = SupportedOS.getOS();
 		
+		SUPPORTS = false;
+		
+		/**
 		if (os != null) {
 			String libpath = MessageFormat.format("/assets/epicfight/nativelib/{0}/ServerCommunicationHelper{1}", os.telemetryName(), os.libExtension());
 			InputStream inputstream = EpicFightMod.class.getResourceAsStream(libpath);
@@ -77,14 +80,14 @@ public class EpicFightServerConnectionHelper {
 					exceptionOccurred = true;
 				}
 				
-				SUPPORTS = !exceptionOccurred;
+				SUPPORTS = false;//!exceptionOccurred;
 			} else {
 				SUPPORTS = false;
 				throw new IllegalArgumentException("Cannot find library file in " + libpath);
 			}
 		} else {
 			SUPPORTS = false;
-		}
+		}**/
 	}
 	
 	public static native void autoLogin(String minecraftUuid, String accessToken, String refreshToken, String provider, BiConsumer<HttpResponse<String>, Exception> onResponse);

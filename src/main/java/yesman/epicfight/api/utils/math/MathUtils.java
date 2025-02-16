@@ -1,6 +1,12 @@
 package yesman.epicfight.api.utils.math;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -309,6 +315,47 @@ public class MathUtils {
 		i = 1597463007 - (i >> 1);
 		number = Float.intBitsToFloat(i);
 		return number * (1.5F - f * number * number);
+	}
+	
+	public static <T> Set<Set<T>> getSubset(Collection<T> collection) {
+		Set<Set<T>> subsets = new HashSet<> ();
+		List<T> asList = new ArrayList<> (collection);
+		createSubset(0, asList, new HashSet<> (), subsets);
+		
+		return subsets;
+	}
+	
+	private static <T> void createSubset(int idx, List<T> elements, Set<T> parent, Set<Set<T>> subsets) {
+		for (int i = idx; i < elements.size(); i++) {
+			Set<T> subset = new HashSet<> (parent);
+			subset.add(elements.get(i));
+			subsets.add(subset);
+			
+			createSubset(i + 1, elements, subset, subsets);
+		}
+	}
+	
+	public static int getLeastAngleVectorIdx(Vec3f src, Vec3f... candidates) {
+		int leastVectorIdx = -1;
+		int current = 0;
+		float maxDot = -10000.0F;
+		
+		for (Vec3f normzlizedVec : Stream.of(candidates).map((vec) -> vec.normalize()).collect(Collectors.toList())) {
+			float dot = Vec3f.dot(src, normzlizedVec);
+			
+			if (maxDot < dot) {
+				maxDot = dot;
+				leastVectorIdx = current;
+			}
+			
+			current++;
+		}
+		
+		return leastVectorIdx;
+	}
+	
+	public static Vec3f getLeastAngleVector(Vec3f src, Vec3f... candidates) {
+		return candidates[getLeastAngleVectorIdx(src, candidates)];
 	}
 	
 	private MathUtils() {}

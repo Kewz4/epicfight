@@ -59,7 +59,7 @@ public class FABRIK {
 			tailToHeadM.rotate(parentQuaternion);
 			Vec3f tailToHead = Vec3f.fromMojangVector(tailToHeadM);
 			Vec3f tailToNewHead = chain.head.copy().sub(chain.tail);
-			Vec3f axis = Vec3f.cross(tailToNewHead, tailToHead, null).normalise();
+			Vec3f axis = Vec3f.cross(tailToNewHead, tailToHead, null).normalize();
 			float radian = Vec3f.getAngleBetween(tailToNewHead, tailToHead);
 			Quaternionf rotationQuat = QuaternionUtils.rotation(axis.toMojangVector(), radian);
 			parentQuaternion = QuaternionUtils.rotation(axis.scale(-1.0F).toMojangVector(), radian);

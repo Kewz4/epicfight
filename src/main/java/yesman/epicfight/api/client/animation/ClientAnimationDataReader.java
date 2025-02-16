@@ -79,13 +79,13 @@ public class ClientAnimationDataReader {
 			if (this.multilayerInfo.jointMaskEntry.isValid()) {
 				multilayerAnimation.addProperty(ClientAnimationProperties.JOINT_MASK, this.multilayerInfo.jointMaskEntry);
 			}
-
+			
 			multilayerAnimation.addProperty(ClientAnimationProperties.LAYER_TYPE, this.multilayerInfo.layerType);
 			multilayerAnimation.addProperty(ClientAnimationProperties.PRIORITY, this.multilayerInfo.priority);
 			multilayerAnimation.addProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 				Layer baseLayer = entitypatch.getClientAnimator().baseLayer;
 				
-				if (baseLayer.animationPlayer.getAnimation().get().getRealAnimation() != animation) {
+				if (baseLayer.animationPlayer.getAnimation().get().getRealAnimation().get() != animation) {
 					return Pair.of(prevElapsedTime, elapsedTime);
 				}
 				

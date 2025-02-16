@@ -26,15 +26,19 @@ public interface SoftBodyTranslatable extends SimulationProvider<ClothSimulatabl
 	}
 	
 	default Mesh getAsMesh() {
-		return (Mesh)this;
+		if (this instanceof MeshAccessor<?> meshAccessor) {
+			return (Mesh)meshAccessor.get();
+		} else {
+			return (Mesh)this;
+		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record ClothSimulationInfo(List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] rootDistance) {
+	public static record ClothSimulationInfo(List<int[]> constraints, ConstraintType[] constraintTypes, float[] compliances, int[] particles, float[] weights, float[] rootDistance, int[] normalOffsetMapping) {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public enum ConstraintType {
-		DISTANCE, VOLUME
+		STRETCHING, SHAPING, BENDING, VOLUME
 	}
 }

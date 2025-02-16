@@ -34,9 +34,9 @@ public class ClothColliderPresets {
 			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[7], new ClothSimulator.ClothOBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.14D, 0.0D, 0, 0, 1, 0, 0, 0)))
 			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[8], new ClothSimulator.ClothOBBCollider(0.25D, 0.1875D, 0.13D, 0.0D, 0.1875D, 0.0D, 0, 0, 1, 0, 0, 0)))
 			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[9], new ClothSimulator.ClothOBBCollider(0.25D, 0.25D, 0.25D, 0.0D, 0.25D, 0.0D, 0, 0, 1, 0, 0, 0)))
-			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[11], new ClothSimulator.ClothOBBCollider(0.125D, 0.24D, 0.125D, -0.05D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
-			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[12], new ClothSimulator.ClothOBBCollider(0.125D, 0.1875D, 0.125D, -0.05D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
-			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[16], new ClothSimulator.ClothOBBCollider(0.125D, 0.24D, 0.125D, 0.05D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
-			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[17], new ClothSimulator.ClothOBBCollider(0.125D, 0.1875D, 0.125D, 0.05D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
+			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[11], new ClothSimulator.ClothOBBCollider(0.13D, 0.24D, 0.13D, -0.0D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
+			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[12], new ClothSimulator.ClothOBBCollider(0.13D, 0.1875D, 0.13D, -0.0D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
+			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[16], new ClothSimulator.ClothOBBCollider(0.13D, 0.24D, 0.13D, 0.0D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
+			.add(Pair.of((simObject) -> simObject.getArmature().getPoseMatrices()[17], new ClothSimulator.ClothOBBCollider(0.13D, 0.1875D, 0.13D, 0.0D, 0.14D, 0.0D, 1, 0, 1, 0, 0, 0)))
 			.build();
 }

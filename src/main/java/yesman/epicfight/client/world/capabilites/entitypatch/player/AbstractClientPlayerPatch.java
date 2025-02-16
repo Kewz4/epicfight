@@ -28,6 +28,7 @@ import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
@@ -38,7 +39,7 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
-import yesman.epicfight.api.client.online.EpicSkinsInformation;
+import yesman.epicfight.api.client.online.EpicSkins;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.PhysicsSimulator;
@@ -56,7 +57,7 @@ import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements ClothSimulatable {
 	private Item prevHeldItem;
 	private Item prevHeldItemOffHand;
-	protected EpicSkinsInformation epicSkinsInformation;
+	protected EpicSkins epicSkinsInformation;
 	
 	@Override
 	public void onJoinWorld(T entity, EntityJoinLevelEvent event) {
@@ -65,7 +66,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		this.prevHeldItem = Items.AIR;
 		this.prevHeldItemOffHand = Items.AIR;
 		
-		EpicSkinsInformation.initEpicSkins(this);
+		EpicSkins.initEpicSkins(this);
 	}
 	
 	@Override
@@ -418,11 +419,11 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		return Direction.UP;
 	}
 	
-	public void setEpicSkinsInformation(EpicSkinsInformation epicSkinsInformation) {
+	public void setEpicSkinsInformation(EpicSkins epicSkinsInformation) {
 		this.epicSkinsInformation = epicSkinsInformation;
 	}
 	
-	public EpicSkinsInformation getEpicSkinsInformation() {
+	public EpicSkins getEpicSkinsInformation() {
 		return this.epicSkinsInformation;
 	}
 	
@@ -515,12 +516,22 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 
 	@Override
-	public boolean valid() {
-		return !this.original.isRemoved();
+	public boolean invalid() {
+		return this.original.isRemoved();
 	}
 
 	@Override
 	public float getScale() {
 		return PLAYER_SCALE;
+	}
+
+	@Override
+	public Animator getSimulatableAnimator() {
+		return this.animator;
+	}
+
+	@Override
+	public float getGravity() {
+		return this.getOriginal().isUnderWater() ? 0.98F : 9.8F;
 	}
 }

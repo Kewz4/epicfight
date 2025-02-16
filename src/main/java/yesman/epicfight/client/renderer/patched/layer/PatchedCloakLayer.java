@@ -4,7 +4,6 @@ import java.util.function.Function;
 
 import org.joml.Matrix4f;
 
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -24,10 +23,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.online.EpicSkinsInformation;
+import yesman.epicfight.api.client.online.EpicSkins;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationTypes;
-import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
@@ -51,15 +49,15 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 		entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
 			simulator.getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent((clothObj) -> {
 	            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
-					Vec3 pos = entitypatch.getAccuratePartialLocation(partialFrame);
-					float yRotLerp = entitypatch.getAccurateYRot(partialFrame);
-					float scale = entitypatch.getScale();
+					Vec3 pos = entitypatch.getOriginal().getPosition(partialFrame);
+					float yRotLerp = Mth.rotLerp(partialFrame, entitypatch.getYRotO(), entitypatch.getYRot());
 					
-					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS).scale(scale, scale, scale);
+					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
 	            };
 	            
 				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
-				
+				//cloakTexture = ResourceLocation.tryBuild(EpicFightMod.MODID, "animmodels/layer/cape.png");
+				//REMOVE
 				if (cloakTexture != null) {
 					clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
 					
@@ -75,31 +73,30 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					
 					poseStack.pushPose();
 					
+					float scaler = entitypatch.getScale();
+					poseStack.scale(scaler, scaler, scaler);
+					
 					if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
-						poseStack.pushPose();
 						OpenMatrix4f poseMat = poses[Armatures.BIPED.get().chest.getId()];
-						
 						poseStack.translate(poseMat.m30, poseMat.m31, poseMat.m32);
-						poseStack.scale(1.1F, 1.1F, 1.1F);
+						poseStack.scale(1.17F, 1.17F, 1.17F);
 						poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
 					}
 					
+					poseStack.pushPose();
 					poseStack.mulPoseMatrix(inverted);
 					poseStack.translate(-lastpose.m30() - entityX, -lastpose.m31() - entityY, -lastpose.m32() - entityZ);
 					
-					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entitySolid(cloakTexture)));
+					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(cloakTexture)));
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
-						EpicSkinsInformation epicskinsInfo = entitypatch.getEpicSkinsInformation();
+						EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();
 						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					} else {
 						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					}
 					
-					if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
-						poseStack.popPose();
-					}
-					
+					poseStack.popPose();
 					poseStack.popPose();
 				}
 			});

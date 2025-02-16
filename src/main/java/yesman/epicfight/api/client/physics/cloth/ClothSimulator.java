@@ -1,9 +1,13 @@
 package yesman.epicfight.api.client.physics.cloth;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.annotation.Nullable;
 
@@ -25,6 +29,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -36,7 +41,6 @@ import yesman.epicfight.api.client.model.MeshPart;
 import yesman.epicfight.api.client.model.SkinnedMesh.SkinnedMeshPart;
 import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.SoftBodyTranslatable;
-import yesman.epicfight.api.client.model.SoftBodyTranslatable.ConstraintType;
 import yesman.epicfight.api.client.model.StaticMesh;
 import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.client.physics.AbstractSimulator;
@@ -47,11 +51,11 @@ import yesman.epicfight.api.physics.SimulationObject;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
+import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.model.armature.HumanoidArmature;
 
 /**
- * Inspired by Ten minuates physics tutorial 14, 15
+ * Referred to Matthias Müller's Ten minuates physics tutorial video number 14, 15
  * 
  * https://matthias-research.github.io/pages/tenMinutePhysics/index.html
  * 
@@ -59,16 +63,15 @@ import yesman.epicfight.model.armature.HumanoidArmature;
  **/
 @OnlyIn(Dist.CLIENT)
 public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
-	public static final ResourceLocation PLAYER_CLOAK = new ResourceLocation(EpicFightMod.MODID, "ingame_cloak");
-	public static final ResourceLocation MODELPREVIEWER_CLOAK = new ResourceLocation(EpicFightMod.MODID, "previewer_cloak");
+	public static final ResourceLocation PLAYER_CLOAK = ResourceLocation.tryBuild(EpicFightMod.MODID, "ingame_cloak");
+	public static final ResourceLocation MODELPREVIEWER_CLOAK = ResourceLocation.tryBuild(EpicFightMod.MODID, "previewer_cloak");
 	
-	private static final float GRAVITY = 9.8F;
 	private static final float PARTICLE_MASS = 0.01F;
 	private static final float SPACING = 0.05F;
-	private static final float SELF_COLLISION = 0.025F;
+	private static float SELF_COLLISION = 0.025F;
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class ClothObjectBuilder extends SimulationObject.SimulationBuilder {
+	public static class ClothObjectBuilder extends SimulationObject.SimulationObjectBuilder {
 		List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders = Lists.newArrayList();
 		
 		public ClothObjectBuilder addEntry(Function<ClothSimulatable, OpenMatrix4f> obbTransformer, ClothOBBCollider clothOBBCollider) {
@@ -89,29 +92,40 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 	@OnlyIn(Dist.CLIENT)
 	public static class ClothObject implements SimulationObject<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable>, Mesh {
 		private final SoftBodyTranslatable provider;
-		private final Map<String, Part> parts;
-		private final List<Map<Vec3, Vec3f>> poseNormals;
+		private final Map<String, ClothPart> parts;
+		private final List<Map<Integer, Vec3f>> poseNormals;
 		
 		@Nullable
 		protected List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders;
 		
 		//Storage vectors
 		private static final Vec3f TRASNFORMED = new Vec3f();
+		private static final Vector3f NORMAL = new Vector3f();
 		
-		public ClothObject(ClothObjectBuilder builder, SoftBodyTranslatable provider, Map<String, MeshPart<?>> parts, float[] positions) {
+		public ClothObject(ClothObjectBuilder builder, SoftBodyTranslatable provider, Map<String, MeshPart<VertexBuilder<StaticMesh<?, ?>>>> parts, float[] positions) {
 			this.provider = provider;
 			this.clothColliders = builder.clothColliders;
-			
 			this.poseNormals = Lists.newArrayList();
 			
 			for (int i = 0; i < positions.length / 3; i++) {
 				this.poseNormals.add(Maps.newHashMap());
 			}
 			
-			ImmutableMap.Builder<String, Part> partBuilder = ImmutableMap.builder();
+			for (MeshPart<VertexBuilder<StaticMesh<?, ?>>> meshPart : parts.values()) {
+				for (VertexBuilder<StaticMesh<?, ?>> vb : meshPart.getVertices()) {
+					Map <Integer, Vec3f> map = this.poseNormals.get(vb.position);
+					
+					if (!map.containsKey(vb.normal)) {
+						vb.getVertexNormal(provider.getSoftBodyMesh(), NORMAL);
+						map.put(vb.normal, new Vec3f(NORMAL.x, NORMAL.y, NORMAL.z));
+					}
+				}
+			}
 			
-			for (Map.Entry<String, MeshPart<?>> entry : parts.entrySet()) {
-				partBuilder.put(entry.getKey(), new Part(entry.getKey(), entry.getValue(), positions));
+			ImmutableMap.Builder<String, ClothPart> partBuilder = ImmutableMap.builder();
+			
+			for (Map.Entry<String, MeshPart<VertexBuilder<StaticMesh<?, ?>>>> entry : parts.entrySet()) {
+				partBuilder.put(entry.getKey(), new ClothPart(entry.getKey(), entry.getValue(), positions));
 			}
 			
 			this.parts = partBuilder.build();
@@ -122,22 +136,30 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			return this.provider;
 		}
 		
-		@Override
-		public void tick(ClothSimulatable simulatableObj) {
-		}
-		
-		private static final int SUB_STEPS = 15;
+		private static /*final*/ int SUB_STEPS = 3;
 		private static final float YROT_LIMIT = 5.0F;
 		private static final double MAX_VELOCITY_FORCE = 6.0D;
-		private static final Vec3f SCALED_FORCE = new Vec3f();
-		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(HumanoidArmature.JOINTS);
+		private static final Vec3f SCALED_CENTRIFUGAL_FORCE = new Vec3f();
+		private static final Vec3f OFFSET = new Vec3f();
+		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
 		private static final OpenMatrix4f COLLIDER_TRANSFORM = new OpenMatrix4f();
-		private final Vec3f force = new Vec3f();
+		private final Vec3f centrifugalForceDirection = new Vec3f();
 		
+		/**
+		 * This method needs be called before drawing simulated cloth
+		 */
 		public void tick(ClothSimulatable simulatableObj, Function<Float, OpenMatrix4f> colliderTransform, float partialTick, @Nullable Armature armature, @Nullable OpenMatrix4f[] poses) {
-			for (int i = 0; i < HumanoidArmature.JOINTS; i++) {
-				BOUND_ANIMATION_TRANSFORM[i].load(poses[i]);
-				BOUND_ANIMATION_TRANSFORM[i].mulBack(armature.searchJointById(i).getToOrigin());
+			boolean skinned = poses != null && armature != null;
+			
+			for (int j = 0; j < ShaderParser.MAX_JOINTS; j++) {
+				if (j >= armature.getJointNumber()) {
+					break;
+				}
+				
+				if (skinned) {
+					BOUND_ANIMATION_TRANSFORM[j].load(poses[j]);
+					BOUND_ANIMATION_TRANSFORM[j].mulBack(armature.searchJointById(j).getToOrigin());
+				}
 			}
 			
 			float deltaFrameTime = Minecraft.getInstance().getDeltaFrameTime();
@@ -147,12 +169,19 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			Vec3 velocity = simulatableObj.getObjectVelocity();
 			double centrifugalForce = deltaYRot * deltaYRot * Mth.clamp(velocity.length() / 0.2D, 1.0D, MAX_VELOCITY_FORCE) * PARTICLE_MASS * (0.16F / deltaFrameTime);
 			
-			this.force.add(Vec3f.fromDoubleVector(MathUtils.getVectorForRotation(0.0F, yRotO - 180.0F)
+			this.centrifugalForceDirection.add(Vec3f.fromDoubleVector(MathUtils.getVectorForRotation(0.0F, yRotO - 180.0F)
 									                       .add(MathUtils.getVectorForRotation(0.0F, yRotO + (deltaYRot > 0.0F ? -90.0F : 90.0F)))
 									                       .scale(centrifugalForce)
 														   .add(velocity.scale(centrifugalForce * deltaFrameTime))
 			));
 			
+			// Reset normal vectors
+			this.poseNormals.forEach((poseNormals) -> poseNormals.values().forEach((vec3f) -> vec3f.set(0.0F, 0.0F, 0.0F)));
+			
+			SELF_COLLISION = 0.015F;
+			SUB_STEPS = 3;
+			
+			float gravity = simulatableObj.getGravity();
 			float subStebInvert = 1.0F / SUB_STEPS;
 			float subSteppingDeltaTime = deltaFrameTime * subStebInvert;
 			
@@ -169,27 +198,51 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				
 				Vec3 pos = simulatableObj.getAccuratePartialLocation(substepPartialTick);
 				float yRotLerp = simulatableObj.getAccurateYRot(substepPartialTick);
-				float scale = simulatableObj.getScale();
 				
 				OpenMatrix4f clothRootMatrix = OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z)
-														   .rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS)
-														   .scale(scale, scale, scale);
+														   .rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
 				
-				Vec3f.scale(this.force, SCALED_FORCE, subStebInvert);
+				Vec3f.scale(this.centrifugalForceDirection, SCALED_CENTRIFUGAL_FORCE, subStebInvert);
 				
-				for (Part part : this.parts.values()) {
-					part.tick(SCALED_FORCE, subSteppingDeltaTime, clothRootMatrix, this.clothColliders, BOUND_ANIMATION_TRANSFORM);
+				for (ClothPart part : this.parts.values()) {
+					part.tick(SCALED_CENTRIFUGAL_FORCE, gravity, subSteppingDeltaTime, i + 1, clothRootMatrix, this.clothColliders, skinned ? BOUND_ANIMATION_TRANSFORM : null);
 				}
 			}
 			
-			this.force.scale(1.0F - deltaFrameTime * 0.5F);
+			this.centrifugalForceDirection.scale(1.0F - deltaFrameTime * 0.5F);
+			
+			// Update normals & offset particles
+			for (ClothPart part : this.parts.values()) {
+				part.updateNormal(false);
+				
+				if (!part.normalOffsetParticles.isEmpty()) {
+					for (ClothPart.OffsetParticle offsetParticle : part.normalOffsetParticles.values()) {
+						// Update offset positions
+						ClothPart.Particle rootParticle = offsetParticle.rootParticle();
+						Map<Integer, Vec3f> rootNormalMap = this.poseNormals.get(rootParticle.meshVertexId);
+						OFFSET.set(0.0F, 0.0F, 0.0F);
+						
+						for (Integer normIdx : offsetParticle.positionNormalMembers()) {
+							OFFSET.add(rootNormalMap.get(normIdx));
+						}
+						
+						OFFSET.scale(offsetParticle.length / OFFSET.length());
+						
+						offsetParticle.position.set(
+							  rootParticle.position.x - OFFSET.x
+							, rootParticle.position.y - OFFSET.y
+							, rootParticle.position.z - OFFSET.z
+						);
+					}
+				}
+				
+				part.updateNormal(true);
+			}
 		}
 		
 		@Override
 		public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-			this.poseNormals.forEach((poseNormals) -> poseNormals.values().forEach((vec3f) -> vec3f.set(0.0F, 0.0F, 0.0F)));
-			
-			for (Part part : this.parts.values()) {
+			for (ClothPart part : this.parts.values()) {
 				part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
 			
@@ -202,9 +255,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		
 		@Override
 		public void drawPosed(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-			this.poseNormals.forEach((poseNormals) -> poseNormals.values().forEach((vec3f) -> vec3f.set(0.0F, 0.0F, 0.0F)));
-			
-			for (Part part : this.parts.values()) {
+			for (ClothPart part : this.parts.values()) {
 				part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
 			
@@ -221,7 +272,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			poseStack.popPose();
 			
 			if (this.provider instanceof CompositeMesh compositeMesh) {
-				compositeMesh.getStaticMesh().drawPosed(poseStack, vertexConsumer, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
+				//compositeMesh.getStaticMesh().drawPosed(poseStack, vertexConsumer, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
 			}
 			
 			poseStack.pushPose();
@@ -232,10 +283,12 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		}
 		
 		@OnlyIn(Dist.CLIENT)
-		public class Part {
+		public class ClothPart {
 			final String name;
 			final Map<Integer, Particle> particles;
-			final List<ConstraintsBundle> constraints;
+			final Map<Integer, ClothPart.OffsetParticle> normalOffsetParticles;
+			
+			final List<ConstraintList> constraints;
 			final Multimap<Integer, Particle> spatialHash;
 			final int hashTableSize;
 			
@@ -243,69 +296,102 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			private static final Vec3f VEC3F = new Vec3f();
 			private static final Vector4f POSITION = new Vector4f(0.0F, 0.0F, 0.0F, 1.0F);
 			private static final Vector3f NORMAL = new Vector3f();
+			private static final Vec3f AVERAGE = new Vec3f();
 			
-			Part(String name, MeshPart<?> clothPart, float[] positions) {
+			ClothPart(String name, MeshPart<?> clothPart, float[] positions) {
 				this.name = name;
 				this.particles = Maps.newLinkedHashMap();
+				//this.normalOffsetConnections = Maps.newHashMap();
+				this.normalOffsetParticles = Maps.newHashMap();
 				
 				for (VertexBuilder<?> vb : clothPart.getVertices()) {
-					Vec3 normal = provider.getSoftBodyMesh().normalList().get(vb.normal);
-					Map<Vec3, Vec3f> positionNormals = poseNormals.get(vb.position);
+					Map<Integer, Vec3f> positionNormals = poseNormals.get(vb.position);
 					
-					if (!positionNormals.containsKey(normal)) {
-						positionNormals.put(normal, new Vec3f());
+					if (!positionNormals.containsKey(vb.normal)) {
+						positionNormals.put(vb.normal, new Vec3f());
 					}
 				}
 				
-				List<Particle> particlesList = Lists.newArrayList();
-				ImmutableList.Builder<ConstraintsBundle> constraintsBuilder = ImmutableList.builder();
+				ImmutableList.Builder<ConstraintList> constraintsBuilder = ImmutableList.builder();
 				SoftBodyTranslatable.ClothSimulationInfo clothInfo = clothPart.getClothInfo();
 				
+				/**
+				 * Add particles
+				 */
 				for (int i = 0; i < clothInfo.particles().length / 2; i++) {
-					int posIndex = clothInfo.particles()[i * 2];
-					int influence = clothInfo.particles()[i * 2 + 1];
+					int positionIndex = clothInfo.particles()[i * 2];
+					int weightIndex = clothInfo.particles()[i * 2 + 1];
+					float influence = clothInfo.weights()[weightIndex];
 					float rootDistance = clothInfo.rootDistance()[i];
 					
 					VertexBuilder<?> vb = null;
 					
 					if (clothPart instanceof ClassicMeshPart) {
-						vb = new ClassicMeshVertexBuilder(posIndex, -1, -1);
+						vb = new ClassicMeshVertexBuilder(positionIndex, -1, -1);
 					} else if (clothPart instanceof SkinnedMeshPart) {
-						vb = new SkinnedMeshVertexBuilder(posIndex, -1, -1);
+						vb = new SkinnedMeshVertexBuilder(positionIndex, -1, -1);
 					}
 					
-					float x = positions[posIndex * 3];
-					float y = positions[posIndex * 3 + 1];
-					float z = positions[posIndex * 3 + 2];
+					float x = positions[positionIndex * 3];
+					float y = positions[positionIndex * 3 + 1];
+					float z = positions[positionIndex * 3 + 2];
 					
 					@SuppressWarnings("unchecked")
-					Particle particle = new Particle((VertexBuilder<StaticMesh<?, ?>>)vb, new Vec3f(x, y, z), influence, rootDistance, posIndex);
-					this.particles.put(posIndex, particle);
-					particlesList.add(particle);
+					Particle particle = new Particle((VertexBuilder<StaticMesh<?, ?>>)vb, new Vec3f(x, y, z), influence, rootDistance, positionIndex);
+					this.particles.put(positionIndex, particle);
 				}
 				
 				this.hashTableSize = this.particles.size() * 2;
 				this.spatialHash = HashMultimap.create(this.hashTableSize, 2);
 				int idx = 0;
 				
+				/**
+				 * Add constraints
+				 */
 				for (int[] constraints : clothInfo.constraints()) {
 					float compliance = clothInfo.compliances()[idx];
-					ConstraintType constraintType = clothInfo.constraintTypes()[idx];
+					SoftBodyTranslatable.ConstraintType constraintType = clothInfo.constraintTypes()[idx];
 					List<Constraint> constraintList;
 					idx++;
 					
 					switch(constraintType) {
-					case DISTANCE -> {
+					case STRETCHING -> {
 						constraintList = new ArrayList<> (constraints.length / 2);
 						
 						for (int i = 0; i < constraints.length / 2; i++) {
 							int idx1 = constraints[i * 2];
 							int idx2 = constraints[i * 2 + 1];
 							
-							constraintList.add(new DistanceConstraint(particlesList.get(idx1), particlesList.get(idx2)));
+							constraintList.add(new StretchConstraint(this.particles.get(idx1), this.particles.get(idx2)));
 						}
 						
-						constraintsBuilder.add(new ConstraintsBundle(compliance, constraintList));
+						constraintsBuilder.add(new ConstraintList(compliance, constraintList));
+					}
+					case SHAPING -> {
+						constraintList = new ArrayList<> (constraints.length / 2);
+						
+						for (int i = 0; i < constraints.length / 2; i++) {
+							int idx1 = constraints[i * 2];
+							int idx2 = constraints[i * 2 + 1];
+							
+							constraintList.add(new ShapingConstraint(this.particles.get(idx1), this.particles.get(idx2)));
+						}
+						
+						constraintsBuilder.add(new ConstraintList(compliance, constraintList));
+					}
+					case BENDING -> {
+						constraintList = new ArrayList<> (constraints.length / 4);
+						
+						for (int i = 0; i < constraints.length / 4; i++) {
+							int idx1 = constraints[i * 4];
+							int idx2 = constraints[i * 4 + 1];
+							int idx3 = constraints[i * 4 + 2];
+							int idx4 = constraints[i * 4 + 3];
+							
+							constraintList.add(new BendingConstraint(this.particles.get(idx1), this.particles.get(idx2), this.particles.get(idx3), this.particles.get(idx4)));
+						}
+						
+						constraintsBuilder.add(new ConstraintList(compliance, constraintList));
 					}
 					case VOLUME -> {
 						constraintList = new ArrayList<> (constraints.length / 4);
@@ -316,15 +402,90 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 							int idx3 = constraints[i * 4 + 2];
 							int idx4 = constraints[i * 4 + 3];
 							
-							constraintList.add(new VolumeConstraint(particlesList.get(idx1), particlesList.get(idx2), particlesList.get(idx3), particlesList.get(idx4)));
+							constraintList.add(new VolumeConstraint(this.particles.get(idx1), this.particles.get(idx2), this.particles.get(idx3), this.particles.get(idx4)));
 						}
 						
-						constraintsBuilder.add(new ConstraintsBundle(compliance, constraintList));
+						constraintsBuilder.add(new ConstraintList(compliance, constraintList));
 					}
 					}
 				}
 				
 				this.constraints = constraintsBuilder.build();
+				
+				/**
+				 * Setup normal offsets
+				 */
+				if (clothInfo.normalOffsetMapping() != null) {
+					for (int i = 0; i < clothInfo.normalOffsetMapping().length / 2; i++) {
+						int rootParticle = clothInfo.normalOffsetMapping()[i * 2];
+						int extendingParticle = clothInfo.normalOffsetMapping()[i * 2 + 1];
+						Vec3f offsetDirection = new Vec3f( positions[extendingParticle * 3] - positions[rootParticle * 3]
+														 , positions[extendingParticle * 3 + 1] - positions[rootParticle * 3 + 1]
+														 , positions[extendingParticle * 3 + 2] - positions[rootParticle * 3 + 2]);
+						
+						List<Integer> positionNormalMembers = Lists.newArrayList();
+						List<Integer> inverseNormals = Lists.newArrayList();
+						OffsetParticle offsetParticle = new OffsetParticle(extendingParticle, offsetDirection.length(), this.particles.get(rootParticle), new Vec3f(), positionNormalMembers, inverseNormals);
+						offsetDirection.normalize();
+						
+						Map<Integer, Vec3f> rootNormalMap = poseNormals.get(rootParticle);
+						List<Vec3f> rootNormals = new ArrayList<> (rootNormalMap.values());
+						List<Set<Integer>> normalSubsets = new ArrayList<> (MathUtils.getSubset(IntStream.rangeClosed(0, rootNormals.size() - 1).boxed().toList()));
+						int candidate = -1;
+						int loopIdx = 0;
+						float maxDot = -10000.0F;
+						
+						for (Set<Integer> subset : normalSubsets) {
+							Set<Vec3f> rootNormal = subset.stream().map((normIdx) -> rootNormals.get(normIdx)).collect(Collectors.toSet());
+							Vec3f.average(rootNormal, AVERAGE);
+							AVERAGE.scale(-1.0F);
+							
+							float dot = Vec3f.dot(offsetDirection, AVERAGE);
+							
+							if (maxDot < dot) {
+								maxDot = dot;
+								candidate = loopIdx;
+							}
+							
+							loopIdx++;
+						}
+						
+						normalSubsets.get(candidate).forEach((orderIdx) -> {
+							int iterCount = 0;
+							Iterator<Map.Entry<Integer, Vec3f>> iter = rootNormalMap.entrySet().iterator();
+							
+							while (iter.hasNext()) {
+								Map.Entry<Integer, Vec3f> entry = iter.next();
+								
+								if (orderIdx == iterCount) {
+									positionNormalMembers.add(entry.getKey());
+									break;
+								}
+								
+								iterCount++;
+							}
+						});
+						
+						this.normalOffsetParticles.put(extendingParticle, offsetParticle);
+						
+						for (Vec3f normal : poseNormals.get(extendingParticle).values()) {
+							int leastDotIdx = MathUtils.getLeastAngleVectorIdx(normal, rootNormals.toArray(new Vec3f[0]));
+							int iterCount = 0;
+							Iterator<Map.Entry<Integer, Vec3f>> iter = rootNormalMap.entrySet().iterator();
+							
+							while (iter.hasNext()) {
+								Map.Entry<Integer, Vec3f> entry = iter.next();
+								
+								if (leastDotIdx == iterCount) {
+									inverseNormals.add(entry.getKey());
+									break;
+								}
+								
+								iterCount++;
+							}
+						}
+					}
+				}
 			}
 			
 			public void buildSpatialHash() {
@@ -337,25 +498,28 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				}
 			}
 			
-			public void tick(Vec3f force, float deltaTime, OpenMatrix4f clothRootTransform, List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders, @Nullable OpenMatrix4f[] poses) {
+			public void tick(Vec3f centrifugalForce, float gravity, float deltaTime, int stepCount, OpenMatrix4f clothRootTransform, List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders, @Nullable OpenMatrix4f[] poses) {
 				boolean paused = Minecraft.getInstance().isPaused();
 				
 				for (Particle p : this.particles.values()) {
+					if (stepCount == 1) {
+						p.collided = false;
+					}
+					
 					float influenceInv = 1.0F - p.influence;
 					
 					// Apply animation transform
 					if (influenceInv > 0.0) {
 						p.vertexBuilder.getVertexPosition(ClothObject.this.provider.getSoftBodyMesh(), POSITION, poses);
 						VEC3F.set(POSITION.x, POSITION.y, POSITION.z);
-						
 						OpenMatrix4f.transform3v(clothRootTransform, VEC3F, TRASNFORMED);
 						Vec3f.interpolate(p.position, TRASNFORMED, influenceInv, TRASNFORMED);
 						p.position.set(TRASNFORMED);
 					}
 					
 					if (!paused) {
-						p.position.y -= GRAVITY * PARTICLE_MASS * p.influence * deltaTime;
-						p.position.add(force.x * p.rootDistance * p.influence, force.y * p.rootDistance * p.influence, force.z * p.rootDistance * p.influence);
+						p.position.y -= gravity * PARTICLE_MASS * p.influence * deltaTime;
+						p.position.add(centrifugalForce.x * p.rootDistance * p.influence, centrifugalForce.y * p.rootDistance * p.influence, centrifugalForce.z * p.rootDistance * p.influence);
 					}
 				}
 				
@@ -363,9 +527,10 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					return;
 				}
 				
-				for (ConstraintsBundle constraintsBundle : this.constraints) {
+				for (ConstraintList constraintsBundle : this.constraints) {
 					for (Constraint c : constraintsBundle.constraints()) {
-						c.solve(deltaTime, constraintsBundle.compliance());
+						float alpha = constraintsBundle.compliance() / (deltaTime * deltaTime);
+						c.solve(alpha, stepCount);
 					}
 				}
 				
@@ -373,13 +538,18 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				if (clothColliders != null) {
 					for (Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider> entry : clothColliders) {
 						for (Particle p : this.particles.values()) {
+							// Exclude root particles
 							if (p.influence == 0.0F) {
 								continue;
 							}
 							
 							Vec3 particlePos = p.position.toDoubleVector();
 							Vec3 pushedPoint = entry.getSecond().getCollidePoint(particlePos, p.position.toDoubleVector());
-							p.position.set(pushedPoint);
+							
+							if (!particlePos.equals(pushedPoint)) {
+								p.collided = true;
+								p.position.set(pushedPoint);
+							}
 						}
 					}
 				}
@@ -419,9 +589,54 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				return Math.abs(hash) % this.hashTableSize;
 			}
 			
+			public Vec3f getParticlePosition(int idx) {
+				if (this.particles.containsKey(idx)) {
+					return this.particles.get(idx).position;
+				} else {
+					return this.normalOffsetParticles.get(idx).position;
+				}
+			}
+			
 			private static final Vec3f TO_P2 = new Vec3f();
 			private static final Vec3f TO_P3 = new Vec3f();
 			private static final Vec3f CROSS = new Vec3f();
+			
+			// Calculate vertex normals
+			private void updateNormal(boolean updateOffsetParticles) {
+				SoftBodyTranslatable softBodyMesh = ClothObject.this.provider;
+				MeshPart<?> modelPart = softBodyMesh.getSoftBodyMesh().getPart(this.name);
+				
+				for (int i = 0; i < modelPart.getVertices().size() / 3; i++) {
+					VertexBuilder<?> triP1 = modelPart.getVertices().get(i * 3);
+					VertexBuilder<?> triP2 = modelPart.getVertices().get(i * 3 + 1);
+					VertexBuilder<?> triP3 = modelPart.getVertices().get(i * 3 + 2);
+					
+					if (!this.particles.containsKey(triP1.position) || !this.particles.containsKey(triP2.position) || !this.particles.containsKey(triP3.position)) {
+						if (!updateOffsetParticles) {
+							continue;
+						}
+					} else {
+						if (updateOffsetParticles) {
+							continue;
+						}
+					}
+					
+					Vec3f p1Pos = this.getParticlePosition(triP1.position);
+					Vec3f p2Pos = this.getParticlePosition(triP2.position);
+					Vec3f p3Pos = this.getParticlePosition(triP3.position);
+					
+					Vec3f.cross(Vec3f.sub(p2Pos, p1Pos, TO_P2), Vec3f.sub(p3Pos, p1Pos, TO_P3), CROSS);
+					CROSS.normalize();
+					
+					Map<Integer, Vec3f> triP1Normals = poseNormals.get(triP1.position);
+					Map<Integer, Vec3f> triP2Normals = poseNormals.get(triP2.position);
+					Map<Integer, Vec3f> triP3Normals = poseNormals.get(triP3.position);
+					
+					triP1Normals.get(triP1.normal).add(CROSS);
+					triP2Normals.get(triP2.normal).add(CROSS);
+					triP3Normals.get(triP3.normal).add(CROSS);
+				}
+			}
 			
 			public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 				SoftBodyTranslatable softBodyMesh = ClothObject.this.provider;
@@ -435,39 +650,74 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				Matrix3f matrix3f = poseStack.last().normal();
 				float[] uvs = softBodyMesh.getSoftBodyMesh().uvs();
 				
-				// Calculate pose normals
-				for (int i = 0; i < modelPart.getVertices().size() / 3; i++) {
-					VertexBuilder<?> triP1 = modelPart.getVertices().get(i * 3);
-					VertexBuilder<?> triP2 = modelPart.getVertices().get(i * 3 + 1);
-					VertexBuilder<?> triP3 = modelPart.getVertices().get(i * 3 + 2);
-					Vec3f p1Pos = this.particles.get(triP1.position).position;
-					Vec3f p2Pos = this.particles.get(triP2.position).position;
-					Vec3f p3Pos = this.particles.get(triP3.position).position;
+				for (int i = 0; i < modelPart.getVertices().size(); i++) {
+					/**
+					Enable when testing normal offset
+					if (i % 3 == 0) {
+						if (i + 1 == modelPart.getVertices().size() || i + 2 == modelPart.getVertices().size()) {
+							
+						} else {
+							VertexBuilder<?> v1 = modelPart.getVertices().get(i);
+							VertexBuilder<?> v2 = modelPart.getVertices().get(i + 1);
+							VertexBuilder<?> v3 = modelPart.getVertices().get(i + 2);
+							
+							if (!Minecraft.getInstance().player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty() && (this.particles.get(v1.position) == null || this.particles.get(v2.position) == null || this.particles.get(v3.position) == null)) {
+								i += 2;
+								continue;
+							}
+						}
+					}
+					**/
 					
-					Vec3f.cross(Vec3f.sub(p2Pos, p1Pos, TO_P2), Vec3f.sub(p3Pos, p1Pos, TO_P3), CROSS);
-					CROSS.normalise();
+					VertexBuilder<?> vb = modelPart.getVertices().get(i);
+					Vec3f particlePosition = this.getParticlePosition(vb.position);
+					Vec3f poseNormal = poseNormals.get(vb.position).get(vb.normal);
+					poseNormal.normalize();
 					
-					Map<Vec3, Vec3f> triP1Normals = poseNormals.get(triP1.position);
-					Map<Vec3, Vec3f> triP2Normals = poseNormals.get(triP2.position);
-					Map<Vec3, Vec3f> triP3Normals = poseNormals.get(triP3.position);
+					POSITION.set(particlePosition.x, particlePosition.y, particlePosition.z);
+					NORMAL.set(poseNormal.x, poseNormal.y, poseNormal.z);
+					POSITION.mul(matrix4f);
+					NORMAL.mul(matrix3f);
 					
-					triP1Normals.get(provider.getSoftBodyMesh().normalList().get(triP1.normal)).add(CROSS);
-					triP2Normals.get(provider.getSoftBodyMesh().normalList().get(triP2.normal)).add(CROSS);
-					triP3Normals.get(provider.getSoftBodyMesh().normalList().get(triP3.normal)).add(CROSS);
+					drawingFunction.draw(builder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, r, g, b, a, uvs[vb.uv * 2], uvs[vb.uv * 2 + 1], overlay);
 				}
 				
+				/**
 				for (VertexBuilder<?> vi : modelPart.getVertices()) {
 					Particle particle = this.particles.get(vi.position);
-					Vec3f poseNormal = poseNormals.get(vi.position).get(provider.getSoftBodyMesh().normalList().get(vi.normal));
-					poseNormal.normalise();
 					
-					POSITION.set(particle.position.x, particle.position.y, particle.position.z);
+					if (particle == null) {
+						OffsetParticle offsetParticle = this.normalOffsetParticles.get(vi.position);
+						Particle rootParticle = offsetParticle.rootParticle();
+						Map<Integer, Vec3f> rootNormalMap = poseNormals.get(rootParticle.meshVertexId);
+						
+						OFFSET.set(0.0F, 0.0F, 0.0F);
+						
+						for (Integer i : offsetParticle.positionNormalMembers()) {
+							OFFSET.add(rootNormalMap.get(i));
+						}
+						
+						OFFSET.normalize();
+						OFFSET.scale(offsetParticle.length);
+						
+						POSITION.set(
+							  rootParticle.position.x + OFFSET.x
+							, rootParticle.position.y + OFFSET.y
+							, rootParticle.position.z + OFFSET.z
+						);
+					} else {
+						POSITION.set(particle.position.x, particle.position.y, particle.position.z);
+					}
+					
+					Vec3f poseNormal = poseNormals.get(vi.position).get(vi.normal);
+					poseNormal.normalize();
+					
 					NORMAL.set(poseNormal.x, poseNormal.y, poseNormal.z);
 					POSITION.mul(matrix4f);
 					NORMAL.mul(matrix3f);
 					
 					drawingFunction.draw(builder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, r, g, b, a, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
-				}
+				}**/
 			}
 			
 			@OnlyIn(Dist.CLIENT)
@@ -478,29 +728,85 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				final float rootDistance;
 				final int meshVertexId;
 				
+				boolean collided;
+				
 				Particle(VertexBuilder<StaticMesh<?, ?>> vertexBuilder, Vec3f position, float influence, float rootDistance, int meshVertexId) {
 					this.vertexBuilder = vertexBuilder;
 					this.position = position;
 					this.influence = influence;
 					this.rootDistance = rootDistance;
 					this.meshVertexId = meshVertexId;
+					
+					this.collided = false;
 				}
 			}
 			
 			@OnlyIn(Dist.CLIENT)
-			public static record ConstraintsBundle(float compliance, List<Constraint> constraints) {
+			public static record ConstraintList(float compliance, List<Constraint> constraints) {
+			}
+			
+			@OnlyIn(Dist.CLIENT)
+			public static record OffsetParticle(int offsetVertexId, float length, Particle rootParticle, Vec3f position, List<Integer> positionNormalMembers, List<Integer> inverseNormal) {
 			}
 			
 			@OnlyIn(Dist.CLIENT)
 			abstract class Constraint {
-				abstract void solve(float deltaTime, float compliance);
+				abstract void solve(float alpha, int stepcount);
 			}
 			
+			/**
+			 * A constraint that restricts stretching of two particles
+			 */
 			@OnlyIn(Dist.CLIENT)
-			class DistanceConstraint extends Constraint {
-				private static final float MIN_STRETCH = 1.1F;
-				private static final float STRETCH_RESTRICTION = 5.0F;
+			class StretchConstraint extends Constraint {
+				final Particle p1;
+				final Particle p2;
+				final float restLength;
 				
+				// Storage vector
+				static final Vec3f GRADIENT = new Vec3f();
+				
+				StretchConstraint(Particle p1, Particle p2) {
+					this.p1 = p1;
+					this.p2 = p2;
+					this.restLength = p1.position.distance(p2.position);
+				}
+				
+				@Override
+				void solve(float alpha, int stepcount) {
+				    float influenceSum = this.p1.influence + this.p2.influence;
+				    
+				    if (influenceSum < 1E-8) {
+				        return;
+				    }
+				    
+				    Vec3f.sub(this.p2.position, this.p1.position, GRADIENT);
+				    float currentLength = GRADIENT.length();
+				    
+				    if (currentLength  < 1E-8) {
+				        return;
+				    }
+				    
+				    // Normalize
+				    GRADIENT.scale(1.0F / currentLength);
+				    
+				    float constraint = currentLength - this.restLength;
+				    float force = constraint / (influenceSum + alpha);
+				    float p1Move = force * this.p1.influence;
+				    float p2Move = -force * this.p2.influence;
+				    
+				    this.p1.position.add(GRADIENT.x * p1Move, GRADIENT.y * p1Move, GRADIENT.z * p1Move);
+				    this.p2.position.add(GRADIENT.x * p2Move, GRADIENT.y * p2Move, GRADIENT.z * p2Move);
+				}
+			}
+			
+			/**
+			 * A constraint that restricts stretching of two particles, and doesn't allow stretching over the rest length.
+			 * 
+			 * Be used to prevent streching too much in gravity direction in low fps
+			 */
+			@OnlyIn(Dist.CLIENT)
+			class ShapingConstraint extends Constraint {
 				final Particle p1;
 				final Particle p2;
 				final float restLength;
@@ -508,15 +814,16 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				// Storage vector
 				static final Vec3f TOWARD = new Vec3f();
 				
-				DistanceConstraint(Particle p1, Particle p2) {
+				ShapingConstraint(Particle p1, Particle p2) {
 					this.p1 = p1;
 					this.p2 = p2;
 					this.restLength = p1.position.distance(p2.position);
 				}
 				
 				@Override
-				void solve(float deltaTime, float compliance) {
-				    float p1Influence = this.p1.influence;
+				void solve(float alpha, int stepcount) {
+					// remove the influence in the last substep
+				    float p1Influence = stepcount == SUB_STEPS ? 0.0F : this.p1.influence;
 				    float p2Influence = this.p2.influence;
 				    float influenceSum = p1Influence + p2Influence;
 				    
@@ -527,38 +834,147 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				    Vec3f.sub(this.p2.position, this.p1.position, TOWARD);
 				    float distanceLength = TOWARD.length();
 				    
-				    if (distanceLength == 0.0) {
+				    if (distanceLength == 0.0F) {
 				        return;
 				    }
 				    
+				    //Normalize
 				    TOWARD.scale(1.0F / distanceLength);
 				    
-				    float alpha = compliance / (deltaTime * deltaTime);
 				    float distanceGap = distanceLength - this.restLength;
 				    float force = distanceGap / (influenceSum + alpha);
-				    float p1Modifier = p1Influence / influenceSum;
-				    float p2Modifier = p2Influence / influenceSum;
-				    float stretchMultiplier = distanceLength / this.restLength;
-				    
-				    if (stretchMultiplier > MIN_STRETCH && p1Modifier > 0.0F) {
-				    	float modifier = Math.min((stretchMultiplier - MIN_STRETCH) / STRETCH_RESTRICTION, 1.0F);
-				    	p2Modifier = Math.min(p2Modifier + p1Modifier * modifier, 1.0F);
-				    	p1Modifier = Math.max(p1Modifier - p1Modifier * modifier, 0.0F);
-				    }
-				    
-				    float p1Move = force * p1Modifier * influenceSum;
-				    float p2Move = -force * p2Modifier * influenceSum;
+				    float p1Move = force * p1Influence * influenceSum;
+				    float p2Move = -force * p2Influence * influenceSum;
 				    
 				    this.p1.position.add(TOWARD.x * p1Move, TOWARD.y * p1Move, TOWARD.z * p1Move);
 				    this.p2.position.add(TOWARD.x * p2Move, TOWARD.y * p2Move, TOWARD.z * p2Move);
 				}
 			}
 			
+			/**
+			 * A constraint that restricts bending of member particles. p2, p3 are adjacent edge particles, and p1, p4 are opponent each other
+			 */
+			@OnlyIn(Dist.CLIENT)
+			class BendingConstraint extends Constraint {
+				final Particle p1;
+				final Particle p2;
+				final Particle p3;
+				final Particle p4;
+				final float restAngle;
+				final float oppositeDistance;
+				
+				// Storage vector
+				static final Vec3f[] GRADIENTS = { new Vec3f(), new Vec3f(), new Vec3f(), new Vec3f() };
+				static final Vec3f NORMAL_SUM = new Vec3f();
+				
+				BendingConstraint(Particle p1, Particle p2, Particle p3, Particle p4) {
+					this.p1 = p1;
+					this.p2 = p2;
+					this.p3 = p3;
+					this.p4 = p4;
+					this.restAngle = this.getDihedralAngle();
+					this.oppositeDistance = Vec3f.sub(this.p1.position, this.p4.position, null).lengthSqr(); 
+				}
+				
+				@Override
+				void solve(float alpha, int stepcount) {
+				    float influenceSum = this.p1.influence + this.p2.influence + this.p3.influence + this.p4.influence;
+				    
+				    if (influenceSum < 1E-8) {
+				        return;
+				    }
+				    
+					float currentAngle = this.getDihedralAngle();
+				    float constraint = (this.restAngle - currentAngle);
+				    
+				    while (constraint > Math.PI) {
+				    	constraint -= Math.PI * 2;
+				    }
+				    
+				    while (constraint < -Math.PI) {
+				    	constraint += Math.PI * 2;
+				    }
+				    
+				    // radian angle * diameter
+				    constraint = this.oppositeDistance * constraint;
+				    
+				    float edgeLength = EDGE.length();
+				    
+				    CROSS1.scale(edgeLength);
+				    CROSS2.scale(edgeLength);
+				    GRADIENTS[0].set(CROSS1);
+				    GRADIENTS[3].set(CROSS2);
+				    
+				    Vec3f.add(CROSS1, CROSS2, NORMAL_SUM);
+				    NORMAL_SUM.scale(-0.5F);
+				    GRADIENTS[1].set(NORMAL_SUM);
+				    GRADIENTS[2].set(NORMAL_SUM);
+				    
+				    float weight = this.p1.influence * GRADIENTS[0].lengthSqr()
+				    				+ this.p2.influence * GRADIENTS[1].lengthSqr()
+				    				+ this.p3.influence * GRADIENTS[2].lengthSqr()
+				    				+ this.p4.influence * GRADIENTS[3].lengthSqr();
+				    
+				    if (weight < 1E-8) {
+						return;
+					}
+				    
+				    float stiffness = 1.0F;
+				    float force = (-constraint * stiffness) / (influenceSum + alpha);
+				    
+				    GRADIENTS[0].scale(force * this.p1.influence);
+				    GRADIENTS[1].scale(force * this.p2.influence);
+				    GRADIENTS[2].scale(force * this.p3.influence);
+				    GRADIENTS[3].scale(force * this.p4.influence);
+				    
+				    Vec3f.add(this.p1.position, GRADIENTS[0], this.p1.position);
+				    Vec3f.add(this.p2.position, GRADIENTS[1], this.p2.position);
+				    Vec3f.add(this.p3.position, GRADIENTS[2], this.p3.position);
+				    Vec3f.add(this.p4.position, GRADIENTS[3], this.p4.position);
+				}
+				
+				static final Vec3f P2P1 = new Vec3f();
+				static final Vec3f P3P1 = new Vec3f();
+				static final Vec3f P4P2 = new Vec3f();
+				static final Vec3f P4P3 = new Vec3f();
+				static final Vec3f EDGE = new Vec3f();
+				static final Vec3f EDGE_NORM = new Vec3f();
+				
+				static final Vec3f CROSS1 = new Vec3f();
+				static final Vec3f CROSS2 = new Vec3f();
+				static final Vec3f CROSS3 = new Vec3f();
+				
+				public float getDihedralAngle() {
+					Vec3f.sub(this.p1.position, this.p2.position, P2P1);
+					Vec3f.sub(this.p1.position, this.p3.position, P3P1);
+					Vec3f.sub(this.p4.position, this.p2.position, P4P2);
+					Vec3f.sub(this.p4.position, this.p3.position, P4P3);
+					Vec3f.sub(this.p3.position, this.p2.position, EDGE);
+					
+					Vec3f.cross(P2P1, P3P1, CROSS1);
+					Vec3f.cross(P4P3, P4P2, CROSS2);
+					CROSS1.normalize();
+					CROSS2.normalize();
+					Vec3f.normalize(EDGE, EDGE_NORM);
+					
+					float cos = Vec3f.dot(CROSS1, CROSS2);
+					float sin = Vec3f.dot(Vec3f.cross(CROSS1, CROSS2, CROSS3), EDGE_NORM);
+					
+					return (float)Math.atan2(sin, cos);
+				}
+			}
+			
+			/**
+			 * A constraint that resists squashing of tetrahedral.
+			 * 
+			 * Note: This constraint is expensive. Consider using NormalMappedParticle instead.
+			 */
 			@OnlyIn(Dist.CLIENT)
 			class VolumeConstraint extends Constraint {
 				final Particle[] particles;
 				final float restVolume;
 				
+				static final float SUBDIVISION = 1.0F / 6.0F;
 				static final int[][] VOLUME_ORDER = { {1, 3, 2}, {0, 2, 3}, {0, 3, 1}, {0, 1, 2} };
 				static final Vec3f[] SHRINK_DIRECTIONS = { new Vec3f(), new Vec3f(), new Vec3f(), new Vec3f() };
 				
@@ -574,12 +990,11 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					this.particles[1] = p2;
 					this.particles[2] = p3;
 					this.particles[3] = p4;
-					this.restVolume = getTetrahedralVolume(this.particles[0], this.particles[1], this.particles[2], this.particles[3]);
+					this.restVolume = this.getTetrahedralVolume();
 				}
 
 				@Override
-				void solve(float deltaTime, float compliance) {
-					float alpha = compliance / (deltaTime * deltaTime);
+				void solve(float alpha, int stepcount) {
 					float weight = 0.0F;
 					
 					for (int i = 0; i < 4; i++) {
@@ -590,18 +1005,17 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 						Vec3f.sub(p2.position, p1.position, P1_TO_P2);
 						Vec3f.sub(p3.position, p1.position, P1_TO_P3);
 						Vec3f.cross(P1_TO_P2, P1_TO_P3, SHRINK_DIRECTIONS[i]);
-						SHRINK_DIRECTIONS[i].scale(1.0F / 6.0F);
+						SHRINK_DIRECTIONS[i].scale(SUBDIVISION);
 						
 						weight += this.particles[i].influence * SHRINK_DIRECTIONS[i].lengthSqr();
 					}
 					
-					if (weight == 0.0F) {
+					if (weight < 1E-8) {
 						return;
 					}
 					
-					float currentVolume = getTetrahedralVolume(this.particles[0], this.particles[1], this.particles[2], this.particles[3]);
-					float volumeGap = currentVolume - this.restVolume;
-					float force = -volumeGap / (weight + alpha);
+					float constraint = this.restVolume - this.getTetrahedralVolume();
+					float force = constraint / (weight + alpha);
 					
 					for (int i = 0; i < 4; i++) {
 						SHRINK_DIRECTIONS[i].scale(force * this.particles[i].influence);
@@ -609,10 +1023,10 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					}
 				}
 				
-				static float getTetrahedralVolume(Particle p1, Particle p2, Particle p3, Particle p4) {
-					Vec3f.sub(p2.position, p1.position, P1_TO_P2);
-					Vec3f.sub(p3.position, p1.position, P1_TO_P3);
-					Vec3f.sub(p4.position, p1.position, P1_TO_P4);
+				float getTetrahedralVolume() {
+					Vec3f.sub(this.particles[1].position, this.particles[0].position, P1_TO_P2);
+					Vec3f.sub(this.particles[2].position, this.particles[0].position, P1_TO_P3);
+					Vec3f.sub(this.particles[3].position, this.particles[0].position, P1_TO_P4);
 					Vec3f.cross(P1_TO_P2, P1_TO_P3, TET_CROSS);
 					
 					return Vec3f.dot(TET_CROSS, P1_TO_P4) / 6.0F;

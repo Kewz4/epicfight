@@ -12,10 +12,10 @@ import com.google.common.collect.Maps;
 import net.minecraft.resources.ResourceLocation;
 import yesman.epicfight.api.physics.PhysicsSimulator;
 import yesman.epicfight.api.physics.SimulationObject;
-import yesman.epicfight.api.physics.SimulationObject.SimulationBuilder;
+import yesman.epicfight.api.physics.SimulationObject.SimulationObjectBuilder;
 import yesman.epicfight.api.physics.SimulationProvider;
 
-public abstract class AbstractSimulator<B extends SimulationBuilder, PV extends SimulationProvider<O, SO, B, PV>, O, SO extends SimulationObject<B, PV, O>> implements PhysicsSimulator<B, PV, O, SO> {
+public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV extends SimulationProvider<O, SO, B, PV>, O, SO extends SimulationObject<B, PV, O>> implements PhysicsSimulator<B, PV, O, SO> {
 	protected Map<ResourceLocation, ObjectWrapper> simulationObjects = Maps.newHashMap();
 	
 	@Override
@@ -37,7 +37,6 @@ public abstract class AbstractSimulator<B extends SimulationBuilder, PV extends 
 			
 			return false;
 		});
-		
 	}
 	
 	/**

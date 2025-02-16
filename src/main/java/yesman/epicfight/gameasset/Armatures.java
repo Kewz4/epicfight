@@ -58,7 +58,7 @@ public class Armatures {
 	public static final ArmatureAccessor<DragonArmature> DRAGON = ArmatureAccessor.create(EpicFightMod.MODID, "entity/dragon", DragonArmature::new);
 	public static final ArmatureAccessor<WitherArmature> WITHER = ArmatureAccessor.create(EpicFightMod.MODID, "entity/wither", WitherArmature::new);
 	
-	static {
+	public static void registerEntityTypes() {
 		registerEntityTypeArmature(EntityType.CAVE_SPIDER, SPIDER);
 		registerEntityTypeArmature(EntityType.CREEPER, CREEPER);
 		registerEntityTypeArmature(EntityType.DROWNED, BIPED);

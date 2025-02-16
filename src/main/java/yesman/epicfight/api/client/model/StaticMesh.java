@@ -122,6 +122,6 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 	@SuppressWarnings("unchecked")
 	@Override
 	public ClothSimulator.ClothObject createSimulationData(@Nullable SoftBodyTranslatable provider, ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder simBuilder) {
-		return new ClothObject(simBuilder, provider == null ? this : provider, (Map<String, MeshPart<?>>)this.parts, this.positions);
+		return new ClothObject(simBuilder, provider == null ? this : provider, (Map<String, MeshPart<VertexBuilder<StaticMesh<?, ?>>>>)this.parts, this.positions);
 	}
 }

@@ -31,6 +31,7 @@ import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPChangePlayerMode;
+import yesman.epicfight.network.client.CPSetStamina;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
 import yesman.epicfight.network.client.CPSetPlayerTarget;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -309,6 +310,11 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	
 	public void toggleLockOn() {
 		this.targetLockedOn = !this.targetLockedOn;
+	}
+	
+	@Override
+	public void setStamina(float value) {
+		EpicFightNetworkManager.sendToServer(new CPSetStamina(value, true));
 	}
 	
 	@Override

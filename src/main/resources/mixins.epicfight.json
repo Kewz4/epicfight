@@ -21,10 +21,7 @@
 		"SkinLayer3DMixinCustomModelPart",
 		"SkinLayer3DMixinCustomizableCubeWrapper$SkinLayer3DMixinCustomModelCube",
 		"VampirismMixinVampirePlayerHeadLayer",
-		"WerewolvesMixinHumanWerewolfLayer",
-		"ParCoolMixinKongVaultAnimator",
-		"ParCoolMixinSpeedVaultAnimator",
-		"ParCoolMixinHorizontalWallRunAnimator"
+		"WerewolvesMixinHumanWerewolfLayer"
 	],
 	"mixins": [
 		"MixinEndCrystal",
@@ -34,10 +31,7 @@
 		"MixinMob",
 		"MixinPlayer",
 		"MixinThrownTrident",
-		"MixinServerGamePacketListenerImpl",
-		"ParCoolMixinAnimation",
-		"ParCoolMixinClingToCliff",
-		"ParCoolMixinClingToCliffAccessor"
+		"MixinServerGamePacketListenerImpl"
 	],
 	"injector": {
 		"defaultRequire": 1

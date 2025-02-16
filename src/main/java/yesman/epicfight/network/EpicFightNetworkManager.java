@@ -58,6 +58,7 @@ public class EpicFightNetworkManager {
 		INSTANCE.registerMessage(id++, CPModifySkillData.class, CPModifySkillData::toBytes, CPModifySkillData::fromBytes, CPModifySkillData::handle);
 		INSTANCE.registerMessage(id++, CPCheckAnimationRegistrySync.class, CPCheckAnimationRegistrySync::toBytes, CPCheckAnimationRegistrySync::fromBytes, CPCheckAnimationRegistrySync::handle);
 		INSTANCE.registerMessage(id++, CPAnimationVariablePacket.class, CPAnimationVariablePacket::toBytes, CPAnimationVariablePacket::fromBytes, CPAnimationVariablePacket::handle);
+		INSTANCE.registerMessage(id++, CPSetStamina.class, CPSetStamina::toBytes, CPSetStamina::fromBytes, CPSetStamina::handle);
 		
 		INSTANCE.registerMessage(id++, SPChangeSkill.class, SPChangeSkill::toBytes, SPChangeSkill::fromBytes, SPChangeSkill::handle);
 		INSTANCE.registerMessage(id++, SPSkillExecutionFeedback.class, SPSkillExecutionFeedback::toBytes, SPSkillExecutionFeedback::fromBytes, SPSkillExecutionFeedback::handle);

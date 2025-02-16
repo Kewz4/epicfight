@@ -85,18 +85,14 @@ public class ClientModBusEvent {
 	public static void addLayersEvent(EntityRenderersEvent.AddLayers event) {
 		ClientEngine.getInstance().renderEngine.bootstrap(event.getContext());
 		
+		SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.removeIf(ClothSimulatable::invalid);
+		
 		for (ClothSimulatable simOwner : SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS) {
-			if (!simOwner.valid()) {
-				continue;
-			}
-			
 			simOwner.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
 				simulator.getAllRunningObjects().forEach((entry) -> {
 					simulator.restart(entry.getKey());
 				});
 			});
 		}
-		
-		SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.clear();
 	}
 }

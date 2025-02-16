@@ -202,6 +202,7 @@ public class JsonAssetLoader {
 		for (Map.Entry<String, JsonElement> e : clothInfoObj.entrySet()) {
 			JsonObject clothObject = e.getValue().getAsJsonObject();
 			int[] particlesArray = ParseUtil.toIntArrayPrimitive(clothObject.get("particles").getAsJsonObject().get("array").getAsJsonArray());
+			float[] weightsArray = ParseUtil.toFloatArrayPrimitive(clothObject.get("weights").getAsJsonObject().get("array").getAsJsonArray());
 			
 			JsonArray constraintsArray = clothObject.get("constraints").getAsJsonArray();
 			List<int[]> constraintsList = new ArrayList<> (constraintsArray.size());
@@ -241,7 +242,13 @@ public class JsonAssetLoader {
 				rootDistances[j] = (float)position.distanceTo(nearest);
 			}
 			
-			SoftBodyTranslatable.ClothSimulationInfo clothSimulInfo = new SoftBodyTranslatable.ClothSimulationInfo(constraintsList, constraintType, compliances, particlesArray, rootDistances);
+			int[] normalOffsetMappingArray = null;
+			
+			if (clothObject.has("normal_offsets")) {
+				normalOffsetMappingArray = ParseUtil.toIntArrayPrimitive(clothObject.get("normal_offsets").getAsJsonObject().get("array").getAsJsonArray());
+			}
+			
+			SoftBodyTranslatable.ClothSimulationInfo clothSimulInfo = new SoftBodyTranslatable.ClothSimulationInfo(constraintsList, constraintType, compliances, particlesArray, weightsArray, rootDistances, normalOffsetMappingArray);
 			clothInfo.put(e.getKey(), clothSimulInfo);
 		}
 		

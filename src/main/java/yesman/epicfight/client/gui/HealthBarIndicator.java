@@ -107,14 +107,6 @@ public class HealthBarIndicator extends EntityIndicator {
 		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, healthRatio, 0.05F, 1, 15, textureRatio, 20, size);
 		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -0.05F, 0.5F, 0.05F, textureRatio, 10, 62, 15, size);
 		
-		/**
-		int textureRatio = (int) (67 * ratio);
-		float boxWidth = 0.5F;
-		float boxHeight = 0.055F;
-		
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -boxWidth, -boxHeight, healthRatio, boxHeight, 0, 7, textureRatio, 14, 1.0F / 128.0F);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -boxHeight, boxWidth, boxHeight, textureRatio, 0, 67, 7, 1.0F / 128.0F);
-		**/
 		float absorption = entity.getAbsorptionAmount();
 		
 		if (absorption > 0.0D) {

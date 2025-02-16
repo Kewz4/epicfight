@@ -1,9 +1,11 @@
 package yesman.epicfight.api.animation;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -396,14 +398,27 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static class AnimationRegistryEvent extends Event implements IModBusEvent {
-		private String namespace;
+		private List<AnimationBuilder> builders = Lists.newArrayList();
+		private Set<String> namespaces = Sets.newHashSet();
 		
-		public void startsWith(String namespace) {
-			this.namespace = namespace;
+		public void newBuilder(String namespace, Consumer<AnimationBuilder> build) {
+			if (this.namespaces.contains(namespace)) {
+				throw new IllegalArgumentException("Animation builder namespace '" + namespace + "' already exists!");
+			}
+			
+			this.namespaces.add(namespace);
+			this.builders.add(new AnimationBuilder(namespace, build));
 		}
 		
+		public List<AnimationBuilder> getBuilders() {
+			return this.builders;
+		}
+	}
+	
+	public static record AnimationBuilder(String namespace, Consumer<AnimationBuilder> task) {
 		public <T extends StaticAnimation> AnimationManager.AnimationAccessor<T> nextAccessor(String id, Function<AnimationManager.AnimationAccessor<T>, T> onLoad) {
 			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.tryBuild(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
+			
 			INSTANCE.animationById.put(accessor.id(), accessor);
 			INSTANCE.animationByName.put(accessor.registryName(), accessor);
 			INSTANCE.animations.put(accessor, null);

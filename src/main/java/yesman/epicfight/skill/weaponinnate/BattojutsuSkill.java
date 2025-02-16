@@ -2,7 +2,7 @@ package yesman.epicfight.skill.weaponinnate;
 
 import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.skill.SkillSlots;
-import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
+import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 public class BattojutsuSkill extends ConditionalWeaponInnateSkill {
 	public BattojutsuSkill(ConditionalWeaponInnateSkill.Builder builder) {
@@ -10,7 +10,7 @@ public class BattojutsuSkill extends ConditionalWeaponInnateSkill {
 	}
 	
 	@Override
-	public void playSkillAnimation(PlayerPatch<?> executor) {
+	public void playSkillAnimation(ServerPlayerPatch executor) {
 		boolean isSheathed = executor.getSkill(SkillSlots.WEAPON_PASSIVE).getDataManager().getDataValue(SkillDataKeys.SHEATH.get());
 		
 		if (isSheathed) {

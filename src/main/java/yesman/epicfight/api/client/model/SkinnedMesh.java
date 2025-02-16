@@ -115,7 +115,6 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	}
 	
 	public void initBuffers() {
-		this.bufferInitialized = true;
 		this.positionsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 3, false, ByteBuffer::putFloat);
 		this.uvsBuffer = new VertexBuffer<> (GLConstants.GL_FLOAT, 2, false, ByteBuffer::putFloat);
 		this.normalsBuffer = new VertexBuffer<> (GLConstants.GL_BYTE, 3, true, ByteBuffer::put);
@@ -148,6 +147,8 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		
 		GlStateManager._glBindVertexArray(currentBoundVao);
 		GlStateManager._glBindBuffer(GLConstants.GL_ARRAY_BUFFER, currentBoundVbo);
+		
+		this.bufferInitialized = true;
 	}
 	
 	public void pointPositionsBuffer(int attrIndex) {
