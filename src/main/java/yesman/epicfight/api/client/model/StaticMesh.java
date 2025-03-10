@@ -18,20 +18,20 @@ import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject;
 import yesman.epicfight.api.utils.ParseUtil;
+import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<?>> implements Mesh, SoftBodyTranslatable {
-	protected static final Vector4f POSITION = new Vector4f();
-	protected static final Vector3f NORMAL = new Vector3f();
-	
+public abstract class StaticMesh<P extends MeshPart> implements Mesh, SoftBodyTranslatable {
 	protected final float[] positions;
 	protected final float[] normals;
 	protected final float[] uvs;
 	
 	protected final int vertexCount;
-	protected final RenderProperties renderProperties;
+	protected final Mesh.RenderProperties renderProperties;
 	protected final Map<String, P> parts;
 	protected final List<Vec3> normalList;
+	
+	private Map<String, ClothSimulationInfo> softBodySimulationInfo;
 	
 	/**
 	 * @param arrayMap Null if parent is not null
@@ -39,7 +39,7 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 	 * @param parent Null if arrayMap and parts are not null
 	 * @param renderProperties
 	 */
-	public StaticMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<V>> partBuilders, @Nullable StaticMesh<P, V> parent, RenderProperties renderProperties) {
+	public StaticMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable StaticMesh<P> parent, Mesh.RenderProperties renderProperties) {
 		this.positions = (parent == null) ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("positions")) : parent.positions;
 		this.normals = (parent == null) ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("normals")) : parent.normals;
 		this.uvs = (parent == null) ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("uvs")) : parent.uvs;
@@ -48,7 +48,7 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 		
 		int totalV = 0;
 		
-		for (MeshPart<V> modelpart : this.parts.values()) {
+		for (MeshPart modelpart : this.parts.values()) {
 			totalV += modelpart.getVertices().size();
 		}
 		
@@ -67,14 +67,14 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 		}
 	}
 	
-	protected abstract Map<String, P> createModelPart(Map<MeshPartDefinition, List<V>> partBuilders);
+	protected abstract Map<String, P> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders);
 	protected abstract P getOrLogException(Map<String, P> parts, String name);
 	
 	public boolean hasPart(String part) {
 		return this.parts.containsKey(part);
 	}
 	
-	public MeshPart<V> getPart(String part) {
+	public MeshPart getPart(String part) {
 		return this.parts.get(part);
 	}
 	
@@ -82,8 +82,34 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 		return this.parts.values();
 	}
 	
-	public RenderProperties getRenderProperty() {
+	public void putSoftBodySimulationInfo(Map<String, ClothSimulationInfo> sofyBodySimulationInfo) {
+		this.softBodySimulationInfo = sofyBodySimulationInfo;
+	}
+	
+	public Map<String, ClothSimulationInfo> getSoftBodySimulationInfo() {
+		return this.softBodySimulationInfo;
+	}
+	
+	public Mesh.RenderProperties getRenderProperties() {
 		return this.renderProperties;
+	}
+	
+	public void getVertexPosition(int positionIndex, Vector4f dest) {
+		int index = positionIndex * 3;
+		dest.set(this.positions[index], this.positions[index + 1], this.positions[index + 2], 1.0F);
+	}
+	
+	public void getVertexNormal(int normalIndex, Vector3f dest) {
+		int index = normalIndex * 3;
+		dest.set(this.normals[index], this.normals[index + 1], this.normals[index + 2]);
+	}
+	
+	public void getVertexPosition(int positionIndex, Vector4f dest, @Nullable OpenMatrix4f[] poses) {
+		this.getVertexPosition(positionIndex, dest);
+	}
+	
+	public void getVertexNormal(int positionIndex, int normalIndex, Vector3f dest, @Nullable OpenMatrix4f[] poses) {
+		this.getVertexNormal(normalIndex, dest);
 	}
 	
 	public float[] positions() {
@@ -108,20 +134,9 @@ public abstract class StaticMesh<P extends MeshPart<V>, V extends VertexBuilder<
 		this.parts.values().forEach((part) -> part.setHidden(false));
 	}
 	
-	@Override
-	public boolean canStartSoftBodySimulation() {
-		boolean hasSimulInfo = true;
-		
-		for (MeshPart<?> part : this.parts.values()) {
-			hasSimulInfo &= part.clothInfo != null;
-		}
-		
-		return hasSimulInfo;
-	}
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public ClothSimulator.ClothObject createSimulationData(@Nullable SoftBodyTranslatable provider, ClothSimulatable simObject, ClothSimulator.ClothObjectBuilder simBuilder) {
-		return new ClothObject(simBuilder, provider == null ? this : provider, (Map<String, MeshPart<VertexBuilder<StaticMesh<?, ?>>>>)this.parts, this.positions);
+		return new ClothObject(simBuilder, provider == null ? this : provider, (Map<String, MeshPart>)this.parts, this.positions);
 	}
 }

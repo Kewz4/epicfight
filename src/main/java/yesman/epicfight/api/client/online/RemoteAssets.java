@@ -21,11 +21,10 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.online.texture.RemoteTexture;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class RemoteAssets {
-	public static final String SERVER_URL = "https://epic-fight.com";
-	
 	private static final RemoteAssets INSTANCE = new RemoteAssets();
 	private static final TextureManager TEXTURE_MANAGER = Minecraft.getInstance().getTextureManager();
 	
@@ -73,7 +72,7 @@ public class RemoteAssets {
 		AbstractTexture texture = TEXTURE_MANAGER.getTexture(textureLocation, MissingTextureAtlasSprite.getTexture());
 		
 		if (texture == MissingTextureAtlasSprite.getTexture()) {
-			AbstractTexture httptexture = new RemoteTexture(SERVER_URL + "/textures/" + fileName, MissingTextureAtlasSprite.getLocation());
+			AbstractTexture httptexture = new RemoteTexture(EpicFightSharedConstants.SERVER_URL + "/textures/" + fileName, MissingTextureAtlasSprite.getLocation());
 			TEXTURE_MANAGER.register(textureLocation, httptexture);
 		}
 		

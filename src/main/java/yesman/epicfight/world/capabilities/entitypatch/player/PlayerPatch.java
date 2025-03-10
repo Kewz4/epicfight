@@ -275,10 +275,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	/**
-	 * @Deprecated
-	 * Use {@link getSkillContainerFor} instead to ensure null checking
+	 * Use {@link getSkillContainerFor} instead to cherck null
 	 **/
-	@Deprecated
 	public SkillContainer getSkill(Skill skill) {
 		if (skill == null) {
 			return null;

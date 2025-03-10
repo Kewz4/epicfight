@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,6 +21,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModList;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.client.ICurioRenderer.HumanoidRender;
+import top.theillusivec4.curios.api.client.ICurioRenderer.ModelRender;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 import top.theillusivec4.curios.client.render.CuriosLayer;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
@@ -76,6 +79,9 @@ public class CuriosCompat implements ICompatModule {
 			if (ModList.get().isLoaded("relics")) {
 				//CURIO_MODEL_GETTERS.add(RelicsModelProvider::getCuriosModel);
 			}
+			
+			ModelRender mr;
+			HumanoidRender hr;
 		}
 		
 		@Override

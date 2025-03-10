@@ -41,11 +41,11 @@ import yesman.epicfight.api.client.animation.Layer.LayerType;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.ItemSkin;
-import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
+import yesman.epicfight.client.ClientEngine;
+import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -245,10 +245,10 @@ public class StaticAnimation extends DynamicAnimation {
 					
 					if (trailInfo.hand != null) {
 						ItemStack stack = entitypatch.getOriginal().getItemInHand(trailInfo.hand);
-						ItemSkin itemSkin = ItemSkins.getItemSkin(stack.getItem());
+						RenderItemBase renderitembase = ClientEngine.getInstance().renderEngine.getItemRenderer(stack);
 						
-						if (itemSkin != null && itemSkin.trailInfo() != null) {
-							trailInfo = itemSkin.trailInfo().overwrite(trailInfo);
+						if (renderitembase != null && renderitembase.trailInfo() != null) {
+							trailInfo = renderitembase.trailInfo().overwrite(trailInfo);
 						}
 					}
 					

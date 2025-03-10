@@ -28,7 +28,7 @@ public class FABRIK {
 	public void addChain(Pose pose, Joint startJoint, Joint endJoint) {
 		OpenMatrix4f bindTransform = armature.getBindedTransformFor(pose, startJoint);
 		int pathIndex = Integer.parseInt(startJoint.searchPath("", endJoint.getName()));
-		this.startPos.set(bindTransform.toTranslationVector());
+		OpenMatrix4f.toTranslationVector(bindTransform, this.startPos);
 		this.addChainInternal(pose, bindTransform, startJoint, pathIndex);
 	}
 	

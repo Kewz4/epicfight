@@ -56,20 +56,8 @@ public class MoveCoordFunctions {
 		LivingEntity livingentity = entitypatch.getOriginal();
 		JointTransform oJt = coord.getInterpolatedTransform(prevElapsedTime);
 		JointTransform jt = coord.getInterpolatedTransform(elapsedTime);
-		
-		TransformSheet animCoord = animation.getCoord();
-		JointTransform oAnimJt = animCoord.getInterpolatedTransform(prevElapsedTime);
-		JointTransform animJt = animCoord.getInterpolatedTransform(elapsedTime);
-		
-		Vec3f lastCoord = entitypatch.getAnimator().getVariables().get(ActionAnimation.LAST_MODEL_COORD, animation.getRealAnimation());
-		
-		if (lastCoord == null || Math.abs(animJt.translation().z - oAnimJt.translation().z) < 0.01F) {
-			lastCoord = oJt.translation();
-		}
-		
-		Vec4f prevpos = new Vec4f(lastCoord);
+		Vec4f prevpos = new Vec4f(oJt.translation());
 		Vec4f currentpos = new Vec4f(jt.translation());
-		entitypatch.getAnimator().getVariables().put(ActionAnimation.LAST_MODEL_COORD, animation.getRealAnimation(), jt.translation());
 		
 		OpenMatrix4f rotationTransform = OpenMatrix4f.createRotatorDeg(-entitypatch.getYRot(), Vec3f.Y_AXIS);
 		OpenMatrix4f localTransform = entitypatch.getArmature().searchJointByName("Root").getLocalTransform().removeTranslation();
@@ -315,8 +303,6 @@ public class MoveCoordFunctions {
 			
 			Vec3 toDestWorld = destLocation.subtract(startInWorld);
 			Vec3f toDestAnim = realAnimationCoord[realAnimationCoord.length - 1].transform().translation();
-			
-			//float yRot = (float)Mth.wrapDegrees(MathUtils.getYRotOfVector(toDestWorld));
 			LivingEntity attackTarget = entitypatch.getTarget();
 			
 			// Calculate Entity-Entity collide radius
@@ -340,9 +326,6 @@ public class MoveCoordFunctions {
 					translation.z *= scale;
 				}
 			}
-			
-			//float entityYRot = MathUtils.rotlerp(entitypatch.getYRot(), yRot, entitypatch.getYRotLimit());
-			//entitypatch.setYRot(entityYRot);
 			
 			transformSheet.readFrom(transform);
 		} else {

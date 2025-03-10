@@ -129,6 +129,7 @@ public abstract class HurtableEntityPatch<T extends LivingEntity> extends Entity
 		power *= 1.0D - this.original.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
 		
 		if (power > 0.0D) {
+			this.original.hurtMarked = true;
 			this.original.hasImpulse = true;
 			Vec3 vec3 = this.original.getDeltaMovement();
 			Vec3 vec31 = (new Vec3(d1, 0.0D, d0)).normalize().scale(power);

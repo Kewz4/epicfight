@@ -10,6 +10,8 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -67,8 +69,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEnderDragonEvent;
-import yesman.epicfight.api.client.model.ItemSkin;
-import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -106,13 +106,12 @@ import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
 import yesman.epicfight.client.renderer.patched.entity.PatchedLivingEntityRenderer;
 import yesman.epicfight.client.renderer.patched.entity.PresetRenderer;
 import yesman.epicfight.client.renderer.patched.entity.WitherGhostCloneRenderer;
-import yesman.epicfight.client.renderer.patched.item.RenderBow;
-import yesman.epicfight.client.renderer.patched.item.RenderCrossbow;
+import yesman.epicfight.client.renderer.patched.item.RenderFilledMap;
 import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.client.renderer.patched.item.RenderKatana;
-import yesman.epicfight.client.renderer.patched.item.RenderMap;
 import yesman.epicfight.client.renderer.patched.item.RenderShield;
 import yesman.epicfight.client.renderer.patched.item.RenderTrident;
+import yesman.epicfight.client.renderer.patched.item.RenderTwoHandedRangedWeapon;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
@@ -129,17 +128,15 @@ import yesman.epicfight.world.capabilities.item.ShieldCapability;
 import yesman.epicfight.world.capabilities.item.TridentCapability;
 import yesman.epicfight.world.entity.EpicFightEntities;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
-import yesman.epicfight.world.item.EpicFightItems;
 
 @SuppressWarnings("rawtypes")
 @OnlyIn(Dist.CLIENT)
 public class RenderEngine {
-	private static final Vec3f AIMING_CORRECTION = new Vec3f(-1.5F, 0.0F, 1.25F);
-	
 	public final BattleModeGui battleModeUI = new BattleModeGui(Minecraft.getInstance());
 	public final VersionNotifier versionNotifier = new VersionNotifier(Minecraft.getInstance());
 	public final Minecraft minecraft;
 	
+	private final Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers;
 	private final BiMap<EntityType<?>, Function<EntityType<?>, PatchedEntityRenderer>> entityRendererProvider;
 	private final Map<EntityType<?>, PatchedEntityRenderer> entityRendererCache;
 	private final Map<Item, RenderItemBase> itemRendererMapByInstance;
@@ -159,7 +156,6 @@ public class RenderEngine {
 	
 	public RenderEngine() {
 		Events.renderEngine = this;
-		RenderItemBase.renderEngine = this;
 		EntityIndicator.init();
 		
 		this.minecraft = Minecraft.getInstance();
@@ -169,9 +165,23 @@ public class RenderEngine {
 		this.itemRendererMapByClass = Maps.newHashMap();
 		this.sentMessages = Sets.newHashSet();
 		this.overlayManager = new OverlayManager();
+		this.itemRenderers = Maps.newHashMap();
+		
+		RenderItemBase.initItemRenderers(this.minecraft);
+		
+		this.itemRenderers.put(ResourceLocation.tryParse("base"), RenderItemBase::new);
+		this.itemRenderers.put(ResourceLocation.tryParse("ranged"), RenderTwoHandedRangedWeapon::new);
+		this.itemRenderers.put(ResourceLocation.tryParse("map"), RenderFilledMap::new);
+		this.itemRenderers.put(ResourceLocation.tryParse("shield"), RenderShield::new);
+		this.itemRenderers.put(ResourceLocation.tryParse("trident"), RenderTrident::new);
+		this.itemRenderers.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "uchigatana"), RenderKatana::new);
 	}
 	
-	public void bootstrap(EntityRendererProvider.Context context) {
+	public void addItemRenderer(ResourceLocation rl, Function<JsonElement, RenderItemBase> provider) {
+		this.itemRenderers.put(rl, provider);
+	}
+	
+	public void reloadEntityRenderers(EntityRendererProvider.Context context) {
 		this.entityRendererProvider.clear();
 		this.entityRendererProvider.put(EntityType.CREEPER, (entityType) -> new PCreeperRenderer(context, entityType).initLayerLast(context, entityType));
 		this.entityRendererProvider.put(EntityType.ENDERMAN, (entityType) -> new PEndermanRenderer(context, entityType).initLayerLast(context, entityType));
@@ -206,41 +216,66 @@ public class RenderEngine {
 		this.basicHumanoidRenderer = new PHumanoidRenderer<>(Meshes.BIPED, context, EntityType.PLAYER);
 		this.aimHelper = new AimHelperRenderer();
 		
-		RenderItemBase baseRenderer = new RenderItemBase();
-		RenderBow bowRenderer = new RenderBow();
-		RenderCrossbow crossbowRenderer = new RenderCrossbow();
-		RenderTrident tridentRenderer = new RenderTrident();
-		RenderMap mapRenderer = new RenderMap();
-		RenderShield shieldRenderer = new RenderShield();
+		ModLoader.get().postEvent(new PatchedRenderersEvent.Add(this.entityRendererProvider, this.itemRendererMapByInstance, context));
 		
+		this.resetRenderers();
+	}
+	
+	public void reloadItemRenderers(Map<ResourceLocation, JsonElement> objects) {
 		//Clear item renderers
 		this.itemRendererMapByInstance.clear();
 		this.itemRendererMapByClass.clear();
 		
-		this.itemRendererMapByInstance.put(Items.AIR, baseRenderer);
-		this.itemRendererMapByInstance.put(Items.BOW, bowRenderer);
-		this.itemRendererMapByInstance.put(Items.SHIELD, shieldRenderer);
-		this.itemRendererMapByInstance.put(Items.CROSSBOW, crossbowRenderer);
-		this.itemRendererMapByInstance.put(Items.TRIDENT, tridentRenderer);
-		this.itemRendererMapByInstance.put(Items.FILLED_MAP, mapRenderer);
-		this.itemRendererMapByInstance.put(EpicFightItems.UCHIGATANA.get(), new RenderKatana());
+		for (Map.Entry<ResourceLocation, JsonElement> entry : objects.entrySet()) {
+			ResourceLocation rl = entry.getKey();
+			String pathString = rl.getPath();
+			ResourceLocation registryName = ResourceLocation.tryBuild(rl.getNamespace(), pathString);
+			
+			if (!ForgeRegistries.ITEMS.containsKey(registryName)) {
+				EpicFightMod.LOGGER.warn("Failed to load item skin: no item named " + registryName);
+				continue;
+			}
+			
+			Item item = ForgeRegistries.ITEMS.getValue(registryName);
+			Function<JsonElement, RenderItemBase> rendererProvider;
+			
+			if (entry.getValue().getAsJsonObject().has("renderer")) {
+				ResourceLocation rendererName = ResourceLocation.tryParse(entry.getValue().getAsJsonObject().get("renderer").getAsString());
+				
+				if (this.itemRenderers.containsKey(rendererName)) {
+					rendererProvider = this.itemRenderers.get(rendererName);
+				} else {
+					EpicFightMod.LOGGER.warn("No renderer named " + rendererName);
+					rendererProvider = RenderItemBase::new;
+				}
+			} else {
+				rendererProvider = RenderItemBase::new;
+			}
+			
+			RenderItemBase itemRenderer = rendererProvider.apply(entry.getValue());
+			this.itemRendererMapByInstance.put(item, itemRenderer);
+		}
 		
-		//Render by item class
+		RenderItemBase baseRenderer = new RenderItemBase(new JsonObject());
+		RenderTwoHandedRangedWeapon bowRenderer = new RenderTwoHandedRangedWeapon(new JsonObject());
+		RenderTwoHandedRangedWeapon crossbowRenderer = new RenderTwoHandedRangedWeapon(new JsonObject());
+		RenderTrident tridentRenderer = new RenderTrident(new JsonObject());
+		RenderFilledMap mapRenderer = new RenderFilledMap(new JsonObject());
+		RenderShield shieldRenderer = new RenderShield(new JsonObject());
+		
+		// Render by item classes
 		this.itemRendererMapByClass.put(BowItem.class, bowRenderer);
 		this.itemRendererMapByClass.put(CrossbowItem.class, crossbowRenderer);
 		this.itemRendererMapByClass.put(ShieldItem.class, baseRenderer);
 		this.itemRendererMapByClass.put(TridentItem.class, tridentRenderer);
 		this.itemRendererMapByClass.put(ShieldItem.class, shieldRenderer);
-		//Render by capability class
+		
+		// Render by capability classes
 		this.itemRendererMapByClass.put(BowCapability.class, bowRenderer);
 		this.itemRendererMapByClass.put(CrossbowCapability.class, crossbowRenderer);
 		this.itemRendererMapByClass.put(TridentCapability.class, tridentRenderer);
 		this.itemRendererMapByClass.put(MapCapability.class, mapRenderer);
 		this.itemRendererMapByClass.put(ShieldCapability.class, shieldRenderer);
-		
-		ModLoader.get().postEvent(new PatchedRenderersEvent.Add(this.entityRendererProvider, this.itemRendererMapByInstance, context));
-		
-		this.resetRenderers();
 	}
 	
 	public void resetRenderers() {
@@ -373,6 +408,8 @@ public class RenderEngine {
 			this.addMessage(message);
 		}
 	}
+	
+	private static final Vec3f AIMING_CORRECTION = new Vec3f(-1.5F, 0.0F, 1.25F);
 	
 	private void setRangedWeaponThirdPerson(ViewportEvent.ComputeCameraAngles event, CameraType pov, double partialTicks) {
 		if (ClientEngine.getInstance().getPlayerPatch() == null) {
@@ -686,8 +723,8 @@ public class RenderEngine {
 				boolean isBattleMode = playerpatch.isBattleMode();
 				
 				if ((isBattleMode || !ClientConfig.filterAnimation) && ClientConfig.enableAnimatedFirstPersonModel) {
-					ItemSkin mainhandItemSkin = ItemSkins.getItemSkin(playerpatch.getOriginal().getMainHandItem().getItem());
-					ItemSkin offhandItemSkin = ItemSkins.getItemSkin(playerpatch.getOriginal().getOffhandItem().getItem());
+					RenderItemBase mainhandItemSkin = renderEngine.getItemRenderer(playerpatch.getOriginal().getMainHandItem());
+					RenderItemBase offhandItemSkin = renderEngine.getItemRenderer(playerpatch.getOriginal().getOffhandItem());
 					boolean useEpicFightModel = (mainhandItemSkin == null || !mainhandItemSkin.forceVanillaFirstPerson()) && (offhandItemSkin == null || !offhandItemSkin.forceVanillaFirstPerson());
 					
 					if (useEpicFightModel) {

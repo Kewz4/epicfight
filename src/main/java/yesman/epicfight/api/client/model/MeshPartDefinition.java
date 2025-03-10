@@ -9,9 +9,6 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 @OnlyIn(Dist.CLIENT)
 public interface MeshPartDefinition {
 	String partName();
+	Mesh.RenderProperties renderProperties();
 	Supplier<OpenMatrix4f> getModelPartAnimationProvider();
-	
-	default SoftBodyTranslatable.ClothSimulationInfo clothInfo() {
-		return null;
-	}
 }

@@ -1,6 +1,4 @@
 {
-    "renderer": "epicfight:uchigatana",
-    "sheath": "epicfight:uchigatana_sheath",
     "trail": {
     	"color": [132, 139, 154],
     	"begin_pos": [0.0, 0.0, -0.2],
@@ -11,12 +9,18 @@
     	"particle_type": "epicfight:swing_trail"
     },
     "transforms": {
-    	"offhand": {
+    	"mainhand": {
+	    	"Tool_R": {
+	    		"translation": [0, 0.0, -0.5],
+	    		"rotation": [-90, 0, 0],
+	    		"scale": [1, 1, 1]
+	    	},
 	    	"Chest": {
-	    		"translation": [0.155, 0.165, 0.145],
-	    		"rotation": [-50.0, -86.0, 3.0],
+	    		"translation": [0.2, 0.2, 0.1],
+	    		"rotation": [0, -45, -45],
 	    		"scale": [1, 1, 1]
 	    	}
     	}
-    }
+    },
+    "renderer": "minecraft:trident"
 }

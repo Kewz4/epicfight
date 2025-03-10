@@ -27,6 +27,7 @@ import yesman.epicfight.api.client.online.EpicSkins;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -56,8 +57,7 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 	            };
 	            
 				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
-				//cloakTexture = ResourceLocation.tryBuild(EpicFightMod.MODID, "animmodels/layer/cape.png");
-				//REMOVE
+				
 				if (cloakTexture != null) {
 					clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
 					
@@ -68,11 +68,9 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					
 					PoseStack posestack$2 = new PoseStack();
 					renderer.mulPoseStack(posestack$2, entitypatch.getArmature(), entityliving, entitypatch, partialTick);
-					Matrix4f lastpose = posestack$2.last().pose();
-					Matrix4f inverted = posestack$2.last().pose().invert();
+					Matrix4f lastposeInv = posestack$2.last().pose().invert();
 					
 					poseStack.pushPose();
-					
 					float scaler = entitypatch.getScale();
 					poseStack.scale(scaler, scaler, scaler);
 					
@@ -84,8 +82,11 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					}
 					
 					poseStack.pushPose();
-					poseStack.mulPoseMatrix(inverted);
-					poseStack.translate(-lastpose.m30() - entityX, -lastpose.m31() - entityY, -lastpose.m32() - entityZ);
+					poseStack.mulPoseMatrix(lastposeInv);
+					poseStack.translate(-lastposeInv.m30() - entityX, -lastposeInv.m31() - entityY, -lastposeInv.m32() - entityZ);
+					
+					float bodyYRot = Mth.rotLerp(partialTick, entitypatch.getYRotO(), entitypatch.getYRot());
+					poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(bodyYRot));
 					
 					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(cloakTexture)));
 					

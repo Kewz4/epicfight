@@ -48,8 +48,8 @@ public class SelectiveAnimation extends StaticAnimation {
 		super.begin(entitypatch);
 		
 		int result = this.selector.apply(entitypatch);
-		entitypatch.getAnimator().playAnimation(this.selectOptions.get(result), 0.0F);
 		entitypatch.getAnimator().getVariables().put(PREVIOUS_STATE, this.getAccessor(), result);
+		entitypatch.getAnimator().playAnimation(this.selectOptions.get(result), 0.0F);
 	}
 	
 	@Override

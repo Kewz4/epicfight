@@ -793,7 +793,7 @@ public class Animations {
 		BIPED_DEMOLITION_LEAP = builder.nextAccessor("biped/skill/demolition_leap", (accessor) -> new ActionAnimation(0.05F, 0.45F, accessor, Armatures.BIPED));
 		
 		BIPED_PHANTOM_ASCENT_FORWARD = builder.nextAccessor("biped/skill/phantom_ascent_forward", (accessor) ->
-				new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
+			new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
 				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.newTimePair(0.0F, 0.5F)
 				.addStateRemoveOld(EntityState.INACTION, true)
@@ -2264,28 +2264,18 @@ public class Animations {
 		};
 		
 		public static final AnimationEvent.E1<SoundEvent> PLAY_SOUND = (entitypatch, animation, params) -> entitypatch.playSound(params.first(), 0, 0);
-		
-		public static final OpenMatrix4f TOOL_L_BACK_LOCAL_TRANSFORM = new OpenMatrix4f(0.014972F, -0.708995F, -0.705055F, -0.208829F, -0.084006F, -0.703533F, 0.70568F, 0.353494F, -0.996353F, 0.048664F, -0.070093F, 0.188484F, 0.0F, 0.0F, 0.0F, 1.0F).transpose();
-		public static final OpenMatrix4f TOOL_R_BACK_LOCAL_TRANSFORM = new OpenMatrix4f(0.018751F, 0.70508F, 0.70888F, 0.212303F, 0.087865F, -0.707423F, 0.701308F, 0.352858F, 0.995956F, 0.049135F, -0.075217F, 0.187872F, 0.0F, 0.0F, 0.0F, 1.0F).transpose();
 		public static final IndependentAnimationVariableKey<Boolean> TOOLS_IN_BACK = AnimationVariables.independent(() -> false, true);
 		
 		private static void moveToolBonesToBack(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, HumanoidArmature humanoidArmature) {
-			humanoidArmature.toolL.getLocalTransform().load(TOOL_L_BACK_LOCAL_TRANSFORM);
-			humanoidArmature.toolR.getLocalTransform().load(TOOL_R_BACK_LOCAL_TRANSFORM);
-			humanoidArmature.handL.removeSubJoints(humanoidArmature.toolL);
-			humanoidArmature.handR.removeSubJoints(humanoidArmature.toolR);
-			humanoidArmature.chest.addSubJoints(humanoidArmature.toolL, humanoidArmature.toolR);
-			humanoidArmature.bakeOriginMatrices();
+			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, humanoidArmature.chest);
+			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, humanoidArmature.chest);
 			entitypatch.getAnimator().getVariables().put(TOOLS_IN_BACK, animation, true);
 		}
 		
 		private static void moveToolBonesToHands(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, HumanoidArmature humanoidArmature) {
-			humanoidArmature.toolL.revertLocalTransform();
-			humanoidArmature.toolR.revertLocalTransform();
-			humanoidArmature.chest.removeSubJoints(humanoidArmature.toolL, humanoidArmature.toolR);
-			humanoidArmature.handL.addSubJoints(humanoidArmature.toolL);
-			humanoidArmature.handR.addSubJoints(humanoidArmature.toolR);
-			humanoidArmature.bakeOriginMatrices();
+			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, humanoidArmature.toolR);
+			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, humanoidArmature.toolL);
+			entitypatch.getAnimator().getVariables().remove(TOOLS_IN_BACK, animation);
 		}
 		
 		public static final AnimationEvent.E0 SET_TOOLS_BACK = (entitypatch, animation, params) -> {
@@ -2304,10 +2294,8 @@ public class Animations {
 			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
 				if (!params.first().isEmpty()) {
 					moveToolBonesToBack(entitypatch, animation, humanoidArmature);
-					entitypatch.getAnimator().getVariables().put(TOOLS_IN_BACK, animation, true);
 				} else {
 					moveToolBonesToHands(entitypatch, animation, humanoidArmature);
-					entitypatch.getAnimator().getVariables().remove(TOOLS_IN_BACK, animation);
 				}
 			}
 		};
@@ -2316,23 +2304,15 @@ public class Animations {
 			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
 				if (!params.first().availableOnHorse()) {
 					moveToolBonesToBack(entitypatch, animation, humanoidArmature);
-					entitypatch.getAnimator().getVariables().put(TOOLS_IN_BACK, animation, true);
 				} else {
 					moveToolBonesToHands(entitypatch, animation, humanoidArmature);
-					entitypatch.getAnimator().getVariables().remove(TOOLS_IN_BACK, animation);
 				}
 			}
 		};
 		
 		public static final AnimationEvent.E0 REVERT_TO_HANDS = (entitypatch, animation, params) -> {
 			if (entitypatch.getAnimator().getVariables().getOrDefault(TOOLS_IN_BACK, animation) && entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
-				humanoidArmature.toolL.revertLocalTransform();
-				humanoidArmature.toolR.revertLocalTransform();
-				humanoidArmature.chest.removeSubJoints(humanoidArmature.toolL);
-				humanoidArmature.chest.removeSubJoints(humanoidArmature.toolR);
-				humanoidArmature.handL.addSubJoints(humanoidArmature.toolL);
-				humanoidArmature.handR.addSubJoints(humanoidArmature.toolR);
-				humanoidArmature.bakeOriginMatrices();
+				moveToolBonesToHands(entitypatch, animation, humanoidArmature);
 			}
 		};
 		

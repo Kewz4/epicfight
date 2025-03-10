@@ -34,6 +34,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
+import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.SkinnedMesh;
@@ -767,6 +768,10 @@ public class AzureArmorTransformer extends HumanoidModelTransformer {
 				
 				return partAnimation;
 			};
+		}
+		
+		public Mesh.RenderProperties renderProperties() {
+			return null;
 		}
 		
 		private void progress(GeoBone bone, PoseStack poseStack, boolean last) {

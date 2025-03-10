@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.StringUtil;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Joint;
@@ -33,7 +34,7 @@ public class MultiLineCollider extends MultiCollider<LineCollider> {
 		float partialScale = 1.0F / numberOf;
 		float interpolation = partialScale;
 		Armature armature = entitypatch.getArmature();
-		int pathIndex =  armature.searchPathIndex(joint.getName());
+		String pathIndex =  armature.searchPathIndex(joint.getName());
 		EntityState state = animation.getState(entitypatch, elapsedTime);
 		EntityState prevState = animation.getState(entitypatch, prevElapsedTime);
 		boolean attacking = prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2);
@@ -56,7 +57,7 @@ public class MultiLineCollider extends MultiCollider<LineCollider> {
 			
 			Pose pose;
 			
-			if (pathIndex == -1) {
+			if (StringUtil.isNullOrEmpty(pathIndex)) {
 				pose = new Pose();
 				pose.putJointData("Root", JointTransform.empty());
 				animation.modifyPose(animation, pose, entitypatch, elapsedTime, 1.0F);

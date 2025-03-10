@@ -14,6 +14,9 @@ public class EpicFightSharedConstants {
 	public static final float GENERAL_ANIMATION_TRANSITION_TIME = 0.15F;
 	public static final boolean IS_DEV_ENV = !FMLEnvironment.production;
 	
+	public static final String SERVER_URL = "https://epic-fight.com";
+	//public static final String SERVER_URL = "http://127.0.0.1:8080";
+	
 	private static final Function<LivingEntityPatch<?>, Animator> ANIMATOR_PROVIDER;
 	
 	static {

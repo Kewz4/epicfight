@@ -35,6 +35,7 @@ import software.bernie.geckolib.core.state.BoneSnapshot;
 import software.bernie.geckolib.renderer.GeoArmorRenderer;
 import software.bernie.geckolib.util.RenderUtils;
 import yesman.epicfight.api.client.forgeevent.AnimatedArmorTextureEvent;
+import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.SkinnedMesh;
@@ -745,6 +746,10 @@ public class GeoModelTransformer extends HumanoidModelTransformer {
 				
 				return partAnimation;
 			};
+		}
+		
+		public Mesh.RenderProperties renderProperties() {
+			return null;
 		}
 		
 		private void progress(GeoBone bone, PoseStack poseStack, boolean last) {

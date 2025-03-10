@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -43,17 +45,17 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.model.ClassicMesh;
-import yesman.epicfight.api.client.model.ClassicMeshVertexBuilder;
 import yesman.epicfight.api.client.model.CompositeMesh;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.Meshes.MeshContructor;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
 import yesman.epicfight.api.client.model.SoftBodyTranslatable;
 import yesman.epicfight.api.client.model.StaticMesh;
+import yesman.epicfight.api.client.model.VertexBuilder;
 import yesman.epicfight.api.client.model.transformer.VanillaModelTransformer.VanillaMeshPartDefinition;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject.ClothPart.ConstraintType;
 import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -68,7 +70,7 @@ import yesman.epicfight.main.EpicFightSharedConstants;
 public class JsonAssetLoader {
 	public static final OpenMatrix4f BLENDER_TO_MINECRAFT_COORD = OpenMatrix4f.createRotatorDeg(-90.0F, Vec3f.X_AXIS);
 	public static final OpenMatrix4f MINECRAFT_TO_BLENDER_COORD = OpenMatrix4f.invert(BLENDER_TO_MINECRAFT_COORD, null);
-	public static final String UNGROUPED_VERTICES_GROUP = "noGroups";
+	public static final String UNGROUPED_NAME = "noGroups";
 	
 	private JsonObject rootJson;
 	private ResourceLocation resourceLocation;
@@ -154,40 +156,39 @@ public class JsonAssetLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public SkinnedMesh.RenderProperties getRenderProperties() {
-		if (!this.rootJson.has("render_properties")) {
+	public static Mesh.RenderProperties getRenderProperties(JsonObject json) {
+		if (!json.has("render_properties")) {
 			return null;
 		}
 		
-		JsonObject properties = this.rootJson.getAsJsonObject("render_properties");
-		SkinnedMesh.RenderProperties renderProperties = Mesh.RenderProperties.create();
+		JsonObject properties = json.getAsJsonObject("render_properties");
+		Mesh.RenderProperties.Builder renderProperties = Mesh.RenderProperties.Builder.create();
 		
-		if (properties != null) {
-			if (properties.has("transparent")) {
-				renderProperties.transparency(properties.get("transparent").getAsBoolean());
-			}
-			
-			if (properties.has("texture_path")) {
-				renderProperties.customTexturePath(properties.get("texture_path").getAsString());
-			}
-			
-			if (properties.has("parent_part_visualizer")) {
-				JsonObject partVisualizer = properties.get("parent_part_visualizer").getAsJsonObject();
-				
-				partVisualizer.entrySet().forEach((entry) -> renderProperties.newPartVisualizer(entry.getKey(), entry.getValue().getAsBoolean()));
-			}
-			
-			return renderProperties;
+		if (properties.has("transparent")) {
+			renderProperties.transparency(properties.get("transparent").getAsBoolean());
 		}
 		
-		return renderProperties;
+		if (properties.has("texture_path")) {
+			renderProperties.customTexturePath(properties.get("texture_path").getAsString());
+		}
+		
+		if (properties.has("color")) {
+			JsonArray jsonarray = properties.getAsJsonArray("color");
+			renderProperties.customColor(jsonarray.get(0).getAsFloat(), jsonarray.get(1).getAsFloat(), jsonarray.get(2).getAsFloat());
+		}
+		
+		return renderProperties.build();
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public ResourceLocation getParent() {
-		return this.rootJson.has("parent") ? new ResourceLocation(this.rootJson.get("parent").getAsString()) : null;
+		return this.rootJson.has("parent") ? ResourceLocation.tryParse(this.rootJson.get("parent").getAsString()) : null;
 	}
 	
+	private static final float DEFAULT_PARTICLE_MASS = 0.16F;
+	private static final float DEFAULT_SELF_COLLISON = 0.05F;
+	
+	@Nullable
 	@OnlyIn(Dist.CLIENT)
 	public Map<String, SoftBodyTranslatable.ClothSimulationInfo> loadClothInformation(Float[] positionArray) {
 		JsonObject obj = this.rootJson.getAsJsonObject("vertices");
@@ -203,11 +204,13 @@ public class JsonAssetLoader {
 			JsonObject clothObject = e.getValue().getAsJsonObject();
 			int[] particlesArray = ParseUtil.toIntArrayPrimitive(clothObject.get("particles").getAsJsonObject().get("array").getAsJsonArray());
 			float[] weightsArray = ParseUtil.toFloatArrayPrimitive(clothObject.get("weights").getAsJsonObject().get("array").getAsJsonArray());
+			float particleMass = clothObject.has("particle_mass") ? clothObject.get("particle_mass").getAsFloat() : DEFAULT_PARTICLE_MASS;
+			float selfCollision = clothObject.has("self_collision") ? clothObject.get("self_collision").getAsFloat() : DEFAULT_SELF_COLLISON;
 			
 			JsonArray constraintsArray = clothObject.get("constraints").getAsJsonArray();
 			List<int[]> constraintsList = new ArrayList<> (constraintsArray.size());
 			float[] compliances = new float[constraintsArray.size()];
-			SoftBodyTranslatable.ConstraintType[] constraintType = new SoftBodyTranslatable.ConstraintType[constraintsArray.size()];
+			ConstraintType[] constraintType = new ConstraintType[constraintsArray.size()];
 			float[] rootDistances = new float[particlesArray.length / 2];
 			
 			int i = 0;
@@ -219,7 +222,7 @@ public class JsonAssetLoader {
 					continue;
 				}
 				
-				constraintType[i] = SoftBodyTranslatable.ConstraintType.valueOf(GsonHelper.getAsString(asJsonObject, "type").toUpperCase(Locale.ROOT));
+				constraintType[i] = ConstraintType.valueOf(GsonHelper.getAsString(asJsonObject, "type").toUpperCase(Locale.ROOT));
 				compliances[i] = GsonHelper.getAsFloat(asJsonObject, "compliance");
 				constraintsList.add(ParseUtil.toIntArrayPrimitive(asJsonObject.get("array").getAsJsonArray()));
 				element.getAsJsonObject().get("compliance");
@@ -229,7 +232,10 @@ public class JsonAssetLoader {
 			List<Vec3> rootParticles = Lists.newArrayList();
 			
 			for (int j = 0; j < particlesArray.length / 2; j++) {
-				if (particlesArray[j * 2 + 1] == 0) {
+				int weightIndex = particlesArray[j * 2 + 1];
+				float weight = weightsArray[weightIndex];
+				
+				if (weight == 0.0F) {
 					int posId = particlesArray[j * 2];
 					rootParticles.add(new Vec3(positionArray[posId * 3 + 0], positionArray[posId * 3 + 1], positionArray[posId * 3 + 2]));
 				}
@@ -248,7 +254,7 @@ public class JsonAssetLoader {
 				normalOffsetMappingArray = ParseUtil.toIntArrayPrimitive(clothObject.get("normal_offsets").getAsJsonObject().get("array").getAsJsonArray());
 			}
 			
-			SoftBodyTranslatable.ClothSimulationInfo clothSimulInfo = new SoftBodyTranslatable.ClothSimulationInfo(constraintsList, constraintType, compliances, particlesArray, weightsArray, rootDistances, normalOffsetMappingArray);
+			SoftBodyTranslatable.ClothSimulationInfo clothSimulInfo = new SoftBodyTranslatable.ClothSimulationInfo(particleMass, selfCollision, constraintsList, constraintType, compliances, particlesArray, weightsArray, rootDistances, normalOffsetMappingArray);
 			clothInfo.put(e.getKey(), clothSimulInfo);
 		}
 		
@@ -256,12 +262,12 @@ public class JsonAssetLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public <T extends ClassicMesh> T loadClassicMesh(MeshContructor<ClassicMesh.ClassicMeshPart, ClassicMeshVertexBuilder, T> constructor) {
+	public <T extends ClassicMesh> T loadClassicMesh(MeshContructor<ClassicMesh.ClassicMeshPart, VertexBuilder, T> constructor) {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
 			T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadClassicMesh(constructor)).get();
-			return constructor.invoke(null, null, mesh, this.getRenderProperties());
+			return constructor.invoke(null, null, mesh, getRenderProperties(this.rootJson));
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
 			JsonObject positions = obj.getAsJsonObject("positions");
@@ -269,7 +275,6 @@ public class JsonAssetLoader {
 			JsonObject uvs = obj.getAsJsonObject("uvs");
 			JsonObject parts = obj.getAsJsonObject("parts");
 			JsonObject indices = obj.getAsJsonObject("indices");
-			
 			Float[] positionArray = ParseUtil.toFloatArray(positions.get("array").getAsJsonArray());
 			
 			for (int i = 0; i < positionArray.length / 3; i++) {
@@ -295,8 +300,7 @@ public class JsonAssetLoader {
 			Float[] uvArray = ParseUtil.toFloatArray(uvs.get("array").getAsJsonArray());
 			
 			Map<String, Number[]> arrayMap = Maps.newHashMap();
-			Map<MeshPartDefinition, List<ClassicMeshVertexBuilder>> meshMap = Maps.newHashMap();
-			Map<String, SoftBodyTranslatable.ClothSimulationInfo> clothInfoMap = this.loadClothInformation(positionArray);
+			Map<MeshPartDefinition, List<VertexBuilder>> meshMap = Maps.newHashMap();
 			
 			arrayMap.put("positions", positionArray);
 			arrayMap.put("normals", normalArray);
@@ -304,25 +308,28 @@ public class JsonAssetLoader {
 			
 			if (parts != null) {
 				for (Map.Entry<String, JsonElement> e : parts.entrySet()) {
-					meshMap.put(VanillaMeshPartDefinition.of(e.getKey(), clothInfoMap != null ? clothInfoMap.get(e.getKey()) : null), ClassicMeshVertexBuilder.create(ParseUtil.toIntArrayPrimitive(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+					meshMap.put(VanillaMeshPartDefinition.of(e.getKey(), getRenderProperties(e.getValue().getAsJsonObject())), VertexBuilder.create(ParseUtil.toIntArrayPrimitive(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
 				}
 			}
 			
 			if (indices != null) {
-				meshMap.put(VanillaMeshPartDefinition.of(UNGROUPED_VERTICES_GROUP, clothInfoMap != null ? clothInfoMap.get(UNGROUPED_VERTICES_GROUP) : null), ClassicMeshVertexBuilder.create(ParseUtil.toIntArrayPrimitive(indices.get("array").getAsJsonArray())));
+				meshMap.put(VanillaMeshPartDefinition.of(UNGROUPED_NAME), VertexBuilder.create(ParseUtil.toIntArrayPrimitive(indices.get("array").getAsJsonArray())));
 			}
 			
-			return constructor.invoke(arrayMap, meshMap, null, this.getRenderProperties());
+			T mesh = constructor.invoke(arrayMap, meshMap, null, getRenderProperties(this.rootJson));
+			mesh.putSoftBodySimulationInfo(this.loadClothInformation(positionArray));
+			
+			return mesh;
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public <T extends SkinnedMesh> T loadSkinnedMesh(MeshContructor<SkinnedMesh.SkinnedMeshPart, SkinnedMeshVertexBuilder, T> constructor) {
+	public <T extends SkinnedMesh> T loadSkinnedMesh(MeshContructor<SkinnedMesh.SkinnedMeshPart, VertexBuilder, T> constructor) {
 		ResourceLocation parent = this.getParent();
 		
 		if (parent != null) {
 			T mesh = Meshes.getOrCreate(parent, (jsonLoader) -> jsonLoader.loadSkinnedMesh(constructor)).get();
-			return constructor.invoke(null, null, mesh, this.getRenderProperties());
+			return constructor.invoke(null, null, mesh, getRenderProperties(this.rootJson));
 		} else {
 			JsonObject obj = this.rootJson.getAsJsonObject("vertices");
 			JsonObject positions = obj.getAsJsonObject("positions");
@@ -362,9 +369,7 @@ public class JsonAssetLoader {
 			Integer[] affectingJointIndices = ParseUtil.toIntArray(vdincies.get("array").getAsJsonArray());
 			
 			Map<String, Number[]> arrayMap = Maps.newHashMap();
-			Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshMap = Maps.newHashMap();
-			Map<String, SoftBodyTranslatable.ClothSimulationInfo> clothInfoMap = this.loadClothInformation(positionArray);
-			
+			Map<MeshPartDefinition, List<VertexBuilder>> meshMap = Maps.newHashMap();
 			arrayMap.put("positions", positionArray);
 			arrayMap.put("normals", normalArray);
 			arrayMap.put("uvs", uvArray);
@@ -374,15 +379,18 @@ public class JsonAssetLoader {
 			
 			if (parts != null) {
 				for (Map.Entry<String, JsonElement> e : parts.entrySet()) {
-					meshMap.put(VanillaMeshPartDefinition.of(e.getKey(), clothInfoMap != null ? clothInfoMap.get(e.getKey()) : null), SkinnedMeshVertexBuilder.create(ParseUtil.toIntArrayPrimitive(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
+					meshMap.put(VanillaMeshPartDefinition.of(e.getKey(), getRenderProperties(e.getValue().getAsJsonObject())), VertexBuilder.create(ParseUtil.toIntArrayPrimitive(e.getValue().getAsJsonObject().get("array").getAsJsonArray())));
 				}
 			}
 			
 			if (indices != null) {
-				meshMap.put(VanillaMeshPartDefinition.of(UNGROUPED_VERTICES_GROUP, clothInfoMap != null ? clothInfoMap.get(UNGROUPED_VERTICES_GROUP) : null), SkinnedMeshVertexBuilder.create(ParseUtil.toIntArrayPrimitive(indices.get("array").getAsJsonArray())));
+				meshMap.put(VanillaMeshPartDefinition.of(UNGROUPED_NAME), VertexBuilder.create(ParseUtil.toIntArrayPrimitive(indices.get("array").getAsJsonArray())));
 			}
 			
-			return constructor.invoke(arrayMap, meshMap, null, this.getRenderProperties());
+			T mesh = constructor.invoke(arrayMap, meshMap, null, getRenderProperties(this.rootJson));
+			mesh.putSoftBodySimulationInfo(this.loadClothInformation(positionArray));
+			
+			return mesh;
 		}
 	}
 	
@@ -395,7 +403,7 @@ public class JsonAssetLoader {
 		JsonAssetLoader clothLoader = new JsonAssetLoader(this.rootJson.get("meshes").getAsJsonObject().get("cloth").getAsJsonObject(), null);
 		JsonAssetLoader staticLoader = new JsonAssetLoader(this.rootJson.get("meshes").getAsJsonObject().get("static").getAsJsonObject(), null);
 		SoftBodyTranslatable softBodyMesh = (SoftBodyTranslatable)clothLoader.loadMesh(false);
-		StaticMesh<?, ?> staticMesh = (StaticMesh<?, ?>)staticLoader.loadMesh(false);
+		StaticMesh<?> staticMesh = (StaticMesh<?>)staticLoader.loadMesh(false);
 		
 		if (!softBodyMesh.canStartSoftBodySimulation()) {
 			throw new AssetLoadingException("Composite mesh loading exception: soft mesh doesn't have cloth info");
@@ -494,27 +502,12 @@ public class JsonAssetLoader {
 		boolean noTransformData = !action && !attack && FMLEnvironment.dist == Dist.DEDICATED_SERVER;
 		boolean root = true;
 		Armature armature = animation.getArmature().get();
-		
 		Set<String> allowedJoints = Sets.newLinkedHashSet();
 		
 		if (attack) {
 			for (Phase phase : ((AttackAnimation)animation).phases) {
-				Joint joint = armature.rootJoint;
-				
 				for (AttackAnimation.JointColliderPair colliderInfo : phase.getColliders()) {
-					int pathIndex = armature.searchPathIndex(colliderInfo.getFirst().getName());
-					
-					while (joint != null) {
-						allowedJoints.add(joint.getName());
-						int nextJoint = pathIndex % 10;
-						
-						if (nextJoint > 0) {
-							pathIndex /= 10;
-							joint = joint.getSubJoints().get(nextJoint - 1);
-						} else {
-							joint = null;
-						}
-					}
+					armature.gatherAllJointsInPathToTerminal(colliderInfo.getFirst().getName(), allowedJoints);
 				}
 			}
 		} else if (action) {
@@ -587,7 +580,7 @@ public class JsonAssetLoader {
 				}
 			}
 			
-			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getInitialLocalTransform(), null), root);
+			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getLocalTransform(), null), root);
 			
 			if (!noTransformData) {
 				clip.addJointTransform(name, sheet);
@@ -645,7 +638,7 @@ public class JsonAssetLoader {
 				}
 			}
 			
-			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getInitialLocalTransform(), null), root);
+			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getLocalTransform(), null), root);
 			clip.addJointTransform(name, sheet);
 			
 			if (clip.getClipTime() < times[times.length - 1]) {
@@ -699,7 +692,7 @@ public class JsonAssetLoader {
 				}
 			}
 			
-			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getInitialLocalTransform(), null), root);
+			TransformSheet sheet = getTransformSheet(times, transforms, OpenMatrix4f.invert(joint.getLocalTransform(), null), root);
 			clip.addJointTransform(name, sheet);
 			
 			if (clip.getClipTime() < times[times.length - 1]) {
@@ -737,7 +730,7 @@ public class JsonAssetLoader {
 			
 			matrix.mulFront(invLocalTransform);
 			
-			JointTransform transform = new JointTransform(matrix.toTranslationVector(), matrix.toQuaternion(), matrix.toScaleVector());
+			JointTransform transform = JointTransform.fromMatrix(matrix);
 			keyframeList.add(new Keyframe(timeStamp, transform));
 		}
 		

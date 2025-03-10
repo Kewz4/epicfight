@@ -2,10 +2,10 @@ package yesman.epicfight.client.renderer.patched.item;
 
 import org.joml.Matrix4f;
 
+import com.google.gson.JsonElement;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -13,31 +13,31 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.Joint;
+import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class RenderMap extends RenderItemBase {
-	private static final RenderType MAP_BACKGROUND = RenderType.text(new ResourceLocation("textures/map/map_background.png"));
+public class RenderFilledMap extends RenderItemBase {
+	private static final RenderType MAP_BACKGROUND = RenderType.text(ResourceLocation.tryParse("textures/map/map_background.png"));
+	
+	public RenderFilledMap(JsonElement jsonElement) {
+		super(jsonElement);
+	}
 	
 	@Override
 	public void renderItemInHand(ItemStack stack, LivingEntityPatch<?> entitypatch, InteractionHand hand, HumanoidArmature armature, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(stack, entitypatch, hand);
-		boolean isInMainhand = (hand == InteractionHand.MAIN_HAND);
-		Joint holdingHand = isInMainhand ? armature.toolR : armature.toolL;
-		modelMatrix.mulFront(poses[holdingHand.getId()]);
+		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(entitypatch, hand, poses);
 		
 		poseStack.pushPose();
-		this.mulPoseStack(poseStack, modelMatrix);
+		MathUtils.mulStack(poseStack, modelMatrix);
 		
 		if (hand == InteractionHand.MAIN_HAND && entitypatch.getOriginal().getOffhandItem().isEmpty()) {
 			poseStack.scale(2.0F, 2.0F, 2.0F);
 		}
 		
-		Minecraft mc = Minecraft.getInstance();
-		mc.gameRenderer.itemInHandRenderer.renderMap(poseStack, buffer, packedLight, stack);
+		itemInHandRenderer.renderMap(poseStack, buffer, packedLight, stack);
 		VertexConsumer vertexconsumer = buffer.getBuffer(MAP_BACKGROUND);
 	    Matrix4f matrix4f = poseStack.last().pose();
 		

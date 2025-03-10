@@ -1,56 +1,191 @@
 package yesman.epicfight.client.renderer.patched.item;
 
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Joint;
+import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.client.events.engine.RenderEngine;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderItemBase {
-	protected final OpenMatrix4f mainhandcorrectionMatrix;
-	protected final OpenMatrix4f offhandCorrectionMatrix;
-	public static RenderEngine renderEngine;
+	protected static final Map<String, OpenMatrix4f> GLOBAL_MAINHAND_ITEM_TRANSFORMS = ImmutableMap.<String, OpenMatrix4f>builder()
+		.put("Tool_L", new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS).unmodifiable())
+		.put("Tool_R", new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS).unmodifiable())
+		.put("Chest",
+			new OpenMatrix4f(
+				  3.3484866E-8F, -2.809714E-8F, -0.99999994F, 0.0F
+				, -0.6427876F, -0.7660444F, 0.0F, 0.0F
+				, -0.76604444F, 0.64278764F, -4.3711385E-8F, 0.0F
+				, 0.25711504F, 0.30641776F, 0.14999999F, 1.0F
+			).unmodifiable()
+		)
+		.put("Root", new OpenMatrix4f().unmodifiable())
+		.build();
 	
-	public RenderItemBase() {
-		this(new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS), new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS));
+	protected static final Map<String, OpenMatrix4f> GLOBAL_OFFHAND_ITEM_TRANSFORMS = ImmutableMap.<String, OpenMatrix4f>builder()
+		.put("Tool_L", new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS).unmodifiable())
+		.put("Tool_R", new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS).unmodifiable())
+		.put("Chest",
+			new OpenMatrix4f(
+				  3.3484866E-8F, 2.809714E-8F, 0.99999994F, 0.0F
+				, 0.6427876F, -0.7660444F, 0.0F, 0.0F
+				, 0.76604444F, 0.64278764F, -4.3711385E-8F, 0.0F
+				, -0.25711504F, 0.30641776F, 0.15099998F, 1.0F
+			).unmodifiable()
+		)
+		.put("Root", new OpenMatrix4f().unmodifiable())
+		.build();
+	
+	protected static ItemRenderer itemRenderer;
+	protected static ItemInHandRenderer itemInHandRenderer;
+	
+	public static void initItemRenderers(Minecraft minecraft) {
+		if (itemRenderer != null || itemInHandRenderer != null) {
+			throw new IllegalStateException("Already initialized item renderers");
+		}
+		
+		itemRenderer = minecraft.getItemRenderer();
+		itemInHandRenderer = minecraft.gameRenderer.itemInHandRenderer;
 	}
 	
-	public RenderItemBase(OpenMatrix4f mainhandcorrectionMatrix, OpenMatrix4f offhandCorrectionMatrix) {
-		this.mainhandcorrectionMatrix = mainhandcorrectionMatrix;
-		this.offhandCorrectionMatrix = offhandCorrectionMatrix;
+	protected final Map<String, OpenMatrix4f> mainhandCorrectionTransforms;
+	protected final Map<String, OpenMatrix4f> offhandCorrectionTransforms;
+	private final TrailInfo trailInfo;
+	private final boolean forceVanillaFirstPerson;
+	
+	public RenderItemBase(JsonElement jsonElement) {
+		JsonObject jsonObj = jsonElement.getAsJsonObject();
+		
+		this.trailInfo = jsonObj.has("trail") ? TrailInfo.deserialize(jsonObj.get("trail")) : null;
+		this.forceVanillaFirstPerson = jsonObj.has("force_vanilla_first_person") ? GsonHelper.getAsBoolean(jsonObj, "force_vanilla_first_person") : false;
+		
+		if (!jsonObj.has("transforms")) {
+			// Set a global transformation
+			this.mainhandCorrectionTransforms = GLOBAL_MAINHAND_ITEM_TRANSFORMS;
+			this.offhandCorrectionTransforms = GLOBAL_OFFHAND_ITEM_TRANSFORMS;
+		} else {
+			JsonObject handEntry = jsonObj.get("transforms").getAsJsonObject();
+			
+			if (handEntry.has("mainhand")) {
+				ImmutableMap.Builder<String, OpenMatrix4f> mainhandBuilder = ImmutableMap.builder();
+				
+				for (Map.Entry<String, JsonElement> entry : handEntry.get("mainhand").getAsJsonObject().entrySet()) {
+					JsonObject transformEntry = entry.getValue().getAsJsonObject();
+					OpenMatrix4f matrix = new OpenMatrix4f();
+					
+					if (transformEntry.has("translation")) {
+						JsonArray values = transformEntry.get("translation").getAsJsonArray();
+						matrix.translate(values.get(0).getAsFloat(), values.get(1).getAsFloat(), values.get(2).getAsFloat());
+					}
+					
+					if (transformEntry.has("rotation")) {
+						JsonArray values = transformEntry.get("rotation").getAsJsonArray();
+						matrix.rotateDeg(values.get(2).getAsFloat(), Vec3f.Z_AXIS);
+						matrix.rotateDeg(values.get(1).getAsFloat(), Vec3f.Y_AXIS);
+						matrix.rotateDeg(values.get(0).getAsFloat(), Vec3f.X_AXIS);
+					}
+					
+					if (transformEntry.has("scale")) {
+						JsonArray values = transformEntry.get("scale").getAsJsonArray();
+						matrix.scale(values.get(0).getAsFloat(), values.get(1).getAsFloat(), values.get(2).getAsFloat());
+					}
+					
+					mainhandBuilder.put(entry.getKey(), matrix.unmodifiable());
+				}
+				
+				this.mainhandCorrectionTransforms = mainhandBuilder.build();
+			} else {
+				this.mainhandCorrectionTransforms = GLOBAL_MAINHAND_ITEM_TRANSFORMS;
+			}
+			
+			if (handEntry.has("offhand")) {
+				ImmutableMap.Builder<String, OpenMatrix4f> offhandBuilder = ImmutableMap.builder();
+
+				for (Map.Entry<String, JsonElement> entry : handEntry.get("offhand").getAsJsonObject().entrySet()) {
+					JsonObject transformEntry = entry.getValue().getAsJsonObject();
+					OpenMatrix4f matrix = new OpenMatrix4f();
+					
+					if (transformEntry.has("translation")) {
+						JsonArray values = transformEntry.get("translation").getAsJsonArray();
+						matrix.translate(values.get(0).getAsFloat(), values.get(1).getAsFloat(), values.get(2).getAsFloat());
+					}
+					
+					if (transformEntry.has("rotation")) {
+						JsonArray values = transformEntry.get("rotation").getAsJsonArray();
+						matrix.rotateDeg(values.get(2).getAsFloat(), Vec3f.Z_AXIS);
+						matrix.rotateDeg(values.get(1).getAsFloat(), Vec3f.Y_AXIS);
+						matrix.rotateDeg(values.get(0).getAsFloat(), Vec3f.X_AXIS);
+					}
+					
+					if (transformEntry.has("scale")) {
+						JsonArray values = transformEntry.get("scale").getAsJsonArray();
+						matrix.scale(values.get(0).getAsFloat(), values.get(1).getAsFloat(), values.get(2).getAsFloat());
+					}
+					
+					offhandBuilder.put(entry.getKey(), matrix.unmodifiable());
+				}
+				
+				this.offhandCorrectionTransforms = offhandBuilder.build();
+			} else {
+				this.offhandCorrectionTransforms = GLOBAL_OFFHAND_ITEM_TRANSFORMS;
+			}
+		}
 	}
 	
 	public void renderItemInHand(ItemStack stack, LivingEntityPatch<?> entitypatch, InteractionHand hand, HumanoidArmature armature, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(stack, entitypatch, hand);
-		boolean isInMainhand = (hand == InteractionHand.MAIN_HAND);
-		Joint holdingHand = isInMainhand ? armature.toolR : armature.toolL;
-		modelMatrix.mulFront(poses[holdingHand.getId()]);
+		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(entitypatch, hand, poses);
 		
 		poseStack.pushPose();
-		this.mulPoseStack(poseStack, modelMatrix);
-		ItemDisplayContext transformType = isInMainhand ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-		Minecraft mc = Minecraft.getInstance();
-		mc.gameRenderer.itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, transformType, !isInMainhand, poseStack, buffer, packedLight);
+		MathUtils.mulStack(poseStack, modelMatrix);
+		ItemDisplayContext transformType = (hand == InteractionHand.MAIN_HAND) ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+		itemInHandRenderer.renderItem(entitypatch.getOriginal(), stack, transformType, !(hand == InteractionHand.MAIN_HAND), poseStack, buffer, packedLight);
 		poseStack.popPose();
 	}
 	
-	protected void mulPoseStack(PoseStack poseStack, OpenMatrix4f pose) {
-		MathUtils.mulStack(poseStack, pose);
+	public final OpenMatrix4f transformHolder = new OpenMatrix4f();
+	
+	protected OpenMatrix4f getCorrectionMatrix(LivingEntityPatch<?> entitypatch, InteractionHand hand, OpenMatrix4f[] poses) {
+		Joint parentJoint = entitypatch.getParentJointOfHand(hand);
+		
+		switch (hand) {
+		case MAIN_HAND -> {
+			this.transformHolder.load(this.mainhandCorrectionTransforms.getOrDefault(parentJoint.getName(), GLOBAL_MAINHAND_ITEM_TRANSFORMS.get(parentJoint.getName())));
+		}
+		case OFF_HAND -> {
+			this.transformHolder.load(this.offhandCorrectionTransforms.getOrDefault(parentJoint.getName(), GLOBAL_OFFHAND_ITEM_TRANSFORMS.get(parentJoint.getName())));
+		}
+		}
+		
+		this.transformHolder.mulFront(poses[parentJoint.getId()]);
+		
+		return this.transformHolder;
 	}
 	
-	public OpenMatrix4f getCorrectionMatrix(ItemStack stack, LivingEntityPatch<?> itemHolder, InteractionHand hand) {
-		return new OpenMatrix4f(hand == InteractionHand.MAIN_HAND ? this.mainhandcorrectionMatrix : this.offhandCorrectionMatrix);
+	public TrailInfo trailInfo() {
+		return this.trailInfo;
+	}
+	
+	public boolean forceVanillaFirstPerson() {
+		return this.forceVanillaFirstPerson;
 	}
 }

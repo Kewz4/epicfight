@@ -36,7 +36,7 @@ import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
-import yesman.epicfight.api.client.model.ItemSkins;
+import yesman.epicfight.api.client.model.ItemSkinsReloadListener;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
@@ -97,7 +97,7 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
- *  Changes from 20.9.5 -> 20.9.6
+ *  Changes from 20.9.5 -> 20.10.1
  *  
  *  1. Fixed skill book screen not showing up when Enhanced Visuals installed
  *  
@@ -310,7 +310,7 @@ public class EpicFightMod {
     		event.registerReloadListener(new JointMaskReloadListener());
     		event.registerReloadListener(Meshes.INSTANCE);
     		event.registerReloadListener(AnimationManager.getInstance());
-    		event.registerReloadListener(ItemSkins.INSTANCE);
+    		event.registerReloadListener(ItemSkinsReloadListener.INSTANCE);
     	}
     }
 	

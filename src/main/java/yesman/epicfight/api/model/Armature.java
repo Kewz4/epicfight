@@ -2,7 +2,9 @@ package yesman.epicfight.api.model;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -10,12 +12,11 @@ import com.google.gson.JsonObject;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.asset.JsonAssetLoader;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -24,7 +25,7 @@ public class Armature {
 	private final String name;
 	private final Int2ObjectMap<Joint> jointById;
 	private final Map<String, Joint> jointByName;
-	private final Object2IntMap<String> pathIndexMap;
+	private final Map<String, String> pathIndexMap;
 	private final int jointCount;
 	private final OpenMatrix4f[] poseMatrices;
 	
@@ -36,17 +37,13 @@ public class Armature {
 		this.rootJoint = rootJoint;
 		this.jointByName = jointMap;
 		this.jointById = new Int2ObjectOpenHashMap<>();
-		this.pathIndexMap = new Object2IntOpenHashMap<>();
+		this.pathIndexMap = Maps.newHashMap();
 		
 		this.jointByName.values().forEach((joint) -> {
 			this.jointById.put(joint.getId(), joint);
 		});
 		
-		this.poseMatrices = new OpenMatrix4f[this.jointCount];
-		
-		for (int i = 0; i < this.jointCount; i++) {
-			this.poseMatrices[i] = new OpenMatrix4f();
-		}
+		this.poseMatrices = OpenMatrix4f.allocateMatrixArray(this.jointCount);
 	}
 	
 	protected Joint getOrLogException(Map<String, Joint> jointMap, String name) {
@@ -100,16 +97,15 @@ public class Armature {
 	}
 	
 	/** Get binded position of joint **/
-	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, int pathIndex) {
-		return getBindedJointTransformByIndexInternal(pose, this.rootJoint, new OpenMatrix4f(), pathIndex);
+	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, String pathIndex) {
+		return getBindedJointTransformByIndexInternal(pose, this.rootJoint, new OpenMatrix4f(), pathIndex, pathIndex.length() - 1);
 	}
 	
-	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, int pathIndex) {
+	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
 		JointTransform jt = pose.getOrDefaultTransform(joint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
-		int nextIndex = pathIndex % 10;
 		
-		return nextIndex > 0 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoints().get(nextIndex - 1), result, pathIndex / 10) : result;
+		return index > -1 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
 	}
 	
 	public Joint searchJointById(int id) {
@@ -120,24 +116,46 @@ public class Armature {
 		return this.jointByName.get(name);
 	}
 	
-	public int searchPathIndex(String joint) {
-		if (this.pathIndexMap.containsKey(joint)) {
-			return this.pathIndexMap.getInt(joint);
+	/**
+	 * Search a joint path to given joint name
+	 * For root joints, it returns empty string
+	 * 
+	 * @param terminalJointName
+	 * @return
+	 */
+	public String searchPathIndex(String terminalJointName) {
+		if (this.pathIndexMap.containsKey(terminalJointName)) {
+			return this.pathIndexMap.get(terminalJointName);
 		} else {
-			String pathIndex = this.rootJoint.searchPath("", joint);
-			int pathIndex2Int = 0;
+			String pathIndex = this.rootJoint.searchPath("", terminalJointName);
 			
 			if (pathIndex == null) {
-				throw new IllegalArgumentException("failed to get joint path index for " + joint);
+				throw new IllegalArgumentException("Failed to get joint path index for " + terminalJointName);
 			} else {
-				pathIndex2Int = (pathIndex.length() == 0) ? -1 : Integer.parseInt(pathIndex);
-				this.pathIndexMap.put(joint, pathIndex2Int);
+				this.pathIndexMap.put(terminalJointName, pathIndex);
 			}
 			
-			return pathIndex2Int;
+			return pathIndex;
 		}
 	}
+	
+	public void gatherAllJointsInPathToTerminal(String terminalJointName, Collection<String> collections) {
+		if (!this.jointByName.containsKey(terminalJointName)) {
+			throw new NoSuchElementException("No " + terminalJointName + " joint in this armature!");
+		}
 		
+		String pathIndices = this.searchPathIndex(terminalJointName);
+		Joint joint = this.rootJoint;
+		int index = pathIndices.length() - 1;
+		collections.add(joint.getName());
+		
+		while (index > -1) {
+			joint = joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndices.charAt(index)) - 1);
+			collections.add(joint.getName());
+			index--;
+		}
+	}
+	
 	public int getJointNumber() {
 		return this.jointCount;
 	}
@@ -155,7 +173,7 @@ public class Armature {
 		newRoot.initOriginTransform(new OpenMatrix4f());
 		Armature newArmature = null;
 		
-		//Uses reflection to keep the type of copied armature
+		// Uses reflection to keep the type of copied armature
 		try {
 			Constructor<? extends Armature> constructor = this.getClass().getConstructor(String.class, int.class, Joint.class, Map.class);
 			newArmature = constructor.newInstance(this.name, this.jointCount, newRoot, oldToNewJoint);

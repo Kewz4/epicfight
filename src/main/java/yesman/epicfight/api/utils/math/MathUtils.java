@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -60,17 +61,17 @@ public class MathUtils {
 	}
 	
 	public static int getSign(double value) {
-		return value >= 0.0F ? 1 : -1;
+		return value > 0.0D ? 1 : -1;
 	}
 	
 	public static Vec3 getVectorForRotation(float pitch, float yaw) {
-		float f = pitch * ((float) Math.PI / 180F);
-		float f1 = -yaw * ((float) Math.PI / 180F);
+		float f = pitch * (float) Math.PI / 180F;
+		float f1 = -yaw * (float) Math.PI / 180F;
 		float f2 = Mth.cos(f1);
 		float f3 = Mth.sin(f1);
 		float f4 = Mth.cos(f);
 		float f5 = Mth.sin(f);
-
+		
 		return new Vec3(f3 * f4, -f5, f2 * f4);
 	}
 	
@@ -121,6 +122,21 @@ public class MathUtils {
 		return (float)d;
 	}
 	
+	public static float wrapRadian(float pValue) {
+		float maxRot = (float)Math.PI * 2.0F;
+		float f = pValue % maxRot;
+		
+		if (f >= Math.PI) {
+			f -= maxRot;
+		}
+		
+		if (f < -Math.PI) {
+			f += maxRot;
+		}
+		
+		return f;
+	}
+	
 	public static float lerpDegree(float from, float to, float progression) {
 		from = Mth.wrapDegrees(from);
 		to = Mth.wrapDegrees(to);
@@ -137,7 +153,7 @@ public class MathUtils {
 	}
 	
 	public static Vec3 getNearestVector(Vec3 from, Vec3... vectors) {
-		double maxLength = Double.MAX_VALUE;
+		double minLength = 1000000.0D;
 		int index = 0;
 		
 		for (int i = 0; i < vectors.length; i++) {
@@ -147,8 +163,8 @@ public class MathUtils {
 			
 			double distSqr = from.distanceToSqr(vectors[i]);
 			
-			if (distSqr < maxLength) {
-				maxLength = distSqr;
+			if (distSqr < minLength) {
+				minLength = distSqr;
 				index = i;
 			}
 		}
@@ -158,6 +174,54 @@ public class MathUtils {
 	
 	public static Vec3 getNearestVector(Vec3 from, List<Vec3> vectors) {
 		return getNearestVector(from, vectors.toArray(new Vec3[0]));
+	}
+	
+	public static float greatest(float... dList) {
+		float max = -1000000.0F;
+		
+		for (float d : dList) {
+			if ( max < d) {
+				max = d;
+			}
+		}
+		
+		return max;
+	}
+	
+	public static float least(float... dList) {
+		float min = 1000000.0F;
+		
+		for (float d : dList) {
+			if (min > d) {
+				min = d;
+			}
+		}
+		
+		return min;
+	}
+	
+	public static double greatest(double... dList) {
+		double max = -1000000.0D;
+		
+		for (double d : dList) {
+			if ( max < d) {
+				max = d;
+			}
+		}
+		
+		return max;
+	}
+	
+	public static double least(double... dList) {
+		double min = 1000000.0D;
+		
+		for (double d : dList) {
+			if (min > d) {
+				min = d;
+			}
+		}
+		
+		return min;
 	}
 	
 	private static final Matrix4f BUFFER = new Matrix4f();
@@ -196,6 +260,11 @@ public class MathUtils {
 		return Math.acos(cos);
 	}
 	
+	public static float getAngleBetween(Quaternionf a, Quaternionf b) {
+		float dot = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+		return 2.0F * (Math.safeAcos(MathUtils.getSign(dot) * b.w) - Math.safeAcos(a.w));
+	}
+	
 	public static double getXRotOfVector(Vec3 vec) {
 		Vec3 normalized = vec.normalize();
 		return -(Math.atan2(normalized.y, (float)Math.sqrt(normalized.x * normalized.x + normalized.z * normalized.z)) * (180D / Math.PI));
@@ -229,7 +298,23 @@ public class MathUtils {
 	public static Vec3 projectVector(Vec3 from, Vec3 to) {
 		double dot = to.dot(from);
 		double normalScale = 1.0D / ((to.x * to.x) + (to.y * to.y) + (to.z * to.z));
+		
 		return new Vec3(dot * to.x * normalScale, dot * to.y * normalScale, dot * to.z * normalScale);
+	}
+	
+	public static Vec3f projectVector(Vec3f from, Vec3f to, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		float dot = Vec3f.dot(to, from);
+		float normalScale = 1.0F / ((to.x * to.x) + (to.y * to.y) + (to.z * to.z));
+		
+		dest.x = dot * to.x * normalScale;
+		dest.y = dot * to.y * normalScale;
+		dest.z = dot * to.z * normalScale;
+		
+		return dest;
 	}
 	
 	public static void setQuaternion(Quaternionf quat, float x, float y, float z, float w) {
@@ -259,7 +344,15 @@ public class MathUtils {
 	    return dest;
 	}
 	
-	public static Quaternionf lerpQuaternion(Quaternionf from, Quaternionf to, float lerpAmount) {
+	public static Quaternionf lerpQuaternion(Quaternionf from, Quaternionf to, float delta) {
+		return lerpQuaternion(from, to, delta, null);
+	}
+	
+	public static Quaternionf lerpQuaternion(Quaternionf from, Quaternionf to, float delta, Quaternionf dest) {
+		if (dest == null) {
+			dest = new Quaternionf();
+		}
+		
 		float fromX = from.x();
 		float fromY = from.y();
 		float fromZ = from.z();
@@ -273,28 +366,30 @@ public class MathUtils {
 		float resultZ;
 		float resultW;
 		float dot = fromW * toW + fromX * toX + fromY * toY + fromZ * toZ;
-		float blendI = 1.0F - lerpAmount;
+		float blendI = 1.0F - delta;
 		
 		if (dot < 0.0F) {
-			resultW = blendI * fromW + lerpAmount * -toW;
-			resultX = blendI * fromX + lerpAmount * -toX;
-			resultY = blendI * fromY + lerpAmount * -toY;
-			resultZ = blendI * fromZ + lerpAmount * -toZ;
+			resultW = blendI * fromW + delta * -toW;
+			resultX = blendI * fromX + delta * -toX;
+			resultY = blendI * fromY + delta * -toY;
+			resultZ = blendI * fromZ + delta * -toZ;
 		} else {
-			resultW = blendI * fromW + lerpAmount * toW;
-			resultX = blendI * fromX + lerpAmount * toX;
-			resultY = blendI * fromY + lerpAmount * toY;
-			resultZ = blendI * fromZ + lerpAmount * toZ;
+			resultW = blendI * fromW + delta * toW;
+			resultX = blendI * fromX + delta * toX;
+			resultY = blendI * fromY + delta * toY;
+			resultZ = blendI * fromZ + delta * toZ;
 		}
-
-		Quaternionf result = new Quaternionf(resultX, resultY, resultZ, resultW);
-		normalizeQuaternion(result);
-		return result;
+		
+		dest.set(resultX, resultY, resultZ, resultW);
+		normalizeQuaternion(dest);
+		
+		return dest;
 	}
 	
 	private static void normalizeQuaternion(Quaternionf quaternion) {
 		float f = quaternion.x() * quaternion.x() + quaternion.y() * quaternion.y() + quaternion.z() * quaternion.z() + quaternion.w() * quaternion.w();
-		if (f > 1.0E-6F) {
+		
+		if (f > 1E-6F) {
 			float f1 = fastInvSqrt(f);
 			setQuaternion(quaternion, quaternion.x() * f1, quaternion.y() * f1, quaternion.z() * f1, quaternion.w() * f1);
 		} else {

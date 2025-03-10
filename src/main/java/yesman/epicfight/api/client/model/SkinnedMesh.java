@@ -11,6 +11,8 @@ import javax.annotation.Nullable;
 
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -48,7 +50,7 @@ import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
-public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBuilder> {
+public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	protected final float[] weights;
 	protected final int[] affectingJointCounts;
 	protected final int[][] affectingWeightIndices;
@@ -64,7 +66,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	private VertexBuffer<Short> jointsBuffer;
 	private VertexBuffer<Float> weightsBuffer;
 	
-	public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
+	public SkinnedMesh(@Nullable Map<String, Number[]> arrayMap, @Nullable Map<MeshPartDefinition, List<VertexBuilder>> partBuilders, @Nullable SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, partBuilders, parent, properties);
 		
 		this.weights = parent == null ? ParseUtil.unwrapFloatWrapperArray(arrayMap.get("weights")) : parent.weights;
@@ -128,7 +130,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		List<Byte> normalList = Lists.newArrayList();
 		List<Short> jointList = Lists.newArrayList();
 		List<Float> weightList = Lists.newArrayList();
-		Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap = Maps.newHashMap();
+		Map<VertexBuilder, Integer> vertexBuilderMap = Maps.newHashMap();
 		
 		int currentBoundVao = GlStateManager._getInteger(GLConstants.GL_VERTEX_ARRAY_BINDING);
 		int currentBoundVbo = GlStateManager._getInteger(GLConstants.GL_VERTEX_ARRAY_BUFFER_BINDING);
@@ -188,11 +190,11 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	}
 	
 	@Override
-	protected Map<String, SkinnedMeshPart> createModelPart(Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> partBuilders) {
+	protected Map<String, SkinnedMeshPart> createModelPart(Map<MeshPartDefinition, List<VertexBuilder>> partBuilders) {
 		Map<String, SkinnedMeshPart> parts = Maps.newHashMap();
 		
 		partBuilders.forEach((partDefinition, vertexBuilder) -> {
-			parts.put(partDefinition.partName(), new SkinnedMeshPart(vertexBuilder, partDefinition.getModelPartAnimationProvider(), partDefinition.clothInfo()));
+			parts.put(partDefinition.partName(), new SkinnedMeshPart(vertexBuilder, partDefinition.renderProperties(), partDefinition.getModelPartAnimationProvider()));
 		});
 		
 		return parts;
@@ -211,6 +213,46 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		return parts.get(name);
 	}
 	
+	private static final Vec4f TRANSFORM = new Vec4f();
+	private static final Vec4f POS = new Vec4f();
+	private static final Vec4f TOTAL_POS = new Vec4f();
+	
+	@Override
+	public void getVertexPosition(int positionIndex, Vector4f dest, @Nullable OpenMatrix4f[] poses) {
+		int index = positionIndex * 3;
+		
+		POS.set(this.positions[index], this.positions[index + 1], this.positions[index + 2], 1.0F);
+		TOTAL_POS.set(0.0F, 0.0F, 0.0F, 0.0F);
+		
+		for (int i = 0; i < this.affectingJointCounts[positionIndex]; i++) {
+			int jointIndex = this.affectingJointIndices[positionIndex][i];
+			int weightIndex = this.affectingWeightIndices[positionIndex][i];
+			float weight = this.weights[weightIndex];
+			Vec4f.add(OpenMatrix4f.transform(poses[jointIndex], POS, TRANSFORM).scale(weight), TOTAL_POS, TOTAL_POS);
+		}
+		
+		dest.set(TOTAL_POS.x, TOTAL_POS.y, TOTAL_POS.z, 1.0F);
+	}
+	
+	private static final Vec4f NORM = new Vec4f();
+	private static final Vec4f TOTAL_NORM = new Vec4f();
+	
+	@Override
+	public void getVertexNormal(int positionIndex, int normalIndex, Vector3f dest, @Nullable OpenMatrix4f[] poses) {
+		int index = normalIndex * 3;
+		NORM.set(this.normals[index], this.normals[index + 1], this.normals[index + 2], 1.0F);
+		TOTAL_NORM.set(0.0F, 0.0F, 0.0F, 0.0F);
+		
+		for (int i = 0; i < this.affectingJointCounts[positionIndex]; i++) {
+			int jointIndex = this.affectingJointIndices[positionIndex][i];
+			int weightIndex = this.affectingWeightIndices[positionIndex][i];
+			float weight = this.weights[weightIndex];
+			Vec4f.add(OpenMatrix4f.transform(poses[jointIndex], NORM, TRANSFORM).scale(weight), TOTAL_NORM, TOTAL_NORM);
+		}
+		
+		dest.set(TOTAL_NORM.x, TOTAL_NORM.y, TOTAL_NORM.z);
+	}
+	
 	/**
 	 * Draws the model without applying animation
 	 */
@@ -221,6 +263,8 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		}
 	}
 	
+	protected static final Vector4f POSITION = new Vector4f();
+	protected static final Vector3f NORMAL = new Vector3f();
 	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
 	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
 	
@@ -250,9 +294,9 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 					NORMAL_POSES[i] = FINAL_POSES[i].removeTranslation();
 				}
 				
-				for (SkinnedMeshVertexBuilder vi : part.getVertices()) {
-					vi.getVertexPosition(SkinnedMesh.this, POSITION, FINAL_POSES);
-					vi.getVertexNormal(SkinnedMesh.this, NORMAL, NORMAL_POSES);
+				for (VertexBuilder vi : part.getVertices()) {
+					getVertexPosition(vi.position, POSITION, FINAL_POSES);
+					getVertexNormal(vi.position, vi.normal, NORMAL, NORMAL_POSES);
 					
 					POSITION.mul(matrix4f);
 					NORMAL.mul(matrix3f);
@@ -376,7 +420,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		EpicFightVertexFormatElement.bindDrawing(this);
 		
 		for (SkinnedMeshPart part : this.parts.values()) {
-			part.drawWithShader(animationShaderInstance, armature, poses);
+			part.drawWithShader(animationShaderInstance, r, g, b, a, armature, poses);
 		}
 		
 		EpicFightVertexFormatElement.unbindDrawing();
@@ -390,31 +434,31 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class SkinnedMeshPart extends MeshPart<SkinnedMeshVertexBuilder> {
+	public class SkinnedMeshPart extends MeshPart {
 		private int indexBufferId;
 		
-		public SkinnedMeshPart(List<SkinnedMeshVertexBuilder> animatedMeshPartList, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
-			super(animatedMeshPartList, vanillaPartTracer, clothInfo);
+		public SkinnedMeshPart(List<VertexBuilder> animatedMeshPartList, @Nullable Mesh.RenderProperties renderProperties, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
+			super(animatedMeshPartList, renderProperties, vanillaPartTracer);
 		}
 		
 		private void createVbo(
-				Map<SkinnedMeshVertexBuilder, Integer> vertexBuilderMap
-			  , float[] positions
-			  , float[] uvs
-			  , float[] normals
-			  , float[] weights
-			  , int[] affectingJointCounts
-			  , int[][] affectingJointIndices
-			  , int[][] affectingWeightsIndices
-			  , List<Float> position
-			  , List<Float> uv
-			  , List<Byte> normal
-			  , List<Short> joint
-			  , List<Float> weight
+			  Map<VertexBuilder, Integer> vertexBuilderMap
+			, float[] positions
+			, float[] uvs
+			, float[] normals
+			, float[] weights
+			, int[] affectingJointCounts
+			, int[][] affectingJointIndices
+			, int[][] affectingWeightsIndices
+			, List<Float> position
+			, List<Float> uv
+			, List<Byte> normal
+			, List<Short> joint
+			, List<Float> weight
 		) {
 			ByteBuffer indicesBuffer = ByteBuffer.allocateDirect(this.getVertices().size() * 4).order(ByteOrder.nativeOrder());
 			
-			for (SkinnedMeshVertexBuilder vb : this.getVertices()) {
+			for (VertexBuilder vb : this.getVertices()) {
 				if (vertexBuilderMap.containsKey(vb)) {
 					indicesBuffer.putInt(vertexBuilderMap.get(vb));
 				} else {
@@ -452,20 +496,21 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 				return;
 			}
 			
+			Vector4f color = this.getColor(r, g, b, a);
 			Matrix4f matrix4f = poseStack.last().pose();
 			Matrix3f matrix3f = poseStack.last().normal();
 			
-			for (SkinnedMeshVertexBuilder vi : this.getVertices()) {
-				vi.getVertexPosition(SkinnedMesh.this, POSITION);
-				vi.getVertexNormal(SkinnedMesh.this, NORMAL);
+			for (VertexBuilder vi : this.getVertices()) {
+				getVertexPosition(vi.position, POSITION);
+				getVertexNormal(vi.normal, NORMAL);
 				POSITION.mul(matrix4f);
 				NORMAL.mul(matrix3f);
 				
-				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, r, g, b, a, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
+				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
 			}
 		}
 		
-		public void drawWithShader(AnimationShaderInstance animationShaderInstance, Armature armature, OpenMatrix4f[] poses) {
+		public void drawWithShader(AnimationShaderInstance animationShaderInstance, float r, float g, float b, float a, Armature armature, OpenMatrix4f[] poses) {
 			if (this.isHidden()) {
 				return;
 			}
@@ -490,6 +535,12 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 				}
 			}
 			
+			boolean hasCustomColor = this.renderProperties != null && this.renderProperties.customColor() != null;
+			
+			if (hasCustomColor) {
+				animationShaderInstance.getColorUniform().set(this.renderProperties.customColor().x, this.renderProperties.customColor().y, this.renderProperties.customColor().z, 1.0F);
+			}
+			
 			animationShaderInstance._getVertexFormat().setupBufferState();
 			animationShaderInstance._apply();
 			
@@ -499,6 +550,10 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			
 			animationShaderInstance._clear();
 			animationShaderInstance._getVertexFormat().clearBufferState();
+			
+			if (hasCustomColor) {
+				animationShaderInstance.getColorUniform().set(r, g, b, a);
+			}
 		}
 		
 		static byte packNormal(float f) {
@@ -616,7 +671,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			for (Map.Entry<String, SkinnedMeshPart> partEntry : this.parts.entrySet()) {
 				IntList indicesArray = new IntArrayList();
 				
-				for (SkinnedMeshVertexBuilder vertexIndicator : partEntry.getValue().getVertices()) {
+				for (VertexBuilder vertexIndicator : partEntry.getValue().getVertices()) {
 					indicesArray.add(vertexIndicator.position);
 					indicesArray.add(vertexIndicator.uv);
 					indicesArray.add(vertexIndicator.normal);
@@ -631,7 +686,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 			int[] indices = new int[this.vertexCount * 3];
 			
 			for (SkinnedMeshPart part : this.parts.values()) {
-				for (SkinnedMeshVertexBuilder vertexIndicator : part.getVertices()) {
+				for (VertexBuilder vertexIndicator : part.getVertices()) {
 					indices[i * 3] = vertexIndicator.position;
 					indices[i * 3 + 1] = vertexIndicator.uv;
 					indices[i * 3 + 2] = vertexIndicator.normal;
@@ -646,7 +701,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart, SkinnedMeshVertexBu
 		
 		if (this.renderProperties != null) {
 			JsonObject renderProperties = new JsonObject();
-			renderProperties.addProperty("texture_path", this.renderProperties.getCustomTexturePath());
+			renderProperties.addProperty("texture_path", this.renderProperties.customTexturePath());
 			renderProperties.addProperty("transparent", this.renderProperties.isTransparent());
 			root.add("render_properties", renderProperties);
 		}

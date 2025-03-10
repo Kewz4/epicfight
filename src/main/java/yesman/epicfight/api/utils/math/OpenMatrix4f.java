@@ -17,9 +17,10 @@ import yesman.epicfight.api.animation.JointTransform;
 
 public class OpenMatrix4f {
 	private static final FloatBuffer MATRIX_TRANSFORMER = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-	private static final Vec3f VEC3_STORAGE = new Vec3f();
+	private static final Vec3f VECTOR_STORAGE = new Vec3f();
 	private static final Vec4f VEC4_STORAGE = new Vec4f();
-	private static final OpenMatrix4f MAT4X4_STORAGE = new OpenMatrix4f();
+	
+	public static final OpenMatrix4f IDENTITY = new OpenMatrix4f();
 	
 	/*
 	 * m00 m01 m02 m03
@@ -517,8 +518,8 @@ public class OpenMatrix4f {
 	}
 	
 	public OpenMatrix4f translate(float x, float y, float z) {
-		VEC3_STORAGE.set(x, y, z);
-		return translate(VEC3_STORAGE, this);
+		VECTOR_STORAGE.set(x, y, z);
+		return translate(VECTOR_STORAGE, this);
 	}
 	
 	public OpenMatrix4f translate(Vec3f vec) {
@@ -545,13 +546,41 @@ public class OpenMatrix4f {
 	}
 	
 	public static OpenMatrix4f createTranslation(float x, float y, float z) {
-		VEC3_STORAGE.set(x, y, z);
-		return new OpenMatrix4f().translate(VEC3_STORAGE);
+		return ofTranslation(x, y, z, null);
+	}
+	
+	public static OpenMatrix4f ofTranslation(float x, float y, float z, OpenMatrix4f dest) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
+		dest.setIdentity();
+		dest.m30 = x;
+		dest.m31 = y;
+		dest.m32 = z;
+		
+		return dest;
 	}
 	
 	public static OpenMatrix4f createScale(float x, float y, float z) {
-		VEC3_STORAGE.set(x, y, z);
-		return new OpenMatrix4f().scale(VEC3_STORAGE);
+		return ofScale(x, y, z, null);
+	}
+	
+	public static OpenMatrix4f ofScale(float x, float y, float z, OpenMatrix4f dest) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
+		dest.setIdentity();
+		dest.m00 = x;
+		dest.m11 = y;
+		dest.m22 = z;
+		
+		return dest;
 	}
 	
 	public OpenMatrix4f rotateDeg(float angle, Vec3f axis) {
@@ -566,8 +595,12 @@ public class OpenMatrix4f {
 		return rotate(angle, axis, this, dest);
 	}
 	
-	public static OpenMatrix4f createRotatorDeg(float angle, Vec3f axis) {
-		return rotate((float)Math.toRadians(angle), axis, new OpenMatrix4f(), null);
+	public static OpenMatrix4f createRotatorDeg(float degree, Vec3f axis) {
+		return rotate((float)Math.toRadians(degree), axis, new OpenMatrix4f(), null);
+	}
+	
+	public static OpenMatrix4f ofRotationDegree(float degree, Vec3f axis, @Nullable OpenMatrix4f dest) {
+		return rotate((float)Math.toRadians(degree), axis, dest, null);
 	}
 	
 	public static OpenMatrix4f rotate(float angle, Vec3f axis, OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
@@ -625,55 +658,99 @@ public class OpenMatrix4f {
 	}
 	
 	public Vec3f toTranslationVector() {
-		return toVector(this);
+		return toTranslationVector(this);
 	}
 	
-	public static Vec3f toVector(OpenMatrix4f matrix) {
-		return new Vec3f(matrix.m30, matrix.m31, matrix.m32);
+	public Vec3f toTranslationVector(Vec3f dest) {
+		return toTranslationVector(this, dest);
+	}
+	
+	public static Vec3f toTranslationVector(OpenMatrix4f matrix) {
+		return toTranslationVector(matrix, null);
+	}
+	
+	public static Vec3f toTranslationVector(OpenMatrix4f matrix, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.x = matrix.m30;
+		dest.y = matrix.m31;
+		dest.z = matrix.m32;
+		
+		return dest;
 	}
 	
 	public Quaternionf toQuaternion() {
 		return OpenMatrix4f.toQuaternion(this);
 	}
 	
+	public Quaternionf toQuaternion(Quaternionf dest) {
+		return OpenMatrix4f.toQuaternion(this, dest);
+	}
+	
 	public static Quaternionf toQuaternion(OpenMatrix4f matrix) {
-		OpenMatrix4f.load(matrix, MAT4X4_STORAGE);
-		MAT4X4_STORAGE.removeScale();
+		return toQuaternion(matrix, new Quaternionf());
+	}
+	
+	private static final OpenMatrix4f MATRIX_STORAGE = new OpenMatrix4f();
+	
+	public static Quaternionf toQuaternion(OpenMatrix4f matrix, Quaternionf dest) {
+		if (dest == null) {
+			dest = new Quaternionf();
+		}
+		
+		OpenMatrix4f.load(matrix, MATRIX_STORAGE);
+		MATRIX_STORAGE.removeScale();
 		
 		float w, x, y, z;
-		float diagonal = MAT4X4_STORAGE.m00 + MAT4X4_STORAGE.m11 + MAT4X4_STORAGE.m22;
+		float diagonal = MATRIX_STORAGE.m00 + MATRIX_STORAGE.m11 + MATRIX_STORAGE.m22;
 		
 		if (diagonal > 0) {
 			float w4 = (float) (Math.sqrt(diagonal + 1f) * 2f);
 			w = w4 / 4f;
-			x = (MAT4X4_STORAGE.m21 - MAT4X4_STORAGE.m12) / w4;
-			y = (MAT4X4_STORAGE.m02 - MAT4X4_STORAGE.m20) / w4;
-			z = (MAT4X4_STORAGE.m10 - MAT4X4_STORAGE.m01) / w4;
-		} else if ((MAT4X4_STORAGE.m00 > MAT4X4_STORAGE.m11) && (MAT4X4_STORAGE.m00 > MAT4X4_STORAGE.m22)) {
-			float x4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m11 - MAT4X4_STORAGE.m22) * 2f);
-			w = (MAT4X4_STORAGE.m21 - MAT4X4_STORAGE.m12) / x4;
+			x = (MATRIX_STORAGE.m21 - MATRIX_STORAGE.m12) / w4;
+			y = (MATRIX_STORAGE.m02 - MATRIX_STORAGE.m20) / w4;
+			z = (MATRIX_STORAGE.m10 - MATRIX_STORAGE.m01) / w4;
+		} else if ((MATRIX_STORAGE.m00 > MATRIX_STORAGE.m11) && (MATRIX_STORAGE.m00 > MATRIX_STORAGE.m22)) {
+			float x4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m00 - MATRIX_STORAGE.m11 - MATRIX_STORAGE.m22) * 2f);
+			w = (MATRIX_STORAGE.m21 - MATRIX_STORAGE.m12) / x4;
 			x = x4 / 4f;
-			y = (MAT4X4_STORAGE.m01 + MAT4X4_STORAGE.m10) / x4;
-			z = (MAT4X4_STORAGE.m02 + MAT4X4_STORAGE.m20) / x4;
-		} else if (MAT4X4_STORAGE.m11 > MAT4X4_STORAGE.m22) {
-			float y4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m11 - MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m22) * 2f);
-			w = (MAT4X4_STORAGE.m02 - MAT4X4_STORAGE.m20) / y4;
-			x = (MAT4X4_STORAGE.m01 + MAT4X4_STORAGE.m10) / y4;
+			y = (MATRIX_STORAGE.m01 + MATRIX_STORAGE.m10) / x4;
+			z = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) / x4;
+		} else if (MATRIX_STORAGE.m11 > MATRIX_STORAGE.m22) {
+			float y4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m11 - MATRIX_STORAGE.m00 - MATRIX_STORAGE.m22) * 2f);
+			w = (MATRIX_STORAGE.m02 - MATRIX_STORAGE.m20) / y4;
+			x = (MATRIX_STORAGE.m01 + MATRIX_STORAGE.m10) / y4;
 			y = y4 / 4f;
-			z = (MAT4X4_STORAGE.m12 + MAT4X4_STORAGE.m21) / y4;
+			z = (MATRIX_STORAGE.m12 + MATRIX_STORAGE.m21) / y4;
 		} else {
-			float z4 = (float) (Math.sqrt(1f + MAT4X4_STORAGE.m22 - MAT4X4_STORAGE.m00 - MAT4X4_STORAGE.m11) * 2f);
-			w = (MAT4X4_STORAGE.m10 - MAT4X4_STORAGE.m01) / z4;
-			x = (MAT4X4_STORAGE.m02 + MAT4X4_STORAGE.m20) / z4;
-			y = (MAT4X4_STORAGE.m12 + MAT4X4_STORAGE.m21) / z4;
+			float z4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m22 - MATRIX_STORAGE.m00 - MATRIX_STORAGE.m11) * 2f);
+			w = (MATRIX_STORAGE.m10 - MATRIX_STORAGE.m01) / z4;
+			x = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) / z4;
+			y = (MATRIX_STORAGE.m12 + MATRIX_STORAGE.m21) / z4;
 			z = z4 / 4f;
 		}
 		
-		return new Quaternionf(x, y, z, w);
+		dest.x = x;
+		dest.y = y;
+		dest.z = z;
+		dest.w = w;
+		
+		return dest;
 	}
 	
 	public static OpenMatrix4f fromQuaternion(Quaternionf quaternion) {
-		OpenMatrix4f matrix = new OpenMatrix4f();
+		return fromQuaternion(quaternion, null);
+	}
+	
+	public static OpenMatrix4f fromQuaternion(Quaternionf quaternion, OpenMatrix4f dest) {
+		if (dest == null) {
+			dest = new OpenMatrix4f();
+		} else if (dest.immutable) {
+			throw new UnsupportedOperationException("Can't modify immutable matrix");
+		}
+		
 		float x = quaternion.x();
 		float y = quaternion.y();
 		float z = quaternion.z();
@@ -687,22 +764,22 @@ public class OpenMatrix4f {
 		float xSquared = 2F * x * x;
 		float ySquared = 2F * y * y;
 		float zSquared = 2F * z * z;
-		matrix.m00 = 1.0F - ySquared - zSquared;
-		matrix.m01 = 2.0F * (xy - zw);
-		matrix.m02 = 2.0F * (xz + yw);
-		matrix.m10 = 2.0F * (xy + zw);
-		matrix.m11 = 1.0F - xSquared - zSquared;
-		matrix.m12 = 2.0F * (yz - xw);
-		matrix.m20 = 2.0F * (xz - yw);
-		matrix.m21 = 2.0F * (yz + xw);
-		matrix.m22 = 1.0F - xSquared - ySquared;
+		dest.m00 = 1.0F - ySquared - zSquared;
+		dest.m01 = 2.0F * (xy - zw);
+		dest.m02 = 2.0F * (xz + yw);
+		dest.m10 = 2.0F * (xy + zw);
+		dest.m11 = 1.0F - xSquared - zSquared;
+		dest.m12 = 2.0F * (yz - xw);
+		dest.m20 = 2.0F * (xz - yw);
+		dest.m21 = 2.0F * (yz + xw);
+		dest.m22 = 1.0F - xSquared - ySquared;
 		
-		return matrix;
+		return dest;
 	}
 	
 	public OpenMatrix4f scale(float x, float y, float z) {
-		VEC3_STORAGE.set(x, y, z);
-		return this.scale(VEC3_STORAGE);
+		VECTOR_STORAGE.set(x, y, z);
+		return this.scale(VECTOR_STORAGE);
 	}
 	
 	public OpenMatrix4f scale(Vec3f vec) {
@@ -733,14 +810,14 @@ public class OpenMatrix4f {
 	}
 	
 	public Vec3f toScaleVector() {
-		VEC3_STORAGE.set(this.m00, this.m01, this.m02);
-		float xScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(this.m00, this.m01, this.m02);
+		float xScale = VECTOR_STORAGE.length();
 		
-		VEC3_STORAGE.set(this.m10, this.m11, this.m12);
-		float yScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(this.m10, this.m11, this.m12);
+		float yScale = VECTOR_STORAGE.length();
 		
-		VEC3_STORAGE.set(this.m20, this.m21, this.m22);
-		float zScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(this.m20, this.m21, this.m22);
+		float zScale = VECTOR_STORAGE.length();
 		
 		return new Vec3f(xScale, yScale, zScale);
 	}
@@ -775,14 +852,14 @@ public class OpenMatrix4f {
 			throw new UnsupportedOperationException("Can't modify immutable matrix");
 		}
 		
-		VEC3_STORAGE.set(src.m00, src.m01, src.m02);
-		float xScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(src.m00, src.m01, src.m02);
+		float xScale = VECTOR_STORAGE.length();
 		
-		VEC3_STORAGE.set(src.m10, src.m11, src.m12);
-		float yScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(src.m10, src.m11, src.m12);
+		float yScale = VECTOR_STORAGE.length();
 		
-		VEC3_STORAGE.set(src.m20, src.m21, src.m22);
-		float zScale = VEC3_STORAGE.length();
+		VECTOR_STORAGE.set(src.m20, src.m21, src.m22);
+		float zScale = VECTOR_STORAGE.length();
 		
 		dest.load(src);
 		dest.scale(1.0F / xScale, 1.0F / yScale, 1.0F / zScale);

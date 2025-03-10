@@ -2,9 +2,11 @@ package yesman.epicfight.world.capabilities.entitypatch;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
@@ -38,6 +40,7 @@ import net.minecraftforge.event.entity.living.LivingFallEvent;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Animator;
+import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -116,6 +119,8 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	private Style oStyle;
 	
+	private final Map<InteractionHand, Joint> parentJointOfHands = Maps.newHashMap();
+	
 	@Override
 	public void onConstructed(T entityIn) {
 		super.onConstructed(entityIn);
@@ -133,6 +138,9 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		animator.getVariables().putSharedVariable(AttackAnimation.HIT_ENTITIES);
 		animator.getVariables().putSharedVariable(AttackAnimation.HURT_ENTITIES);
 		animator.getVariables().putSharedVariable(ActionAnimation.ACTION_ANIMATION_COORD);
+		
+		this.setParentJointOfHand(InteractionHand.MAIN_HAND, Armatures.BIPED.get().toolR);
+		this.setParentJointOfHand(InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL);
 	}
 	
 	@Override
@@ -501,6 +509,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	/**
 	 * Play an animation ensuring synchronization between client-server
 	 * Plays animation when getting response from server if it called in client side.
+	 * Do not call this in client side for non-player entities.
 	 * 
 	 * @param animation
 	 * @param transitionTimeModifier
@@ -516,6 +525,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	/**
 	 * Play an animation ensuring synchronization between client-server
 	 * Plays animation when getting response from server if it called in client side.
+	 * Do not call this in client side for non-player entities.
 	 * 
 	 * @param animation
 	 * @param transitionTimeModifier
@@ -648,7 +658,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void updateArmor(CapabilityItem fromCap, CapabilityItem toCap, EquipmentSlot slotType) {
 	}
 	
-	public void onAttackBlocked(DamageSource damageSource, LivingEntityPatch<?> opponent) {
+	/**
+	 * Fired when my attack is blocked
+	 * @param damageSource
+	 * @param blocker
+	 */
+	public void onAttackBlocked(DamageSource damageSource, LivingEntityPatch<?> blocker) {
 	}
 	
 	public void onMount(boolean isMountOrDismount, Entity ridingEntity) {
@@ -737,6 +752,14 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public boolean isOffhandItemValid() {
 		return this.getHoldingItemCapability(InteractionHand.MAIN_HAND).checkOffhandValid(this);
+	}
+	
+	public Joint getParentJointOfHand(InteractionHand hand) {
+		return this.parentJointOfHands.getOrDefault(hand, this.armature.rootJoint);
+	}
+	
+	public void setParentJointOfHand(InteractionHand hand, Joint joint) {
+		this.parentJointOfHands.put(hand, joint);
 	}
 	
 	public boolean isTeammate(Entity entityIn) {
@@ -852,6 +875,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.original.zOld;
 	}
 	
+	/**
+	 * Use this instead of {@link Entity#getYRot()} to get the fixed rotation when player's taking action
+	 * @return
+	 */
 	public float getYRot() {
 		return this.original.getYRot();
 	}

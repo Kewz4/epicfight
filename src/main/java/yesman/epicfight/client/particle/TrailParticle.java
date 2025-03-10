@@ -39,12 +39,12 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.ItemSkin;
-import yesman.epicfight.api.client.model.ItemSkins;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.CubicBezierCurve;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
+import yesman.epicfight.client.ClientEngine;
+import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -392,10 +392,10 @@ public class TrailParticle extends TextureSheetParticle {
 				
 				if (result.hand != null) {
 					ItemStack stack = entitypatch.getOriginal().getItemInHand(result.hand);
-					ItemSkin itemSkin = ItemSkins.getItemSkin(stack.getItem());
+					RenderItemBase renderItemBase = ClientEngine.getInstance().renderEngine.getItemRenderer(stack);
 					
-					if (itemSkin != null && itemSkin.trailInfo() != null) {
-						result = itemSkin.trailInfo().overwrite(result);
+					if (renderItemBase != null && renderItemBase.trailInfo() != null) {
+						result = renderItemBase.trailInfo().overwrite(result);
 					}
 				}
 				

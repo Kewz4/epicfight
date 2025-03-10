@@ -37,7 +37,6 @@ public abstract class PatchedEntityRenderer<E extends LivingEntity, T extends Li
 	public void mulPoseStack(PoseStack poseStack, Armature armature, E entity, T entitypatch, float partialTicks) {
 		OpenMatrix4f modelMatrix = entitypatch.getModelMatrix(partialTicks);
         poseStack.mulPose(QuaternionUtils.YP.rotationDegrees(180.0F));
-        
         MathUtils.mulStack(poseStack, modelMatrix);
         
         if (LivingEntityRenderer.isEntityUpsideDown(entity)) {

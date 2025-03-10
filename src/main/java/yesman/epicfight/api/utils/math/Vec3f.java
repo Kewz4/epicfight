@@ -1,6 +1,7 @@
 package yesman.epicfight.api.utils.math;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -34,22 +35,25 @@ public class Vec3f extends Vec2f {
 		this((float)mojangVec.x, (float)mojangVec.y, (float)mojangVec.z);
 	}
 	
-	public void set(float x, float y, float z) {
+	public Vec3f set(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		return this;
 	}
 	
-	public void set(Vec3 vec3f) {
+	public Vec3f set(Vec3 vec3f) {
 		this.x = (float)vec3f.x;
 		this.y = (float)vec3f.y;
 		this.z = (float)vec3f.z;
+		return this;
 	}
 	
-	public void set(Vec3f vec3f) {
+	public Vec3f set(Vec3f vec3f) {
 		this.x = vec3f.x;
 		this.y = vec3f.y;
 		this.z = vec3f.z;
+		return this;
 	}
 	
 	public Vec3f add(float x, float y, float z) {
@@ -163,6 +167,16 @@ public class Vec3f extends Vec2f {
 
 	public void rotate(float degree, Vec3f axis) {
 		rotate(degree, axis, this, this);
+	}
+	
+	public void invalidate() {
+		this.x = Float.NaN;
+		this.y = Float.NaN;
+		this.z = Float.NaN;
+	}
+	
+	public boolean validateValues() {
+		return Float.isFinite(this.x) && Float.isFinite(this.y) && Float.isFinite(this.z);
 	}
 	
 	public static Vec3f rotate(float degree, Vec3f axis, Vec3f src, Vec3f dest) {
@@ -319,6 +333,109 @@ public class Vec3f extends Vec2f {
 		dest.scale(vectors.length);
 		
 		return dest;
+	}
+	
+	public static int getNearest(Vec3f from, List<Vec3f> vectors) {
+		float minLength = Float.MAX_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.size(); i++) {
+			if (vectors.get(i) == null) {
+				continue;
+			}
+			
+			if (!vectors.get(i).validateValues()) {
+				continue;
+			}
+			
+			float distSqr = from.distanceSqr(vectors.get(i));
+			
+			if (distSqr < minLength) {
+				minLength = distSqr;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	public static int getNearest(Vec3f from, Vec3f... vectors) {
+		float minLength = Float.MAX_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.length; i++) {
+			if (vectors[i] == null) {
+				continue;
+			}
+			
+			if (!vectors[i].validateValues()) {
+				continue;
+			}
+			
+			float distSqr = from.distanceSqr(vectors[i]);
+			
+			if (distSqr < minLength) {
+				minLength = distSqr;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	public static int getMostSimilar(Vec3f start, Vec3f end, Vec3f... vectors) {
+		Vec3f.sub(end, start, BASIS_DIRECTION);
+		float maxDot = Float.MIN_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.length; i++) {
+			if (vectors[i] == null) {
+				continue;
+			}
+			
+			if (!vectors[i].validateValues()) {
+				continue;
+			}
+			
+			Vec3f.sub(vectors[i], start, COMPARISION);
+			float dot = Vec3f.dot(BASIS_DIRECTION, COMPARISION) / BASIS_DIRECTION.length() * COMPARISION.length();
+			
+			if (dot > maxDot) {
+				maxDot = dot;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	private static final Vec3f BASIS_DIRECTION = new Vec3f();
+	private static final Vec3f COMPARISION = new Vec3f();
+	
+	public static int getMostSimilar(Vec3f start, Vec3f end, List<Vec3f> vectors) {
+		Vec3f.sub(end, start, BASIS_DIRECTION);
+		float maxDot = Float.MIN_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.size(); i++) {
+			if (vectors.get(i) == null) {
+				continue;
+			}
+			
+			if (!vectors.get(i).validateValues()) {
+				continue;
+			}
+			
+			Vec3f.sub(vectors.get(i), start, COMPARISION);
+			float dot = Vec3f.dot(BASIS_DIRECTION, COMPARISION) / BASIS_DIRECTION.length() * COMPARISION.length();
+			
+			if (dot > maxDot) {
+				maxDot = dot;
+				index = i;
+			}
+		}
+		
+		return index;
 	}
 	
 	public Vector3f toMojangVector() {

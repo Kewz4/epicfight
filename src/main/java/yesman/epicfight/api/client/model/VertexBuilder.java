@@ -1,16 +1,29 @@
 package yesman.epicfight.api.client.model;
 
-import javax.annotation.Nullable;
+import java.util.List;
 
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import com.google.common.collect.Lists;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class VertexBuilder<M extends StaticMesh<?, ?>> {
+public class VertexBuilder {
+	public static List<VertexBuilder> create(int[] drawingIndices) {
+		List<VertexBuilder> vertexIndicators = Lists.newArrayList();
+		
+		for (int i = 0; i < drawingIndices.length / 3; i++) {
+			int k = i * 3;
+			int position = drawingIndices[k];
+			int uv = drawingIndices[k + 1];
+			int normal = drawingIndices[k + 2];
+			VertexBuilder vi = new VertexBuilder(position, uv, normal);
+			vertexIndicators.add(vi);
+		}
+		
+		return vertexIndicators;
+	}
+	
 	public final int position;
 	public final int uv;
 	public final int normal;
@@ -20,11 +33,6 @@ public abstract class VertexBuilder<M extends StaticMesh<?, ?>> {
 		this.uv = uv;
 		this.normal = normal;
 	}
-	
-	public abstract void getVertexPosition(M mesh, Vector4f dest);
-	public abstract void getVertexNormal(M mesh, Vector3f dest);
-	public abstract void getVertexPosition(M mesh, Vector4f dest, @Nullable OpenMatrix4f[] poses);
-	public abstract void getVertexNormal(M mesh, Vector3f dest, @Nullable OpenMatrix4f[] poses);
 	
 	@Override
 	public boolean equals(Object o) {

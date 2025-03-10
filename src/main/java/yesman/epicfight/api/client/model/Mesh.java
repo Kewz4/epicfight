@@ -3,62 +3,54 @@ package yesman.epicfight.api.client.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.api.utils.math.Vec3f;
 
 @OnlyIn(Dist.CLIENT)
 public interface Mesh {
-	/* Draw classic mesh */
-	void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
-	/* Draw mesh with animation */
-	void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
 	
 	void initialize();
 	
+	/* Draw classic mesh */
+	void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
+	
+	/* Draw mesh with animation */
+	void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
+	
 	@OnlyIn(Dist.CLIENT)
-	public static class RenderProperties {
-		protected String customTexturePath;
-		protected boolean isTransparent;
-		protected Object2BooleanMap<String> parentPartVisualizer;
-		
-		public String getCustomTexturePath() {
-			return this.customTexturePath;
-		}
-		
-		public boolean isTransparent() {
-			return this.isTransparent;
-		}
-		
-		public Object2BooleanMap<String> getParentPartVisualizer() {
-			return this.parentPartVisualizer;
-		}
-		
-		public RenderProperties customTexturePath(String path) {
-			this.customTexturePath = path;
-			return this;
-		}
-		
-		public RenderProperties transparency(boolean isTransparent) {
-			this.isTransparent = isTransparent;
-			return this;
-		}
-		
-		public RenderProperties newPartVisualizer(String partName, boolean setVisible) {
-			if (this.parentPartVisualizer == null) {
-				this.parentPartVisualizer = new Object2BooleanOpenHashMap<>();
+	public static record RenderProperties(String customTexturePath, Vec3f customColor, boolean isTransparent) {
+		public static class Builder {
+			protected String customTexturePath;
+			protected Vec3f customColor = new Vec3f();
+			protected boolean isTransparent;
+			
+			public RenderProperties.Builder customTexturePath(String path) {
+				this.customTexturePath = path;
+				return this;
 			}
 			
-			this.parentPartVisualizer.put(partName, setVisible);
+			public RenderProperties.Builder transparency(boolean isTransparent) {
+				this.isTransparent = isTransparent;
+				return this;
+			}
 			
-			return this;
-		}
-		
-		public static RenderProperties create() {
-			return new RenderProperties();
+			public RenderProperties.Builder customColor(float r, float g, float b) {
+				this.customColor.x = r;
+				this.customColor.y = g;
+				this.customColor.z = b;
+				return this;
+			}
+			
+			public RenderProperties build() {
+				return new RenderProperties(this.customTexturePath, this.customColor, this.isTransparent);
+			}
+			
+			public static RenderProperties.Builder create() {
+				return new RenderProperties.Builder();
+			}
 		}
 	}
 	

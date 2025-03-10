@@ -6,8 +6,6 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.model.Armature;
 
 public class HumanoidArmature extends Armature {
-	public static final int JOINTS = 20;
-	
 	public final Joint thighR;
 	public final Joint legR;
 	public final Joint kneeR;

@@ -25,7 +25,7 @@ import yesman.epicfight.skill.weaponinnate.SteelWhirlwindSkill;
 public class SkillDataKeys {
 	private static final Supplier<RegistryBuilder<SkillDataKey<?>>> BUILDER = () -> new RegistryBuilder<SkillDataKey<?>>().addCallback(SkillDataKey.getRegistryCallback());
 	
-	public static final DeferredRegister<SkillDataKey<?>> DATA_KEYS = DeferredRegister.create(new ResourceLocation(EpicFightMod.MODID, "skill_data_keys"), EpicFightMod.MODID);
+	public static final DeferredRegister<SkillDataKey<?>> DATA_KEYS = DeferredRegister.create(ResourceLocation.tryBuild(EpicFightMod.MODID, "skill_data_keys"), EpicFightMod.MODID);
 	public static final Supplier<IForgeRegistry<SkillDataKey<?>>> REGISTRY = DATA_KEYS.makeRegistry(BUILDER);
 	
 	public static final RegistryObject<SkillDataKey<Boolean>> BASIC_ATTACK_ACTIVATE = DATA_KEYS.register("basic_attack_active", () -> SkillDataKey.createSkillDataKey(PacketBufferCodec.BOOLEAN, false, false, BasicAttack.class));

@@ -83,7 +83,7 @@ public class ClientModBusEvent {
 	
 	@SubscribeEvent
 	public static void addLayersEvent(EntityRenderersEvent.AddLayers event) {
-		ClientEngine.getInstance().renderEngine.bootstrap(event.getContext());
+		ClientEngine.getInstance().renderEngine.reloadEntityRenderers(event.getContext());
 		
 		SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.removeIf(ClothSimulatable::invalid);
 		

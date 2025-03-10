@@ -24,21 +24,19 @@ import yesman.epicfight.main.EpicFightSharedConstants;
 public class EpicFightServerConnectionHelper {
 	public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(60000)).build();
 	public static final boolean SUPPORTS;
+	private static final String LIB_FILE = "ServerCommunicationHelper";
 	
 	static {
 		SupportedOS os = SupportedOS.getOS();
 		
-		SUPPORTS = false;
-		
-		/**
 		if (os != null) {
-			String libpath = MessageFormat.format("/assets/epicfight/nativelib/{0}/ServerCommunicationHelper{1}", os.telemetryName(), os.libExtension());
+			String libpath = MessageFormat.format("/assets/epicfight/nativelib/{0}/{1}{2}", os.telemetryName(), LIB_FILE, os.libExtension());
 			InputStream inputstream = EpicFightMod.class.getResourceAsStream(libpath);
 			
 			if (inputstream != null) {
 				String javaLibPath = System.getProperty("java.library.path");
 				List<String> paths = List.of(javaLibPath.split(";"));
-				File file = new File(paths.get(0) + "/ServerCommunicationHelper" + os.libExtension());
+				File file = new File(paths.get(0) + "/" + LIB_FILE + os.libExtension());
 				boolean shouldCreate;
 				
 				if (EpicFightSharedConstants.IS_DEV_ENV) {
@@ -74,20 +72,20 @@ public class EpicFightServerConnectionHelper {
 				boolean exceptionOccurred = false;
 				
 				try {
-					System.loadLibrary("ServerCommunicationHelper");
+					System.loadLibrary(LIB_FILE);
 				} catch (UnsatisfiedLinkError e) {
 					e.printStackTrace();
 					exceptionOccurred = true;
 				}
 				
-				SUPPORTS = false;//!exceptionOccurred;
+				SUPPORTS = !exceptionOccurred;
 			} else {
 				SUPPORTS = false;
 				throw new IllegalArgumentException("Cannot find library file in " + libpath);
 			}
 		} else {
 			SUPPORTS = false;
-		}**/
+		}
 	}
 	
 	public static native void autoLogin(String minecraftUuid, String accessToken, String refreshToken, String provider, BiConsumer<HttpResponse<String>, Exception> onResponse);
@@ -96,13 +94,12 @@ public class EpicFightServerConnectionHelper {
 	
 	public static native void signOut(String minecraftUuid, String accessToken, String refreshToken, String provider, BiConsumer<HttpResponse<String>, Exception> onResponse);
 	
-	public static native void getAvailableCosmetics(String accessToken, String refreshToken, String provider, BiConsumer<HttpResponse<String>, Exception> onResponse);
+	public static native void getAvailableCosmetics(String minecraftUuid, String accessToken, String refreshToken, String provider, BiConsumer<HttpResponse<String>, Exception> onResponse);
 	
 	public static native void saveConfiguration(String postBody, BiConsumer<HttpResponse<String>, Exception> onResponse);
 	
 	public static native void getPlayerSkinInfo(String minecraftUuid, BiConsumer<HttpResponse<String>, Exception> onResponse);
 	
-	/* Warn: this function doesn't behave as async */
 	public static native void loadRemoteMesh(String path, BiConsumer<Mesh, Exception> onResponse);
 	
 	public enum SupportedOS {

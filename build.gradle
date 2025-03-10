@@ -90,8 +90,6 @@ mixin {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-	
-	
 	// Required dependencies to build project
 	// compile against the JEI API but do not include it at runtime
   	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
@@ -110,7 +108,7 @@ dependencies {
     compileOnly fg.deobf("curse.maven:werewolves-become-a-beast-417851:5406832")
     compileOnly fg.deobf("curse.maven:vampirism-become-a-vampire-233029:5743414")
     
-    compileOnly fg.deobf("curse.maven:curios-309927:6058834")
+    compileOnly fg.deobf("curse.maven:curios-309927:6216710")
     
     compileOnly fg.deobf("curse.maven:citadel-331936:5559513") // ice-and-fire dependency
     compileOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5633453")
@@ -118,12 +116,11 @@ dependencies {
     // The mods had to use local repository
     compileOnly fg.deobf("local:skinlayers3d:1.6.6")
     compileOnly fg.deobf("local:firstperson:2.4.3")
-    
     /**
-     * The mods we had worked on resource pack or data pack.
+     * The mods we had worked on for resourcepack or datapack.
      **/
     /**
-	compileOnly fg.deobf("curse.maven:curios-309927:6058834") // samurai-dynasty dependency
+	compileOnly fg.deobf("curse.maven:curios-309927:6216710") // samurai-dynasty dependency
 	compileOnly fg.deobf("curse.maven:samurai-dynasty-848381:5672395")
     **/
     
@@ -131,7 +128,7 @@ dependencies {
      * Curios compatibility planned.
      **/
     /**
-    compileOnly fg.deobf("curse.maven:curios-309927:6058834")
+    compileOnly fg.deobf("curse.maven:curios-309927:6216710")
     compileOnly fg.deobf("curse.maven:octo-lib-916747:5115332")
     compileOnly fg.deobf("curse.maven:relics-mod-445274:5435202")
     **/

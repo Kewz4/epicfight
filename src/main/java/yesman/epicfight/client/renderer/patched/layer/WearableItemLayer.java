@@ -322,8 +322,8 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 		MinecraftForge.EVENT_BUS.post(animatedArmorTextureEvent);
 		ResourceLocation extensionTexturePath = animatedArmorTextureEvent.getResultLocation();
 		
-		if (armorMesh.getRenderProperty() != null && armorMesh.getRenderProperty().getCustomTexturePath() != null) {
-			s1 = armorMesh.getRenderProperty().getCustomTexturePath();
+		if (armorMesh.getRenderProperties() != null && armorMesh.getRenderProperties().customTexturePath() != null) {
+			s1 = armorMesh.getRenderProperties().customTexturePath();
 			extensionTexturePath = null;
 		}
 		

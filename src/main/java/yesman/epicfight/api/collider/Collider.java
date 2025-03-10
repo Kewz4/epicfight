@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -86,14 +87,14 @@ public abstract class Collider {
 	@OnlyIn(Dist.CLIENT)
 	public void draw(PoseStack poseStack, MultiBufferSource buffer, LivingEntityPatch<?> entitypatch, AttackAnimation animation, Joint joint, float prevElapsedTime, float elapsedTime, float partialTicks, float attackSpeed) {
 		Armature armature = entitypatch.getArmature();
-		int pathIndex =  armature.searchPathIndex(joint.getName());
+		String pathIndex = armature.searchPathIndex(joint.getName());
 		EntityState state = animation.getState(entitypatch, elapsedTime);
 		EntityState prevState = animation.getState(entitypatch, prevElapsedTime);
 		boolean attacking = prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2);
 		Pose prevPose;
 		Pose currentPose;
 		
-		if (pathIndex == -1) {
+		if (StringUtil.isNullOrEmpty(pathIndex)) {
 			prevPose = new Pose();
 			currentPose = new Pose();
 			prevPose.putJointData("Root", JointTransform.empty());

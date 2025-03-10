@@ -81,21 +81,7 @@ public class Meshes implements PreparableReloadListener {
 	public static final MeshAccessor<ClassicMesh> LASER = MeshAccessor.create(EpicFightMod.MODID, "particle/laser", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
 	
 	// Layers
-	public static final MeshAccessor<SkinnedMesh> CLOAK = MeshAccessor.create(EpicFightMod.MODID, "layer/cloak", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
-	
-	
-	/**
-	 * @deprecated TEST CODE
-	
-	public static final MeshAccessor<Mesh> KING_CAPE = MeshAccessor.create(EpicFightMod.MODID, "layer/king_cape", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
-	/**
-	 * @deprecated TEST CODE
-	
-	public static final MeshAccessor<Mesh> CAPE = MeshAccessor.create(EpicFightMod.MODID, "layer/cape", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
-	/**
-	 * @deprecated TEST CODE
-	
-	public static final MeshAccessor<Mesh> BENDING_TEST = MeshAccessor.create(EpicFightMod.MODID, "layer/bending_test", (jsonModelLoader) -> jsonModelLoader.loadMesh(true)); **/
+	public static final MeshAccessor<SkinnedMesh> CAPE_DEFAULT = MeshAccessor.create(EpicFightMod.MODID, "layer/default_cape", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	
 	public static void reload(ResourceManager resourceManager) {
 		Meshes.resourceManager = resourceManager;
@@ -140,7 +126,7 @@ public class Meshes implements PreparableReloadListener {
 	
 	@FunctionalInterface
 	@OnlyIn(Dist.CLIENT)
-	public interface MeshContructor<P extends MeshPart<V>, V extends VertexBuilder<?>, M extends StaticMesh<P, V>> {
+	public interface MeshContructor<P extends MeshPart, V extends VertexBuilder, M extends StaticMesh<P>> {
 		M invoke(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<V>> parts, M parent, RenderProperties properties);
 	}
 	
@@ -197,7 +183,7 @@ public class Meshes implements PreparableReloadListener {
 		public boolean canStartSoftBodySimulation() {
 			Mesh mesh = this.get();
 			
-			if (mesh instanceof StaticMesh<?, ?> staticMesh) {
+			if (mesh instanceof StaticMesh<?> staticMesh) {
 				return staticMesh.canStartSoftBodySimulation();
 			} else if (mesh instanceof CompositeMesh compositeMesh) {
 				return compositeMesh.canStartSoftBodySimulation();
@@ -210,13 +196,33 @@ public class Meshes implements PreparableReloadListener {
 		public ClothObject createSimulationData(SoftBodyTranslatable provider, ClothSimulatable simOwner, ClothObjectBuilder simBuilder) {
 			Mesh mesh = this.get();
 			
-			if (mesh instanceof StaticMesh<?, ?> staticMesh) {
+			if (mesh instanceof StaticMesh<?> staticMesh) {
 				return staticMesh.createSimulationData(provider, simOwner, simBuilder);
 			} else if (mesh instanceof CompositeMesh compositeMesh) {
 				return compositeMesh.createSimulationData(provider, simOwner, simBuilder);
 			}
 			
 			return null;
+		}
+
+		@Override
+		public void putSoftBodySimulationInfo(Map<String, ClothSimulationInfo> sofyBodySimulationInfo) {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof SoftBodyTranslatable softBodyTranslatable) {
+				softBodyTranslatable.putSoftBodySimulationInfo(sofyBodySimulationInfo);
+			}
+		}
+
+		@Override
+		public Map<String, ClothSimulationInfo> getSoftBodySimulationInfo() {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof SoftBodyTranslatable softBodyTranslatable) {
+				return softBodyTranslatable.getSoftBodySimulationInfo();
+			} else {
+				return null;
+			}
 		}
 	}
 }

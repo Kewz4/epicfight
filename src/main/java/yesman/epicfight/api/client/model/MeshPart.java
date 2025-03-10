@@ -5,6 +5,8 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import org.joml.Vector4f;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -13,16 +15,16 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class MeshPart<T extends VertexBuilder<?>> {
-	protected final List<T> verticies;
+public abstract class MeshPart {
+	protected final List<VertexBuilder> verticies;
+	protected final Mesh.RenderProperties renderProperties;
 	protected final Supplier<OpenMatrix4f> vanillaPartTracer;
-	protected final SoftBodyTranslatable.ClothSimulationInfo clothInfo;
 	protected boolean isHidden;
 	
-	public MeshPart(List<T> vertices, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer, @Nullable SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
+	public MeshPart(List<VertexBuilder> vertices, @Nullable Mesh.RenderProperties renderProperties, @Nullable Supplier<OpenMatrix4f> vanillaPartTracer) {
 		this.verticies = vertices;
+		this.renderProperties = renderProperties;
 		this.vanillaPartTracer = vanillaPartTracer;
-		this.clothInfo = clothInfo;
 	}
 	
 	public abstract void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
@@ -35,12 +37,8 @@ public abstract class MeshPart<T extends VertexBuilder<?>> {
 		return this.isHidden;
 	}
 	
-	public List<T> getVertices() {
+	public List<VertexBuilder> getVertices() {
 		return this.verticies;
-	}
-	
-	public SoftBodyTranslatable.ClothSimulationInfo getClothInfo() {
-		return this.clothInfo;
 	}
 	
 	public OpenMatrix4f getVanillaPartTransform() {
@@ -49,5 +47,29 @@ public abstract class MeshPart<T extends VertexBuilder<?>> {
 		}
 		
 		return this.vanillaPartTracer.get();
+	}
+	
+	protected static final Vector4f COLOR = new Vector4f();
+	
+	public Vector4f getColor(float r, float g, float b, float a) {
+		if (this.renderProperties != null && this.renderProperties.customColor() != null) {
+			COLOR.set(
+				  this.renderProperties.customColor().x
+				, this.renderProperties.customColor().x
+				, this.renderProperties.customColor().x
+				, a
+			);
+			
+			return COLOR;
+		} else {
+			COLOR.set(
+				  r
+				, g
+				, b
+				, a
+			);
+			
+			return COLOR;
+		}
 	}
 }

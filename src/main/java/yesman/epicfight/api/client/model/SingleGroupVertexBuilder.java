@@ -132,7 +132,7 @@ public class SingleGroupVertexBuilder {
 		Float[] jointWeightList = jointWeights.toArray(new Float[0]);
 		Integer[] affectJointCounts = affectCountList.toArray(new Integer[0]);
 		Map<String, Number[]> arrayMap = Maps.newHashMap();
-		Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> meshDefinitions = Maps.newHashMap();
+		Map<MeshPartDefinition, List<VertexBuilder>> meshDefinitions = Maps.newHashMap();
 		
 		arrayMap.put("positions", positionList);
 		arrayMap.put("normals", normalList);
@@ -142,10 +142,10 @@ public class SingleGroupVertexBuilder {
 		arrayMap.put("vindices", affectingJointIndices);
 		
 		for (Map.Entry<MeshPartDefinition, IntList> e : indices.entrySet()) {
-			meshDefinitions.put(e.getKey(), SkinnedMeshVertexBuilder.create(e.getValue().toIntArray()));
+			meshDefinitions.put(e.getKey(), VertexBuilder.create(e.getValue().toIntArray()));
 		}
 		
-		return new SkinnedMesh(arrayMap, meshDefinitions, null, Mesh.RenderProperties.create());
+		return new SkinnedMesh(arrayMap, meshDefinitions, null, null);
 	}
 	
 	public enum State {

@@ -7,7 +7,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.SkinnedMeshVertexBuilder;
+import yesman.epicfight.api.client.model.VertexBuilder;
 
 @OnlyIn(Dist.CLIENT)
 public class WitherMesh extends SkinnedMesh {
@@ -17,7 +17,7 @@ public class WitherMesh extends SkinnedMesh {
 	public final SkinnedMeshPart ribcage;
 	public final SkinnedMeshPart tail;
 	
-	public WitherMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<SkinnedMeshVertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
+	public WitherMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.centerHead = this.getOrLogException(this.parts, "centerHead");

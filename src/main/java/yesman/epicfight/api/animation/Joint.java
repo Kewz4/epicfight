@@ -3,6 +3,8 @@ package yesman.epicfight.api.animation;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
 import com.google.common.collect.Lists;
 
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -13,15 +15,13 @@ public class Joint {
 	private final List<Joint> subJoints = Lists.newArrayList();
 	private final int jointId;
 	private final String jointName;
-	private final OpenMatrix4f initialLocalTransform;
-	private final OpenMatrix4f localTransform = new OpenMatrix4f();
+	private final OpenMatrix4f localTransform;
 	private final OpenMatrix4f toOrigin = new OpenMatrix4f();
 	
-	public Joint(String name, int jointId, OpenMatrix4f initialLocalTransform) {
+	public Joint(String name, int jointId, OpenMatrix4f localTransform) {
 		this.jointId = jointId;
 		this.jointName = name;
-		this.initialLocalTransform = initialLocalTransform.unmodifiable();
-		this.localTransform.load(initialLocalTransform);
+		this.localTransform = localTransform.unmodifiable();
 	}
 
 	public void addSubJoints(Joint... joints) {
@@ -70,14 +70,6 @@ public class Joint {
 		}
 	}
 	
-	public void revertLocalTransform() {
-		this.localTransform.load(this.initialLocalTransform);
-	}
-	
-	public OpenMatrix4f getInitialLocalTransform() {
-		return this.initialLocalTransform;
-	}
-	
 	public OpenMatrix4f getLocalTransform() {
 		return this.localTransform;
 	}
@@ -88,6 +80,16 @@ public class Joint {
 	
 	public List<Joint> getSubJoints() {
 		return this.subJoints;
+	}
+	
+	// Null if index out of range
+	@Nullable
+	public Joint getSubJoint(int index) {
+		if (index < 0 || this.subJoints.size() <= index) {
+			return null;
+		}
+		
+		return this.subJoints.get(index);
 	}
 	
 	public String getName() {
@@ -109,7 +111,7 @@ public class Joint {
 	
 	@Override
 	public int hashCode() {
-		return this.jointName.hashCode() + this.jointId;
+		return this.jointName.hashCode() ^ this.jointId;
 	}
 	
 	public String searchPath(String path, String joint) {
@@ -117,6 +119,7 @@ public class Joint {
 			return path;
 		} else {
 			int i = 1;
+			
 			for (Joint subJoint : this.subJoints) {
 				String str = subJoint.searchPath(i + path, joint);
 				i++;
@@ -124,6 +127,7 @@ public class Joint {
 					return str;
 				}
 			}
+			
 			return null;
 		}
 	}

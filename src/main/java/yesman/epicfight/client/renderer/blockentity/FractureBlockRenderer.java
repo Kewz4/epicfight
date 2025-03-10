@@ -35,6 +35,7 @@ public class FractureBlockRenderer implements BlockEntityRenderer<FractureBlockE
 	public void render(FractureBlockEntity blockEntity, float partialTicks, PoseStack poseStack, MultiBufferSource multiBufferSource, int lightColor, int overlayColor) {
 		float turnBackTime = 5.0F;
 		float lerpAmount = Mth.clamp(partialTicks * (1.0F / turnBackTime) + (turnBackTime - (blockEntity.getMaxLifeTime() - blockEntity.getLifeTime())) * (1.0F / turnBackTime), 0.0F, 1.0F);
+		
 		Vector3f translate = blockEntity.getMaxLifeTime() > blockEntity.getLifeTime() + turnBackTime ? blockEntity.getTranslate() : MathUtils.lerpMojangVector(blockEntity.getTranslate(), new Vector3f(), lerpAmount);
 		Quaternionf rotate = blockEntity.getMaxLifeTime() > blockEntity.getLifeTime() + turnBackTime ? blockEntity.getRotation() : MathUtils.lerpQuaternion(blockEntity.getRotation(), new Quaternionf(), lerpAmount);
 		
@@ -50,8 +51,7 @@ public class FractureBlockRenderer implements BlockEntityRenderer<FractureBlockE
 		poseStack.translate(translate.x(), translate.y() + bouncingAnimation, translate.z());
 		poseStack.translate(-0.5D, -0.5D, -0.5D);	
 		
-		this.blockRenderDispatcher.renderBreakingTexture(blockEntity.getOriginalBlockState(), blockEntity.getBlockPos().above(), blockEntity.getLevel(), poseStack,
-				multiBufferSource.getBuffer(RenderType.cutout()), ModelData.EMPTY);
+		this.blockRenderDispatcher.renderBreakingTexture(blockEntity.getOriginalBlockState(), blockEntity.getBlockPos().above(), blockEntity.getLevel(), poseStack, multiBufferSource.getBuffer(RenderType.cutout()), ModelData.EMPTY);
 		
 		poseStack.popPose();
 	}

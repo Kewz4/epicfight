@@ -21,6 +21,7 @@ import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
+import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
@@ -42,7 +43,6 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class ActionAnimation extends MainFrameAnimation {
 	public static final SharedAnimationVariableKey<TransformSheet> ACTION_ANIMATION_COORD = AnimationVariables.shared(TransformSheet::new, false);
 	public static final IndependentAnimationVariableKey<Vec3> BEGINNING_LOCATION = AnimationVariables.independent(() -> (Vec3)null, true);
-	public static final IndependentAnimationVariableKey<Vec3f> LAST_MODEL_COORD = AnimationVariables.independent(() -> (Vec3f)null, true);
 	public static final IndependentAnimationVariableKey<Float> INITIAL_LOOK_VEC_DOT = AnimationVariables.independent(() -> (Float)null, true);
 	
 	public ActionAnimation(float transitionTime, AnimationAccessor<? extends ActionAnimation> accessor, AssetAccessor<? extends Armature> armature) {
@@ -337,10 +337,11 @@ public class ActionAnimation extends MainFrameAnimation {
 	protected Vec3 getCoordVector(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
 		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(animation);
 		TimePairList coordUpdateTime = this.getProperty(ActionAnimationProperty.COORD_UPDATE_TIME).orElse(null);
-		boolean isCoordUpdateTime = coordUpdateTime == null || coordUpdateTime.isTimeInPairs(player.getElapsedTime());
+		boolean inUpdateTime = coordUpdateTime == null || coordUpdateTime.isTimeInPairs(player.getElapsedTime());
+		boolean getRawCoord = this.getProperty(AttackAnimationProperty.FIXED_MOVE_DISTANCE).orElse(!inUpdateTime);
 		
 		TransformSheet transformSheet = entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD);
-		MoveCoordSetter moveCoordsetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_SET_TICK).orElse(null) : MoveCoordFunctions.RAW_COORD;
+		MoveCoordSetter moveCoordsetter = getRawCoord ? MoveCoordFunctions.RAW_COORD : this.getProperty(ActionAnimationProperty.COORD_SET_TICK).orElse(null);
 		
 		if (moveCoordsetter != null) {
 			moveCoordsetter.set(animation.get(), entitypatch, transformSheet);
@@ -348,21 +349,20 @@ public class ActionAnimation extends MainFrameAnimation {
 		
 		boolean hasNoGravity = entitypatch.getOriginal().isNoGravity();
 		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(this.getProperty(ActionAnimationProperty.COORD).isPresent());
-		MoveCoordGetter moveGetter = isCoordUpdateTime ? this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD) : MoveCoordFunctions.MODEL_COORD;
+		MoveCoordGetter moveGetter = getRawCoord ? MoveCoordFunctions.MODEL_COORD : this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD);
 		Vec3f move = moveGetter.get(animation.get(), entitypatch, transformSheet, player.getPrevElapsedTime(), player.getElapsedTime());
 		LivingEntity livingentity = entitypatch.getOriginal();
 		Vec3 motion = livingentity.getDeltaMovement();
-		double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();
 		
 		this.getProperty(ActionAnimationProperty.NO_GRAVITY_TIME).ifPresentOrElse((noGravityTime) -> {
 			if (noGravityTime.isTimeInPairs(animation.get().isLinkAnimation() ? 0.0F : player.getElapsedTime())) {
 				livingentity.setDeltaMovement(motion.x, 0.0D, motion.z);
-				move.y = Math.max(move.y, 0.0F);
 			} else {
 				move.y = 0.0F;
 			}
 		}, () -> {
 			if (moveVertical && move.y > 0.0F && !hasNoGravity) {
+				double gravity = livingentity.getAttribute(ForgeMod.ENTITY_GRAVITY.get()).getValue();
 				livingentity.setDeltaMovement(motion.x, motion.y < 0.0D ? motion.y + gravity : 0.0D, motion.z);
 			}
 		});
@@ -371,7 +371,7 @@ public class ActionAnimation extends MainFrameAnimation {
 			move.y = 0.0F;
 		}
 		
-		if (isCoordUpdateTime) {
+		if (inUpdateTime) {
 			this.getProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER).ifPresent((entityYRotProvider) -> {
 				float yRot = entityYRotProvider.get(animation.get(), entitypatch);
 				entitypatch.setYRot(yRot);

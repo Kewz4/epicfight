@@ -529,7 +529,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			AbstractTexture texture = textureManager.getTexture(this.cloakTexture);
 			
 			if (texture != MissingTextureAtlasSprite.getTexture()) {
-				this.cloakMesh.getAsMesh().initialize();
+				this.cloakMesh.getOriginalMesh().initialize();
 				
 				if (this.animator != null && this.entitypatch != null && this.clothSimulator != null) {
 					this.clothSimulator.getRunningObject(ClothSimulator.MODELPREVIEWER_CLOAK).ifPresent((clothObj) -> {
@@ -558,7 +558,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
 					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
 					RenderSystem.setShaderTexture(0, this.cloakTexture);
-					this.cloakMesh.getAsMesh().draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY);
+					this.cloakMesh.getOriginalMesh().draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY);
 					BufferUploader.drawWithShader(bufferbuilder.end());
 				}
 			}

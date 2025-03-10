@@ -19,6 +19,8 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class PatchedStuckInBodyLayer<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends PlayerModel<E>, R extends StuckInBodyLayer<E, M>> extends PatchedLayer<E, T, M, R> {
+	private static final Vec3f VECTOR = new Vec3f();
+	
 	@Override
 	protected void renderLayer(T entitypatch, E entityliving, R vanillaLayer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partialTicks) {
 		int i = Math.min(ClientConfig.maxStuckProjectiles, this.numStuck(entityliving));
@@ -30,15 +32,14 @@ public abstract class PatchedStuckInBodyLayer<E extends LivingEntity, T extends 
 				
 				int randomJoint = Math.abs(randomsource.nextInt()) % entitypatch.getArmature().getJointNumber();
 				MathUtils.mulStack(poseStack, poses[randomJoint]);
-				
-	            Vec3f vec = entitypatch.getArmature().searchJointById(randomJoint).getLocalTransform().toTranslationVector();
+	            entitypatch.getArmature().searchJointById(randomJoint).getLocalTransform().toTranslationVector(VECTOR);
 	            
 				float f = randomsource.nextFloat();
 				float f1 = randomsource.nextFloat();
 				float f2 = randomsource.nextFloat();
-				float f3 = Mth.lerp(f, -vec.x * 0.5F, vec.x * 0.5F);
-				float f4 = Mth.lerp(f1, -vec.y * 0.5F, vec.y * 0.5F);
-				float f5 = Mth.lerp(f2, -vec.z * 0.5F, vec.z * 0.5F);
+				float f3 = Mth.lerp(f, -VECTOR.x * 0.5F, VECTOR.x * 0.5F);
+				float f4 = Mth.lerp(f1, -VECTOR.y * 0.5F, VECTOR.y * 0.5F);
+				float f5 = Mth.lerp(f2, -VECTOR.z * 0.5F, VECTOR.z * 0.5F);
 				poseStack.translate(f3, f4, f5);
 				f = -1.0F * (f * 2.0F - 1.0F);
 				f1 = -1.0F * (f1 * 2.0F - 1.0F);

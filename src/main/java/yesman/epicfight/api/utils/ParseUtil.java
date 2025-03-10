@@ -311,6 +311,10 @@ public class ParseUtil {
 		return s.toLowerCase(Locale.ROOT);
 	}
 	
+	public static String toUpperCase(String s) {
+		return s.toUpperCase(Locale.ROOT);
+	}
+	
 	public static String getBytesSHA256Hash(byte[] bytes) {
 		String hashString = "";
 		
@@ -331,6 +335,14 @@ public class ParseUtil {
 		}
 		
 		return hashString;
+	}
+	
+	public static int parseCharacterToNumber(char c) {
+		if (c < '0' || c > '9') {
+			throw new IllegalArgumentException(c + "is not a character represents number");
+		}
+		
+		return c - '0';
 	}
 	
 	private ParseUtil() {}

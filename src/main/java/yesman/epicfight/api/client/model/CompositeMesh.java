@@ -1,5 +1,7 @@
 package yesman.epicfight.api.client.model;
 
+import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -15,10 +17,10 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public class CompositeMesh implements Mesh, SoftBodyTranslatable {
-	private final StaticMesh<?, ?> staticMesh;
+	private final StaticMesh<?> staticMesh;
 	private final SoftBodyTranslatable softBodyMesh;
 	
-	public CompositeMesh(StaticMesh<?, ?> staticMesh, SoftBodyTranslatable softBodyMesh) {
+	public CompositeMesh(StaticMesh<?> staticMesh, SoftBodyTranslatable softBodyMesh) {
 		this.staticMesh = staticMesh;
 		this.softBodyMesh = softBodyMesh;
 	}
@@ -31,13 +33,13 @@ public class CompositeMesh implements Mesh, SoftBodyTranslatable {
 	@Override
 	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 		this.staticMesh.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
-		this.softBodyMesh.getAsMesh().draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+		this.softBodyMesh.getOriginalMesh().draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@Override
 	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 		this.staticMesh.drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
-		this.softBodyMesh.getAsMesh().drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+		this.softBodyMesh.getOriginalMesh().drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
 	}
 	
 	@Override
@@ -51,12 +53,22 @@ public class CompositeMesh implements Mesh, SoftBodyTranslatable {
 	}
 	
 	@Nullable
-	public StaticMesh<?, ?> getStaticMesh() {
+	public StaticMesh<?> getStaticMesh() {
 		return this.staticMesh;
 	}
 	
 	@Override
-	public StaticMesh<?, ?> getSoftBodyMesh() {
-		return (StaticMesh<?, ?>)this.softBodyMesh;
+	public StaticMesh<?> getOriginalMesh() {
+		return (StaticMesh<?>)this.softBodyMesh;
+	}
+
+	@Override
+	public void putSoftBodySimulationInfo(Map<String, ClothSimulationInfo> sofyBodySimulationInfo) {
+		this.softBodyMesh.putSoftBodySimulationInfo(sofyBodySimulationInfo);
+	}
+
+	@Override
+	public Map<String, ClothSimulationInfo> getSoftBodySimulationInfo() {
+		return this.softBodyMesh.getSoftBodySimulationInfo();
 	}
 }

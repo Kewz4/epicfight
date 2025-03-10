@@ -69,6 +69,7 @@
 	"effect.epicfight.instability": "Instability",
 	
 	"entity.epicfight.wither_skeleton_minion": "Wither's Minion",
+	"entity.epicfight.wither_ghost": "Wither Ghost",
 	"entity.epicfight.area_effect_breath": "Dragon Breath",
 	
 	"epicfight.gui.configuration.autoswitching": "Auto Switching Items",
@@ -263,13 +264,13 @@
 	"gui.epicskins.button.signout": "Sign out",
 	"gui.epicskins.button.back": "Back",
 	
-	"gui.epicskins.avatar.cloak_type": "Cloak Type",
-	"gui.epicskins.avatar.cloak_color": "Cloak Color",
+	"gui.epicskins.avatar.cape_type": "Cape Type",
+	"gui.epicskins.avatar.cape_color": "Cape Color",
 	"gui.epicskins.avatar.vanilla_texture": "Vanilla Texture",
 	
-	"gui.epicskins.avatar.cloak_type.tooltip": "Select a cloak type",
-	"gui.epicskins.avatar.cloak_color.tooltip": "Set a color of the cloak",
-	"gui.epicskins.avatar.vanilla_texture.tooltip": "Check if you want to use vanilla cloak texture",
+	"gui.epicskins.avatar.cape_type.tooltip": "Select a cape type",
+	"gui.epicskins.avatar.cape_color.tooltip": "Set a color of cape",
+	"gui.epicskins.avatar.vanilla_texture.tooltip": "Check if you want to use vanilla cape texture",
 	
 	"item.epicfight.bokken": "Bokken",
 	"item.epicfight.uchigatana": "Uchigatana",

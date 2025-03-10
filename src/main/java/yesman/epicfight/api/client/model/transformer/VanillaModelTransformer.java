@@ -24,10 +24,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.model.Mesh.RenderProperties;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
 import yesman.epicfight.api.client.model.SkinnedMesh;
-import yesman.epicfight.api.client.model.SoftBodyTranslatable;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
@@ -610,17 +610,25 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root, SoftBodyTranslatable.ClothSimulationInfo clothInfo) implements MeshPartDefinition {
+	public record VanillaMeshPartDefinition(String partName, RenderProperties renderProperties, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) implements MeshPartDefinition {
+		public static MeshPartDefinition of(String partName, RenderProperties renderProperties) {
+			return new VanillaMeshPartDefinition(partName, renderProperties, null, null, null);
+		}
+		
 		public static MeshPartDefinition of(String partName) {
 			return new VanillaMeshPartDefinition(partName, null, null, null, null);
 		}
 		
-		public static MeshPartDefinition of(String partName, SoftBodyTranslatable.ClothSimulationInfo clothInfo) {
-			return new VanillaMeshPartDefinition(partName, null, null, null, clothInfo);
-		}
-		
+		/**
+		 * For animated models
+		 * @param partName
+		 * @param path
+		 * @param invertedParentTransform
+		 * @param root
+		 * @return
+		 */
 		public static MeshPartDefinition of(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) {
-			return new VanillaMeshPartDefinition(partName, path, invertedParentTransform, root, null);
+			return new VanillaMeshPartDefinition(partName, null, path, invertedParentTransform, root);
 		}
 		
 		public Supplier<OpenMatrix4f> getModelPartAnimationProvider() {
