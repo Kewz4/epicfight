@@ -105,7 +105,7 @@ public class EpicFightServerConnectionHelper {
 	public enum SupportedOS {
 		//LINUX("linux", ".so", ""),
 		//SOLARIS("solaris", ".so", ""),
-		WINDOWS("windows", ".dll", "d889700cddbc10a3214cb56928f555d679d8f3262f921eb5ae7bcf883ea3e1cc"),
+		WINDOWS("windows", ".dll", "2f1f38f1aff1fb405408865a22478ad464a6786fe636e13adf67891b9eb8e6e5"),
 		//OSX("mac", ".dylib", "")
 		;
 		
@@ -135,7 +135,7 @@ public class EpicFightServerConnectionHelper {
 			return this.libExtension;
 		}
 		
-		Object SHA256() {
+		String SHA256() {
 			return this.SHA256;
 		}
 	}
