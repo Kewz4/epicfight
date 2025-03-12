@@ -91,6 +91,11 @@ public class ControllEngine {
 	}
 	
 	public void handleEpicFightKeyMappings() {
+		// Pause here if playerpatch is null
+		if (this.playerpatch == null) {
+			return;
+		}
+		
 		if (keyPressed(EpicFightKeyMappings.SKILL_EDIT, false)) {
 			if (this.playerpatch.getSkillCapability() != null) {
 				Minecraft.getInstance().setScreen(new SkillEditScreen(this.player, this.playerpatch.getSkillCapability()));
@@ -202,16 +207,13 @@ public class ControllEngine {
 			this.playerpatch.toggleLockOn();
 		}
 		
-		//Disable swap hand items
+		// Disable swap hand items
 		if (this.playerpatch.getEntityState().inaction() || (!this.playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).canBePlacedOffhand())) {
 			disableKey(this.minecraft.options.keySwapOffhand);
 		}
 		
-		this.tick();
-	}
-	
-	private void tick() {
-		if (this.playerpatch == null || !this.playerpatch.isBattleMode() || Minecraft.getInstance().isPaused()) {
+		// Pause here if player is not in battle mode
+		if (!this.playerpatch.isBattleMode() || Minecraft.getInstance().isPaused()) {
 			return;
 		}
 		

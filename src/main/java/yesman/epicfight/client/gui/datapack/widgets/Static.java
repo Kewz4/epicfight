@@ -29,7 +29,7 @@ public class Static extends AbstractWidget implements ResizableComponent {
 		super(x1, y1, x2, y2, message);
 		
 		this.owner = owner;
-		this.font = owner.getMinecraft().font;
+		this.font = this.owner.getMinecraft().font;
 		this.x1 = x1;
 		this.x2 = x2;
 		this.y1 = y1;
@@ -37,16 +37,14 @@ public class Static extends AbstractWidget implements ResizableComponent {
 		this.horizontalSizingOption = horizontal;
 		this.verticalSizingOption = vertical;
 		this.tooltip = tooltip;
+		
+		this.setTooltip(Tooltip.create(this.tooltip));
 	}
 	
 	@Override
 	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		String correctedString = this._getMessage() == null ? "" : this.font.plainSubstrByWidth(this._getMessage().getString(), this._getWidth());
 		guiGraphics.drawString(this.font, correctedString, this._getX(), this._getY() + this.height / 2 - this.font.lineHeight / 2, this.fontColor, false);
-		
-		if (this.owner == this.owner.getMinecraft().screen && this.tooltip != null) {
-			this.setTooltip(this.isMouseOver(mouseX, mouseY) ? Tooltip.create(this.tooltip) : null);
-		}
 	}
 	
 	@Override

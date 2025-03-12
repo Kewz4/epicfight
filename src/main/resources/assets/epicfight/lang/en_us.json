@@ -261,7 +261,7 @@
 	"gui.epicskins.button.skin_configuration": "Skin Configuration",
 	"gui.epicskins.button.save": "Save",
 	"gui.epicskins.button.quit": "Quit",
-	"gui.epicskins.button.signout": "Sign out",
+	"gui.epicskins.button.delete_account": "Delete Account",
 	"gui.epicskins.button.back": "Back",
 	
 	"gui.epicskins.avatar.cape_type": "Cape Type",
