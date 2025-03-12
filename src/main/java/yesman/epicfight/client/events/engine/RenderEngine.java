@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
@@ -165,20 +166,21 @@ public class RenderEngine {
 		this.itemRendererMapByClass = Maps.newHashMap();
 		this.sentMessages = Sets.newHashSet();
 		this.overlayManager = new OverlayManager();
-		this.itemRenderers = Maps.newHashMap();
 		
 		RenderItemBase.initItemRenderers(this.minecraft);
 		
-		this.itemRenderers.put(ResourceLocation.tryParse("base"), RenderItemBase::new);
-		this.itemRenderers.put(ResourceLocation.tryParse("ranged"), RenderTwoHandedRangedWeapon::new);
-		this.itemRenderers.put(ResourceLocation.tryParse("map"), RenderFilledMap::new);
-		this.itemRenderers.put(ResourceLocation.tryParse("shield"), RenderShield::new);
-		this.itemRenderers.put(ResourceLocation.tryParse("trident"), RenderTrident::new);
-		this.itemRenderers.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "uchigatana"), RenderKatana::new);
-	}
-	
-	public void addItemRenderer(ResourceLocation rl, Function<JsonElement, RenderItemBase> provider) {
-		this.itemRenderers.put(rl, provider);
+		Map<ResourceLocation, Function<JsonElement, RenderItemBase>> builder = Maps.newHashMap();
+		
+		builder.put(ResourceLocation.tryParse("base"), RenderItemBase::new);
+		builder.put(ResourceLocation.tryParse("ranged"), RenderTwoHandedRangedWeapon::new);
+		builder.put(ResourceLocation.tryParse("map"), RenderFilledMap::new);
+		builder.put(ResourceLocation.tryParse("shield"), RenderShield::new);
+		builder.put(ResourceLocation.tryParse("trident"), RenderTrident::new);
+		builder.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "uchigatana"), RenderKatana::new);
+		
+		ModLoader.get().postEvent(new PatchedRenderersEvent.RegisterItemRenderer(builder));
+		
+		this.itemRenderers = ImmutableMap.copyOf(builder);
 	}
 	
 	public void reloadEntityRenderers(EntityRendererProvider.Context context) {
@@ -216,7 +218,7 @@ public class RenderEngine {
 		this.basicHumanoidRenderer = new PHumanoidRenderer<>(Meshes.BIPED, context, EntityType.PLAYER);
 		this.aimHelper = new AimHelperRenderer();
 		
-		ModLoader.get().postEvent(new PatchedRenderersEvent.Add(this.entityRendererProvider, this.itemRendererMapByInstance, context));
+		ModLoader.get().postEvent(new PatchedRenderersEvent.Add(this.entityRendererProvider, context));
 		
 		this.resetRenderers();
 	}
@@ -242,8 +244,8 @@ public class RenderEngine {
 			if (entry.getValue().getAsJsonObject().has("renderer")) {
 				ResourceLocation rendererName = ResourceLocation.tryParse(entry.getValue().getAsJsonObject().get("renderer").getAsString());
 				
-				if (this.itemRenderers.containsKey(rendererName)) {
-					rendererProvider = this.itemRenderers.get(rendererName);
+				if (itemRenderers.containsKey(rendererName)) {
+					rendererProvider = itemRenderers.get(rendererName);
 				} else {
 					EpicFightMod.LOGGER.warn("No renderer named " + rendererName);
 					rendererProvider = RenderItemBase::new;
