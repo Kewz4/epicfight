@@ -89,7 +89,7 @@ public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float 
 								  }
 							);
 							
-							if (cosmetic.useIntParam1() && !cosmetic.boolParam1()) {
+							if (cosmetic.useIntParam1() && (!cosmetic.useBoolParam1() || !cosmetic.boolParam1())) {
 								double brightness = (cosmetic.intParam1() & 255) / 255.0F;
 								double saturation = ((cosmetic.intParam1() & 65280) >> 8) / 255.0F;
 								double hue = ((cosmetic.intParam1() & 16711680) >> 16) / 255.0F;
