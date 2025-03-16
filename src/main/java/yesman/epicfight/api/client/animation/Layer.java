@@ -113,11 +113,6 @@ public class Layer {
 			this.animationPlayer.tick(entitypatch);
 		}
 		
-		if (this.isBaseLayer()) {
-			entitypatch.updateEntityState();
-			entitypatch.updateMotion(true);
-		}
-		
 		if (!this.animationPlayer.isEnd()) {
 			this.animationPlayer.getAnimation().get().tick(entitypatch);
 		} else if (!this.paused) {
@@ -135,6 +130,11 @@ public class Layer {
 					this.off(entitypatch);
 				}
 			}
+		}
+		
+		if (this.isBaseLayer()) {
+			entitypatch.updateEntityState();
+			entitypatch.updateMotion(true);
 		}
 	}
 	

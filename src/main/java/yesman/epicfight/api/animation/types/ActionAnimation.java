@@ -66,7 +66,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	/**
-	 * For resourcepack animation
+	 * For resourcepack animations
 	 */
 	public ActionAnimation(float transitionTime, float postDelay, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, path, armature);
@@ -77,7 +77,6 @@ public class ActionAnimation extends MainFrameAnimation {
 			.addState(EntityState.UPDATE_LIVING_MOTION, false)
 			.addState(EntityState.CAN_BASIC_ATTACK, false)
 			.addState(EntityState.CAN_SKILL_EXECUTION, false)
-			.newTimePair(0.01F, postDelay)
 			.addState(EntityState.TURNING_LOCKED, true)
 			.newTimePair(0.0F, Float.MAX_VALUE)
 			.addState(EntityState.INACTION, true);

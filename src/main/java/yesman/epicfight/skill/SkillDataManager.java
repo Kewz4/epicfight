@@ -37,8 +37,9 @@ public class SkillDataManager {
 			Player owner = this.container.getExecutor().getOriginal();
 			
 			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(
-					new SPAddOrRemoveSkillData(key, container.getSlot().universalOrdinal(), key.defaultValue(), SPAddOrRemoveSkillData.AddRemove.ADD, owner.getId()),
-					owner);
+				new SPAddOrRemoveSkillData(key, container.getSlot().universalOrdinal(), key.defaultValue(), SPAddOrRemoveSkillData.AddRemove.ADD, owner.getId()),
+				owner
+			);
 		}
 	}
 	
@@ -49,8 +50,9 @@ public class SkillDataManager {
 			Player owner = this.container.getExecutor().getOriginal();
 			
 			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(
-					new SPAddOrRemoveSkillData(key, container.getSlot().universalOrdinal(), null, SPAddOrRemoveSkillData.AddRemove.REMOVE, owner.getId()),
-					owner);
+				new SPAddOrRemoveSkillData(key, container.getSlot().universalOrdinal(), null, SPAddOrRemoveSkillData.AddRemove.REMOVE, owner.getId()),
+				owner
+			);
 		}
 	}
 	

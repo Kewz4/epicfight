@@ -75,18 +75,21 @@ public class SkillContainer {
 		
 		this.containingSkill = skill;
 		this.resetValues();
+		
+		// Remove all data keys
 		this.skillDataManager.clearData();
 		
 		if (skill != null) {
-			skill.onInitiate(this);
-			this.setMaxResource(skill.consumption);
-			this.setMaxDuration(skill.maxDuration);
-			
 			Set<SkillDataKey<?>> datakeys = SkillDataKey.getSkillDataKeyMap().get(skill.getClass());
 			
 			if (datakeys != null) {
 				datakeys.forEach(this.skillDataManager::registerData);
 			}
+			
+			skill.onInitiate(this);
+			
+			this.setMaxResource(skill.consumption);
+			this.setMaxDuration(skill.maxDuration);
 		}
 		
 		this.stack = 0;

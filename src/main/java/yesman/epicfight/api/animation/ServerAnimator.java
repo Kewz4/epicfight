@@ -65,13 +65,7 @@ public class ServerAnimator extends Animator {
 	@Override
 	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation) {
 		this.softPaused = false;
-		
-		if (!this.animationPlayer.isEnd && this.animationPlayer.getAnimation() != null) {
-			this.animationPlayer.getAnimation().get().end(this.entitypatch, nextAnimation, false);
-		}
-		
 		this.nextAnimation = nextAnimation;
-		this.animationPlayer.terminate();
 	}
 	
 	@Override

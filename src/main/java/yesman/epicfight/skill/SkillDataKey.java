@@ -20,8 +20,8 @@ import yesman.epicfight.main.EpicFightMod;
 
 public class SkillDataKey<T> {
 	private static final HashMultimap<Class<?>, SkillDataKey<?>> SKILL_DATA_KEYS = HashMultimap.create();
-	private static final ResourceLocation CLASS_TO_DATA_KEYS = new ResourceLocation(EpicFightMod.MODID, "classtodatakeys");
-	private static final ResourceLocation DATA_KEY_TO_ID = new ResourceLocation(EpicFightMod.MODID, "datakeytoid");
+	private static final ResourceLocation CLASS_TO_DATA_KEYS = ResourceLocation.tryBuild(EpicFightMod.MODID, "classtodatakeys");
+	private static final ResourceLocation DATA_KEY_TO_ID = ResourceLocation.tryBuild(EpicFightMod.MODID, "datakeytoid");
 	
 	private static class SkillDataKeyCallbacks implements IForgeRegistry.BakeCallback<SkillDataKey<?>>, IForgeRegistry.CreateCallback<SkillDataKey<?>>, IForgeRegistry.ClearCallback<SkillDataKey<?>> {
 		static final SkillDataKeyCallbacks INSTANCE = new SkillDataKeyCallbacks();
@@ -31,6 +31,7 @@ public class SkillDataKey<T> {
         public void onBake(IForgeRegistryInternal<SkillDataKey<?>> owner, RegistryManager stage) {
 			final ClearableIdMapper<SkillDataKey<?>> skillDataKeyMap = owner.getSlaveMap(DATA_KEY_TO_ID, ClearableIdMapper.class);
 			owner.forEach(skillDataKeyMap::add);
+			
 			final Map<Class<?>, Set<SkillDataKey<?>>> skillDataKeys = owner.getSlaveMap(CLASS_TO_DATA_KEYS, Map.class);
 			
 			SkillManager.getSkillRegistry().forEach((skill) -> {
@@ -45,6 +46,10 @@ public class SkillDataKey<T> {
 					
 					skillClass = skillClass.getSuperclass();
 				} while (Skill.class.isAssignableFrom(skillClass));
+				
+				if (!dataKeySet.isEmpty()) {
+					EpicFightMod.LOGGER.info("Data keys "  + dataKeySet.stream().map(SkillDataKeys.REGISTRY.get()::getKey).toList() + " for " + skill.getRegistryName());
+				}
 			});
         }
 		
