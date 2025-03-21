@@ -28,7 +28,6 @@ public class Armature {
 	private final Map<String, String> pathIndexMap;
 	private final int jointCount;
 	private final OpenMatrix4f[] poseMatrices;
-	
 	public final Joint rootJoint;
 	
 	public Armature(String name, int jointNumber, Joint rootJoint, Map<String, Joint> jointMap) {
@@ -80,7 +79,7 @@ public class Armature {
 	}
 	
 	private void getPoseTransform(Joint joint, OpenMatrix4f parentTransform, Pose pose, OpenMatrix4f[] jointMatrices, boolean applyOriginTransform) {
-		OpenMatrix4f result = pose.getOrDefaultTransform(joint.getName()).getAnimationBoundMatrix(joint, parentTransform);
+		OpenMatrix4f result = pose.orElseEmpty(joint.getName()).getAnimationBoundMatrix(joint, parentTransform);
 		jointMatrices[joint.getId()] = result;
 		
 		for (Joint joints : joint.getSubJoints()) {
@@ -102,16 +101,20 @@ public class Armature {
 	}
 	
 	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
-		JointTransform jt = pose.getOrDefaultTransform(joint.getName());
+		JointTransform jt = pose.orElseEmpty(joint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
 		
 		return index > -1 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
 	}
 	
+	public boolean hasJoint(String name) {
+		return this.jointByName.containsKey(name);
+	}
+	
 	public Joint searchJointById(int id) {
 		return this.jointById.get(id);
 	}
-
+	
 	public Joint searchJointByName(String name) {
 		return this.jointByName.get(name);
 	}

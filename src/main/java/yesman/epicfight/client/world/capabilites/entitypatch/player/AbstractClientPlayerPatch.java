@@ -242,7 +242,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@Override
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-		if (pose.getJointTransformData().containsKey("Head")) {
+		if (pose.hasTransform("Head")) {
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.modelYRotO - this.original.yHeadRotO;
 				float headRot = this.modelYRot - this.original.yHeadRot;
@@ -254,7 +254,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
 				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(xRot, xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
-				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
+				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}
 	}

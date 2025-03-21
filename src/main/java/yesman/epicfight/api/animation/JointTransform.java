@@ -53,6 +53,12 @@ public class JointTransform {
 		return this.scale;
 	}
 	
+	public void clearTransform() {
+		this.translation.set(0.0F, 0.0F, 0.0F);
+		this.rotation.set(0.0F, 0.0F, 0.0F, 1.0F);
+		this.scale.set(1.0F, 1.0F, 1.0F);
+	}
+	
 	public JointTransform copy() {
 		return JointTransform.empty().copyFrom(this);
 	}
@@ -64,7 +70,6 @@ public class JointTransform {
 		this.translation.set(newV);
 		this.rotation.set(newQ);
 		this.scale.set(newS);
-
 		this.entries.putAll(jt.entries);
 		
 		return this;
@@ -122,32 +127,48 @@ public class JointTransform {
 		return String.format("translation:%s, rotation:%s, %d entries ", this.translation, this.rotation, this.entries.size());
 	}
 	
-	private static JointTransform interpolateSimple(JointTransform prev, JointTransform next, float progression) {
-		return new JointTransform(MathUtils.lerpVector(prev.translation, next.translation, progression),
-				MathUtils.lerpQuaternion(prev.rotation, next.rotation, progression),
-				MathUtils.lerpVector(prev.scale, next.scale, progression));
+	public static JointTransform interpolateTransform(JointTransform prev, JointTransform next, float progression, JointTransform dest) {
+		if (dest == null) {
+			dest = JointTransform.empty();
+		}
+		
+		MathUtils.lerpVector(prev.translation, next.translation, progression, dest.translation);
+		MathUtils.lerpQuaternion(prev.rotation, next.rotation, progression, dest.rotation);
+		MathUtils.lerpVector(prev.scale, next.scale, progression, dest.scale);
+		
+		return dest;
 	}
 	
 	public static JointTransform interpolate(JointTransform prev, JointTransform next, float progression) {
+		return interpolate(prev, next, progression, null);
+	}
+	
+	public static JointTransform interpolate(JointTransform prev, JointTransform next, float progression, JointTransform dest) {
+		if (dest == null) {
+			dest = JointTransform.empty();
+		}
+		
 		if (prev == null || next == null) {
-			return JointTransform.empty();
+			dest.clearTransform();
+			return dest;
 		}
 		
 		progression = Mth.clamp(progression, 0.0F, 1.0F);
-		JointTransform interpolated = interpolateSimple(prev, next, progression);
+		interpolateTransform(prev, next, progression, dest);
+		dest.entries.clear();
 		
 		for (Map.Entry<String, TransformEntry> entry : prev.entries.entrySet()) {
 			JointTransform transform = next.entries.containsKey(entry.getKey()) ? next.entries.get(entry.getKey()).transform : JointTransform.empty();
-			interpolated.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateSimple(entry.getValue().transform, transform, progression)));
+			dest.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateTransform(entry.getValue().transform, transform, progression, null)));
 		}
 		
 		for (Map.Entry<String, TransformEntry> entry : next.entries.entrySet()) {
-			if (!interpolated.entries.containsKey(entry.getKey())) {
-				interpolated.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateSimple(JointTransform.empty(), entry.getValue().transform, progression)));
+			if (!dest.entries.containsKey(entry.getKey())) {
+				dest.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateTransform(JointTransform.empty(), entry.getValue().transform, progression, null)));
 			}
 		}
 		
-		return interpolated;
+		return dest;
 	}
 	
 	public static JointTransform fromMatrixWithoutScale(OpenMatrix4f matrix) {

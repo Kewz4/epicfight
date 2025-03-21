@@ -323,7 +323,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 		ResourceLocation extensionTexturePath = animatedArmorTextureEvent.getResultLocation();
 		
 		if (armorMesh.getRenderProperties() != null && armorMesh.getRenderProperties().customTexturePath() != null) {
-			s1 = armorMesh.getRenderProperties().customTexturePath();
+			s1 = armorMesh.getRenderProperties().customTexturePath().toString();
 			extensionTexturePath = null;
 		}
 		

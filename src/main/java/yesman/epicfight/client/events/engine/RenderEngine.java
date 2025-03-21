@@ -567,7 +567,7 @@ public class RenderEngine {
 					renderEngine.renderEntityArmatureModel(livingentity, entitypatch, event.getRenderer(), event.getMultiBufferSource(), event.getPoseStack(), event.getPackedLight(), event.getPartialTick());
 					
 					if (renderEngine.shouldRenderVanillaModel()) {
-						event.getPoseStack().translate(1.5F, 0.0F, 0.0F);
+						event.getPoseStack().translate(renderEngine.modelInitTimer > 0 ? 10000.0F : 1.5F, 0.0F, 0.0F);
 						--renderEngine.modelInitTimer;
 					} else {
 						event.setCanceled(true);

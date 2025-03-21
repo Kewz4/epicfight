@@ -45,7 +45,7 @@ public class IngameConfigurationScreen extends Screen {
 			}
 		}).pos(this.width / 2 + 5, 68).size(160, 20).build();
 		
-		skinConfigScreen.active = EpicFightServerConnectionHelper.SUPPORTS;
+		skinConfigScreen.active = EpicFightServerConnectionHelper.supported();
 		
 		this.addRenderableWidget(skinConfigScreen);
 		

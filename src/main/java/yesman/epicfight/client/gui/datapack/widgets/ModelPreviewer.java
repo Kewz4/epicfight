@@ -75,6 +75,7 @@ import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SoftBodyTranslatable;
+import yesman.epicfight.api.client.physics.bezier.CubicBezierCurve;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.collider.Collider;
@@ -82,7 +83,6 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.physics.PhysicsSimulator;
 import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationTypes;
-import yesman.epicfight.api.utils.math.CubicBezierCurve;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
@@ -807,19 +807,19 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				if (!ModelPreviewer.this.trailInfoList.isEmpty()) {
 					for (TrailInfo trailInfo : ModelPreviewer.this.trailInfoList) {
 						if (trailInfo.playable()) {
-							CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(trailInfo.joint), toPlay, trailInfo);
+							CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(trailInfo.joint()), toPlay, trailInfo);
 							ModelPreviewer.this.trailParticles.add(trail);
 						} else {
 							toPlay.get().getProperty(ClientAnimationProperties.TRAIL_EFFECT).ifPresent(trailInfos -> {
 								for (TrailInfo info : trailInfos) {
-									if (info.hand != InteractionHand.MAIN_HAND) {
+									if (info.hand() != InteractionHand.MAIN_HAND) {
 										continue;
 									}
 									
 									TrailInfo combinedTrailInfo = trailInfo.overwrite(info);
 									
 									if (combinedTrailInfo.playable()) {
-										CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(combinedTrailInfo.joint), toPlay, combinedTrailInfo);
+										CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(combinedTrailInfo.joint()), toPlay, combinedTrailInfo);
 										ModelPreviewer.this.trailParticles.add(trail);
 									}
 								}
@@ -954,7 +954,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			public Pose getEnabledPose(LivingEntityPatch<?> entitypatch, float partialTick) {
 				DynamicAnimation animation = this.animationPlayer.getAnimation().get();
 				Pose pose = animation.getRawPose(this.animationPlayer.getPrevElapsedTime() + (this.animationPlayer.getElapsedTime() - this.animationPlayer.getPrevElapsedTime()) * partialTick);
-				pose.removeJointIf((entry) -> !animation.hasTransformFor(entry.getKey()));
+				pose.disableJoint((entry) -> !animation.hasTransformFor(entry.getKey()));
 				
 				return pose;
 			}
@@ -1154,28 +1154,28 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			AnimationPlayer animPlayer = ModelPreviewer.this.animator.getPlayerFor(null);
 			this.visibleTrailEdges.removeIf(v -> !v.isAlive());
 			
-			if (this.animationEnd) {
+			if (this.animationEnds) {
 				if (this.lifetime-- == 0) {
 					this.remove();
 				}
 			} else {
-				if (this.animation != animPlayer.getAnimation().get().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime) {
-					this.animationEnd = true;
-					this.lifetime = this.trailInfo.trailLifetime;
+				if (this.animation != animPlayer.getAnimation().get().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime()) {
+					this.animationEnds = true;
+					this.lifetime = this.trailInfo.trailLifetime();
 				}
 			}
 			
-			if (this.trailInfo.fadeTime > 0.0F && this.trailInfo.endTime < animPlayer.getElapsedTime()) {
+			if (this.trailInfo.fadeTime() > 0.0F && this.trailInfo.endTime() < animPlayer.getElapsedTime()) {
 				return;
 			}
 			
-			boolean isTrailInvisible = animPlayer.getAnimation().get().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime;
+			boolean isTrailInvisible = animPlayer.getAnimation().get().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime();
 			boolean isFirstTrail = this.visibleTrailEdges.isEmpty();
 			boolean needCorrection = (!isTrailInvisible && isFirstTrail);
 			
 			if (needCorrection) {
-				float startCorrection = Math.max((this.trailInfo.startTime - animPlayer.getPrevElapsedTime()) / (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()), 0.0F);
-				this.startEdgeCorrection = this.trailInfo.interpolateCount * 2 * startCorrection;
+				float startCorrection = Math.max((this.trailInfo.startTime() - animPlayer.getPrevElapsedTime()) / (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()), 0.0F);
+				this.startEdgeCorrection = this.trailInfo.interpolateCount() * 2 * startCorrection;
 			}
 			
 			TrailInfo trailInfo = this.trailInfo;
@@ -1185,12 +1185,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			OpenMatrix4f prevJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(prevPose, this.joint);
 			OpenMatrix4f middleJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(middlePose, this.joint);
 			OpenMatrix4f currentJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(currentPose, this.joint);
-			Vec3 prevStartPos = OpenMatrix4f.transform(prevJointTf, trailInfo.start);
-			Vec3 prevEndPos = OpenMatrix4f.transform(prevJointTf, trailInfo.end);
-			Vec3 middleStartPos = OpenMatrix4f.transform(middleJointTf, trailInfo.start);
-			Vec3 middleEndPos = OpenMatrix4f.transform(middleJointTf, trailInfo.end);
-			Vec3 currentStartPos = OpenMatrix4f.transform(currentJointTf, trailInfo.start);
-			Vec3 currentEndPos = OpenMatrix4f.transform(currentJointTf, trailInfo.end);
+			Vec3 prevStartPos = OpenMatrix4f.transform(prevJointTf, trailInfo.start());
+			Vec3 prevEndPos = OpenMatrix4f.transform(prevJointTf, trailInfo.end());
+			Vec3 middleStartPos = OpenMatrix4f.transform(middleJointTf, trailInfo.start());
+			Vec3 middleEndPos = OpenMatrix4f.transform(middleJointTf, trailInfo.end());
+			Vec3 currentStartPos = OpenMatrix4f.transform(currentJointTf, trailInfo.start());
+			Vec3 currentEndPos = OpenMatrix4f.transform(currentJointTf, trailInfo.end());
 			
 			List<Vec3> finalStartPositions;
 			List<Vec3> finalEndPositions;
@@ -1217,7 +1217,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					edge1 = this.invisibleTrailEdges.get(lastIdx);
 					edge2 = new TrailEdge(prevStartPos, prevEndPos, -1);
 				} else {
-					edge1 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - (this.trailInfo.interpolateCount / 2 + 1));
+					edge1 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - (this.trailInfo.interpolateCount() / 2 + 1));
 					edge2 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - 1);
 					edge2.lifetime++;
 				}
@@ -1231,8 +1231,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				startPosList.add(currentStartPos);
 				endPosList.add(currentEndPos);
 				
-				finalStartPositions = CubicBezierCurve.getBezierInterpolatedPoints(startPosList, 1, 3, this.trailInfo.interpolateCount);
-				finalEndPositions = CubicBezierCurve.getBezierInterpolatedPoints(endPosList, 1, 3, this.trailInfo.interpolateCount);
+				finalStartPositions = CubicBezierCurve.getBezierInterpolatedPoints(startPosList, 1, 3, this.trailInfo.interpolateCount());
+				finalEndPositions = CubicBezierCurve.getBezierInterpolatedPoints(endPosList, 1, 3, this.trailInfo.interpolateCount());
 				
 				if (!isFirstTrail) {
 					finalStartPositions.remove(0);
@@ -1252,7 +1252,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-	        AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath);
+	        AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath());
 	        RenderSystem.bindTexture(abstracttexture.getId());
 	        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
 		    RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
@@ -1263,17 +1263,17 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			Matrix4f matrix4f = poseStack.last().pose();
 			int edges = this.visibleTrailEdges.size() - 1;
 			boolean startFade = this.visibleTrailEdges.get(0).lifetime == 1;
-			boolean endFade = this.visibleTrailEdges.get(edges).lifetime == this.trailInfo.trailLifetime;
-			float startEdge = (startFade ? this.trailInfo.interpolateCount * 2 * partialTick : 0.0F) + this.startEdgeCorrection;
-			float endEdge = endFade ? Math.min(edges - (this.trailInfo.interpolateCount * 2) * (1.0F - partialTick), edges - 1) : edges - 1;
+			boolean endFade = this.visibleTrailEdges.get(edges).lifetime == this.trailInfo.trailLifetime();
+			float startEdge = (startFade ? this.trailInfo.interpolateCount() * 2 * partialTick : 0.0F) + this.startEdgeCorrection;
+			float endEdge = endFade ? Math.min(edges - (this.trailInfo.interpolateCount() * 2) * (1.0F - partialTick), edges - 1) : edges - 1;
 			float interval = 1.0F / (endEdge - startEdge);
 			float fading = 1.0F;
 			
-			if (this.animationEnd) {
-				if (TrailInfo.isValidTime(this.trailInfo.fadeTime)) {
-					fading = ((float)this.lifetime / (float)this.trailInfo.trailLifetime);
+			if (this.animationEnds) {
+				if (TrailInfo.isValidTime(this.trailInfo.fadeTime())) {
+					fading = ((float)this.lifetime / (float)this.trailInfo.trailLifetime());
 				} else {
-					fading = Mth.clamp((this.lifetime + (1.0F - partialTick)) / this.trailInfo.trailLifetime, 0.0F, 1.0F);
+					fading = Mth.clamp((this.lifetime + (1.0F - partialTick)) / this.trailInfo.trailLifetime(), 0.0F, 1.0F);
 				}
 			}
 			

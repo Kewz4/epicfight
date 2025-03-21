@@ -24,7 +24,7 @@ public class PWitherSkeletonMinionRenderer extends PHumanoidRenderer<PathfinderM
 
 	@Override
 	public void setJointTransforms(HumanoidMobPatch<PathfinderMob> entitypatch, Armature armature, Pose pose, float partialTicks) {
-		Vec3f rootScale = pose.getOrDefaultTransform("Root").scale();
-		pose.getOrDefaultTransform("Head").jointLocal(JointTransform.scale(new Vec3f(1.0F / rootScale.x, 1.0F / rootScale.y, 1.0F / rootScale.z)), OpenMatrix4f::mul);
+		Vec3f rootScale = pose.orElseEmpty("Root").scale();
+		pose.orElseEmpty("Head").jointLocal(JointTransform.scale(new Vec3f(1.0F / rootScale.x, 1.0F / rootScale.y, 1.0F / rootScale.z)), OpenMatrix4f::mul);
 	}
 }

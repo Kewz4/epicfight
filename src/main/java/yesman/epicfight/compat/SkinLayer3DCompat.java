@@ -55,6 +55,7 @@ import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.mixin.SkinLayer3DMixinSkinUtil;
+import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class SkinLayer3DCompat implements ICompatModule {
 	private static Capability<SkinLayer3DMeshes> SKIN_LAYER_3D_CAPABILITY;
@@ -81,6 +82,8 @@ public class SkinLayer3DCompat implements ICompatModule {
 		});
 	}
 	
+	private static boolean REVERT_TO_MINING = false;
+	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void onForgeEventBusClient(IEventBus eventBus) {
@@ -88,6 +91,13 @@ public class SkinLayer3DCompat implements ICompatModule {
 		
 		eventBus.<ScreenEvent.Opening>addListener((event) -> {
 			if (event.getScreen() instanceof dev.tr7zw.skinlayers.config.CustomConfigScreen) {
+				PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
+				
+				if (playerpatch != null && playerpatch.isMiningMode()) {
+					REVERT_TO_MINING = true;
+					playerpatch.toBattleMode(false);
+				}
+				
 				if (!ClientEngine.getInstance().isVanillaModelDebuggingMode()) {
 					ClientEngine.getInstance().switchVanillaModelDebuggingMode();
 				}
@@ -98,6 +108,11 @@ public class SkinLayer3DCompat implements ICompatModule {
 			if (event.getScreen() instanceof dev.tr7zw.skinlayers.config.CustomConfigScreen) {
 				if (ClientEngine.getInstance().isVanillaModelDebuggingMode()) {
 					ClientEngine.getInstance().switchVanillaModelDebuggingMode();
+				}
+				
+				if (REVERT_TO_MINING) {
+					ClientEngine.getInstance().getPlayerPatch().toMiningMode(false);
+					REVERT_TO_MINING = false;
 				}
 			}
 		});
@@ -236,8 +251,14 @@ public class SkinLayer3DCompat implements ICompatModule {
 			NativeImage skinImage = SkinLayer3DMixinSkinUtil.invokeGetSkinTexture(player);
             
             if (SolidPixelWrapper.wrapBox(builder, new WrappedNativeImage(skinImage), width, height, depth, textureU, textureV, topPivot, rotationOffset) != null) {
-                return SkinLayer3DTransformer.transformMesh(player, (skinlayerModelPart == null) ? new CustomizableModelPart(builder.getVanillaCubes(), builder.getCubes(), Collections.emptyMap()) : (CustomizableModelPart)skinlayerModelPart,
-                											vanillaModelPart, playerModelPart, builder.getVanillaCubes(), builder.getCubes());
+                return SkinLayer3DTransformer.transformMesh(
+	                			player
+	                		 , (skinlayerModelPart == null) ? new CustomizableModelPart(builder.getVanillaCubes(), builder.getCubes(), Collections.emptyMap()) : (CustomizableModelPart)skinlayerModelPart
+	                		 , vanillaModelPart
+	                		 , playerModelPart
+	                		 , builder.getVanillaCubes()
+	                		 , builder.getCubes()
+                	   );
             }
             
             return null;

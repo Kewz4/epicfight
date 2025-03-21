@@ -330,7 +330,7 @@ public class EpicFightMod {
 		SkillManager.getNamespaces().forEach((modid) -> {
 			ModList.get().getModContainerById(modid).flatMap((mc) -> mc.getCustomExtension(EpicFightExtensions.class)).ifPresentOrElse((extension) -> {
 				if (extension.skillBookCreativeTab() == event.getTab()) {
-					SkillManager.getSkillNames((skill) -> skill.getCategory().learnable() && skill.getRegistryName().getNamespace() == modid).forEach((rl) -> {
+					SkillManager.getSkillNames((skill) -> skill.getCategory().learnable() && skill.getCreativeTab() == null && skill.getRegistryName().getNamespace() == modid).forEach((rl) -> {
 						ItemStack stack = new ItemStack(EpicFightItems.SKILLBOOK.get());
 						SkillBookItem.setContainingSkill(rl.toString(), stack);
 						event.accept(stack);
@@ -338,13 +338,19 @@ public class EpicFightMod {
 				}
 			}, () -> {
 				if (event.getTab() == EpicFightCreativeTabs.ITEMS.get()) {
-					SkillManager.getSkillNames((skill) -> skill.getCategory().learnable() && skill.getRegistryName().getNamespace() == modid).forEach((rl) -> {
+					SkillManager.getSkillNames((skill) -> skill.getCategory().learnable() && skill.getCreativeTab() == null && skill.getRegistryName().getNamespace() == modid).forEach((rl) -> {
 						ItemStack stack = new ItemStack(EpicFightItems.SKILLBOOK.get());
 						SkillBookItem.setContainingSkill(rl.toString(), stack);
 						event.accept(stack);
 					});
 				}
 			});
+		});
+		
+		SkillManager.getSkillNames((skill) -> skill.getCategory().learnable() && skill.getCreativeTab() == event.getTab()).forEach((rl) -> {
+			ItemStack stack = new ItemStack(EpicFightItems.SKILLBOOK.get());
+			SkillBookItem.setContainingSkill(rl.toString(), stack);
+			event.accept(stack);
 		});
 	}
 }

@@ -50,15 +50,15 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart> {
 	}
 	
 	@Override
-	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+	public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 		for (ClassicMeshPart part : this.parts.values()) {
-			part.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+			part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
 	}
 	
 	@Override
-	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		this.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+	public void drawPosed(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+		this.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -71,13 +71,12 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart> {
 		protected static final Vector3f NORMAL = new Vector3f();
 		
 		@Override
-		public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+		public void draw(PoseStack poseStack, VertexConsumer bufferbuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			if (this.isHidden()) {
 				return;
 			}
 			
 			Vector4f color = this.getColor(r, g, b, a);
-			
 			poseStack.pushPose();
 			OpenMatrix4f transform = this.getVanillaPartTransform();
 			
@@ -94,7 +93,7 @@ public class ClassicMesh extends StaticMesh<ClassicMeshPart> {
 				POSITION.mul(matrix4f);
 				NORMAL.mul(matrix3f);
 				
-				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
+				drawingFunction.draw(bufferbuilder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
 			}
 			
 			poseStack.popPose();

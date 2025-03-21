@@ -1,4 +1,4 @@
-package yesman.epicfight.api.utils.math;
+package yesman.epicfight.api.client.physics.bezier;
 
 import java.util.List;
 

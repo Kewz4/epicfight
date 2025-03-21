@@ -34,7 +34,7 @@ import yesman.epicfight.main.EpicFightMod;
 @OnlyIn(Dist.CLIENT)
 public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
-		if (EpicFightServerConnectionHelper.SUPPORTS) {
+		if (EpicFightServerConnectionHelper.supported()) {
 			EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
 				if (exception != null) {
 					EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + exception.getMessage());
@@ -132,7 +132,6 @@ public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float 
 	
 	@OnlyIn(Dist.CLIENT)
 	public record Cosmetic(int seq, Slot slot, int intParam1, boolean boolParam1, boolean useIntParam1, boolean useBoolParam1, String fileLocation, ResourceLocation textureLocation) {
-		
 		/**
 		 * intParam1 is usually used to color
 		 * boolParam1 is usually used to decide cape's vanilla texture

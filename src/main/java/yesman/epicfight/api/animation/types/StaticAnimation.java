@@ -240,11 +240,11 @@ public class StaticAnimation extends DynamicAnimation {
 				for (TrailInfo trailInfo : trailInfos) {
 					double eid = Double.longBitsToDouble((long)entitypatch.getOriginal().getId());
 					double animid = Double.longBitsToDouble((long)this.getId());
-					double jointId = Double.longBitsToDouble((long)this.armature.get().searchJointByName(trailInfo.joint).getId());
+					double jointId = Double.longBitsToDouble((long)this.armature.get().searchJointByName(trailInfo.joint()).getId());
 					double index = Double.longBitsToDouble((long)idx++);
 					
-					if (trailInfo.hand != null) {
-						ItemStack stack = entitypatch.getOriginal().getItemInHand(trailInfo.hand);
+					if (trailInfo.hand() != null) {
+						ItemStack stack = entitypatch.getOriginal().getItemInHand(trailInfo.hand());
 						RenderItemBase renderitembase = ClientEngine.getInstance().renderEngine.getItemRenderer(stack);
 						
 						if (renderitembase != null && renderitembase.trailInfo() != null) {
@@ -256,7 +256,7 @@ public class StaticAnimation extends DynamicAnimation {
 						continue;
 					}
 					
-					entitypatch.getOriginal().level().addParticle(trailInfo.particle, eid, 0, animid, jointId, index, 0);
+					entitypatch.getOriginal().level().addParticle(trailInfo.particle(), eid, 0, animid, jointId, index, 0);
 				}
 			});
 		}

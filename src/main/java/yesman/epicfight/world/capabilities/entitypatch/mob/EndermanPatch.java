@@ -153,8 +153,8 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
 		super.poseTick(animation, pose, elapsedTime, partialTicks);
 		
-		if (this.isRaging() && pose.getJointTransformData().containsKey("Head_Top")) {
-			pose.getOrDefaultTransform("Head_Top").frontResult(JointTransform.translation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
+		if (this.isRaging() && pose.hasTransform("Head_Top")) {
+			pose.orElseEmpty("Head_Top").frontResult(JointTransform.translation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
 		}
 	}
 	

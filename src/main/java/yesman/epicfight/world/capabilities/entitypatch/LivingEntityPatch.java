@@ -188,7 +188,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-		if (pose.getJointTransformData().containsKey("Head")) {
+		if (pose.hasTransform("Head") && this.armature.hasJoint("Head")) {
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.original.yBodyRotO - this.original.yHeadRotO;
 				float headRot = this.original.yBodyRot - this.original.yHeadRot;
@@ -197,7 +197,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
 				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
-				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
+				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}
 	}

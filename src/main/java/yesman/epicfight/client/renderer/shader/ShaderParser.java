@@ -35,9 +35,6 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class ShaderParser {
-	public static final int MAX_JOINTS = 40;
-	public static final int MAX_WEIGHTS = 3;
-	
 	private static final Double[] IDENTY_MATRIX3F = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
 	private static final Double[] IDENTY_MATRIX4F = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
 	

@@ -98,8 +98,8 @@ public class AimAnimation extends StaticAnimation {
 		super.modifyPose(animation, pose, entitypatch, time, partialTicks);
 		
 		if (!entitypatch.isFirstPerson() && !animation.isLinkAnimation()) {
-			JointTransform chest = pose.getOrDefaultTransform("Chest");
-			JointTransform head = pose.getOrDefaultTransform("Head");
+			JointTransform chest = pose.orElseEmpty("Chest");
+			JointTransform head = pose.orElseEmpty("Head");
 			float f = 90.0F;
 			float ratio = (f - Math.abs(entitypatch.getOriginal().getXRot())) / f;
 			float yRotHead = entitypatch.getOriginal().yHeadRotO;

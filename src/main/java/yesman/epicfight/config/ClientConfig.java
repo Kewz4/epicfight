@@ -185,7 +185,9 @@ public class ClientConfig {
 		chargingBarBaseX = CHARGING_BAR_BASE_X.get();
 		chargingBarBaseY = CHARGING_BAR_BASE_Y.get();
 		
-		if (EpicFightServerConnectionHelper.SUPPORTS) {
+		EpicFightServerConnectionHelper.init(event.getConfig().getFullPath().getParent().toString());
+		
+		if (EpicFightServerConnectionHelper.supported()) {
 			AuthenticationHelper.initialize(ACCESS_TOKEN, REFRESH_TOKNE, PROVIDER);
 		}
     }

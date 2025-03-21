@@ -41,6 +41,7 @@ import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.client.renderer.shader.VanillaAnimationShader;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
@@ -111,8 +112,22 @@ public class EpicFightRenderTypes extends RenderType {
 			.createCompositeState(false)
 	);
 	
+	private static final Map<String, Map<ResourceLocation, RenderType>> TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE = Maps.newHashMap();
+	
 	private static final Function<RenderType, RenderType> TRIANGULATED_RENDER_TYPES = Util.memoize((renderType$1) -> {
 		if (renderType$1 instanceof CompositeRenderType compositeRenderType) {
+			if (TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.containsKey(renderType$1.name)) {
+				Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.get(renderType$1.name);
+				
+				if (compositeRenderType.state.textureState instanceof TextureStateShard texStateShard) {
+					ResourceLocation texLocation = texStateShard.texture.orElse(null);
+					
+					if (renderTypesByTexture.containsKey(texLocation)) {
+						return renderTypesByTexture.get(texLocation);
+					}
+				}
+			}
+			
 			return new CompositeRenderType(renderType$1.name, renderType$1.format, VertexFormat.Mode.TRIANGLES, renderType$1.bufferSize(), renderType$1.affectsCrumbling(), renderType$1.sortOnUpload, compositeRenderType.state);
 		} else {
 			return renderType$1;
@@ -121,6 +136,60 @@ public class EpicFightRenderTypes extends RenderType {
 	
 	public static RenderType getTriangulated(RenderType renderType) {
 		return TRIANGULATED_RENDER_TYPES.apply(renderType);
+	}
+	
+	/**
+	 * Cache all Texture - RenderType entries to replace texture by MeshPart
+	 */
+	public static void addRenderType(String name, ResourceLocation textureLocation, RenderType renderType) {
+		Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.computeIfAbsent(name, (k) -> Maps.newHashMap());
+		renderTypesByTexture.put(textureLocation, renderType);
+	}
+	
+	private static RenderType createTextureShardReplaced(ResourceLocation texToReplace, RenderType renderType) {
+		if (renderType instanceof CompositeRenderType compositeRenderType && compositeRenderType.state.textureState instanceof TextureStateShard texStateShard) {
+			CompositeState textureReplacedState = new CompositeState(
+				  new RenderStateShard.TextureStateShard(texToReplace, texStateShard.blur, texStateShard.mipmap)
+				, compositeRenderType.state.shaderState
+				, compositeRenderType.state.transparencyState
+				, compositeRenderType.state.depthTestState
+				, compositeRenderType.state.cullState
+				, compositeRenderType.state.lightmapState
+				, compositeRenderType.state.overlayState
+				, compositeRenderType.state.layeringState
+				, compositeRenderType.state.outputState
+				, compositeRenderType.state.texturingState
+				, compositeRenderType.state.writeMaskState
+				, compositeRenderType.state.lineState
+				, compositeRenderType.state.colorLogicState
+				, compositeRenderType.state.outlineProperty
+			);
+			
+			return new CompositeRenderType(renderType.name, renderType.format, compositeRenderType.mode(), renderType.bufferSize(), renderType.affectsCrumbling(), renderType.sortOnUpload, textureReplacedState);
+		} else {
+			return null;
+		}
+	}
+	
+	public static RenderType replaceTexture(ResourceLocation texLocation, RenderType renderType) {
+		if (TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.containsKey(renderType.name)) {
+			Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.get(renderType.name);
+			
+			if (renderTypesByTexture.containsKey(texLocation)) {
+				return renderTypesByTexture.get(texLocation);
+			}
+		}
+		
+		RenderType textureReplacedRenderType = createTextureShardReplaced(texLocation, renderType);
+		
+		if (textureReplacedRenderType == null) {
+			return renderType;
+		}
+		
+		Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.computeIfAbsent(textureReplacedRenderType.name, k -> Maps.newHashMap());
+		renderTypesByTexture.put(texLocation, textureReplacedRenderType);
+		
+		return textureReplacedRenderType;
 	}
 	
 	public static RenderType entityIndicator(ResourceLocation resourcelocation) {
@@ -281,7 +350,7 @@ public class EpicFightRenderTypes extends RenderType {
 					shaderParser.addUniform("Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 				}
 				
-				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.MAX_JOINTS);
+				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, EpicFightSharedConstants.MAX_JOINTS);
 				shaderParser.replaceScript("Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "gl_Position", "in vec3 Position;");
 				
 				if (hasNormalAttribute && !isEyesShader) {

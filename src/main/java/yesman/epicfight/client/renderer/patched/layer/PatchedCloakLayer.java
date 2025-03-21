@@ -88,13 +88,13 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					float bodyYRot = Mth.rotLerp(partialTick, entitypatch.getYRotO(), entitypatch.getYRot());
 					poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(bodyYRot));
 					
-					VertexConsumer vertexconsumer = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(cloakTexture)));
+					VertexConsumer bufferBuilder = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(cloakTexture)));
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
 						EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();
-						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+						clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					} else {
-						clothObj.drawPosed(poseStack, vertexconsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+						clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
 					}
 					
 					poseStack.popPose();

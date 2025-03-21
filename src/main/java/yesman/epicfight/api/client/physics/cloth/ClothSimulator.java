@@ -48,7 +48,6 @@ import yesman.epicfight.api.physics.SimulationObject;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
 
@@ -180,7 +179,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		private static final Vec3f CENTRIFUGAL = new Vec3f();
 		private static final Vec3f CIRCULAR = new Vec3f();
 		
-		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
+		private static final OpenMatrix4f[] BOUND_ANIMATION_TRANSFORM = OpenMatrix4f.allocateMatrixArray(EpicFightSharedConstants.MAX_JOINTS);
 		private static final OpenMatrix4f COLLIDER_TRANSFORM = new OpenMatrix4f();
 		private static final OpenMatrix4f TO_CENTRIFUGAL = new OpenMatrix4f();
 		private static final OpenMatrix4f OBJECT_TRANSFORM = new OpenMatrix4f();
@@ -204,7 +203,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			if (!Minecraft.getInstance().isPaused()) {
 				boolean skinned = poses != null && armature != null;
 				
-				for (int j = 0; j < ShaderParser.MAX_JOINTS; j++) {
+				for (int j = 0; j < EpicFightSharedConstants.MAX_JOINTS; j++) {
 					if (j >= armature.getJointNumber()) {
 						break;
 					}
@@ -354,17 +353,17 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		}
 		
 		@Override
-		public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+		public void draw(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			if (DRAW_OUTLINES) {
 				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 			} else {
-				this.drawParts(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
+				this.drawParts(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
 			
 			if (this.provider instanceof CompositeMesh compositeMesh) {
 				poseStack.popPose();
-				compositeMesh.getStaticMesh().draw(poseStack, vertexConsumer, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay);
+				compositeMesh.getStaticMesh().draw(poseStack, bufferBuilder, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay);
 				poseStack.pushPose();
 			}
 		}
@@ -372,12 +371,12 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		private static final Vector3f SCALER = new Vector3f();
 		
 		@Override
-		public void drawPosed(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+		public void drawPosed(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 			if (DRAW_OUTLINES) {
 				this.drawOutline(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 				//part.drawNormals(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.lines()), Mesh.DrawingFunction.POSITION_COLOR_NORMAL, r, g, b, a);
 			} else {
-				this.drawParts(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
+				this.drawParts(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 			}
 			
 			if (DRAW_MESH_COLLIDERS && this.clothColliders != null) {
@@ -401,7 +400,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			poseStack.scale(xDiv, yDiv, zDiv);
 			
 			if (this.provider instanceof CompositeMesh compositeMesh) {
-				compositeMesh.getStaticMesh().drawPosed(poseStack, vertexConsumer, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
+				compositeMesh.getStaticMesh().drawPosed(poseStack, bufferBuilder, drawingFunction, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
 			}
 			
 			poseStack.pushPose();
@@ -421,7 +420,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			}
 		}
 		
-		public void drawParts(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+		public void drawParts(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			SoftBodyTranslatable softBodyMesh = ClothObject.this.provider;
 			float[] uvs = softBodyMesh.getOriginalMesh().uvs();
 			
@@ -460,7 +459,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					POSITION.mul(matrix4f);
 					NORMAL.mul(matrix3f);
 					
-					drawingFunction.draw(builder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vb.uv * 2], uvs[vb.uv * 2 + 1], overlay);
+					drawingFunction.draw(bufferBuilder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vb.uv * 2], uvs[vb.uv * 2 + 1], overlay);
 				}
 			}
 		}

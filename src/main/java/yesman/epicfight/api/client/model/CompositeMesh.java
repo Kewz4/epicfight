@@ -31,15 +31,15 @@ public class CompositeMesh implements Mesh, SoftBodyTranslatable {
 	}
 	
 	@Override
-	public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
-		this.staticMesh.draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
-		this.softBodyMesh.getOriginalMesh().draw(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay);
+	public void draw(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+		this.staticMesh.draw(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
+		this.softBodyMesh.getOriginalMesh().draw(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 	}
 	
 	@Override
-	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		this.staticMesh.drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
-		this.softBodyMesh.getOriginalMesh().drawPosed(poseStack, builder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+	public void drawPosed(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+		this.staticMesh.drawPosed(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
+		this.softBodyMesh.getOriginalMesh().drawPosed(poseStack, bufferBuilder, drawingFunction, packedLight, r, g, b, a, overlay, armature, poses);
 	}
 	
 	@Override

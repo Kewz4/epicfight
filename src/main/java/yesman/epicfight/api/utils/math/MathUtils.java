@@ -281,17 +281,30 @@ public class MathUtils {
 		return quat;
 	}
 	
-	public static Vec3f lerpVector(Vec3f start, Vec3f end, float weight) {
-		float x = start.x + (end.x - start.x) * weight;
-		float y = start.y + (end.y - start.y) * weight;
-		float z = start.z + (end.z - start.z) * weight;
-		return new Vec3f(x, y, z);
+	public static Vec3f lerpVector(Vec3f start, Vec3f end, float delta) {
+		return lerpVector(start, end, delta, new Vec3f());
 	}
 	
-	public static Vector3f lerpMojangVector(Vector3f start, Vector3f end, float weight) {
-		float x = start.x() + (end.x() - start.x()) * weight;
-		float y = start.y() + (end.y() - start.y()) * weight;
-		float z = start.z() + (end.z() - start.z()) * weight;
+	public static Vec3f lerpVector(Vec3f start, Vec3f end, float delta, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.x = start.x + (end.x - start.x) * delta;
+		dest.y = start.y + (end.y - start.y) * delta;
+		dest.z = start.z + (end.z - start.z) * delta;
+		
+		return dest;
+	}
+	
+	public static Vec3 lerpVector(Vec3 start, Vec3 end, float delta) {
+		return new Vec3(start.x + (end.x - start.x) * delta, start.y + (end.y - start.y) * delta, start.z + (end.z - start.z) * delta);
+	}
+	
+	public static Vector3f lerpMojangVector(Vector3f start, Vector3f end, float delta) {
+		float x = start.x() + (end.x() - start.x()) * delta;
+		float y = start.y() + (end.y() - start.y()) * delta;
+		float z = start.z() + (end.z() - start.z()) * delta;
 		return new Vector3f(x, y, z);
 	}
 	

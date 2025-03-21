@@ -3,6 +3,7 @@ package yesman.epicfight.api.client.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.model.Armature;
@@ -14,14 +15,14 @@ public interface Mesh {
 	
 	void initialize();
 	
-	/* Draw classic mesh */
-	void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
+	/* Draw wihtout mesh deformation */
+	void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
 	
-	/* Draw mesh with animation */
-	void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
+	/* Draw with mesh deformation */
+	void drawPosed(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses);
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record RenderProperties(String customTexturePath, Vec3f customColor, boolean isTransparent) {
+	public static record RenderProperties(ResourceLocation customTexturePath, Vec3f customColor, boolean isTransparent) {
 		public static class Builder {
 			protected String customTexturePath;
 			protected Vec3f customColor = new Vec3f();
@@ -45,7 +46,7 @@ public interface Mesh {
 			}
 			
 			public RenderProperties build() {
-				return new RenderProperties(this.customTexturePath, this.customColor, this.isTransparent);
+				return new RenderProperties(ResourceLocation.tryParse(this.customTexturePath), this.customColor, this.isTransparent);
 			}
 			
 			public static RenderProperties.Builder create() {

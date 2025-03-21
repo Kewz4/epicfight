@@ -13,7 +13,7 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.FABRIK;
+import yesman.epicfight.api.physics.ik.FABRIK;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -120,7 +120,7 @@ public interface ProceduralAnimation {
     	OpenMatrix4f tipRotationMatrix = OpenMatrix4f.fromQuaternion(tipRotation);
     	OpenMatrix4f animRotation = armature.getBindedTransformFor(pose, endJoint).removeTranslation();
     	OpenMatrix4f animToTipRotation = OpenMatrix4f.mul(OpenMatrix4f.invert(animRotation, null), tipRotationMatrix, null);
-    	pose.getOrDefaultTransform(endJoint.getName()).overwriteRotation(JointTransform.fromMatrixWithoutScale(animToTipRotation));
+    	pose.orElseEmpty(endJoint.getName()).overwriteRotation(JointTransform.fromMatrixWithoutScale(animToTipRotation));
 	}
 	
 	default void startPartAnimation(IKInfo ikInfo, TipPointAnimation tipAnim, TransformSheet partAnimation, Vec3f targetpos) {

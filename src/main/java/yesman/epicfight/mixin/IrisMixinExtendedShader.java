@@ -36,6 +36,7 @@ import yesman.epicfight.client.renderer.shader.IrisAnimationShader;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @Mixin(value = net.irisshaders.iris.pipeline.programs.ExtendedShader.class)
 public abstract class IrisMixinExtendedShader {
@@ -79,7 +80,7 @@ public abstract class IrisMixinExtendedShader {
 						shaderParser.addUniform("iris_Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 					}
 					
-					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.MAX_JOINTS);
+					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, EpicFightSharedConstants.MAX_JOINTS);
 					
 					shaderParser.replaceScript("iris_Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "in vec3 iris_Position;");
 					

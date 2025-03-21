@@ -248,7 +248,7 @@ public class ClientAnimator extends Animator {
 		Pose baseLayerPose = this.baseLayer.getEnabledPose(this.entitypatch, useCurrentMotion, partialTicks);
 		
 		Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> layerPoses = Maps.newLinkedHashMap();
-		composedPose.putJointData(baseLayerPose);
+		composedPose.load(baseLayerPose, Pose.LoadOperation.OVERWRITE);
 		
 		for (Layer.Priority priority : this.baseLayer.baseLayerPriority.uppers()) {
 			Layer compositeLayer = this.baseLayer.compositeLayers.get(priority);
@@ -260,7 +260,7 @@ public class ClientAnimator extends Animator {
 			if (!compositeLayer.isDisabled() && !compositeLayer.animationPlayer.isEmpty()) {
 				Pose layerPose = compositeLayer.getEnabledPose(this.entitypatch, useCurrentMotion, partialTicks);
 				layerPoses.put(priority, Pair.of(compositeLayer.animationPlayer.getAnimation(), layerPose));
-				composedPose.putJointData(layerPose);
+				composedPose.load(layerPose, Pose.LoadOperation.OVERWRITE);
 			}
 		}
 		
@@ -285,7 +285,7 @@ public class ClientAnimator extends Animator {
 			if (!compositeLayer.isDisabled()) {
 				Pose layerPose = compositeLayer.getEnabledPose(this.entitypatch, true, partialTicks);
 				layerPoses.put(priority, Pair.of(compositeLayer.animationPlayer.getAnimation(), layerPose));
-				composedPose.putJointData(layerPose);
+				composedPose.load(layerPose, Pose.LoadOperation.OVERWRITE);
 			}
 		}
 		
@@ -308,8 +308,8 @@ public class ClientAnimator extends Animator {
 				LivingMotion livingMotion = this.getCompositeLayer(priority).getLivingMotion(this.entitypatch, useCurrentMotion);
 				
 				if (nowPlaying.get().hasTransformFor(joint.getName()) && !jointMaskEntry.isMasked(livingMotion, joint.getName())) {
-					JointMaskSet set = jointMaskEntry.getMask(livingMotion);
-					BindModifier bindModifier = set.getBindModifier(joint.getName());
+					JointMaskSet jointmaskset = jointMaskEntry.getMask(livingMotion);
+					BindModifier bindModifier = jointmaskset.getBindModifier(joint.getName());
 					
 					if (bindModifier != null) {
 						bindModifier.modify(this.entitypatch, basePose, result, livingMotion, jointMaskEntry, priority, joint, poses);

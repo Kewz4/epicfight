@@ -1,4 +1,4 @@
-package yesman.epicfight.api.utils.math;
+package yesman.epicfight.api.physics.ik;
 
 import java.util.List;
 
@@ -8,6 +8,9 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.api.utils.math.QuaternionUtils;
+import yesman.epicfight.api.utils.math.Vec3f;
 
 import org.joml.Vector3f;
 import org.joml.Quaternionf;
@@ -34,7 +37,7 @@ public class FABRIK {
 	
 	private void addChainInternal(Pose pose, OpenMatrix4f parentTransform, Joint joint, int pathIndex) {
 		Joint nextJoint = joint.getSubJoints().get((pathIndex % 10) - 1);
-		JointTransform jt = pose.getOrDefaultTransform(nextJoint.getName());
+		JointTransform jt = pose.orElseEmpty(nextJoint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(nextJoint, parentTransform);
 		this.chains.add(new Chain(joint.getName(), parentTransform.toTranslationVector(), result.toTranslationVector()));
 		int remainPath = pathIndex / 10;
@@ -64,7 +67,7 @@ public class FABRIK {
 			Quaternionf rotationQuat = QuaternionUtils.rotation(axis.toMojangVector(), radian);
 			parentQuaternion = QuaternionUtils.rotation(axis.scale(-1.0F).toMojangVector(), radian);
 			
-			JointTransform jt = this.pose.getOrDefaultTransform(chain.jointName);
+			JointTransform jt = this.pose.orElseEmpty(chain.jointName);
 			jt.frontResult(JointTransform.rotation(rotationQuat), OpenMatrix4f::mulAsOriginInverse);
 		}
 	}

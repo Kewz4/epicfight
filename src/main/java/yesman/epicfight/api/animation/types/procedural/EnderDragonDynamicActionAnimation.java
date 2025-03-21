@@ -55,7 +55,7 @@ public class EnderDragonDynamicActionAnimation extends ActionAnimation implement
 	    	float yo = (float)entitypatch.getOriginal().yo;
 	    	float zo = (float)entitypatch.getOriginal().zo;
 	    	OpenMatrix4f toModelPos = OpenMatrix4f.mul(OpenMatrix4f.translate(new Vec3f(xo + (x - xo) * partialTicks, yo + (y - yo) * partialTicks, zo + (z - zo) * partialTicks), new OpenMatrix4f(), null), entitypatch.getModelMatrix(partialTicks), null).invert();
-	    	this.correctRootRotation(pose.getJointTransformData().get("Root"), enderdragonpatch, partialTicks);
+	    	this.correctRootRotation(pose.get("Root"), enderdragonpatch, partialTicks);
 	    	
 	    	for (IKInfo ikInfo : this.ikInfos) {
 		    	TipPointAnimation tipAnim = enderdragonpatch.getTipPointAnimation(ikInfo.endJoint.getName());

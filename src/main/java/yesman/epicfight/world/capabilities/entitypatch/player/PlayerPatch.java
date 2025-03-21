@@ -641,6 +641,10 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.playerMode == PlayerMode.BATTLE;
 	}
 	
+	public boolean isMiningMode() {
+		return this.playerMode == PlayerMode.MINING;
+	}
+	
 	@Override
 	public double getXOld() {
 		return this.xo;

@@ -165,10 +165,10 @@ public class DatapackAttackAnimation extends AttackAnimation implements Datapack
 			
 			for (TrailInfo trailInfo : trailInfos) {
 				JsonObject trailObj = new JsonObject();
-				trailObj.addProperty("start_time", trailInfo.startTime);
-				trailObj.addProperty("end_time", trailInfo.endTime);
-				trailObj.addProperty("joint", trailInfo.joint);
-				trailObj.addProperty("item_skin_hand", trailInfo.hand.toString());
+				trailObj.addProperty("start_time", trailInfo.startTime());
+				trailObj.addProperty("end_time", trailInfo.endTime());
+				trailObj.addProperty("joint", trailInfo.joint());
+				trailObj.addProperty("item_skin_hand", trailInfo.hand().toString());
 				trailArray.add(trailObj);
 			}
 			

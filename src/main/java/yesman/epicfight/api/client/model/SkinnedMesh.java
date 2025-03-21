@@ -44,7 +44,6 @@ import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.EpicFightVertexFormatElement;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
-import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -257,22 +256,22 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	 * Draws the model without applying animation
 	 */
 	@Override
-	public void draw(PoseStack poseStack, VertexConsumer vertexConsumer, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+	public void draw(PoseStack poseStack, VertexConsumer bufferbuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 		for (SkinnedMeshPart part : this.parts.values()) {
-			part.draw(poseStack, vertexConsumer, drawingFunction, packedLight, r, g, b, a, overlay);
+			part.draw(poseStack, bufferbuilder, drawingFunction, packedLight, r, g, b, a, overlay);
 		}
 	}
 	
 	protected static final Vector4f POSITION = new Vector4f();
 	protected static final Vector3f NORMAL = new Vector3f();
-	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
-	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrixArray(ShaderParser.MAX_JOINTS);
+	protected static final OpenMatrix4f[] FINAL_POSES = OpenMatrix4f.allocateMatrixArray(EpicFightSharedConstants.MAX_JOINTS);
+	protected static final OpenMatrix4f[] NORMAL_POSES = OpenMatrix4f.allocateMatrixArray(EpicFightSharedConstants.MAX_JOINTS);
 	
 	/**
 	 * Draws the model to vanilla buffer
 	 */
 	@Override
-	public void drawPosed(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+	public void drawPosed(PoseStack poseStack, VertexConsumer bufferbuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 		Matrix4f matrix4f = poseStack.last().pose();
 		Matrix3f matrix3f = poseStack.last().normal();
 		
@@ -301,7 +300,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 					POSITION.mul(matrix4f);
 					NORMAL.mul(matrix3f);
 					
-					drawingFunction.draw(builder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x, NORMAL.y, NORMAL.z, packedLight, r, g, b, a, this.uvs[vi.uv * 2], this.uvs[vi.uv * 2 + 1], overlay);
+					drawingFunction.draw(bufferbuilder, POSITION.x, POSITION.y, POSITION.z, NORMAL.x, NORMAL.y, NORMAL.z, packedLight, r, g, b, a, this.uvs[vi.uv * 2], this.uvs[vi.uv * 2 + 1], overlay);
 				}
 			}
 		}
@@ -312,15 +311,14 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	 * @param armature give this parameter as null if @param poses already bound origin translation
 	 * @param poses
 	 */
-	public void draw(PoseStack poseStack, MultiBufferSource multiBufferSource, RenderType renderType, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
+	public void draw(PoseStack poseStack, MultiBufferSource bufferSources, RenderType renderType, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
 		if (ClientConfig.activateAnimationShader) {
 			renderType.setupRenderState();
 			AnimationShaderInstance animationShader = EpicFightRenderTypes.getAnimationShader(renderType);
 			this.drawWithShader(poseStack, animationShader, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);
 			renderType.clearRenderState();
 		} else {
-			VertexConsumer vertexConsumer = multiBufferSource.getBuffer(EpicFightRenderTypes.getTriangulated(renderType));
-			this.drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.NEW_ENTITY, packedLight, r, g, b, a, overlay, armature, poses);
+			this.drawPosed(poseStack, bufferSources.getBuffer(EpicFightRenderTypes.getTriangulated(renderType)), Mesh.DrawingFunction.NEW_ENTITY, packedLight, r, g, b, a, overlay, armature, poses);
 		}
 	}
 	
@@ -491,7 +489,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 		}
 		
 		@Override
-		public void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
+		public void draw(PoseStack poseStack, VertexConsumer bufferBuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay) {
 			if (this.isHidden()) {
 				return;
 			}
@@ -506,7 +504,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 				POSITION.mul(matrix4f);
 				NORMAL.mul(matrix3f);
 				
-				drawingFunction.draw(builder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
+				drawingFunction.draw(bufferBuilder, POSITION.x(), POSITION.y(), POSITION.z(), NORMAL.x(), NORMAL.y(), NORMAL.z(), packedLight, color.x, color.y, color.z, color.w, uvs[vi.uv * 2], uvs[vi.uv * 2 + 1], overlay);
 			}
 		}
 		
@@ -701,7 +699,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 		
 		if (this.renderProperties != null) {
 			JsonObject renderProperties = new JsonObject();
-			renderProperties.addProperty("texture_path", this.renderProperties.customTexturePath());
+			renderProperties.addProperty("texture_path", this.renderProperties.customTexturePath().toString());
 			renderProperties.addProperty("transparent", this.renderProperties.isTransparent());
 			root.add("render_properties", renderProperties);
 		}

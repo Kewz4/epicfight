@@ -22,7 +22,7 @@ import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.FABRIK;
+import yesman.epicfight.api.physics.ik.FABRIK;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -58,7 +58,7 @@ public class EnderDragonActionAnimation extends ActionAnimation implements Proce
 	    	float yo = (float)entitypatch.getOriginal().yo;
 	    	float zo = (float)entitypatch.getOriginal().zo;
 	    	OpenMatrix4f toModelPos = OpenMatrix4f.mul(OpenMatrix4f.translate(new Vec3f(xo + (x - xo) * partialTicks, yo + (y - yo) * partialTicks, zo + (z - zo) * partialTicks), new OpenMatrix4f(), null), entitypatch.getModelMatrix(partialTicks), null).invert();
-	    	this.correctRootRotation(pose.getJointTransformData().get("Root"), enderdragonpatch, partialTicks);
+	    	this.correctRootRotation(pose.get("Root"), enderdragonpatch, partialTicks);
 	    	
 	    	for (IKInfo ikInfo : this.ikInfos) {
 	    		TipPointAnimation tipAnim = enderdragonpatch.getTipPointAnimation(ikInfo.endJoint.getName());

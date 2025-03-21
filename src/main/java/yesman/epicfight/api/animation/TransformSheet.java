@@ -110,6 +110,12 @@ public class TransformSheet {
 		return trasnform;
 	}
 	
+	public JointTransform getInterpolatedTransform(float currentTime, JointTransform dest) {
+		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
+		JointTransform trasnform = JointTransform.interpolate(this.keyframes[interpolInfo.prev].transform(), this.keyframes[interpolInfo.next].transform(), interpolInfo.zero2One, dest);
+		return trasnform;
+	}
+	
 	public TransformSheet extend(TransformSheet target) {
 		int newKeyLength = this.keyframes.length + target.keyframes.length;
 		Keyframe[] newKeyfrmaes = new Keyframe[newKeyLength];

@@ -175,8 +175,6 @@ public class SkillContainer {
 		
 		if (this.containingSkill instanceof ChargeableSkill chargeableSkill && this.containingSkill.getActivateType() == Skill.ActivateType.CHARGING) {
 			if (executor.isChargingSkill(this.containingSkill)) {
-				executor.disableModelYRot(true);
-				
 				packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 				executor.resetSkillCharging();
 			} else {
@@ -195,7 +193,6 @@ public class SkillContainer {
 				return event;
 			}
 			
-			executor.disableModelYRot(true);
 			packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 		}
 		

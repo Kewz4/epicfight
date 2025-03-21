@@ -10,9 +10,12 @@ import org.joml.Vector4f;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class MeshPart {
@@ -27,7 +30,7 @@ public abstract class MeshPart {
 		this.vanillaPartTracer = vanillaPartTracer;
 	}
 	
-	public abstract void draw(PoseStack poseStack, VertexConsumer builder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
+	public abstract void draw(PoseStack poseStack, VertexConsumer bufferbuilder, Mesh.DrawingFunction drawingFunction, int packedLight, float r, float g, float b, float a, int overlay);
 	
 	public void setHidden(boolean hidden) {
 		this.isHidden = hidden;
@@ -47,6 +50,14 @@ public abstract class MeshPart {
 		}
 		
 		return this.vanillaPartTracer.get();
+	}
+	
+	public VertexConsumer getBufferBuilder(RenderType renderType, MultiBufferSource bufferSource) {
+		if (this.renderProperties.customTexturePath() != null) {
+			return bufferSource.getBuffer(EpicFightRenderTypes.replaceTexture(this.renderProperties.customTexturePath(), renderType));
+		}
+		
+		return bufferSource.getBuffer(renderType);
 	}
 	
 	protected static final Vector4f COLOR = new Vector4f();

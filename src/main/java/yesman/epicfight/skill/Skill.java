@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -57,6 +58,7 @@ public abstract class Skill {
 	private final Map<Attribute, AttributeModifier> attributes = Maps.newHashMap();
 	protected final ResourceLocation registryName;
 	protected final SkillCategory category;
+	protected final CreativeModeTab creativeTab;
 	protected final ActivateType activateType;
 	protected final Resource resource;
 	protected float consumption;
@@ -72,6 +74,7 @@ public abstract class Skill {
 		
 		this.registryName = builder.registryName;
 		this.category = builder.category;
+		this.creativeTab = builder.tab;
 		this.activateType = builder.activateType;
 		this.resource = builder.resource;
 	}
@@ -90,7 +93,7 @@ public abstract class Skill {
 			for (Tag tag : attributeList) {
 				CompoundTag comp = (CompoundTag)tag;
 				String attribute = comp.getString("attribute");
-				Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(attribute));
+				Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(ResourceLocation.tryParse(attribute));
 				AttributeModifier modifier = ParseUtil.toAttributeModifier(comp);
 				
 				this.attributes.put(attr, modifier);
@@ -381,6 +384,10 @@ public abstract class Skill {
 		return this.category;
 	}
 	
+	public CreativeModeTab getCreativeTab() {
+		return this.creativeTab;
+	}
+	
 	public int getMaxStack() {
 		return this.maxStackSize;
 	}
@@ -416,7 +423,7 @@ public abstract class Skill {
 	public Resource getResourceType() {
 		return this.resource;
 	}
-
+	
 	public Skill getPriorSkill() {
 		return null;
 	}
@@ -450,7 +457,7 @@ public abstract class Skill {
 	
 	@OnlyIn(Dist.CLIENT)
 	public ResourceLocation getSkillTexture() {
-		return new ResourceLocation(this.getRegistryName().getNamespace(), String.format("textures/gui/skills/%s/%s.png", this.category.toString().toLowerCase(Locale.ROOT), this.getRegistryName().getPath()));
+		return ResourceLocation.tryBuild(this.getRegistryName().getNamespace(), String.format("textures/gui/skills/%s/%s.png", this.category.toString().toLowerCase(Locale.ROOT), this.getRegistryName().getPath()));
 	}
 	
 	@OnlyIn(Dist.CLIENT)

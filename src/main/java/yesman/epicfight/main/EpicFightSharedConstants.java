@@ -10,13 +10,20 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class EpicFightSharedConstants {
+	
+	// Model variables
+	public static final int MAX_JOINTS = 1000;
+	public static final int MAX_WEIGHTS = 3;
+	
+	// Animation variables
 	public static final float A_TICK = 0.05F;
 	public static final float GENERAL_ANIMATION_TRANSITION_TIME = 0.15F;
+	
+	// Environment varables
 	public static final boolean IS_DEV_ENV = !FMLEnvironment.production;
-	
 	public static final String SERVER_URL = "https://epic-fight.com";
-	//public static final String SERVER_URL = "http://127.0.0.1:8080";
 	
+	// Sided variables
 	private static final Function<LivingEntityPatch<?>, Animator> ANIMATOR_PROVIDER;
 	
 	static {

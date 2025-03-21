@@ -572,7 +572,7 @@ public class Animations {
 				})
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, (self, pose, entitypatch, elapsedTime, partialTicks) -> {
 					if (entitypatch.isFirstPerson()) {
-						pose.getJointTransformData().clear();
+						pose.disableAllJoints();
 					} else if (!(self.isLinkAnimation())) {
 						LivingMotion livingMotion = entitypatch.getCurrentLivingMotion();
 						Pose rawPose;
@@ -585,13 +585,13 @@ public class Animations {
 							float f = 90.0F;
 							float ratio = (f - Math.abs(entitypatch.getOriginal().getXRot())) / f;
 							float yawOffset = entitypatch.getOriginal().getVehicle() != null ? entitypatch.getOriginal().getYHeadRot() : entitypatch.getOriginal().yBodyRot;
-							rawPose.getJointTransformData().get("Chest").frontResult(
+							rawPose.get("Chest").frontResult(
 								  JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(entitypatch.getOriginal().getYHeadRot() - yawOffset) * ratio))
 								, OpenMatrix4f::mulAsOriginInverse
 							);
 						}
-
-						pose.getJointTransformData().putAll(rawPose.getJointTransformData());
+						
+						pose.load(rawPose, Pose.LoadOperation.OVERWRITE);
 					}
 				})
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
@@ -777,10 +777,10 @@ public class Animations {
 					float xRot = Mth.clamp(entitypatch.getCameraXRot(), -60.0F, 50.0F);
 					float yRot = Mth.clamp(Mth.wrapDegrees(entitypatch.getCameraYRot() - entitypatch.getOriginal().getYRot()), -60.0F, 60.0F);
 					
-					JointTransform chest = pose.getOrDefaultTransform("Chest");
+					JointTransform chest = pose.orElseEmpty("Chest");
 					chest.frontResult(JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(yRot)), OpenMatrix4f::mulAsOriginInverse);
 
-					JointTransform head = pose.getOrDefaultTransform("Head");
+					JointTransform head = pose.orElseEmpty("Head");
 					MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
@@ -2322,7 +2322,7 @@ public class Animations {
 			}
 			
 			float pitch = entitypatch.getAttackDirectionPitch();
-			JointTransform chest = pose.getOrDefaultTransform("Chest");
+			JointTransform chest = pose.orElseEmpty("Chest");
 			chest.frontResult(JointTransform.rotation(QuaternionUtils.XP.rotationDegrees(-pitch)), OpenMatrix4f::mulAsOriginInverse);
 			
 			if (entitypatch instanceof PlayerPatch) {
@@ -2331,13 +2331,13 @@ public class Animations {
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-(pitch + xRot), xAxis);
 				
-				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
+				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		};
 		
 		public static final AnimationProperty.PoseModifier ROOT_X_MODIFIER = (self, pose, entitypatch, time, partialTicks) -> {
 			float pitch = -entitypatch.getOriginal().getXRot();
-			JointTransform chest = pose.getOrDefaultTransform("Root");
+			JointTransform chest = pose.orElseEmpty("Root");
 			chest.frontResult(JointTransform.rotation(QuaternionUtils.XP.rotationDegrees(-pitch)), OpenMatrix4f::mulAsOriginInverse);
 		};
 		
@@ -2348,8 +2348,8 @@ public class Animations {
             double d1 = vec3d.horizontalDistanceSqr();
 
             if (d0 > 0.0D && d1 > 0.0D) {
-            	JointTransform root = pose.getOrDefaultTransform("Root");
-            	JointTransform head = pose.getOrDefaultTransform("Head");
+            	JointTransform root = pose.orElseEmpty("Root");
+            	JointTransform head = pose.orElseEmpty("Head");
                 double d2 = (vec3d1.x * vec3d.x + vec3d1.z * vec3d.z) / (Math.sqrt(d0) * Math.sqrt(d1));
                 double d3 = vec3d1.x * vec3d.z - vec3d1.z * vec3d.x;
                 float zRot = Mth.clamp((float)(Math.signum(d3) * Math.acos(d2)), -1.0F, 1.0F);
@@ -2370,8 +2370,8 @@ public class Animations {
             double d1 = vec3d.horizontalDistanceSqr();
 
             if (d0 > 0.0D && d1 > 0.0D) {
-            	JointTransform root = pose.getOrDefaultTransform("Root");
-            	JointTransform head = pose.getOrDefaultTransform("Head");
+            	JointTransform root = pose.orElseEmpty("Root");
+            	JointTransform head = pose.orElseEmpty("Head");
                 float xRot = (float) MathUtils.getXRotOfVector(vec3d1) * 2.0F;
                 MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(-xRot), root.rotation(), root.rotation());
                 MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
@@ -2382,8 +2382,8 @@ public class Animations {
 			float xRot = 50.0F - (entitypatch.getOriginal().xRotO + (entitypatch.getOriginal().getXRot() - entitypatch.getOriginal().xRotO) * partialTicks);
 			xRot = Mth.clamp(xRot, 0.0F, 50.0F);
 			
-			JointTransform shoulderL = pose.getOrDefaultTransform("Shoulder_L");
-			JointTransform shoulderR = pose.getOrDefaultTransform("Shoulder_R");
+			JointTransform shoulderL = pose.orElseEmpty("Shoulder_L");
+			JointTransform shoulderR = pose.orElseEmpty("Shoulder_R");
 			
 			float trans = xRot / 500.0F;
 			

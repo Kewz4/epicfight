@@ -329,7 +329,7 @@ public class OBBCollider extends Collider {
 		Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, partialTicks);
 		
 		if (armature.rootJoint.equals(joint)) {
-			JointTransform jt = interpolatedPose.getOrDefaultTransform("Root");
+			JointTransform jt = interpolatedPose.orElseEmpty("Root");
 			jt.rotation().x = 0.0F;
 			jt.rotation().y = 0.0F;
 			jt.rotation().z = 0.0F;

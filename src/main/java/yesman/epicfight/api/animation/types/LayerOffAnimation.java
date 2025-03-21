@@ -42,7 +42,7 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 	public Pose getPoseByTime(LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
 		Pose lowerLayerPose = entitypatch.getClientAnimator().getComposedLayerPoseBelow(this.layerPriority, Minecraft.getInstance().getFrameTime());
 		Pose interpolatedPose = Pose.interpolatePose(this.lastPose, lowerLayerPose, time / this.getTotalTime());
-		interpolatedPose.removeJointIf((joint) -> !this.lastPose.getJointTransformData().containsKey(joint.getKey()));
+		interpolatedPose.disableJoint((joint) -> !this.lastPose.hasTransform(joint.getKey()));
 		
 		return interpolatedPose;
 	}
@@ -78,7 +78,7 @@ public class LayerOffAnimation extends DynamicAnimation implements AnimationAcce
 	
 	@Override
 	public boolean hasTransformFor(String joint) {
-		return this.lastPose.getJointTransformData().containsKey(joint);
+		return this.lastPose.hasTransform(joint);
 	}
 	
 	@Override

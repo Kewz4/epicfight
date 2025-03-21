@@ -197,7 +197,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	public void correctRootJoint(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
-		JointTransform jt = pose.getOrDefaultTransform("Root");
+		JointTransform jt = pose.orElseEmpty("Root");
 		Vec3f jointPosition = jt.translation();
 		OpenMatrix4f toRootTransformApplied = entitypatch.getArmature().searchJointByName("Root").getLocalTransform().removeTranslation();
 		OpenMatrix4f toOrigin = OpenMatrix4f.invert(toRootTransformApplied, null);
@@ -305,7 +305,7 @@ public class ActionAnimation extends MainFrameAnimation {
 	}
 	
 	public void correctRawZCoord(LivingEntityPatch<?> entitypatch, Pose pose, float poseTime) {
-		JointTransform jt = pose.getOrDefaultTransform("Root");
+		JointTransform jt = pose.orElseEmpty("Root");
 		
 		if (this.getProperty(ActionAnimationProperty.COORD).isEmpty()) {
 			TransformSheet coordTransform = this.getTransfroms().get("Root");
