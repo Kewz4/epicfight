@@ -153,7 +153,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 	}
 	
 	@Override
-	public boolean isTeammate(Entity entity) {
+	public boolean isTargetInvulnerable(Entity entity) {
 		EntityPatch<?> cap = EpicFightCapabilities.getEntityPatch(entity, EntityPatch.class);
 		
 		if (cap != null && cap instanceof MobPatch mobpatch) {
@@ -163,7 +163,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 			}
 		}
 		
-		return super.isTeammate(entity);
+		return super.isTargetInvulnerable(entity);
 	}
 	
 	@Override

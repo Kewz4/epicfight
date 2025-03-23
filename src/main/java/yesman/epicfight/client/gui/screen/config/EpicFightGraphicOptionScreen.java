@@ -129,6 +129,15 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		this.optionsList.addSmall(firstPersonModelButton, useAnimationShaderButton);
 		
+		buttonHeight += 24;
+		
+		Button enableCosmetics = Button.builder(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")), (button) -> {
+			ClientConfig.enableCosmetics = !ClientConfig.enableCosmetics;
+			button.setMessage(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_cosmetics.tooltip"))).build();
+		
+		this.optionsList.addSmall(enableCosmetics, null);
+		
 		buttonHeight += 30;
 		
 		this.optionsList.addBig(new ColorSlider(this.font, this.width / 2 - 150, this.height / 4 + buttonHeight, 300, 20, Component.translatable("gui." + modid + ".aim_helper_color"),

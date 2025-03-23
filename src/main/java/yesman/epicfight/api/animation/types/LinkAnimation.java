@@ -46,7 +46,8 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	
 	@Override
 	public TypeFlexibleHashMap<StateFactor<?>> getStatesMap(LivingEntityPatch<?> entitypatch, float time) {
-		TypeFlexibleHashMap<StateFactor<?>> map = this.toAnimation.get().getStatesMap(entitypatch, Math.max(this.nextStartTime + (time - this.getTotalTime()), this.nextStartTime));
+		float timeInRealAnimation = Math.max(time - (this.getTotalTime() - this.nextStartTime), 0.0F);
+		TypeFlexibleHashMap<StateFactor<?>> map = this.toAnimation.get().getStatesMap(entitypatch, timeInRealAnimation);
 		
 		for (Map.Entry<StateFactor<?>, Object> entry : map.entrySet()) {
 			Object val = this.toAnimation.get().getModifiedLinkState(entry.getKey(), entry.getValue(), entitypatch, time);
@@ -58,7 +59,9 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	
 	@Override
 	public EntityState getState(LivingEntityPatch<?> entitypatch, float time) {
-		EntityState state = this.toAnimation.get().getState(entitypatch, Math.max(this.nextStartTime + time - this.getTotalTime(), this.nextStartTime));
+		float timeInRealAnimation = Math.max(time - (this.getTotalTime() - this.nextStartTime), 0.0F);
+		
+		EntityState state = this.toAnimation.get().getState(entitypatch, timeInRealAnimation);
 		TypeFlexibleHashMap<StateFactor<?>> map = state.getStateMap();
 		
 		for (Map.Entry<StateFactor<?>, Object> entry : map.entrySet()) {
@@ -72,7 +75,8 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getState(StateFactor<T> stateFactor, LivingEntityPatch<?> entitypatch, float time) {
-		T state = this.toAnimation.get().getState(stateFactor, entitypatch, Math.max(this.nextStartTime + time - this.getTotalTime(), this.nextStartTime));
+		float timeInRealAnimation = Math.max(time - (this.getTotalTime() - this.nextStartTime), 0.0F);
+		T state = this.toAnimation.get().getState(stateFactor, entitypatch, timeInRealAnimation);
 		
 		return (T)this.toAnimation.get().getModifiedLinkState(stateFactor, state, entitypatch, time);
 	}

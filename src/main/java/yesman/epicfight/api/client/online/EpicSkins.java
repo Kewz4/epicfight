@@ -29,12 +29,13 @@ import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float g, float b) {
 	public static void initEpicSkins(AbstractClientPlayerPatch<?> playerpatch) {
-		if (EpicFightServerConnectionHelper.supported()) {
+		if (EpicFightServerConnectionHelper.supported() && ClientConfig.enableCosmetics) {
 			EpicFightServerConnectionHelper.getPlayerSkinInfo(playerpatch.getOriginal().getUUID().toString().replace("-", ""), (response, exception) -> {
 				if (exception != null) {
 					EpicFightMod.LOGGER.error("Failed at connecting epic fight server: " + exception.getMessage());

@@ -68,13 +68,13 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	public LivingMotion prevMotion = LivingMotions.FLY;
 	
 	@Override
-	public void onConstructed(EnderDragon entityIn) {
+	public void onConstructed(EnderDragon enderdragon) {
 		this.livingMotions.put(LivingMotions.IDLE, Animations.DRAGON_IDLE);
 		this.livingMotions.put(LivingMotions.WALK, Animations.DRAGON_WALK);
 		this.livingMotions.put(LivingMotions.FLY, Animations.DRAGON_FLY);
 		this.livingMotions.put(LivingMotions.CHASE, Animations.DRAGON_AIRSTRIKE);
 		this.livingMotions.put(LivingMotions.DEATH, Animations.DRAGON_DEATH);
-		super.onConstructed(entityIn);
+		super.onConstructed(enderdragon);
 		
 		this.currentLivingMotion = LivingMotions.FLY;
 	}

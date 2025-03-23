@@ -140,7 +140,15 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 					return;
 				}
 				
-				if (armorModel instanceof HumanoidModel humanoidModel) {
+				HumanoidModel<E> humanoidModel;
+				
+				try {
+					humanoidModel = (HumanoidModel<E>)armorModel;
+				} catch (ClassCastException e) {
+					humanoidModel = null;
+				}
+				
+				if (humanoidModel != null) {
 					boolean shouldSit = entityliving.isPassenger() && (entityliving.getVehicle() != null && entityliving.getVehicle().shouldRiderSit());
 					float f8 = 0.0F;
 					float f5 = 0.0F;

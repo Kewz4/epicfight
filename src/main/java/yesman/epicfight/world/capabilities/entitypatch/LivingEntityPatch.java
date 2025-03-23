@@ -772,14 +772,17 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.parentJointOfHands.put(hand, joint);
 	}
 	
-	public boolean isTeammate(Entity entityIn) {
-		if (this.original.getVehicle() != null && this.original.getVehicle().equals(entityIn)) {
-			return true;
-		} else if (this.isRideOrBeingRidden(entityIn)) {
+	
+	public boolean isTargetInvulnerable(Entity taget) {
+		if (!taget.isPickable() || taget.isSpectator()) {
 			return true;
 		}
 		
-		return this.original.isAlliedTo(entityIn) && this.original.getTeam() != null && !this.original.getTeam().isAllowFriendlyFire();
+		if (this.original.getRootVehicle() == taget.getRootVehicle() && !taget.canRiderInteract()) {
+			return true;
+		}
+		
+		return this.original.isAlliedTo(taget) && this.original.getTeam() != null && !this.original.getTeam().isAllowFriendlyFire();
 	}
 	
 	public boolean canPush(Entity entity) {
@@ -812,24 +815,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void setLastAttackPosition() {
 		this.lastAttackPosition = this.original.position();
-	}
-	
-	private boolean isRideOrBeingRidden(Entity entityIn) {
-		LivingEntity orgEntity = this.getOriginal();
-		
-		for (Entity passanger : orgEntity.getPassengers()) {
-			if (passanger.equals(entityIn)) {
-				return true;
-			}
-		}
-		
-		for (Entity passanger : entityIn.getPassengers()) {
-			if (passanger.equals(orgEntity)) {
-				return true;
-			}
-		}
-		
-		return false;
 	}
 	
 	public void setAirborneState(boolean airborne) {

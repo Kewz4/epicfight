@@ -219,8 +219,8 @@ public class AttackAnimation extends ActionAnimation {
 			}
 		}
 		
-		if (prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2)) {
-			if (!prevState.attacking() || (phase != this.getPhaseByTime(prevElapsedTime) && (state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2)))) {
+		if (prevState.attacking() || state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)) {
+			if (!prevState.attacking() || (phase != this.getPhaseByTime(prevElapsedTime) && (state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)))) {
 				entitypatch.playSound(this.getSwingSound(entitypatch, phase), 0.0F, 0.0F);
 				entitypatch.removeHurtEntities();
 			}
@@ -240,22 +240,22 @@ public class AttackAnimation extends ActionAnimation {
 			int maxStrikes = this.getMaxStrikes(entitypatch, phase);
 			
 			while (entitypatch.getCurrenltyHurtEntities().size() < maxStrikes && hitEntities.next()) {
-				Entity hitten = hitEntities.getEntity();
-				LivingEntity trueEntity = this.getTrueEntity(hitten);
+				Entity target = hitEntities.getEntity();
+				LivingEntity trueEntity = this.getTrueEntity(target);
 				
-				if (trueEntity != null && trueEntity.isAlive() && !entitypatch.getCurrenltyAttackedEntities().contains(trueEntity) && !entitypatch.isTeammate(hitten)) {
-					if (hitten instanceof LivingEntity || hitten instanceof PartEntity) {
-						if (entity.hasLineOfSight(hitten)) {
-							EpicFightDamageSource damagesource = this.getEpicFightDamageSource(entitypatch, hitten, phase);
-							int prevInvulTime = hitten.invulnerableTime;
-							hitten.invulnerableTime = 0;
+				if (trueEntity != null && trueEntity.isAlive() && !entitypatch.getCurrenltyAttackedEntities().contains(trueEntity) && !entitypatch.isTargetInvulnerable(target)) {
+					if (target instanceof LivingEntity || target instanceof PartEntity) {
+						if (entity.hasLineOfSight(target)) {
+							EpicFightDamageSource damagesource = this.getEpicFightDamageSource(entitypatch, target, phase);
+							int prevInvulTime = target.invulnerableTime;
+							target.invulnerableTime = 0;
 							
-							AttackResult attackResult = entitypatch.attack(damagesource, hitten, phase.hand);
-							hitten.invulnerableTime = prevInvulTime;
+							AttackResult attackResult = entitypatch.attack(damagesource, target, phase.hand);
+							target.invulnerableTime = prevInvulTime;
 							
 							if (attackResult.resultType.dealtDamage()) {
-								hitten.level().playSound(null, hitten.getX(), hitten.getY(), hitten.getZ(), this.getHitSound(entitypatch, phase), hitten.getSoundSource(), 1.0F, 1.0F);
-								this.spawnHitParticle((ServerLevel)hitten.level(), entitypatch, hitten, phase);
+								target.level().playSound(null, target.getX(), target.getY(), target.getZ(), this.getHitSound(entitypatch, phase), target.getSoundSource(), 1.0F, 1.0F);
+								this.spawnHitParticle((ServerLevel)target.level(), entitypatch, target, phase);
 							}
 							
 							entitypatch.getCurrenltyAttackedEntities().add(trueEntity);

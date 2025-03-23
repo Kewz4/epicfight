@@ -300,9 +300,9 @@ public class EpicFightMod {
         public static void onClientSetup(FMLClientSetupEvent event) {
         	new ClientEngine();
         	
-    		EntityPatchProvider.registerEntityPatchesClient();
-    		SkillBookScreen.registerIconItems();
-    		EpicFightItemProperties.registerItemProperties();
+    		event.enqueueWork(EntityPatchProvider::registerEntityPatchesClient);
+    		event.enqueueWork(SkillBookScreen::registerIconItems);
+    		event.enqueueWork(EpicFightItemProperties::registerItemProperties);
         }
         
         @SubscribeEvent

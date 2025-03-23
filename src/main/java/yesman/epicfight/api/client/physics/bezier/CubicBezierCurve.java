@@ -14,7 +14,6 @@ public class CubicBezierCurve {
 	 * Get more informations about cubic bezier curve here:
 	 * https://towardsdatascience.com/b%C3%A9zier-interpolation-8033e9a262c2
 	 */
-	
 	private static final DoubleList MATRIX_CONSTANTS = new DoubleArrayList();
 	
 	static {

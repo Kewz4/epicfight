@@ -268,12 +268,15 @@ public class SkillContainer {
 				}
 			}
 			
-			event.setResourcePredicate(this.containingSkill.resourcePredicate(executor) || (this.isActivated() && this.containingSkill.activateType == ActivateType.DURATION));
 			event.setSkillExecutable(this.containingSkill.canExecute(this));
 			event.setStateExecutable(this.containingSkill.isExecutableState(executor));
 			executor.getEventListener().triggerEvents(EventType.SKILL_EXECUTE_EVENT, event);
 			
-			return !event.isCanceled() && event.isExecutable();
+			if (!event.isCanceled() && event.isExecutable()) {
+				return (executor.getOriginal().isCreative() || this.containingSkill.resourcePredicate(executor)) || (this.isActivated() && this.containingSkill.activateType == ActivateType.DURATION);
+			} else {
+				return false;
+			}
 		}
 	}
 	
