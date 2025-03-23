@@ -112,6 +112,7 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 		registry.put(EpicFightEntities.WITHER_SKELETON_MINION.get(), (entityIn) -> WitherSkeletonPatch::new);
 		registry.put(EpicFightEntities.WITHER_GHOST_CLONE.get(), (entityIn) -> WitherGhostPatch::new);
 		registry.put(EntityType.ARROW, (entityIn) -> ArrowPatch::new);
+		registry.put(EntityType.SPECTRAL_ARROW, (entityIn) -> ArrowPatch::new);
 		registry.put(EntityType.WITHER_SKULL, (entityIn) -> WitherSkullPatch::new);
 		registry.put(EntityType.DRAGON_FIREBALL, (entityIn) -> DragonFireballPatch::new);
 		registry.put(EntityType.TRIDENT, (entityIn) -> ThrownTridentPatch::new);

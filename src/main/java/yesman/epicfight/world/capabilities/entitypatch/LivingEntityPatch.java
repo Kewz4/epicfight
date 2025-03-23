@@ -161,7 +161,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.armature;
 	}
 	
-	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
 		this.oStyle = this.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(this);
 		
@@ -176,7 +175,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 		
 		this.animator.tick();
-		super.tick(event);
+		
+		if (this.isLogicalClient()) {
+			this.clientTick(event);
+		} else {
+			this.serverTick(event);
+		}
 		
 		if (this.original.deathTime == 19) {
 			this.aboutToDeath();
@@ -185,6 +189,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		if (!this.getEntityState().inaction() && this.original.onGround && this.isAirborneState()) {
 			this.setAirborneState(false);
 		}
+	}
+	
+	protected void clientTick(LivingEvent.LivingTickEvent event) {}
+	
+	protected void serverTick(LivingEvent.LivingTickEvent event) {
+		super.updateStunTime();
 	}
 	
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
@@ -196,7 +206,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 				OpenMatrix4f toOriginalRotation = new OpenMatrix4f(this.armature.getBindedTransformFor(pose, this.armature.searchJointByName("Head"))).removeScale().removeTranslation().invert();
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
-				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
+				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis).rotateDeg(-this.original.getXRot(), xAxis);
 				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}

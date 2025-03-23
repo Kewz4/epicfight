@@ -8,7 +8,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
@@ -19,16 +18,9 @@ public abstract class EntityPatch<T extends Entity> {
 	public void onOldPosUpdate() {
 	}
 	
-	public void tick(LivingEvent.LivingTickEvent event) {
-		if (this.isLogicalClient()) {
-			this.clientTick(event);
-		} else {
-			this.serverTick(event);
-		}
+	public void onAddedToWorld() {
 	}
 	
-	protected void clientTick(LivingEvent.LivingTickEvent event) {}
-	protected void serverTick(LivingEvent.LivingTickEvent event) {}
 	public abstract boolean overrideRender();
 	
 	public void onStartTracking(ServerPlayer trackingPlayer) {
@@ -38,11 +30,11 @@ public abstract class EntityPatch<T extends Entity> {
 	public void processSpawnData(ByteBuf buf) {
 	}
 	
-	public void onConstructed(T entityIn) {
-		this.original = entityIn;
+	public void onConstructed(T entity) {
+		this.original = entity;
 	}
 	
-	public void onJoinWorld(T entityIn, EntityJoinLevelEvent event) {
+	public void onJoinWorld(T entity, EntityJoinLevelEvent event) {
 		this.initialized = true;
 	}
 

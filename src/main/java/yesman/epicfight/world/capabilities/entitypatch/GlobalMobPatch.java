@@ -1,7 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
 import net.minecraft.world.entity.Mob;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
@@ -9,8 +8,9 @@ public class GlobalMobPatch extends HurtableEntityPatch<Mob> {
 	private int remainStunTime;
 	
 	@Override
-	protected void serverTick(LivingEvent.LivingTickEvent event) {
-		super.serverTick(event);
+	protected void updateStunTime() {
+		super.updateStunTime();
+		
 		--this.remainStunTime;
 	}
 	

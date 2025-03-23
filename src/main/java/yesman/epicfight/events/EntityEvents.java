@@ -78,7 +78,7 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 import yesman.epicfight.world.entity.eventlistener.ProjectileHitEvent;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
-@Mod.EventBusSubscriber(modid=EpicFightMod.MODID)
+@Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class EntityEvents {
 	@SuppressWarnings("unchecked")
 	@SubscribeEvent
@@ -92,7 +92,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void updateEvent(LivingEvent.LivingTickEvent event) {
-		EntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), EntityPatch.class);
+		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 		
 		if (entitypatch != null && entitypatch.getOriginal() != null) {
 			entitypatch.tick(event);

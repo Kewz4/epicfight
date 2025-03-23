@@ -88,7 +88,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.api.utils.math.Vec4f;
-import yesman.epicfight.client.particle.TrailParticle;
+import yesman.epicfight.client.particle.AnimationTrailParticle;
 import yesman.epicfight.client.renderer.EpicFightShaders;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -1143,7 +1143,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	class CustomTrailParticle extends TrailParticle {
+	class CustomTrailParticle extends AnimationTrailParticle {
 		@SuppressWarnings("deprecation")
 		protected CustomTrailParticle(Joint joint, AssetAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo) {
 			super(ModelPreviewer.this.entitypatch.getArmature(), ModelPreviewer.this.entitypatch, joint, animation, trailInfo);
@@ -1152,15 +1152,15 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		@Override
 		public void tick() {
 			AnimationPlayer animPlayer = ModelPreviewer.this.animator.getPlayerFor(null);
-			this.visibleTrailEdges.removeIf(v -> !v.isAlive());
+			this.trailEdges.removeIf(v -> !v.isAlive());
 			
-			if (this.animationEnds) {
+			if (this.shouldRemove) {
 				if (this.lifetime-- == 0) {
 					this.remove();
 				}
 			} else {
 				if (this.animation != animPlayer.getAnimation().get().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime()) {
-					this.animationEnds = true;
+					this.shouldRemove = true;
 					this.lifetime = this.trailInfo.trailLifetime();
 				}
 			}
@@ -1170,7 +1170,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			boolean isTrailInvisible = animPlayer.getAnimation().get().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime();
-			boolean isFirstTrail = this.visibleTrailEdges.isEmpty();
+			boolean isFirstTrail = this.trailEdges.isEmpty();
 			boolean needCorrection = (!isTrailInvisible && isFirstTrail);
 			
 			if (needCorrection) {
@@ -1179,9 +1179,9 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			TrailInfo trailInfo = this.trailInfo;
-			Pose prevPose = this.entitypatch.getAnimator().getPose(0.0F);
-			Pose middlePose = this.entitypatch.getAnimator().getPose(0.5F);
-			Pose currentPose = this.entitypatch.getAnimator().getPose(1.0F);
+			Pose prevPose = this.owner.getAnimator().getPose(0.0F);
+			Pose middlePose = this.owner.getAnimator().getPose(0.5F);
+			Pose currentPose = this.owner.getAnimator().getPose(1.0F);
 			OpenMatrix4f prevJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(prevPose, this.joint);
 			OpenMatrix4f middleJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(middlePose, this.joint);
 			OpenMatrix4f currentJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(currentPose, this.joint);
@@ -1217,8 +1217,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					edge1 = this.invisibleTrailEdges.get(lastIdx);
 					edge2 = new TrailEdge(prevStartPos, prevEndPos, -1);
 				} else {
-					edge1 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - (this.trailInfo.interpolateCount() / 2 + 1));
-					edge2 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - 1);
+					edge1 = this.trailEdges.get(this.trailEdges.size() - (this.trailInfo.interpolateCount() / 2 + 1));
+					edge2 = this.trailEdges.get(this.trailEdges.size() - 1);
 					edge2.lifetime++;
 				}
 				
@@ -1242,12 +1242,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				visibleTrail = true;
 			}
 			
-			this.makeTrailEdges(finalStartPositions, finalEndPositions, visibleTrail ? this.visibleTrailEdges : this.invisibleTrailEdges);
+			this.makeTrailEdges(finalStartPositions, finalEndPositions, visibleTrail ? this.trailEdges : this.invisibleTrailEdges);
 		}
 		
 		@Override
 		public void render(VertexConsumer vertexConsumer, Camera camera, float partialTick) {
-			if (this.visibleTrailEdges.isEmpty()) {
+			if (this.trailEdges.isEmpty()) {
 				return;
 			}
 			
@@ -1261,15 +1261,15 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			PoseStack poseStack = new PoseStack();
 			this.setupPoseStack(poseStack, camera, partialTick);
 			Matrix4f matrix4f = poseStack.last().pose();
-			int edges = this.visibleTrailEdges.size() - 1;
-			boolean startFade = this.visibleTrailEdges.get(0).lifetime == 1;
-			boolean endFade = this.visibleTrailEdges.get(edges).lifetime == this.trailInfo.trailLifetime();
+			int edges = this.trailEdges.size() - 1;
+			boolean startFade = this.trailEdges.get(0).lifetime == 1;
+			boolean endFade = this.trailEdges.get(edges).lifetime == this.trailInfo.trailLifetime();
 			float startEdge = (startFade ? this.trailInfo.interpolateCount() * 2 * partialTick : 0.0F) + this.startEdgeCorrection;
 			float endEdge = endFade ? Math.min(edges - (this.trailInfo.interpolateCount() * 2) * (1.0F - partialTick), edges - 1) : edges - 1;
 			float interval = 1.0F / (endEdge - startEdge);
 			float fading = 1.0F;
 			
-			if (this.animationEnds) {
+			if (this.shouldRemove) {
 				if (TrailInfo.isValidTime(this.trailInfo.fadeTime())) {
 					fading = ((float)this.lifetime / (float)this.trailInfo.trailLifetime());
 				} else {
@@ -1282,8 +1282,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			float to = -partialStartEdge + interval;
 			
 			for (int i = (int)(startEdge); i < (int)endEdge + 1; i++) {
-				TrailEdge e1 = this.visibleTrailEdges.get(i);
-				TrailEdge e2 = this.visibleTrailEdges.get(i + 1);
+				TrailEdge e1 = this.trailEdges.get(i);
+				TrailEdge e2 = this.trailEdges.get(i + 1);
 				Vector4f pos1 = new Vector4f((float)e1.start.x, (float)e1.start.y, (float)e1.start.z, 1.0F);
 				Vector4f pos2 = new Vector4f((float)e1.end.x, (float)e1.end.y, (float)e1.end.z, 1.0F);
 				Vector4f pos3 = new Vector4f((float)e2.end.x, (float)e2.end.y, (float)e2.end.z, 1.0F);

@@ -1,5 +1,7 @@
 package yesman.epicfight.world.capabilities.projectile;
 
+import java.util.Map;
+
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -11,8 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -22,8 +24,6 @@ import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.EpicFightDamageSources;
 import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
-
-import java.util.Map;
 
 public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<T> {
 	protected float impact;
@@ -44,10 +44,14 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 				Map<Attribute, AttributeModifier> modifierMap = itemCap.getDamageAttributesInCondition(Styles.RANGED);
 				
 				if (modifierMap != null) {
-					this.armorNegation = modifierMap.containsKey(EpicFightAttributes.ARMOR_NEGATION.get()) ?
-							(float)modifierMap.get(EpicFightAttributes.ARMOR_NEGATION.get()).getAmount() : (float)EpicFightAttributes.ARMOR_NEGATION.get().getDefaultValue();
-					this.impact = modifierMap.containsKey(EpicFightAttributes.IMPACT.get()) ?
-							(float)modifierMap.get(EpicFightAttributes.IMPACT.get()).getAmount() : (float)EpicFightAttributes.IMPACT.get().getDefaultValue();
+					this.armorNegation
+						= modifierMap.containsKey(EpicFightAttributes.ARMOR_NEGATION.get()) ?
+							(float)modifierMap.get(EpicFightAttributes.ARMOR_NEGATION.get()).getAmount()
+								: (float)EpicFightAttributes.ARMOR_NEGATION.get().getDefaultValue();
+					this.impact
+						= modifierMap.containsKey(EpicFightAttributes.IMPACT.get()) ?
+							(float)modifierMap.get(EpicFightAttributes.IMPACT.get()).getAmount()
+								: (float)EpicFightAttributes.IMPACT.get().getDefaultValue();
 					
 					if (modifierMap.containsKey(EpicFightAttributes.MAX_STRIKES.get())) {
 						this.setMaxStrikes(projectileEntity, (int)modifierMap.get(EpicFightAttributes.MAX_STRIKES.get()).getAmount());
@@ -65,12 +69,12 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 	}
 	
 	@Override
-	public final void tick(LivingEvent.LivingTickEvent event) {
+	public void onAddedToWorld() {
+		if (this.getOriginal().level().isClientSide()) {
+			double eid = Double.longBitsToDouble((long)this.getOriginal().getId());
+			this.getOriginal().level().addParticle(EpicFightParticles.PROJECTILE_TRAIL.get(), eid, 0, 0, 0, 0, 0);
+		}
 	}
-	@Override
-	protected final void clientTick(LivingEvent.LivingTickEvent event) {}
-	@Override
-	protected final void serverTick(LivingEvent.LivingTickEvent event) {}
 	
 	public boolean onProjectileImpact(ProjectileImpactEvent event) {
 		return false;
@@ -96,6 +100,6 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 	
 	@Override
 	public OpenMatrix4f getModelMatrix(float partialTicks) {
-		return null;
+		return super.getMatrix(partialTicks);
 	}
 }

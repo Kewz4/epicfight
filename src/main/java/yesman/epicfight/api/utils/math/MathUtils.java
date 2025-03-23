@@ -26,11 +26,11 @@ public class MathUtils {
 	public static final Vec3 ZP = new Vec3(0.0D, 0.0D, 1.0D);
 	public static final Vec3 ZN = new Vec3(0.0D, 0.0D, -1.0D);
 	
-	public static OpenMatrix4f getModelMatrixIntegral(float xPosO, float xPos, float yPosO, float yPos, float zPosO, float zPos, float xRotO, float pitch, float yRotO, float yRot, float partialTick, float scaleX, float scaleY, float scaleZ) {
+	public static OpenMatrix4f getModelMatrixIntegral(float xPosO, float xPos, float yPosO, float yPos, float zPosO, float zPos, float xRotO, float xRot, float yRotO, float yRot, float partialTick, float scaleX, float scaleY, float scaleZ) {
 		OpenMatrix4f modelMatrix = new OpenMatrix4f();
 		Vec3f translation = new Vec3f(-(xPosO + (xPos - xPosO) * partialTick), ((yPosO + (yPos - yPosO) * partialTick)), -(zPosO + (zPos - zPosO) * partialTick));
-		float partialXRot = lerpBetween(xRotO, pitch, partialTick);
-		float partialYRot = lerpBetween(yRotO, yRot, partialTick);
+		float partialXRot = Mth.rotLerp(partialTick, xRotO, xRot);
+		float partialYRot = Mth.rotLerp(partialTick, yRotO, yRot);
 		modelMatrix.translate(translation).rotateDeg(-partialYRot, Vec3f.Y_AXIS).rotateDeg(-partialXRot, Vec3f.X_AXIS).scale(scaleX, scaleY, scaleZ);
 		
 		return modelMatrix;

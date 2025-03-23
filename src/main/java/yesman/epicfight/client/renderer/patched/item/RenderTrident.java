@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -18,12 +19,10 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderTrident extends RenderItemBase {
-	private final OpenMatrix4f correctionMatrixWhenAiming;
+	private static final OpenMatrix4f TRANSFORM_WHEN_AIMING = new OpenMatrix4f().rotateDeg(-80F, Vec3f.X_AXIS).translate(0.0F, 0.1F, 0.0F).unmodifiable();
 	
 	public RenderTrident(JsonElement jsonElement) {
 		super(jsonElement);
-		
-		this.correctionMatrixWhenAiming = new OpenMatrix4f().rotateDeg(-80F, Vec3f.X_AXIS).translate(0.0F, 0.1F, 0.0F).unmodifiable();
 	}
 	
 	@Override
@@ -41,7 +40,10 @@ public class RenderTrident extends RenderItemBase {
 	@Override
 	protected OpenMatrix4f getCorrectionMatrix(LivingEntityPatch<?> entitypatch, InteractionHand hand, OpenMatrix4f[] poses) {
 		if (entitypatch.getOriginal().getUseItemRemainingTicks() > 0) {
-			return this.correctionMatrixWhenAiming;
+			Joint parentJoint = entitypatch.getParentJointOfHand(hand);
+			this.transformHolder.load(TRANSFORM_WHEN_AIMING);
+			this.transformHolder.mulFront(poses[parentJoint.getId()]);
+			return this.transformHolder;
 		}
 		
 		return super.getCorrectionMatrix(entitypatch, hand, poses);

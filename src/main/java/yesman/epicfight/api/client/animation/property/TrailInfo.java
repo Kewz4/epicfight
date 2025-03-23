@@ -49,7 +49,7 @@ public record TrailInfo(
 			.r(0.75F)
 			.g(0.75F)
 			.b(0.75F)
-			.texture(new ResourceLocation(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
+			.texture(ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
 			.type(EpicFightParticles.SWING_TRAIL.get())
 			.create();
 	
@@ -88,11 +88,11 @@ public record TrailInfo(
 		builder.endPos((trailInfo.end == null) ? this.end : trailInfo.end);
 		builder.joint((trailInfo.joint == null) ? this.joint : trailInfo.joint);
 		builder.type((trailInfo.particle == null) ? this.particle : trailInfo.particle);
-		builder.time((!validTime) ? this.startTime : trailInfo.startTime, (!validTime) ? this.endTime : trailInfo.endTime);
+		builder.time(!validTime ? this.startTime : trailInfo.startTime, !validTime ? this.endTime : trailInfo.endTime);
 		builder.fadeTime((!isValidTime(trailInfo.fadeTime)) ? this.fadeTime : trailInfo.fadeTime);
-		builder.r(!(validColor) ? this.rCol : trailInfo.rCol);
-		builder.g(!(validColor) ? this.gCol : trailInfo.gCol);
-		builder.b(!(validColor) ? this.bCol : trailInfo.bCol);
+		builder.r(!validColor ? this.rCol : trailInfo.rCol);
+		builder.g(!validColor ? this.gCol : trailInfo.gCol);
+		builder.b(!validColor ? this.bCol : trailInfo.bCol);
 		builder.interpolations((trailInfo.interpolateCount < 0) ? this.interpolateCount : trailInfo.interpolateCount);
 		builder.lifetime((trailInfo.trailLifetime < 0) ? this.trailLifetime : trailInfo.trailLifetime);
 		builder.texture((trailInfo.texturePath == null) ? this.texturePath : trailInfo.texturePath);
@@ -106,7 +106,26 @@ public record TrailInfo(
 	}
 	
 	public boolean playable() {
-		return this.start != null && this.end != null && this.particle != null && !StringUtil.isNullOrEmpty(this.joint) && isValidTime(this.startTime) && isValidTime(this.endTime) && this.interpolateCount > 0 && this.trailLifetime > 0 && this.texturePath != null;
+		if (this.particle() == EpicFightParticles.SWING_TRAIL.get()) {
+			return this.start != null
+					&& this.end != null
+					&& this.particle != null
+					&& this.updateInterval > 0
+					&& !StringUtil.isNullOrEmpty(this.joint)
+					&& isValidTime(this.startTime)
+					&& isValidTime(this.endTime)
+					&& this.interpolateCount > 0
+					&& this.trailLifetime > 0
+					&& this.texturePath != null;
+		} else {
+			return this.start != null
+					&& this.end != null
+					&& this.particle != null
+					&& this.updateInterval > 0
+					&& this.interpolateCount > 0
+					&& this.trailLifetime > 0
+					&& this.texturePath != null;
+		}
 	}
 	
 	public static TrailInfo.Builder builder() {
@@ -146,7 +165,7 @@ public record TrailInfo(
 		
 		if (trailObj.has("particle_type")) {
 			String particleTypeName = GsonHelper.getAsString(trailObj, "particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -215,7 +234,7 @@ public record TrailInfo(
 		
 		if (compoundTag.contains("particle_type")) {
 			String particleTypeName = compoundTag.getString("particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
