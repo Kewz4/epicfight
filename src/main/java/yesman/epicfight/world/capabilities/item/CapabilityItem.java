@@ -91,9 +91,11 @@ public class CapabilityItem {
 	}
 	
 	protected Map<Style, Map<Attribute, AttributeModifier>> attributeMap;
+	protected Collider collider;
 	
 	protected CapabilityItem(CapabilityItem.Builder builder) {
 		this.weaponCategory = builder.category;
+		this.collider = builder.collider;
 		
 		ImmutableMap.Builder<Style, Map<Attribute, AttributeModifier>> attributeMapbuilder = ImmutableMap.builder();
 		
@@ -263,7 +265,7 @@ public class CapabilityItem {
 	}
 
 	public Collider getWeaponCollider() {
-		return ColliderPreset.FIST;
+		return this.collider != null ? this.collider : ColliderPreset.FIST;
 	}
 
 	public HitParticleType getHitParticle() {
@@ -403,13 +405,15 @@ public class CapabilityItem {
 	
 	public static class Builder {
 		Function<Builder, CapabilityItem> constructor;
-		WeaponCategory category;
 		Map<Style, Map<Attribute, AttributeModifier>> attributeMap;
+		WeaponCategory category;
+		Collider collider;
 		
 		protected Builder() {
 			this.constructor = CapabilityItem::new;
-			this.category = WeaponCategories.FIST;
 			this.attributeMap = Maps.newHashMap();
+			this.category = WeaponCategories.FIST;
+			this.collider = ColliderPreset.FIST;
 		}
 		
 		public Builder constructor(Function<Builder, CapabilityItem> constructor) {
@@ -422,6 +426,11 @@ public class CapabilityItem {
 			return this;
 		}
 		
+		public Builder collider(Collider collider) {
+			this.collider = collider;
+			return this;
+		}
+		
 		public Builder addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) {
 			Map<Attribute, AttributeModifier> map = this.attributeMap.computeIfAbsent(style, (key) -> Maps.newHashMap());
 			map.put(attributePair.getFirst(), attributePair.getSecond());
@@ -431,6 +440,10 @@ public class CapabilityItem {
 		
 		public final CapabilityItem build() {
 			return this.constructor.apply(this);
+		}
+		
+		public Collider getCollider() {
+			return this.collider;
 		}
 	}
 }

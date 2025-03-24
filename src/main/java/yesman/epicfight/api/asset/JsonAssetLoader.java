@@ -24,7 +24,6 @@ import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 
 import io.netty.util.internal.StringUtil;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -80,12 +79,12 @@ public class JsonAssetLoader {
 		JsonReader jsonReader = null;
 		this.resourceLocation = resourceLocation;
 		
-		if (resourceManager == null && EpicFightSharedConstants.IS_DEV_ENV) {
-			resourceManager = Minecraft.getInstance().getResourceManager();
-		}
-		
 		try {
 			try {
+				if (resourceManager == null) {
+					throw new NoSuchElementException();
+				}
+				
 				Resource resource = resourceManager.getResource(resourceLocation).orElseThrow();
 				InputStream inputStream = resource.open();
 				InputStreamReader isr = new InputStreamReader(inputStream, StandardCharsets.UTF_8);

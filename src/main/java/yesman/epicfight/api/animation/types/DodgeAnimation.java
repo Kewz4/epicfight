@@ -17,12 +17,17 @@ import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageType;
-import yesman.epicfight.world.entity.DodgeLeft;
+import yesman.epicfight.world.entity.DodgeLocationIndicator;
 
 public class DodgeAnimation extends ActionAnimation {
 	public static final Function<DamageSource, AttackResult.ResultType> DODGEABLE_SOURCE_VALIDATOR = (damagesource) -> {
-		if (damagesource.getEntity() != null && !damagesource.is(DamageTypeTags.IS_EXPLOSION) && !damagesource.is(DamageTypes.MAGIC) && !damagesource.is(DamageTypeTags.BYPASSES_ARMOR)
-												&& !damagesource.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !damagesource.is(EpicFightDamageType.BYPASS_DODGE)) {
+		if (damagesource.getEntity() != null
+			&& !damagesource.is(DamageTypeTags.IS_EXPLOSION)
+			&& !damagesource.is(DamageTypes.MAGIC)
+			&& !damagesource.is(DamageTypeTags.BYPASSES_ARMOR)
+			&& !damagesource.is(DamageTypeTags.BYPASSES_INVULNERABILITY)
+			&& !damagesource.is(EpicFightDamageType.BYPASS_DODGE)
+		) {
 			return AttackResult.ResultType.MISSED;
 		}
 		
@@ -57,7 +62,7 @@ public class DodgeAnimation extends ActionAnimation {
 		super.begin(entitypatch);
 		
 		if (!entitypatch.isLogicalClient() && entitypatch != null) {
-			entitypatch.getOriginal().level().addFreshEntity(new DodgeLeft(entitypatch));
+			entitypatch.getOriginal().level().addFreshEntity(new DodgeLocationIndicator(entitypatch));
 		}
 	}
 }

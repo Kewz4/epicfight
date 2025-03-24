@@ -68,7 +68,7 @@ public class EpicFightAttributes {
 	public static void entityAttributeCreationEvent(EntityAttributeCreationEvent event) {
 		event.put(EpicFightEntities.WITHER_SKELETON_MINION.get(), AbstractSkeleton.createAttributes().build());
 		event.put(EpicFightEntities.WITHER_GHOST_CLONE.get(), WitherGhostClone.createAttributes().build());
-		event.put(EpicFightEntities.DODGE_LEFT.get(), LivingEntity.createLivingAttributes().build());
+		event.put(EpicFightEntities.DODGE_LOCATION_INDICATOR.get(), LivingEntity.createLivingAttributes().build());
 	}
 	
 	@SubscribeEvent

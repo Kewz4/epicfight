@@ -111,8 +111,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 				LocalPlayer clientPlayer = event.getPlayerPatch().getOriginal();
 				clientPlayer.setSprinting(false);
 				clientPlayer.sprintTriggerTime = -1;
-				Minecraft mc = Minecraft.getInstance();
-				ControllEngine.setKeyBind(mc.options.keySprint, false);
+				ControllEngine.setKeyBind(Minecraft.getInstance().options.keySprint, false);
 			}
 		});
 	}

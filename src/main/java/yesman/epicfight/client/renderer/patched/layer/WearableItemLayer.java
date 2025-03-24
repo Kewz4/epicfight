@@ -140,15 +140,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 					return;
 				}
 				
-				HumanoidModel<E> humanoidModel;
-				
-				try {
-					humanoidModel = (HumanoidModel<E>)armorModel;
-				} catch (ClassCastException e) {
-					humanoidModel = null;
-				}
-				
-				if (humanoidModel != null) {
+				if (armorModel instanceof HumanoidModel humanoidModel) {
 					boolean shouldSit = entityliving.isPassenger() && (entityliving.getVehicle() != null && entityliving.getVehicle().shouldRiderSit());
 					float f8 = 0.0F;
 					float f5 = 0.0F;
@@ -166,7 +158,12 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 						}
 					}
 					
-					humanoidModel.setupAnim(entityliving, f8, f5, bob, yRot, xRot);
+					try {
+						// Fix: Crash with better nether by unknown cause
+						humanoidModel.setupAnim(entityliving, f8, f5, bob, yRot, xRot);
+					} catch (ClassCastException e) {
+					}
+					
 					humanoidModel.head.loadPose(humanoidModel.head.getInitialPose());
 					humanoidModel.hat.loadPose(humanoidModel.hat.getInitialPose());
 					humanoidModel.body.loadPose(humanoidModel.body.getInitialPose());

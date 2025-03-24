@@ -13,16 +13,16 @@ import net.minecraft.world.level.Level;
 import yesman.epicfight.api.animation.types.DodgeAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
-public class DodgeLeft extends LivingEntity {
+public class DodgeLocationIndicator extends LivingEntity {
 	private static final List<ItemStack> EMPTY_LIST = Collections.emptyList();
 	private LivingEntityPatch<?> entitypatch;
 	
-	public DodgeLeft(EntityType<? extends LivingEntity> type, Level level) {
+	public DodgeLocationIndicator(EntityType<? extends LivingEntity> type, Level level) {
 		super(type, level);
 	}
 	
-	public DodgeLeft(LivingEntityPatch<?> entitypatch) {
-		this(EpicFightEntities.DODGE_LEFT.get(), entitypatch.getOriginal().level());
+	public DodgeLocationIndicator(LivingEntityPatch<?> entitypatch) {
+		this(EpicFightEntities.DODGE_LOCATION_INDICATOR.get(), entitypatch.getOriginal().level());
 		
 		this.entitypatch = entitypatch;
 		
@@ -52,6 +52,7 @@ public class DodgeLeft extends LivingEntity {
 		}
 		
 		this.discard();
+		
 		return false;
 	}
 	

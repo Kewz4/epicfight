@@ -40,8 +40,8 @@ public class EpicFightEntities {
 			.sized(0.5F, 0.5F).clientTrackingRange(6).updateInterval(1).noSummon().noSave().build("death_harvest_orb")
 		);
 	
-	public static final RegistryObject<EntityType<DodgeLeft>> DODGE_LEFT = ENTITIES.register("dodge_left", () ->
-		EntityType.Builder.<DodgeLeft>of(DodgeLeft::new, MobCategory.MISC)
+	public static final RegistryObject<EntityType<DodgeLocationIndicator>> DODGE_LOCATION_INDICATOR = ENTITIES.register("dodge_left", () ->
+		EntityType.Builder.<DodgeLocationIndicator>of(DodgeLocationIndicator::new, MobCategory.MISC)
 			.sized(0.0F, 0.0F).clientTrackingRange(6).updateInterval(1).noSummon().noSave().build("dodge_left")
 		);
 	

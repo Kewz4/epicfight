@@ -76,7 +76,7 @@ public class ClientModBusEvent {
 		event.registerEntityRenderer(EpicFightEntities.AREA_EFFECT_BREATH.get(), NoopRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.DROPPED_NETHER_STAR.get(), DroppedNetherStarRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.DEATH_HARVEST_ORB.get(), NoopRenderer::new);
-		event.registerEntityRenderer(EpicFightEntities.DODGE_LEFT.get(), NoopRenderer::new);
+		event.registerEntityRenderer(EpicFightEntities.DODGE_LOCATION_INDICATOR.get(), NoopRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.WITHER_GHOST_CLONE.get(), WitherGhostRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.WITHER_SKELETON_MINION.get(), WitherSkeletonMinionRenderer::new);
 		

@@ -40,7 +40,6 @@ import yesman.epicfight.world.capabilities.item.ArmorCapability;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.Style;
 import yesman.epicfight.world.capabilities.item.TagBasedSeparativeCapability;
-import yesman.epicfight.world.capabilities.item.WeaponCapability;
 import yesman.epicfight.world.capabilities.item.WeaponTypeReloadListener;
 import yesman.epicfight.world.capabilities.provider.ItemCapabilityProvider;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
@@ -165,12 +164,12 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 				}
 			}
 			
-			if (tag.contains("collider") && builder instanceof WeaponCapability.Builder weaponCapBuilder) {
+			if (tag.contains("collider")) {
 				CompoundTag colliderTag = tag.getCompound("collider");
 				
 				try {
 					Collider collider = ColliderPreset.deserializeSimpleCollider(colliderTag);
-					weaponCapBuilder.collider(collider);
+					builder.collider(collider);
 				} catch (IllegalArgumentException e) {
 					EpicFightMod.LOGGER.warn("Cannot deserialize collider: " + e.getMessage());
 					e.printStackTrace();

@@ -21,7 +21,6 @@ import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.collider.Collider;
-import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.particle.HitParticleType;
@@ -35,7 +34,6 @@ public class WeaponCapability extends CapabilityItem {
 	protected final Skill passiveSkill;
 	protected final SoundEvent smashingSound;
 	protected final SoundEvent hitSound;
-	protected final Collider weaponCollider;
 	protected final HitParticleType hitParticle;
 	protected final Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> autoAttackMotions;
 	protected final Map<Style, Function<ItemStack, Skill>> innateSkill;
@@ -58,7 +56,6 @@ public class WeaponCapability extends CapabilityItem {
 		this.smashingSound = weaponBuilder.swingSound;
 		this.hitParticle = weaponBuilder.hitParticle;
 		this.hitSound = weaponBuilder.hitSound;
-		this.weaponCollider = weaponBuilder.collider;
 		this.canBePlacedOffhand = weaponBuilder.canBePlacedOffhand;
 		this.comboCancel = weaponBuilder.comboCancel;
 		this.zoomInType = weaponBuilder.zoomInType;
@@ -103,11 +100,6 @@ public class WeaponCapability extends CapabilityItem {
 	@Override
 	public HitParticleType getHitParticle() {
 		return this.hitParticle;
-	}
-	
-	@Override
-	public Collider getWeaponCollider() {
-		return this.weaponCollider != null ? this.weaponCollider : super.getWeaponCollider();
 	}
 	
 	@Override
@@ -178,7 +170,6 @@ public class WeaponCapability extends CapabilityItem {
 		SoundEvent swingSound;
 		SoundEvent hitSound;
 		HitParticleType hitParticle;
-		Collider collider;
 		Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> autoAttackMotionMap;
 		Map<Style, Function<ItemStack, Skill>> innateSkillByStyle;
 		Map<Style, Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> livingMotionModifiers;
@@ -194,7 +185,6 @@ public class WeaponCapability extends CapabilityItem {
 			this.swingSound = EpicFightSounds.WHOOSH.get();
 			this.hitSound = EpicFightSounds.BLUNT_HIT.get();
 			this.hitParticle = EpicFightParticles.HIT_BLADE.get();
-			this.collider = ColliderPreset.FIST;
 			this.autoAttackMotionMap = Maps.newHashMap();
 			this.innateSkillByStyle = Maps.newHashMap();
 			this.livingMotionModifiers = null;
@@ -291,10 +281,6 @@ public class WeaponCapability extends CapabilityItem {
 		
 		public Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> getComboAnimations() {
 			return ImmutableMap.copyOf(this.autoAttackMotionMap);
-		}
-		
-		public Collider getCollider() {
-			return this.collider;
 		}
 	}
 }

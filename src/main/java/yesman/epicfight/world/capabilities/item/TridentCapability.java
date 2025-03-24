@@ -9,9 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
-import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.gameasset.EpicFightSkills;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -44,11 +42,6 @@ public class TridentCapability extends RangedWeaponCapability {
 	@Override
 	public HitParticleType getHitParticle() {
 		return EpicFightParticles.HIT_BLADE.get();
-	}
-	
-	@Override
-	public Collider getWeaponCollider() {
-		return ColliderPreset.SPEAR;
 	}
 	
 	@Override
