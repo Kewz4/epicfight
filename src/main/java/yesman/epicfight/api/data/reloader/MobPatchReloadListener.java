@@ -299,14 +299,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		} else if (tag.contains("preset")) {
 			String presetName = tag.getString("preset");
 			Function<Entity, Supplier<EntityPatch<?>>> preset = EntityPatchProvider.get(presetName);
-			
-			ResourceLocation presetId = ResourceLocation.tryParse(presetName);
-			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(presetName));
-			ResourceLocation armatureId = ResourceLocation.tryBuild(presetId.getNamespace(), "entity/" + EntityType.getKey(presetEntityType).getPath());
-			
-			Armatures.registerEntityTypeArmature(entityType, Armatures.getOrCreate(armatureId, Armature::new));
+			Armatures.registerEntityTypeArmatureByPreset(entityType, presetName);
 			MobPatchPresetProvider provider = new MobPatchPresetProvider(preset);
-			
 			return provider;
 		} else {
 			boolean humanoid = tag.getBoolean("isHumanoid");
