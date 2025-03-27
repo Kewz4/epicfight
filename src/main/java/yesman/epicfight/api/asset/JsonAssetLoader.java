@@ -412,7 +412,12 @@ public class JsonAssetLoader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public Mesh loadMesh(boolean allowCompositeMesh) throws AssetLoadingException {
+	public Mesh loadMesh() throws AssetLoadingException {
+		return this.loadMesh(true);
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	private Mesh loadMesh(boolean allowCompositeMesh) throws AssetLoadingException {
 		if (!this.rootJson.has("mesh_loader")) {
 			throw new AssetLoadingException("Mesh loading exception: No mesh loader provided!");
 		}
@@ -658,6 +663,7 @@ public class JsonAssetLoader {
 		return this.filehash;
 	}
 	
+	// For datapack import
 	public AnimationClip loadAnimationClip(Armature armature) {
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		AnimationClip clip = new AnimationClip();
@@ -730,10 +736,12 @@ public class JsonAssetLoader {
 			matrix.mulFront(invLocalTransform);
 			
 			JointTransform transform = JointTransform.fromMatrix(matrix);
+			transform.rotation().normalize();
 			keyframeList.add(new Keyframe(timeStamp, transform));
 		}
 		
 		TransformSheet sheet = new TransformSheet(keyframeList);
+		
 		return sheet;
 	}
 }

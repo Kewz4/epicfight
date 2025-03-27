@@ -124,7 +124,7 @@ public class JointTransform {
 	
 	@Override
 	public String toString() {
-		return String.format("translation:%s, rotation:%s, %d entries ", this.translation, this.rotation, this.entries.size());
+		return String.format("translation:%s, rotation:%s, scale:%s %d entries ", this.translation, this.rotation, this.scale, this.entries.size());
 	}
 	
 	public static JointTransform interpolateTransform(JointTransform prev, JointTransform next, float progression, JointTransform dest) {

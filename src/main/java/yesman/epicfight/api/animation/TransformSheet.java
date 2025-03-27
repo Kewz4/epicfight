@@ -212,13 +212,6 @@ public class TransformSheet {
 		double animMagnitude = this.keyframes[0].transform().translation().horizontalDistance();
 		float scale = (float)(worldMagnitude / animMagnitude);
 		
-		//System.out.println("start: " + startInWorld);
-		//System.out.println("Dest: " + destInWorld);
-		//System.out.println("Dest y rot: " + destYRot);
-		
-		//System.out.println("\nFirst coord");
-		//System.out.println(byDest);
-		
 		byStart.forEach((idx, keyframe) -> {
 			keyframe.transform().translation().sub(this.keyframes[0].transform().translation());
 			keyframe.transform().translation().multiply(1.0F, 1.0F, scale);
@@ -227,19 +220,12 @@ public class TransformSheet {
 			keyframe.transform().translation().add(startInWorld);
 		});
 		
-		//System.out.println("\nby start");
-		//System.out.println(byStart);
-		
 		byDest.forEach((idx, keyframe) -> {
 			keyframe.transform().translation().multiply(1.0F, 1.0F, Mth.lerp((idx / (float)destFrame), scale, 1.0F));
 			keyframe.transform().translation().rotate(-destYRot, Vec3f.Y_AXIS);
 			keyframe.transform().translation().multiply(-1.0F, 1.0F, -1.0F);
 			keyframe.transform().translation().add(destInWorld);
 		});
-		
-		//System.out.println("\nby dest");
-		//System.out.println(byDest);
-		//System.out.println(startFrmae +" ~ "+ destFrame);
 		
 		for (int i = 0; i < destFrame + 1; i++) {
 			if (i <= startFrmae) {
@@ -250,10 +236,6 @@ public class TransformSheet {
 				result.getKeyframes()[i] = new Keyframe(this.keyframes[i].time(), JointTransform.translation(lerpTranslation));
 			}
 		}
-		
-		//System.out.println("\ndistance result");
-		//System.out.println(result);
-		//System.out.println("");
 		
 		if (this.keyframes.length > destFrame) {
 			TransformSheet behindDestination = this.copy(destFrame + 1, this.keyframes.length);
@@ -267,10 +249,6 @@ public class TransformSheet {
 			
 			result.extend(behindDestination);
 		}
-		
-		//System.out.println("\nresult");
-		//System.out.println(result);
-		//System.out.println("");
 		
 		return result;
 	}

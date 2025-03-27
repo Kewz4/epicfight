@@ -242,7 +242,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@Override
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-		if (pose.hasTransform("Head")) {
+		if (pose.hasTransform("Head") && this.armature.hasJoint("Head")) {
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.modelYRotO - this.original.yHeadRotO;
 				float headRot = this.modelYRot - this.original.yHeadRot;

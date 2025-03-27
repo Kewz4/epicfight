@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -701,43 +702,57 @@ public class OpenMatrix4f {
 		}
 		
 		OpenMatrix4f.load(matrix, MATRIX_STORAGE);
-		MATRIX_STORAGE.removeScale();
 		
 		float w, x, y, z;
-		float diagonal = MATRIX_STORAGE.m00 + MATRIX_STORAGE.m11 + MATRIX_STORAGE.m22;
+		MATRIX_STORAGE.transpose();
 		
-		if (diagonal > 0) {
-			float w4 = (float) (Math.sqrt(diagonal + 1f) * 2f);
-			w = w4 / 4f;
-			x = (MATRIX_STORAGE.m21 - MATRIX_STORAGE.m12) / w4;
-			y = (MATRIX_STORAGE.m02 - MATRIX_STORAGE.m20) / w4;
-			z = (MATRIX_STORAGE.m10 - MATRIX_STORAGE.m01) / w4;
-		} else if ((MATRIX_STORAGE.m00 > MATRIX_STORAGE.m11) && (MATRIX_STORAGE.m00 > MATRIX_STORAGE.m22)) {
-			float x4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m00 - MATRIX_STORAGE.m11 - MATRIX_STORAGE.m22) * 2f);
-			w = (MATRIX_STORAGE.m21 - MATRIX_STORAGE.m12) / x4;
-			x = x4 / 4f;
-			y = (MATRIX_STORAGE.m01 + MATRIX_STORAGE.m10) / x4;
-			z = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) / x4;
-		} else if (MATRIX_STORAGE.m11 > MATRIX_STORAGE.m22) {
-			float y4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m11 - MATRIX_STORAGE.m00 - MATRIX_STORAGE.m22) * 2f);
-			w = (MATRIX_STORAGE.m02 - MATRIX_STORAGE.m20) / y4;
-			x = (MATRIX_STORAGE.m01 + MATRIX_STORAGE.m10) / y4;
-			y = y4 / 4f;
-			z = (MATRIX_STORAGE.m12 + MATRIX_STORAGE.m21) / y4;
-		} else {
-			float z4 = (float) (Math.sqrt(1f + MATRIX_STORAGE.m22 - MATRIX_STORAGE.m00 - MATRIX_STORAGE.m11) * 2f);
-			w = (MATRIX_STORAGE.m10 - MATRIX_STORAGE.m01) / z4;
-			x = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) / z4;
-			y = (MATRIX_STORAGE.m12 + MATRIX_STORAGE.m21) / z4;
-			z = z4 / 4f;
-		}
+        double lenX = Math.invsqrt(MATRIX_STORAGE.m00 * MATRIX_STORAGE.m00 + MATRIX_STORAGE.m01 * MATRIX_STORAGE.m01 + MATRIX_STORAGE.m02 * MATRIX_STORAGE.m02);
+        double lenY = Math.invsqrt(MATRIX_STORAGE.m10 * MATRIX_STORAGE.m10 + MATRIX_STORAGE.m11 * MATRIX_STORAGE.m11 + MATRIX_STORAGE.m12 * MATRIX_STORAGE.m12);
+        double lenZ = Math.invsqrt(MATRIX_STORAGE.m20 * MATRIX_STORAGE.m20 + MATRIX_STORAGE.m21 * MATRIX_STORAGE.m21 + MATRIX_STORAGE.m22 * MATRIX_STORAGE.m22);
+        MATRIX_STORAGE.m00 *= lenX; MATRIX_STORAGE.m01 *= lenX; MATRIX_STORAGE.m02 *= lenX;
+        MATRIX_STORAGE.m10 *= lenY; MATRIX_STORAGE.m11 *= lenY; MATRIX_STORAGE.m12 *= lenY;
+        MATRIX_STORAGE.m20 *= lenZ; MATRIX_STORAGE.m21 *= lenZ; MATRIX_STORAGE.m22 *= lenZ;
 		
-		dest.x = x;
+		float t;
+        float tr = MATRIX_STORAGE.m00 + MATRIX_STORAGE.m11 + MATRIX_STORAGE.m22;
+        if (tr >= 0.0F) {
+            t = (float)Math.sqrt(tr + 1.0F);
+            w = t * 0.5F;
+            t = 0.5F / t;
+            x = (MATRIX_STORAGE.m12 - MATRIX_STORAGE.m21) * t;
+            y = (MATRIX_STORAGE.m20 - MATRIX_STORAGE.m02) * t;
+            z = (MATRIX_STORAGE.m01 - MATRIX_STORAGE.m10) * t;
+        } else {
+            if (MATRIX_STORAGE.m00 >= MATRIX_STORAGE.m11 && MATRIX_STORAGE.m00 >= MATRIX_STORAGE.m22) {
+                t = (float)Math.sqrt(MATRIX_STORAGE.m00 - (MATRIX_STORAGE.m11 + MATRIX_STORAGE.m22) + 1.0);
+                x = t * 0.5F;
+                t = 0.5F / t;
+                y = (MATRIX_STORAGE.m10 + MATRIX_STORAGE.m01) * t;
+                z = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) * t;
+                w = (MATRIX_STORAGE.m12 - MATRIX_STORAGE.m21) * t;
+            } else if (MATRIX_STORAGE.m11 > MATRIX_STORAGE.m22) {
+                t = (float)Math.sqrt(MATRIX_STORAGE.m11 - (MATRIX_STORAGE.m22 + MATRIX_STORAGE.m00) + 1.0F);
+                y = t * 0.5F;
+                t = 0.5F / t;
+                z = (MATRIX_STORAGE.m21 + MATRIX_STORAGE.m12) * t;
+                x = (MATRIX_STORAGE.m10 + MATRIX_STORAGE.m01) * t;
+                w = (MATRIX_STORAGE.m20 - MATRIX_STORAGE.m02) * t;
+            } else {
+                t = (float)Math.sqrt(MATRIX_STORAGE.m22 - (MATRIX_STORAGE.m00 + MATRIX_STORAGE.m11) + 1.0F);
+                z = t * 0.5F;
+                t = 0.5F / t;
+                x = (MATRIX_STORAGE.m02 + MATRIX_STORAGE.m20) * t;
+                y = (MATRIX_STORAGE.m21 + MATRIX_STORAGE.m12) * t;
+                w = (MATRIX_STORAGE.m01 - MATRIX_STORAGE.m10) * t;
+            }
+        }
+        
+        dest.x = x;
 		dest.y = y;
 		dest.z = z;
 		dest.w = w;
-		
-		return dest;
+        
+        return dest;
 	}
 	
 	public static OpenMatrix4f fromQuaternion(Quaternionf quaternion) {
@@ -870,10 +885,10 @@ public class OpenMatrix4f {
 	@Override
 	public String toString() {
 		return "\n" +
-				m00 + " " + m01 + " " + m02 + " " + m03 + "\n" +
-				m10 + " " + m11 + " " + m12 + " " + m13 + "\n" +
-				m20 + " " + m21 + " " + m22 + " " + m23 + "\n" +
-				m30 + " " + m31 + " " + m32 + " " + m33 + "\n"
+				String.format("%.4f", m00) + " " + String.format("%.4f", m01) + " " + String.format("%.4f", m02) + " " + String.format("%.4f", m03) + "\n" +
+				String.format("%.4f", m10) + " " + String.format("%.4f", m11) + " " + String.format("%.4f", m12) + " " + String.format("%.4f", m13) + "\n" +
+				String.format("%.4f", m20) + " " + String.format("%.4f", m21) + " " + String.format("%.4f", m22) + " " + String.format("%.4f", m23) + "\n" +
+				String.format("%.4f", m30) + " " + String.format("%.4f", m31) + " " + String.format("%.4f", m32) + " " + String.format("%.4f", m33) + "\n"
 				;
 	}
 	

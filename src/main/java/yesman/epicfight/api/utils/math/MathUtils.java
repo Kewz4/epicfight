@@ -394,20 +394,8 @@ public class MathUtils {
 		}
 		
 		dest.set(resultX, resultY, resultZ, resultW);
-		normalizeQuaternion(dest);
 		
 		return dest;
-	}
-	
-	private static void normalizeQuaternion(Quaternionf quaternion) {
-		float f = quaternion.x() * quaternion.x() + quaternion.y() * quaternion.y() + quaternion.z() * quaternion.z() + quaternion.w() * quaternion.w();
-		
-		if (f > 1E-6F) {
-			float f1 = fastInvSqrt(f);
-			setQuaternion(quaternion, quaternion.x() * f1, quaternion.y() * f1, quaternion.z() * f1, quaternion.w() * f1);
-		} else {
-			setQuaternion(quaternion, 0.0F, 0.0F, 0.0F, 0.0F);
-		}
 	}
 	
 	private static Vector3f getScaleVectorFromMatrix(OpenMatrix4f mat) {
@@ -415,14 +403,6 @@ public class MathUtils {
 		Vec3f b = new Vec3f(mat.m01, mat.m11, mat.m21);
 		Vec3f c = new Vec3f(mat.m02, mat.m12, mat.m22);
 		return new Vector3f(a.length(), b.length(), c.length());
-	}
-	
-	private static float fastInvSqrt(float number) {
-		float f = 0.5F * number;
-		int i = Float.floatToIntBits(number);
-		i = 1597463007 - (i >> 1);
-		number = Float.intBitsToFloat(i);
-		return number * (1.5F - f * number * number);
 	}
 	
 	public static <T> Set<Set<T>> getSubset(Collection<T> collection) {
