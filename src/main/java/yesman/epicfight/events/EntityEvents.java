@@ -29,7 +29,6 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
-import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -400,7 +399,7 @@ public class EntityEvents {
 		
 		if (!event.getProjectile().level().isClientSide() && projectilepatch != null) {
 			if (projectilepatch.onProjectileImpact(event)) {
-				event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+				//event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
 				return;
 			}
 		}
@@ -412,20 +411,20 @@ public class EntityEvents {
 					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.PROJECTILE_HIT_EVENT, new ProjectileHitEvent(playerpatch, event));
 					
 					if (canceled) {
-						event.setImpactResult(ImpactResult.SKIP_ENTITY);
+						//event.setImpactResult(ImpactResult.SKIP_ENTITY);
 					}
 				}
 				
 				if (event.getProjectile().getOwner() != null) {
 					if (rayresult.getEntity().equals(event.getProjectile().getOwner().getVehicle())) {
-						event.setImpactResult(ImpactResult.SKIP_ENTITY);
+						//event.setImpactResult(ImpactResult.SKIP_ENTITY);
 					}
 					
 					if (rayresult.getEntity() instanceof PartEntity<?> partEntity) {
 						Entity parent = partEntity.getParent();
 						
 						if (event.getProjectile().getOwner().is(parent)) {
-							event.setImpactResult(ImpactResult.SKIP_ENTITY);
+							//event.setImpactResult(ImpactResult.SKIP_ENTITY);
 						}
 					}
 				}

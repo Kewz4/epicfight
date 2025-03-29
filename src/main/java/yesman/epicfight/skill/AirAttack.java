@@ -29,6 +29,11 @@ public class AirAttack extends Skill {
 	@Override
 	public void executeOnServer(SkillContainer skillContainer, FriendlyByteBuf args) {
 		List<AnimationAccessor<? extends AttackAnimation>> motions = skillContainer.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(skillContainer.getExecutor());
+		
+		if (motions == null) {
+			return;
+		}
+		
 		AnimationAccessor<? extends AttackAnimation> attackMotion = motions.get(motions.size() - 1);
 		
 		if (attackMotion != null) {
