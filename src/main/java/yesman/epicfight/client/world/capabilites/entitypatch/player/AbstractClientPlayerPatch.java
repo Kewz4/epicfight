@@ -283,7 +283,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             mat.rotateDeg(-Mth.rotLerp(partialTick, this.original.yBodyRotO, this.original.yBodyRot), Vec3f.Y_AXIS).rotateDeg(f2 * (-this.original.getXRot()), Vec3f.X_AXIS);
             
             Vec3 vec3d = this.original.getViewVector(partialTick);
-            Vec3 vec3d1 = this.original.getDeltaMovement();
+            Vec3 vec3d1 = this.original.getDeltaMovementLerped(partialTick);
             double d0 = vec3d1.horizontalDistanceSqr();
             double d1 = vec3d.horizontalDistanceSqr();
             
@@ -294,6 +294,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             }
 			
 			return mat;
+			
 		} else if (this.original.isSleeping()) {
 			BlockState blockstate = this.original.getFeetBlockState();
 			float yRot = 0.0F;
