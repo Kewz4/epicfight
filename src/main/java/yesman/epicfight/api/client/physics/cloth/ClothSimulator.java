@@ -203,11 +203,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			if (!Minecraft.getInstance().isPaused()) {
 				boolean skinned = poses != null && armature != null;
 				
-				for (int j = 0; j < EpicFightSharedConstants.MAX_JOINTS; j++) {
-					if (j >= armature.getJointNumber()) {
-						break;
-					}
-					
+				for (int j = 0; j < armature.getJointNumber(); j++) {
 					if (skinned) {
 						BOUND_ANIMATION_TRANSFORM[j].load(poses[j]);
 						BOUND_ANIMATION_TRANSFORM[j].mulBack(armature.searchJointById(j).getToOrigin());

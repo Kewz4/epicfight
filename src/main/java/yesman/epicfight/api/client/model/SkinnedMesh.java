@@ -44,6 +44,7 @@ import yesman.epicfight.api.utils.math.Vec4f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.EpicFightVertexFormatElement;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
+import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -312,7 +313,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 	 * @param poses
 	 */
 	public void draw(PoseStack poseStack, MultiBufferSource bufferSources, RenderType renderType, int packedLight, float r, float g, float b, float a, int overlay, Armature armature, OpenMatrix4f[] poses) {
-		if (ClientConfig.activateAnimationShader) {
+		if (ClientConfig.activateAnimationShader && armature.getJointNumber() <= ShaderParser.SHADER_ARRAY_LIMIT) {
 			renderType.setupRenderState();
 			AnimationShaderInstance animationShader = EpicFightRenderTypes.getAnimationShader(renderType);
 			this.drawWithShader(poseStack, animationShader, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, armature, poses);

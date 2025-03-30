@@ -80,7 +80,7 @@ public abstract class IrisMixinExtendedShader {
 						shaderParser.addUniform("iris_Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 					}
 					
-					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, EpicFightSharedConstants.MAX_JOINTS);
+					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.SHADER_ARRAY_LIMIT);
 					
 					shaderParser.replaceScript("iris_Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "in vec3 iris_Position;");
 					

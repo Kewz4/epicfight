@@ -10,10 +10,9 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class EpicFightSharedConstants {
-	
 	// Model variables
-	public static final int MAX_JOINTS = 1000;
 	public static final int MAX_WEIGHTS = 3;
+	public static final int MAX_JOINTS = 1000;
 	
 	// Animation variables
 	public static final float A_TICK = 0.05F;

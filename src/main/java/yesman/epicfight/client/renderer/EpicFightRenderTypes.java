@@ -41,7 +41,6 @@ import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.client.renderer.shader.VanillaAnimationShader;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
@@ -323,7 +322,7 @@ public class EpicFightRenderTypes extends RenderType {
 			
 			try {
 				ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-				ResourceLocation shaderLocation = new ResourceLocation(shaderInstance.getName());
+				ResourceLocation shaderLocation = ResourceLocation.tryParse(shaderInstance.getName());
 				shaderParser = new ShaderParser(resourceManager, shaderInstance.getName());
 				boolean hasNormalAttribute = shaderParser.hasAttribute("Normal");
 				boolean isEyesShader = "rendertype_eyes".equals(shaderLocation.getPath());
@@ -350,7 +349,7 @@ public class EpicFightRenderTypes extends RenderType {
 					shaderParser.addUniform("Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 				}
 				
-				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, EpicFightSharedConstants.MAX_JOINTS);
+				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.SHADER_ARRAY_LIMIT);
 				shaderParser.replaceScript("Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "gl_Position", "in vec3 Position;");
 				
 				if (hasNormalAttribute && !isEyesShader) {
@@ -398,7 +397,7 @@ public class EpicFightRenderTypes extends RenderType {
 				shaderParser.addToResourceCache(cache);
 				GameRenderer.ResourceCache resourceProvider = new GameRenderer.ResourceCache(resourceManager, cache);
 				
-				return new VanillaAnimationShader(resourceProvider, new ResourceLocation(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
+				return new VanillaAnimationShader(resourceProvider, ResourceLocation.tryBuild(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
 			} catch (IOException | ShaderParsingException e) {
 				e.printStackTrace();
 				

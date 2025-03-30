@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
 import yesman.epicfight.api.client.animation.Layer;
@@ -29,6 +30,11 @@ public class ClientAnimationProperties {
 	 * Trail particle information
 	 */
 	public static final StaticAnimationProperty<List<TrailInfo>> TRAIL_EFFECT = new StaticAnimationProperty<List<TrailInfo>> ();
+	
+	/**
+	 * An animation clip being played in first person.
+	 */
+	public static final StaticAnimationProperty<AnimationClip> POV_CLIP = new StaticAnimationProperty<AnimationClip> ();
 	
 	/**
 	 * Multilayer for living animations (e.g. Greatsword holding animation should be played simultaneously with jumping animation) 

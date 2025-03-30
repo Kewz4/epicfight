@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class VanillaAnimationShader extends ShaderInstance implements AnimationShaderInstance {
@@ -34,9 +33,9 @@ public class VanillaAnimationShader extends ShaderInstance implements AnimationS
 		this.UV1 = this.getUniform("UV1");
 		this.UV2 = this.getUniform("UV2");
 		this.NORMAL_MODEL_VIEW_MATRIX = this.getUniform("Normal_Mv_Matrix");
-		this.POSES = new Uniform[EpicFightSharedConstants.MAX_JOINTS];
+		this.POSES = new Uniform[ShaderParser.SHADER_ARRAY_LIMIT];
 		
-		for (int i = 0; i < EpicFightSharedConstants.MAX_JOINTS; i++) {
+		for (int i = 0; i < ShaderParser.SHADER_ARRAY_LIMIT; i++) {
 			this.POSES[i] = this.getUniform("Poses[" + String.valueOf(i) + "]");
 		}
 	}

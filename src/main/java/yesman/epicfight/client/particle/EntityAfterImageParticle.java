@@ -32,6 +32,7 @@ import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
+import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -39,7 +40,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
-	public static final ResourceLocation WHITE = new ResourceLocation(EpicFightMod.MODID, "textures/particle/white.png");
+	public static final ResourceLocation WHITE = ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/particle/white.png");
 	
 	private final OpenMatrix4f[] poseMatrices;
 	private final Matrix4f modelMatrix;
@@ -60,6 +61,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	@Override
 	public void tick() {
 		super.tick();
+		
 		this.alphaO = this.alpha;
 		this.alpha = (float)(this.lifetime - this.age) / (float)this.lifetime * 0.8F;
 	}
@@ -67,8 +69,9 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	@Override
 	public void render(VertexConsumer vertexConsumer, Camera camera, float partialTicks) {
 		PoseStack poseStack = new PoseStack();
+		boolean useAnimationShader = ClientConfig.activateAnimationShader && this.poseMatrices.length <= ShaderParser.SHADER_ARRAY_LIMIT;
 		
-		if (ClientConfig.activateAnimationShader) {
+		if (useAnimationShader) {
 			poseStack.mulPoseMatrix(RenderSystem.getModelViewMatrix());
 		}
 		
@@ -78,7 +81,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 		
 		RenderSystem.setShaderTexture(0, WHITE);
 		
-		if (ClientConfig.activateAnimationShader) {
+		if (useAnimationShader) {
 			AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getPositionColorLightmapShader());
 			this.particleMeshProvider.get().drawWithShader(poseStack, animShader, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
 		} else {
