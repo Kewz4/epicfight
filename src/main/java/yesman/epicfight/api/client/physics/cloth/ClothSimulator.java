@@ -35,6 +35,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.client.model.CompositeMesh;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.MeshPart;
@@ -67,6 +68,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 	@OnlyIn(Dist.CLIENT)
 	public static class ClothObjectBuilder extends SimulationObject.SimulationObjectBuilder {
 		List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders = Lists.newArrayList();
+		Joint joint;
 		
 		public ClothObjectBuilder addEntry(Function<ClothSimulatable, OpenMatrix4f> obbTransformer, ClothOBBCollider clothOBBCollider) {
 			this.clothColliders.add(Pair.of(obbTransformer, clothOBBCollider));
@@ -75,6 +77,11 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		
 		public ClothObjectBuilder putAll(List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothOBBColliders) {
 			this.clothColliders.addAll(clothOBBColliders);
+			return this;
+		}
+		
+		public ClothObjectBuilder parentJoint(Joint joint) {
+			this.joint = joint;
 			return this;
 		}
 		
@@ -126,6 +133,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		
 		@Nullable
 		protected List<Pair<Function<ClothSimulatable, OpenMatrix4f>, ClothSimulator.ClothOBBCollider>> clothColliders;
+		protected final Joint parentJoint;
 		
 		//Storage vectors
 		private static final Vec3f TRASNFORMED = new Vec3f();
@@ -134,6 +142,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 		
 		public ClothObject(ClothObjectBuilder builder, SoftBodyTranslatable provider, Map<String, MeshPart> parts, float[] positions) {
 			this.clothColliders = builder.clothColliders;
+			this.parentJoint = builder.joint;
+			
 			this.provider = provider;
 			this.particles = Maps.newHashMap();
 			this.normalOffsetParticles = Maps.newHashMap();
@@ -144,13 +154,8 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			}
 			
 			for (Map.Entry<String, MeshPart> meshPart : parts.entrySet()) {
-				//System.out.println(meshPart.getKey());
 				for (VertexBuilder vb : meshPart.getValue().getVertices()) {
 					Map<Integer, Vec3f> posNormals = this.particleNormals.get(vb.position);
-					
-					//if (vb.position == 1450) {
-						//System.out.println(" " + vb.position +" "+ vb.normal + " " + posNormals);
-					//}
 					
 					if (!posNormals.containsKey(vb.normal)) {
 						provider.getOriginalMesh().getVertexNormal(vb.normal, NORMAL);
@@ -207,6 +212,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					if (skinned) {
 						BOUND_ANIMATION_TRANSFORM[j].load(poses[j]);
 						BOUND_ANIMATION_TRANSFORM[j].mulBack(armature.searchJointById(j).getToOrigin());
+						BOUND_ANIMATION_TRANSFORM[j].removeScale();
 					}
 				}
 				
@@ -218,7 +224,7 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 				// Update circular force
 				float yRot = Mth.wrapDegrees(Mth.rotLerp(partialTick, Mth.wrapDegrees(simulatableObj.getYRotO()), Mth.wrapDegrees(simulatableObj.getYRot())));
 				
-				TO_CENTRIFUGAL.load(BOUND_ANIMATION_TRANSFORM[7]);
+				TO_CENTRIFUGAL.load(BOUND_ANIMATION_TRANSFORM[this.parentJoint.getId()]);
 				TO_CENTRIFUGAL.mulFront(OpenMatrix4f.createRotatorDeg(-yRot + 180.0F, Vec3f.Y_AXIS));
 				TO_CENTRIFUGAL.toQuaternion(ROTATOR);
 				
@@ -346,6 +352,17 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 					triP3Normals.get(triP3.normal).add(CROSS);
 				}
 			}
+		}
+		
+		private static final Vec3f SCALE = new Vec3f();
+		
+		public void scaleFromPose(PoseStack poseStack, OpenMatrix4f[] poses) {
+			OpenMatrix4f poseMat = poses[this.parentJoint.getId()];
+			poseMat.toScaleVector(SCALE);
+			
+			poseStack.translate(poseMat.m30, poseMat.m31, poseMat.m32);
+			poseStack.scale(SCALE.x, SCALE.y, SCALE.z);
+			poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
 		}
 		
 		@Override

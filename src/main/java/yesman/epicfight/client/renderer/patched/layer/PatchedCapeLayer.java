@@ -36,7 +36,7 @@ import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
-public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer> {
+public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer> {
 	public static final ResourceLocation DUMMY_CLOAK_TEXTURE = ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/entity/cloak.png");
 	
 	@SuppressWarnings("unchecked")
@@ -56,9 +56,9 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
 	            };
 	            
-				ResourceLocation cloakTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
+				ResourceLocation capeTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
 				
-				if (cloakTexture != null) {
+				if (capeTexture != null) {
 					clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
 					
 					double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
@@ -81,6 +81,8 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 						poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
 					}
 					
+					clothObj.scaleFromPose(poseStack, poses);
+					
 					poseStack.pushPose();
 					poseStack.mulPoseMatrix(lastposeInv);
 					poseStack.translate(-lastposeInv.m30() - entityX, -lastposeInv.m31() - entityY, -lastposeInv.m32() - entityZ);
@@ -88,7 +90,7 @@ public class PatchedCloakLayer extends PatchedLayer<AbstractClientPlayer, Abstra
 					float bodyYRot = Mth.rotLerp(partialTick, entitypatch.getYRotO(), entitypatch.getYRot());
 					poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(bodyYRot));
 					
-					VertexConsumer bufferBuilder = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(cloakTexture)));
+					VertexConsumer bufferBuilder = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(capeTexture)));
 					
 					if (entitypatch.isEpicSkinsLoaded()) {
 						EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();

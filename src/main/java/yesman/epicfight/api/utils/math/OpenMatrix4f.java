@@ -706,15 +706,25 @@ public class OpenMatrix4f {
 		float w, x, y, z;
 		MATRIX_STORAGE.transpose();
 		
-        double lenX = Math.invsqrt(MATRIX_STORAGE.m00 * MATRIX_STORAGE.m00 + MATRIX_STORAGE.m01 * MATRIX_STORAGE.m01 + MATRIX_STORAGE.m02 * MATRIX_STORAGE.m02);
-        double lenY = Math.invsqrt(MATRIX_STORAGE.m10 * MATRIX_STORAGE.m10 + MATRIX_STORAGE.m11 * MATRIX_STORAGE.m11 + MATRIX_STORAGE.m12 * MATRIX_STORAGE.m12);
-        double lenZ = Math.invsqrt(MATRIX_STORAGE.m20 * MATRIX_STORAGE.m20 + MATRIX_STORAGE.m21 * MATRIX_STORAGE.m21 + MATRIX_STORAGE.m22 * MATRIX_STORAGE.m22);
+        float lenX = MATRIX_STORAGE.m00 * MATRIX_STORAGE.m00 + MATRIX_STORAGE.m01 * MATRIX_STORAGE.m01 + MATRIX_STORAGE.m02 * MATRIX_STORAGE.m02;
+        float lenY = MATRIX_STORAGE.m10 * MATRIX_STORAGE.m10 + MATRIX_STORAGE.m11 * MATRIX_STORAGE.m11 + MATRIX_STORAGE.m12 * MATRIX_STORAGE.m12;
+        float lenZ = MATRIX_STORAGE.m20 * MATRIX_STORAGE.m20 + MATRIX_STORAGE.m21 * MATRIX_STORAGE.m21 + MATRIX_STORAGE.m22 * MATRIX_STORAGE.m22;
+        
+        if (lenX == 0.0F || lenY == 0.0F || lenZ == 0.0F) {
+        	return new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F);
+        }
+        
+        lenX = Math.invsqrt(lenX);
+        lenY = Math.invsqrt(lenY);
+        lenZ = Math.invsqrt(lenZ);
+        
         MATRIX_STORAGE.m00 *= lenX; MATRIX_STORAGE.m01 *= lenX; MATRIX_STORAGE.m02 *= lenX;
         MATRIX_STORAGE.m10 *= lenY; MATRIX_STORAGE.m11 *= lenY; MATRIX_STORAGE.m12 *= lenY;
         MATRIX_STORAGE.m20 *= lenZ; MATRIX_STORAGE.m21 *= lenZ; MATRIX_STORAGE.m22 *= lenZ;
 		
 		float t;
         float tr = MATRIX_STORAGE.m00 + MATRIX_STORAGE.m11 + MATRIX_STORAGE.m22;
+        
         if (tr >= 0.0F) {
             t = (float)Math.sqrt(tr + 1.0F);
             w = t * 0.5F;
@@ -825,16 +835,24 @@ public class OpenMatrix4f {
 	}
 	
 	public Vec3f toScaleVector() {
+		return toScaleVector(null);
+	}
+	
+	public Vec3f toScaleVector(Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
 		VECTOR_STORAGE.set(this.m00, this.m01, this.m02);
-		float xScale = VECTOR_STORAGE.length();
+		dest.x = VECTOR_STORAGE.length();
 		
 		VECTOR_STORAGE.set(this.m10, this.m11, this.m12);
-		float yScale = VECTOR_STORAGE.length();
+		dest.y = VECTOR_STORAGE.length();
 		
 		VECTOR_STORAGE.set(this.m20, this.m21, this.m22);
-		float zScale = VECTOR_STORAGE.length();
+		dest.z = VECTOR_STORAGE.length();
 		
-		return new Vec3f(xScale, yScale, zScale);
+		return dest;
 	}
 	
 	public OpenMatrix4f removeTranslation() {

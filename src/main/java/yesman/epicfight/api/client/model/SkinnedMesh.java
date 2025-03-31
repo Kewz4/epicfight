@@ -528,7 +528,7 @@ public class SkinnedMesh extends StaticMesh<SkinnedMeshPart> {
 				}
 			}
 			
-			for (int i = 0; i < FINAL_POSES.length; i++) {
+			for (int i = 0; i < poses.length; i++) {
 				if (animationShaderInstance.getPoses(i) != null) {
 					animationShaderInstance.getPoses(i).set(OpenMatrix4f.exportToMojangMatrix(FINAL_POSES[i]));
 				}

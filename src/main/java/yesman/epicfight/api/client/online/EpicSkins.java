@@ -30,6 +30,7 @@ import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
@@ -83,7 +84,10 @@ public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float 
 							clothSimulator.runWhenPermanent(
 								  ClothSimulator.PLAYER_CLOAK
 								, (SoftBodyTranslatable)mesh
-								, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED)
+								, ClothSimulator.ClothObjectBuilder.create()
+									.parentJoint(Armatures.BIPED.get().torso)
+									.putAll("default".equals(playerpatch.getOriginal().getModelName())
+												? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED)
 								, () -> {
 									  return playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE)
 											 && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA;
@@ -123,7 +127,10 @@ public record EpicSkins(Supplier<ResourceLocation> cloakTexture, float r, float 
 			clothSimulator.runWhenPermanent(
 				  ClothSimulator.PLAYER_CLOAK
 				, Meshes.CAPE_DEFAULT
-				, ClothSimulator.ClothObjectBuilder.create().putAll("default".equals(playerpatch.getOriginal().getModelName()) ? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
+				, ClothSimulator.ClothObjectBuilder.create()
+					.parentJoint(Armatures.BIPED.get().torso)
+					.putAll("default".equals(playerpatch.getOriginal().getModelName())
+								? ClothColliderPresets.BIPED : ClothColliderPresets.BIPED_SLIM)
 				, () -> playerpatch.getOriginal().isCapeLoaded() && !playerpatch.getOriginal().isInvisible() && playerpatch.getOriginal().isModelPartShown(PlayerModelPart.CAPE) && playerpatch.getOriginal().getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA
 			);
 			
