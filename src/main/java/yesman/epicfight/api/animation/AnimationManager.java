@@ -35,7 +35,7 @@ import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
-import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.api.utils.InstantiateInvoker;
 import yesman.epicfight.gameasset.Animations;
@@ -65,7 +65,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static <T extends StaticAnimation> AnimationAccessor<T> byKey(String registryName) {
-		return byKey(ResourceLocation.tryParse(registryName));
+		return byKey(ResourceLocation.parse(registryName));
 	}
 	
 	public static <T extends StaticAnimation> AnimationAccessor<T> byKey(ResourceLocation registryName) {
@@ -105,10 +105,15 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static void readAnimationProperties(StaticAnimation animation) {
-		ResourceLocation dataLocation = getAnimationDataFileLocation(animation.getLocation());
+		ResourceLocation dataLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
+		ResourceLocation povLocation = getSubAnimationFileLocation(animation.getLocation(), AnimationSubFileReader.SUBFILE_POV_ANIMATION);
 		
 		getAnimationResourceManager().getResource(dataLocation).ifPresent((rs) -> {
-			ClientAnimationDataReader.readAndApply(animation, rs);
+			AnimationSubFileReader.readAndApply(animation, rs, AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
+		});
+		
+		getAnimationResourceManager().getResource(povLocation).ifPresent((rs) -> {
+			AnimationSubFileReader.readAndApply(animation, rs, AnimationSubFileReader.SUBFILE_POV_ANIMATION);
 		});
 	}
 	
@@ -147,7 +152,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		 * Load animations that are not registered by {@link AnimationRegistryEvent}
 		 * Reads from /assets folder in physical client, /datapack in physical server.
 		 */
-		objectIn.entrySet().stream().filter((entry) -> !registeredAnimation.contains(entry.getKey()) && !entry.getKey().getPath().contains("/data/"))
+		objectIn.entrySet().stream().filter((entry) -> !registeredAnimation.contains(entry.getKey()) && !entry.getKey().getPath().contains("/data/") && !entry.getKey().getPath().contains("/pov/"))
 									.sorted((e1, e2) -> e1.getKey().toString().compareTo(e2.getKey().toString()))
 									.forEach((entry) -> {
 										try {
@@ -176,14 +181,14 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		});
 	}
 	
-	public static ResourceLocation getAnimationDataFileLocation(ResourceLocation location) {
+	public static ResourceLocation getSubAnimationFileLocation(ResourceLocation location, AnimationSubFileReader.SubFileType<?> subFileType) {
 		int splitIdx = location.getPath().lastIndexOf('/');
 		
 		if (splitIdx < 0) {
 			splitIdx = 0;
 		}
 		
-		return ResourceLocation.tryBuild(location.getNamespace(), String.format("%s/data%s", location.getPath().substring(0, splitIdx), location.getPath().substring(splitIdx)));
+		return ResourceLocation.fromNamespaceAndPath(location.getNamespace(), String.format("%s/" + subFileType.getDirectory() + "%s", location.getPath().substring(0, splitIdx), location.getPath().substring(splitIdx)));
 	}
 	
 	public static void setServerResourceManager(ResourceManager pResourceManager) {
@@ -219,7 +224,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		if (mandatoryPack) {
 			for (CompoundTag tag : packet.getTags()) {
 				String invocationCommand = tag.getString("invoke_command");
-				ResourceLocation registryName = ResourceLocation.tryParse(tag.getString("registry_name"));
+				ResourceLocation registryName = ResourceLocation.parse(tag.getString("registry_name"));
 				int id = tag.getInt("id");
 						
 				if (this.animationByName.containsKey(registryName)) {
@@ -417,7 +422,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	
 	public static record AnimationBuilder(String namespace, Consumer<AnimationBuilder> task) {
 		public <T extends StaticAnimation> AnimationManager.AnimationAccessor<T> nextAccessor(String id, Function<AnimationManager.AnimationAccessor<T>, T> onLoad) {
-			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.tryBuild(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
+			AnimationAccessor<T> accessor = AnimationAccessorImpl.create(ResourceLocation.fromNamespaceAndPath(this.namespace, id), INSTANCE.animations.size() + 1, true, onLoad);
 			
 			INSTANCE.animationById.put(accessor.id(), accessor);
 			INSTANCE.animationByName.put(accessor.registryName(), accessor);

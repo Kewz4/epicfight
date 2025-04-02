@@ -86,7 +86,7 @@ public class StaticAnimation extends DynamicAnimation {
 	public StaticAnimation() {
 		super(0.0F, true);
 		
-		this.resourceLocation = ResourceLocation.tryBuild(EpicFightMod.MODID, "emtpy");
+		this.resourceLocation = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "emtpy");
 		this.armature = null;
 		this.filehash = StringUtil.EMPTY_STRING;
 	}
@@ -98,7 +98,7 @@ public class StaticAnimation extends DynamicAnimation {
 	public StaticAnimation(float transitionTime, boolean isRepeat, AnimationAccessor<? extends StaticAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, isRepeat);
 		
-		this.resourceLocation = ResourceLocation.tryBuild(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
+		this.resourceLocation = ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), "animmodels/animations/" + accessor.registryName().getPath() + ".json");
 		
 		this.armature = armature;
 		this.accessor = accessor;
@@ -109,8 +109,8 @@ public class StaticAnimation extends DynamicAnimation {
 	public StaticAnimation(float transitionTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, isRepeat);
 		
-		ResourceLocation registryName = ResourceLocation.tryParse(path);
-		this.resourceLocation = ResourceLocation.tryBuild(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
+		ResourceLocation registryName = ResourceLocation.parse(path);
+		this.resourceLocation = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "animmodels/animations/" + registryName.getPath() + ".json");
 		this.armature = armature;
 		this.filehash = StringUtil.EMPTY_STRING;
 	}
@@ -386,7 +386,7 @@ public class StaticAnimation extends DynamicAnimation {
 	
 	@SuppressWarnings("unchecked")
 	public <A extends StaticAnimation> A setResourceLocation(String namespace, String path) {
-		this.resourceLocation = ResourceLocation.tryBuild(namespace, "animmodels/animations/" + path + ".json");
+		this.resourceLocation = ResourceLocation.fromNamespaceAndPath(namespace, "animmodels/animations/" + path + ".json");
 		return (A)this;
 	}
 	

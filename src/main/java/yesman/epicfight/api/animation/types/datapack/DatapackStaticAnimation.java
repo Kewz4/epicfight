@@ -28,7 +28,7 @@ public class DatapackStaticAnimation extends StaticAnimation implements Datapack
 	public DatapackStaticAnimation(float convertTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, isRepeat, path, armature);
 		
-		((DatapackAnimation<DatapackStaticAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		((DatapackAnimation<DatapackStaticAnimation>)this).setRegistryName(ResourceLocation.parse(path));
 		this.accessor = this;
 	}
 	

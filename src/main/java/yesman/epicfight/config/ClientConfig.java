@@ -162,10 +162,10 @@ public class ClientConfig {
 		enableCosmetics = ENABLE_COSMETICS.get();
 		
 		battleModeSwitchingItems = BATTLE_MODE_SWITCHING_ITEMS.get().stream()
-				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemName)))
 				.collect(Collectors.toSet());
 		miningModeSwitchingItems = MINING_MODE_SWITCHING_ITEMS.get().stream()
-				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemName)))
 				.collect(Collectors.toSet());
 		
 		showTargetIndicator = SHOW_TARGET_INDICATOR.get();
@@ -215,14 +215,14 @@ public class ClientConfig {
 		if (enableCosmetics != ENABLE_COSMETICS.get()) ENABLE_COSMETICS.set(enableCosmetics);
 		
 		if (!battleModeSwitchingItems.equals(BATTLE_MODE_SWITCHING_ITEMS.get().stream()
-				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemName)))
 				.collect(Collectors.toSet()))
 		) {
 			BATTLE_MODE_SWITCHING_ITEMS.set(battleModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).collect(Collectors.toList()));
 		}
 		
 		if (!miningModeSwitchingItems.equals(MINING_MODE_SWITCHING_ITEMS.get().stream()
-				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(itemName)))
+				.map(itemName -> ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemName)))
 				.collect(Collectors.toSet()))
 		) {
 			MINING_MODE_SWITCHING_ITEMS.set(miningModeSwitchingItems.stream().map((item) -> ForgeRegistries.ITEMS.getKey(item).toString()).collect(Collectors.toList()));

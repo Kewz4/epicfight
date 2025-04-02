@@ -49,7 +49,7 @@ public record TrailInfo(
 			.r(0.75F)
 			.g(0.75F)
 			.b(0.75F)
-			.texture(ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
+			.texture(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
 			.type(EpicFightParticles.SWING_TRAIL.get())
 			.create();
 	
@@ -165,7 +165,7 @@ public record TrailInfo(
 		
 		if (trailObj.has("particle_type")) {
 			String particleTypeName = GsonHelper.getAsString(trailObj, "particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -234,7 +234,7 @@ public record TrailInfo(
 		
 		if (compoundTag.contains("particle_type")) {
 			String particleTypeName = compoundTag.getString("particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -344,7 +344,7 @@ public record TrailInfo(
 		}
 		
 		public TrailInfo.Builder texture(String texturePath) {
-			this.texturePath = new ResourceLocation(texturePath);
+			this.texturePath = ResourceLocation.parse(texturePath);
 			return this;
 		}
 		

@@ -15,7 +15,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class AirBurstParticle extends TexturedCustomModelParticle {
-	public static final ResourceLocation AIR_BURST_PARTICLE = new ResourceLocation(EpicFightMod.MODID, "textures/particle/air_burst.png");
+	public static final ResourceLocation AIR_BURST_PARTICLE = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/particle/air_burst.png");
 	
 	public AirBurstParticle(ClientLevel level, double x, double y, double z, double xd, double yd, double zd, AssetAccessor<ClassicMesh> particleMesh, ResourceLocation texture) {
 		super(level, x, y, z, xd, yd, zd, particleMesh, texture);

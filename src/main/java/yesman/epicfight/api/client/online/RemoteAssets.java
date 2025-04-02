@@ -68,7 +68,7 @@ public class RemoteAssets {
 	}
 	
 	public synchronized ResourceLocation getRemoteTexture(String fileName) {
-		ResourceLocation textureLocation = ResourceLocation.tryBuild(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
+		ResourceLocation textureLocation = ResourceLocation.fromNamespaceAndPath(EpicFightMod.EPICSKINS_MODID, "textures/remote/" + fileName);
 		AbstractTexture texture = TEXTURE_MANAGER.getTexture(textureLocation, MissingTextureAtlasSprite.getTexture());
 		
 		if (texture == MissingTextureAtlasSprite.getTexture()) {

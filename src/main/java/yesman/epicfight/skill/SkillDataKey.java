@@ -20,8 +20,8 @@ import yesman.epicfight.main.EpicFightMod;
 
 public class SkillDataKey<T> {
 	private static final HashMultimap<Class<?>, SkillDataKey<?>> SKILL_DATA_KEYS = HashMultimap.create();
-	private static final ResourceLocation CLASS_TO_DATA_KEYS = ResourceLocation.tryBuild(EpicFightMod.MODID, "classtodatakeys");
-	private static final ResourceLocation DATA_KEY_TO_ID = ResourceLocation.tryBuild(EpicFightMod.MODID, "datakeytoid");
+	private static final ResourceLocation CLASS_TO_DATA_KEYS = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "classtodatakeys");
+	private static final ResourceLocation DATA_KEY_TO_ID = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "datakeytoid");
 	
 	private static class SkillDataKeyCallbacks implements IForgeRegistry.BakeCallback<SkillDataKey<?>>, IForgeRegistry.CreateCallback<SkillDataKey<?>>, IForgeRegistry.ClearCallback<SkillDataKey<?>> {
 		static final SkillDataKeyCallbacks INSTANCE = new SkillDataKeyCallbacks();

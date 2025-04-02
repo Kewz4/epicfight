@@ -503,9 +503,9 @@ public class Animations {
 					return dot < 0.0D ? 1 : 0;
 				},
 				accessor,
-				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_forward"), Armatures.BIPED)
+				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/creative_fly_forward"), Armatures.BIPED)
 					.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.FLYING_CORRECTION),
-				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/creative_fly_backward"), Armatures.BIPED)
+				new DirectStaticAnimation(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/creative_fly_backward"), Armatures.BIPED)
 					.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.FLYING_CORRECTION2)
 			)
 		);
@@ -549,8 +549,8 @@ public class Animations {
 		
 		BIPED_DIG = builder.nextAccessor("biped/living/dig", (accessor) ->
 			new SelectiveAnimation((entitypatch) -> entitypatch.getOriginal().swingingArm == InteractionHand.OFF_HAND ? 1 : 0, accessor,
-									new DirectStaticAnimation(0.1F, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
-									new DirectStaticAnimation(0.1F, true, ResourceLocation.tryBuild(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)));
+									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
+									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)));
 		
 		BIPED_BOW_AIM = builder.nextAccessor("biped/living/bow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
 		BIPED_BOW_SHOT = builder.nextAccessor("biped/living/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));

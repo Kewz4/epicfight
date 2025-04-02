@@ -133,8 +133,8 @@ public class ImportModelScreen extends Screen {
 			userMeshes.clear();
 			userArmatures.clear();
 			
-			this.userMeshes.forEach((packEntry) -> userMeshes.put(ResourceLocation.tryParse(packEntry.getKey()), packEntry.getValue()));
-			this.userArmatures.forEach((packEntry) -> userArmatures.put(ResourceLocation.tryParse(packEntry.getKey()), packEntry.getValue()));
+			this.userMeshes.forEach((packEntry) -> userMeshes.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
+			this.userArmatures.forEach((packEntry) -> userArmatures.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
 			
 			this.onClose();
 		}).pos(this.width / 2 - 162, this.height - 26).size(160, 21).build());
@@ -177,7 +177,7 @@ public class ImportModelScreen extends Screen {
 						stream = new FileInputStream(file);
 						
 						String modelPath = modid + ":" + file.getName().replace(".json", "");
-						ResourceLocation modelId = ResourceLocation.tryParse(modelPath);
+						ResourceLocation modelId = ResourceLocation.parse(modelPath);
 						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, modelId);
 						SkinnedMesh mesh = jsonLoader.loadSkinnedMesh(SkinnedMesh::new);
 						Armature armature = jsonLoader.loadArmature(Armature::new);

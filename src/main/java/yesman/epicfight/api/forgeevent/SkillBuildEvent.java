@@ -46,7 +46,7 @@ public class SkillBuildEvent extends Event implements IModBusEvent {
 		}
 		
 		public <S extends Skill, B extends SkillBuilder<S>> S build(String name, Function<B, S> constructor, B builder) {
-			final ResourceLocation registryName = new ResourceLocation(this.modid, name);
+			final ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(this.modid, name);
 			builder.setRegistryName(registryName);
 			
 			final S skill = constructor.apply(builder);

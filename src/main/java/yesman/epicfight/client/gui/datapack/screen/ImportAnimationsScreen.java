@@ -843,7 +843,7 @@ public class ImportAnimationsScreen extends Screen {
 					try {
 						File file = path.toFile();
 						stream = new FileInputStream(file);
-						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, new ResourceLocation(modid, file.getName()));
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, ResourceLocation.fromNamespaceAndPath(modid, file.getName()));
 						String armatureName = this.modelPreviewer.getArmature().toString();
 						armatureName = armatureName.substring(armatureName.indexOf(":") + 1);
 						

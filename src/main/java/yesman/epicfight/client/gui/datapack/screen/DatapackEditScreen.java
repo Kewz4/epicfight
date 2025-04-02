@@ -87,7 +87,7 @@ import yesman.epicfight.api.animation.types.datapack.EditorAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.asset.SelfAccessor;
-import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SkinnedMesh;
@@ -141,7 +141,7 @@ public class DatapackEditScreen extends Screen {
 	}
 	
 	public static AssetAccessor<? extends StaticAnimation> animationByKey(String path) {
-		ResourceLocation rl = ResourceLocation.tryParse(path);
+		ResourceLocation rl = ResourceLocation.parse(path);
 		
 		if (workingPackScreen.userAnimations.containsKey(rl)) {
 			return workingPackScreen.userAnimations.get(rl).getValue();
@@ -151,7 +151,7 @@ public class DatapackEditScreen extends Screen {
 	}
 	
 	public static AssetAccessor<? extends SkinnedMesh> getMesh(String path) {
-		ResourceLocation rl = ResourceLocation.tryParse(path);
+		ResourceLocation rl = ResourceLocation.parse(path);
 		
 		if (workingPackScreen != null && workingPackScreen.userMeshes.containsKey(rl)) {
 			return workingPackScreen.userMeshes.get(rl);
@@ -161,7 +161,7 @@ public class DatapackEditScreen extends Screen {
 	}
 	
 	public static AssetAccessor<? extends Armature> getArmature(String path) {
-		ResourceLocation rl = ResourceLocation.tryParse(path);
+		ResourceLocation rl = ResourceLocation.parse(path);
 		
 		if (workingPackScreen != null && workingPackScreen.userArmatures.containsKey(rl)) {
 			return workingPackScreen.userArmatures.get(rl);
@@ -171,7 +171,7 @@ public class DatapackEditScreen extends Screen {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> getWeaponType(String typeName) {
-		ResourceLocation typeId = ResourceLocation.tryParse(typeName);
+		ResourceLocation typeId = ResourceLocation.parse(typeName);
 		
 		if (workingPackScreen.userWeaponTypes.containsKey(typeId)) {
 			return workingPackScreen.userWeaponTypes.get(typeId);
@@ -351,7 +351,7 @@ public class DatapackEditScreen extends Screen {
 						for (Path path : filePath) {
 							try {
 								InputStream stream = Files.newInputStream(path);
-								ResourceLocation registryName = new ResourceLocation(modid, path.getFileName().toString().replaceAll(".json", ""));
+								ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(modid, path.getFileName().toString().replaceAll(".json", ""));
 								
 								if (this.tabManager.getCurrentTab() == this.weaponTypeTab) {
 									this.weaponTypeTab.importJson(registryName, stream);
@@ -556,7 +556,7 @@ public class DatapackEditScreen extends Screen {
 					JsonReader jsonReader = new JsonReader(new InputStreamReader(stream.get(), StandardCharsets.UTF_8));
 					jsonReader.setLenient(true);
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-					ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
+					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/", "").replaceAll(".json", ""));
 					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
 					SkinnedMesh mesh = null;
 					Armature armature = null;
@@ -591,8 +591,8 @@ public class DatapackEditScreen extends Screen {
 					jsonReader.setLenient(true);
 					
 					JsonObject jsonObject = Streams.parse(jsonReader).getAsJsonObject();
-					ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/animations/", "").replaceAll(".json", ""));
-					ResourceLocation datapath = AnimationManager.getAnimationDataFileLocation(resourceLocation);
+					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll("animmodels/animations/", "").replaceAll(".json", ""));
+					ResourceLocation datapath = AnimationManager.getSubAnimationFileLocation(resourceLocation, AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
 					IoSupplier<InputStream> streamSupplier = packResources.getResource(PackType.CLIENT_RESOURCES, datapath);
 					JsonElement constructorElement = jsonObject.getAsJsonObject().get("constructor");
 					
@@ -617,7 +617,8 @@ public class DatapackEditScreen extends Screen {
 					}
 					
 					if (streamSupplier != null) {
-						ClientAnimationDataReader.readAndApply(animation.get(), streamSupplier.get());
+						AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY.apply(streamSupplier.get(), animation.get());
+						//AnimationSubFileReader.readAndApplyInputStream(animation.get(), streamSupplier.get());
 					}
 					
 					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);
@@ -667,7 +668,7 @@ public class DatapackEditScreen extends Screen {
 		
 		for (Map.Entry<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> entry : this.userAnimations.entrySet()) {
 			String exportPath = String.format("assets/%s/animmodels/animations/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath());
-			ResourceLocation clientData = AnimationManager.getAnimationDataFileLocation(new ResourceLocation(entry.getKey().getNamespace(), exportPath));
+			ResourceLocation clientData = AnimationManager.getSubAnimationFileLocation(ResourceLocation.fromNamespaceAndPath(entry.getKey().getNamespace(), exportPath), AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY);
 			ZipEntry asResource = new ZipEntry(exportPath);
 			ZipEntry asResourceClientData = new ZipEntry(clientData.getPath());
 			ZipEntry asData = new ZipEntry(String.format("data/%s/animmodels/animations/%s.json", entry.getKey().getNamespace(), entry.getKey().getPath()));
@@ -743,21 +744,21 @@ public class DatapackEditScreen extends Screen {
 									.rowpositionChanged(this::packGridRowpositionChanged)
 									.addColumn(Grid.editbox("pack_item")
 													.editWidgetCreated((editbox) -> editbox.setFilter((str) -> ResourceLocation.isValidResourceLocation(str)))
-													.valueChanged((event) -> this.packList.get(event.rowposition).setPackKey(new ResourceLocation(event.postValue)))
+													.valueChanged((event) -> this.packList.get(event.rowposition).setPackKey(ResourceLocation.parse(event.postValue)))
 									.defaultVal(EpicFightMod.MODID + ":").editable(registry == null ? true : false).width(180))
 									.pressAdd((grid, button) -> {
 										if (registry != null) {
 											DatapackEditScreen.this.minecraft.setScreen(new SelectFromRegistryScreen<>(DatapackEditScreen.this, registry, (registryName, selItem) -> {
 												grid.setValueChangeEnabled(false);
 												int rowposition = grid.addRowWithDefaultValues("pack_item", registryName);
-												this.packList.add(rowposition, PackEntry.of(new ResourceLocation(registryName), CompoundTag::new));
+												this.packList.add(rowposition, PackEntry.of(ResourceLocation.parse(registryName), CompoundTag::new));
 												grid.setGridFocus(rowposition, "pack_item");
 												grid.setValueChangeEnabled(true);
 											}, (registryName, selItem) -> {}, filter));
 										} else {
 											grid.setValueChangeEnabled(false);
 											int rowposition = grid.addRowWithDefaultValues("pack_item", EpicFightMod.MODID + ":");
-											this.packList.add(rowposition, PackEntry.of(new ResourceLocation(EpicFightMod.MODID + ":"), CompoundTag::new));
+											this.packList.add(rowposition, PackEntry.of(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, ""), CompoundTag::new));
 											grid.setGridFocus(rowposition, "pack_item");
 											grid.setValueChangeEnabled(true);
 										}
@@ -859,9 +860,9 @@ public class DatapackEditScreen extends Screen {
 					
 					this.setDataBindingComponenets(new Object[] {
 						WeaponCategory.ENUM_MANAGER.get(tag.getString("category")),
-						ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(tag.getString("hit_particle"))),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("hit_sound"))),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("swing_sound"))),
+						ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(tag.getString("hit_particle"))),
+						ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("hit_sound"))),
+						ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("swing_sound"))),
 						tag.contains("usable_in_offhand") ? tag.getBoolean("usable_in_offhand") : true,
 						null,
 						ParseUtil.nullOrToString(colliderTag.get("number"), Tag::getAsString),
@@ -1177,7 +1178,7 @@ public class DatapackEditScreen extends Screen {
 			packResources.getNamespaces(PackType.SERVER_DATA).stream().distinct().forEach((namespace) -> {
 				packResources.listResources(PackType.SERVER_DATA, namespace, this.directory, (resourceLocation, streamSupplier) -> {
 					try {
-						ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(this.directory + "/", "").replaceAll(".json", ""));
+						ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(this.directory + "/", "").replaceAll(".json", ""));
 						this.importJson(rl, streamSupplier.get());
 					} catch (Exception e) {
 						EpicFightMod.LOGGER.info("Failed to import " + resourceLocation + ": " + e.getMessage());
@@ -1299,7 +1300,7 @@ public class DatapackEditScreen extends Screen {
 						ParseUtil.nullParam(trailTag.get("lifetime")),
 						ParseUtil.nullParam(trailTag.get("interpolations")),
 						ParseUtil.nullParam(trailTag.getString("texture_path")),
-						ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(trailTag.getString("particle_type")))
+						ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(trailTag.getString("particle_type")))
 					});
 					this.itemTypeCombo._setResponder(this.responder);
 				} else {
@@ -1360,7 +1361,7 @@ public class DatapackEditScreen extends Screen {
 							ParseUtil.nullParam(trailTag.get("lifetime")),
 							ParseUtil.nullParam(trailTag.get("interpolations")),
 							ParseUtil.nullParam(trailTag.getString("texture_path")),
-							ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(trailTag.getString("particle_type")))
+							ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(trailTag.getString("particle_type")))
 						});
 						ItemCapabilityTab.this.itemTypeCombo._setResponder(ItemCapabilityTab.this.responder);
 					} else {
@@ -1885,7 +1886,7 @@ public class DatapackEditScreen extends Screen {
 				final ResizableEditBox texturePath = new ResizableEditBox(font, 0, 15, 0, 15, Component.translatable("datapack_edit.item_capability.trail.end_pos.z"), HorizontalSizing.LEFT_RIGHT, null);
 				texturePath.setResponder((input) -> {
 					CompoundTag trailTag = ParseUtil.getOrDefaultTag(this.packList.get(this.packListGrid.getRowposition()).getValue(), "trail", new CompoundTag()); 
-					trailTag.putString("texture_path", new ResourceLocation(input).toString());
+					trailTag.putString("texture_path", ResourceLocation.parse(input).toString());
 					
 					TrailInfo trailInfo = TrailInfo.deserialize(trailTag);
 					this.modelPreviewer.setTrailInfo(trailInfo);
@@ -1936,7 +1937,7 @@ public class DatapackEditScreen extends Screen {
 		public void packGridRowpositionChanged(int rowposition, Map<String, Object> values) {
 			CompoundTag tag = this.packList.get(rowposition).getValue();
 			this.inputComponentsList.importTag(tag);
-			ResourceLocation rl = new ResourceLocation(ParseUtil.nullParam(values.get("pack_item")));
+			ResourceLocation rl = ResourceLocation.parse(ParseUtil.nullParam(values.get("pack_item")));
 			
 			if (this.registry.containsKey(rl)) {
 				this.modelPreviewer.setItemToRender(this.registry.getValue(rl));
@@ -2004,13 +2005,13 @@ public class DatapackEditScreen extends Screen {
 					}
 					
 					try {
-						ResourceLocation registryName = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/%s/", this.directory, ItemType.WEAPON.directoryName), "")
+						ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/%s/", this.directory, ItemType.WEAPON.directoryName), "")
 																													.replaceAll(String.format("%s/%s/", this.directory, ItemType.ARMOR.directoryName), "").replaceAll(".json", ""));
 						
 						ItemType itemType = resourceLocation.getPath().contains(ItemType.WEAPON.directoryName) ? ItemType.WEAPON : ItemType.ARMOR;
 						this.importJson(registryName, itemType, streamSupplier.get());
 						
-						ResourceLocation itemSkin = new ResourceLocation(registryName.getNamespace(), "item_skins/" + registryName.getPath() + ".json");
+						ResourceLocation itemSkin = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "item_skins/" + registryName.getPath() + ".json");
 						IoSupplier<InputStream> itemSkinStreamSupplier = packResources.getResource(PackType.CLIENT_RESOURCES, itemSkin);
 						
 						if (itemSkinStreamSupplier != null) {
@@ -2610,12 +2611,12 @@ public class DatapackEditScreen extends Screen {
 				EntityType.byString(tag.getString("preset")).orElse(null),
 				DatapackEditScreen.getMesh(tag.getString("model")),
 				DatapackEditScreen.getArmature(tag.getString("armature")),
-				StringUtil.isNullOrEmpty(tag.getString("renderer")) ? null : ResourceLocation.tryParse(tag.getString("renderer")),
+				StringUtil.isNullOrEmpty(tag.getString("renderer")) ? null : ResourceLocation.parse(tag.getString("renderer")),
 				tag.getBoolean("isHumanoid"),
 				ParseUtil.nullOrApply(tag.get("faction"), (jsonElement) -> Faction.valueOf(jsonElement.getAsString().toUpperCase(Locale.ROOT))),
-				ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("swing_sound"))),
-				ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("hit_sound"))),
-				ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(tag.getString("hit_particle"))),
+				ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("swing_sound"))),
+				ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("hit_sound"))),
+				ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(tag.getString("hit_particle"))),
 				attributePackImporter,
 				livingmotionPackImporter,
 				stunPackImporter
@@ -2653,7 +2654,7 @@ public class DatapackEditScreen extends Screen {
 		public void importEntries(PackResources packResources) {
 			packResources.getNamespaces(PackType.SERVER_DATA).stream().distinct().forEach((namespace) -> {
 				packResources.listResources(PackType.SERVER_DATA, namespace, this.directory, (resourceLocation, streamSupplier) -> {
-					ResourceLocation rl = new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/", this.directory), "").replaceAll(".json", ""));
+					ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(resourceLocation.getNamespace(), resourceLocation.getPath().replaceAll(String.format("%s/", this.directory), "").replaceAll(".json", ""));
 					
 					try {
 						this.importJson(rl, streamSupplier.get());

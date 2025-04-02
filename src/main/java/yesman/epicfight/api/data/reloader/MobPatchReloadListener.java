@@ -97,7 +97,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		for (Map.Entry<ResourceLocation, JsonElement> entry : objectIn.entrySet()) {
 			ResourceLocation rl = entry.getKey();
 			String pathString = rl.getPath();
-			ResourceLocation registryName = ResourceLocation.tryBuild(rl.getNamespace(), pathString);
+			ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), pathString);
 			
 			if (!ForgeRegistries.ENTITY_TYPES.containsKey(registryName)) {
 				new NoSuchElementException("Mob Patch Exception: No Entity named " + registryName).printStackTrace();
@@ -306,8 +306,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			boolean humanoid = tag.getBoolean("isHumanoid");
 			CustomMobPatchProvider provider = humanoid ? new CustomHumanoidMobPatchProvider() : new CustomMobPatchProvider();
 			provider.attributeValues = deserializeAttributes(tag.getCompound("attributes"));
-			ResourceLocation modelLocation = ResourceLocation.tryParse(tag.getString("model"));
-			ResourceLocation armatureId = ResourceLocation.tryParse(tag.getString("armature"));
+			ResourceLocation modelLocation = ResourceLocation.parse(tag.getString("model"));
+			ResourceLocation armatureId = ResourceLocation.parse(tag.getString("armature"));
 			
 			if (EpicFightSharedConstants.isPhysicalClient()) {
 				Meshes.getOrCreate(modelLocation, (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(humanoid ? SkinnedMesh::new : HumanoidMesh::new));
@@ -320,15 +320,15 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			provider.scale = tag.getCompound("attributes").contains("scale") ? (float)tag.getCompound("attributes").getDouble("scale") : 1.0F;
 			
 			if (tag.contains("swing_sound")) {
-				provider.swingSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("swing_sound")));
+				provider.swingSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("swing_sound")));
 			}
 			
 			if (tag.contains("hit_sound")) {
-				provider.hitSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.tryParse(tag.getString("hit_sound")));
+				provider.hitSound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("hit_sound")));
 			}
 			
 			if (tag.contains("hit_particle")) {
-				provider.hitParticle = (HitParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(tag.getString("hit_particle")));
+				provider.hitParticle = (HitParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(tag.getString("hit_particle")));
 			}
 			
 			if (!clientSide) {
@@ -485,9 +485,9 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		ResourceLocation rl;
 		
 		if (type.contains(":")) {
-			rl = ResourceLocation.tryParse(type);
+			rl = ResourceLocation.parse(type);
 		} else {
-			rl = ResourceLocation.tryBuild(EpicFightMod.MODID, type);
+			rl = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, type);
 		}
 		
 		Supplier<Condition<T>> predicateProvider = EpicFightConditions.getConditionOrNull(rl);
@@ -555,7 +555,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 				disabled = tag.getBoolean("disabled");
 			}
 			
-			EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(tag.getString("id")));
+			EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.parse(tag.getString("id")));
 			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, true, Minecraft.getInstance().getResourceManager()));
 			EntityPatchProvider.putCustomEntityPatch(entityType, (entity) -> () -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			
@@ -563,7 +563,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 				if (tag.contains("preset")) {
 					Armatures.registerEntityTypeArmatureByPreset(entityType, tag.getString("preset"));
 				} else {
-					ResourceLocation armatureLocation = ResourceLocation.tryParse(tag.getString("armature"));
+					ResourceLocation armatureLocation = ResourceLocation.parse(tag.getString("armature"));
 					boolean humanoid = tag.getBoolean("isHumanoid");
 					AssetAccessor<? extends Armature> armature = Armatures.getOrCreate(armatureLocation, humanoid ? Armature::new : HumanoidArmature::new);
 					Armatures.registerEntityTypeArmature(entityType, armature);

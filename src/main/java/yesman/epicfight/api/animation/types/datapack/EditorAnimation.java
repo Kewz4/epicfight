@@ -29,7 +29,7 @@ import yesman.epicfight.api.animation.types.LongHitAnimation;
 import yesman.epicfight.api.animation.types.MovementAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.client.animation.ClientAnimationDataReader;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
@@ -46,7 +46,7 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	private JsonObject properties = new JsonObject();
 	
 	public EditorAnimation(String path, AssetAccessor<? extends Armature> armature, AnimationClip clip, JsonArray rawAnimation) {
-		super(new ResourceLocation(""), 0.0F, false, "", armature);
+		super(ResourceLocation.withDefaultNamespace(""), 0.0F, false, "", armature);
 		
 		this.animationClip = clip;
 		this.rawAnimation = rawAnimation;
@@ -104,7 +104,7 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 	
 	@Override
 	public ResourceLocation getRegistryName() {
-		return new ResourceLocation((String)this.constructorParams.get("path"));
+		return ResourceLocation.parse((String)this.constructorParams.get("path"));
 	}
 	
 	@Override
@@ -215,8 +215,7 @@ public class EditorAnimation extends StaticAnimation implements AnimationAccesso
 			animation.setAnimationClip(this.animationClip);
 			animation.setCreator(this);
 			
-			ClientAnimationDataReader clientDataReader = ClientAnimationDataReader.DESERIALIZER.deserialize(this.properties, null, null);
-			clientDataReader.applyClientData(animation.get());
+			AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY.apply(this.properties, animation.get());
 			
 			return animation;
 		} catch (IllegalArgumentException e) {

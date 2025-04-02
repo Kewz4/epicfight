@@ -181,7 +181,7 @@ public class JsonAssetLoader {
 	
 	@OnlyIn(Dist.CLIENT)
 	public ResourceLocation getParent() {
-		return this.rootJson.has("parent") ? ResourceLocation.tryParse(this.rootJson.get("parent").getAsString()) : null;
+		return this.rootJson.has("parent") ? ResourceLocation.parse(this.rootJson.get("parent").getAsString()) : null;
 	}
 	
 	private static final float DEFAULT_PARTICLE_MASS = 0.16F;

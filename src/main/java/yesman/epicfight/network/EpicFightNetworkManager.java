@@ -14,7 +14,7 @@ import yesman.epicfight.network.server.*;
 
 public class EpicFightNetworkManager {
 	private static final String PROTOCOL_VERSION = "1";
-	public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(EpicFightMod.MODID, "network_manager"),
+	public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "network_manager"),
 			() -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 
 	public static <MSG> void sendToServer(MSG message) {

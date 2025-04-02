@@ -20,7 +20,7 @@ import yesman.epicfight.data.conditions.itemstack.TagValueCondition;
 import yesman.epicfight.main.EpicFightMod;
 
 public class EpicFightConditions {
-	public static final DeferredRegister<Supplier<Condition<?>>> CONDITIONS = DeferredRegister.create(new ResourceLocation(EpicFightMod.MODID, "conditions"), EpicFightMod.MODID);
+	public static final DeferredRegister<Supplier<Condition<?>>> CONDITIONS = DeferredRegister.create(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "conditions"), EpicFightMod.MODID);
 	public static final Supplier<IForgeRegistry<Supplier<Condition<?>>>> REGISTRY = CONDITIONS.makeRegistry(RegistryBuilder::new);
 	
 	public static <T extends Condition<?>> Supplier<T> getConditionOrThrow(ResourceLocation key) throws NoSuchElementException, ClassCastException {
@@ -37,18 +37,18 @@ public class EpicFightConditions {
 	}
 	
 	//EntityPatch conditions
-	public static final RegistryObject<Supplier<Condition<?>>> OFFHAND_ITEM_CATEGORY = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "offhand_item_category").getPath(), () -> OffhandItemCategory::new);
-	public static final RegistryObject<Supplier<Condition<?>>> PLAYER_SKILL_ACTIVATED = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "skill_active").getPath(), () -> PlayerSkillActivated::new);
-	public static final RegistryObject<Supplier<Condition<?>>> PLAYER_NAME = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "player_name").getPath(), () -> PlayerName::new);
-	public static final RegistryObject<Supplier<Condition<?>>> HEALTH_POINT = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "health").getPath(), () -> HealthPoint::new);
-	public static final RegistryObject<Supplier<Condition<?>>> RANDOM = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "random_chance").getPath(), () -> RandomChance::new);
-	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_DISTANCE = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "within_distance").getPath(), () -> TargetInDistance::new);
-	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_EYE_HEIGHT = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "within_eye_height").getPath(), () -> TargetInEyeHeight::new);
-	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_POV = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "within_angle").getPath(), () -> TargetInPov::new);
-	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_POV_HORIZONTAL = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "within_angle_horizontal").getPath(), () -> TargetInPov.TargetInPovHorizontal::new);
+	public static final RegistryObject<Supplier<Condition<?>>> OFFHAND_ITEM_CATEGORY = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "offhand_item_category").getPath(), () -> OffhandItemCategory::new);
+	public static final RegistryObject<Supplier<Condition<?>>> PLAYER_SKILL_ACTIVATED = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill_active").getPath(), () -> PlayerSkillActivated::new);
+	public static final RegistryObject<Supplier<Condition<?>>> PLAYER_NAME = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "player_name").getPath(), () -> PlayerName::new);
+	public static final RegistryObject<Supplier<Condition<?>>> HEALTH_POINT = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "health").getPath(), () -> HealthPoint::new);
+	public static final RegistryObject<Supplier<Condition<?>>> RANDOM = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "random_chance").getPath(), () -> RandomChance::new);
+	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_DISTANCE = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "within_distance").getPath(), () -> TargetInDistance::new);
+	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_EYE_HEIGHT = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "within_eye_height").getPath(), () -> TargetInEyeHeight::new);
+	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_POV = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "within_angle").getPath(), () -> TargetInPov::new);
+	public static final RegistryObject<Supplier<Condition<?>>> TARGET_IN_POV_HORIZONTAL = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "within_angle_horizontal").getPath(), () -> TargetInPov.TargetInPovHorizontal::new);
 	
 	//Itemstack conditions
-	public static final RegistryObject<Supplier<Condition<?>>> TAG_VALUE = CONDITIONS.register(new ResourceLocation(EpicFightMod.MODID, "tag_value").getPath(), () -> TagValueCondition::new);
+	public static final RegistryObject<Supplier<Condition<?>>> TAG_VALUE = CONDITIONS.register(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "tag_value").getPath(), () -> TagValueCondition::new);
 	
 	@Deprecated
 	public static String convertOldNames(String string) {

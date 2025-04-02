@@ -6,13 +6,9 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.skill.SkillCategories;
 
 public class JEIEpicFightSkillsCategory implements IRecipeCategory<SkillCategories> {
-	public static final ResourceLocation UID = new ResourceLocation(EpicFightMod.MODID, "skills");
-	
 	@Override
 	public RecipeType<SkillCategories> getRecipeType() {
 		return null;

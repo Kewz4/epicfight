@@ -39,7 +39,7 @@ public class UISetupScreen extends Screen {
 		
 		//Weapon innate icon
 		this.addRenderableWidget(new UIComponent(weaponInnateX, weaponInnateY, weaponInnateXHandler, weaponInnateYHandler, weaponInnateBaseXHandler, weaponInnateBaseYHandler
-			, 32, 32, 0, 0, 1, 1, 1, 1, 0, 163, 184, this, ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/gui/skills/sweeping_edge.png")
+			, 32, 32, 0, 0, 1, 1, 1, 1, 0, 163, 184, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/sweeping_edge.png")
 		));
 
 		int staminaX = ClientConfig.staminaBarBaseX.positionGetter.apply(this.width, ClientConfig.staminaBarX);
@@ -51,7 +51,7 @@ public class UISetupScreen extends Screen {
 		
 		//Stamina bar
 		this.addRenderableWidget(new UIComponent(staminaX, staminaY, staminaBarXHandler, staminaBarYHandler, staminaBarBaseXHandler, staminaBarBaseYHandler
-			, 118, 4, 2, 38, 237, 9, 256, 256, 255, 128, 64, this, ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/gui/battle_icons.png")
+			, 118, 4, 2, 38, 237, 9, 256, 256, 255, 128, 64, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/battle_icons.png")
 		));
 
 		int chargingBarX = ClientConfig.chargingBarBaseX.positionGetter.apply(this.width, ClientConfig.chargingBarX);
@@ -63,7 +63,7 @@ public class UISetupScreen extends Screen {
 		
 		//Charging bar
 		this.addRenderableWidget(new UIComponent(chargingBarX, chargingBarY, chargingBarXHandler, chargingBarYHandler, chargingBarBaseXHandler, chargingBarBaseYHandler
-			, 238, 13, 1, 71, 237, 13, 256, 256, 255, 255, 255, this, ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/gui/battle_icons.png")
+			, 238, 13, 1, 71, 237, 13, 256, 256, 255, 255, 255, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/battle_icons.png")
 		));
 
 		int passiveX = ClientConfig.passiveBaseX.positionGetter.apply(this.width, ClientConfig.passiveX);
@@ -76,7 +76,7 @@ public class UISetupScreen extends Screen {
 		
 		//Passive skill icons
 		this.addRenderableWidget(new PassiveUIComponent(passiveX, passiveY, passiveXHandler, passiveYHandler, passiveBaseXHandler, passiveBaseYHandler, passiveAlignDirectionHandler
-			, 24, 24, 0, 0, 1, 1, 1, 1, 255, 255, 255, this, ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/gui/skills/guard.png"), ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/gui/skills/berserker.png")
+			, 24, 24, 0, 0, 1, 1, 1, 1, 255, 255, 255, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/guard.png"), ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/berserker.png")
 		));
 	}
 

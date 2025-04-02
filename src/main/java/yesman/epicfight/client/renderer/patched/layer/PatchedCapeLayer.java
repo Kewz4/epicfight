@@ -37,7 +37,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CapeLayer> {
-	public static final ResourceLocation DUMMY_CLOAK_TEXTURE = ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/entity/cloak.png");
+	public static final ResourceLocation DUMMY_CLOAK_TEXTURE = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/entity/cloak.png");
 	
 	@SuppressWarnings("unchecked")
 	@Override

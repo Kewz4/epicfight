@@ -40,7 +40,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
-	public static final ResourceLocation WHITE = ResourceLocation.tryBuild(EpicFightMod.MODID, "textures/particle/white.png");
+	public static final ResourceLocation WHITE = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/particle/white.png");
 	
 	private final OpenMatrix4f[] poseMatrices;
 	private final Matrix4f modelMatrix;

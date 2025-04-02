@@ -322,7 +322,7 @@ public class EpicFightRenderTypes extends RenderType {
 			
 			try {
 				ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-				ResourceLocation shaderLocation = ResourceLocation.tryParse(shaderInstance.getName());
+				ResourceLocation shaderLocation = ResourceLocation.parse(shaderInstance.getName());
 				shaderParser = new ShaderParser(resourceManager, shaderInstance.getName());
 				boolean hasNormalAttribute = shaderParser.hasAttribute("Normal");
 				boolean isEyesShader = "rendertype_eyes".equals(shaderLocation.getPath());
@@ -397,7 +397,7 @@ public class EpicFightRenderTypes extends RenderType {
 				shaderParser.addToResourceCache(cache);
 				GameRenderer.ResourceCache resourceProvider = new GameRenderer.ResourceCache(resourceManager, cache);
 				
-				return new VanillaAnimationShader(resourceProvider, ResourceLocation.tryBuild(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
+				return new VanillaAnimationShader(resourceProvider, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
 			} catch (IOException | ShaderParsingException e) {
 				e.printStackTrace();
 				

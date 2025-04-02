@@ -219,7 +219,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 			return ARMOR_MODELS.get(registryName);
 		} else {
 			ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-			ResourceLocation rl = new ResourceLocation(ForgeRegistries.ITEMS.getKey(armorItem).getNamespace(), "animmodels/armor/" + ForgeRegistries.ITEMS.getKey(armorItem).getPath() + ".json");
+			ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(ForgeRegistries.ITEMS.getKey(armorItem).getNamespace(), "animmodels/armor/" + ForgeRegistries.ITEMS.getKey(armorItem).getPath() + ".json");
 			SkinnedMesh animatedMesh = null;
 			
 			if (resourceManager.getResource(rl).isPresent()){
@@ -313,7 +313,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 		if (resourcelocation2 != null) {
 			return resourcelocation2;
 		} else if (!EPICFIGHT_OVERRIDING_TEXTURES.containsKey(s2)) {
-			resourcelocation2 = new ResourceLocation(s2);
+			resourcelocation2 = ResourceLocation.parse(s2);
 			ResourceManager rm = Minecraft.getInstance().getResourceManager();
 			if (rm.getResource(resourcelocation2).isPresent()){
 				EPICFIGHT_OVERRIDING_TEXTURES.put(s2, resourcelocation2);
@@ -339,7 +339,7 @@ public class WearableItemLayer<E extends LivingEntity, T extends LivingEntityPat
 		ResourceLocation resourcelocation = HumanoidArmorLayer.ARMOR_LOCATION_CACHE.get(s1);
 		
 		if (resourcelocation == null) {
-			resourcelocation = new ResourceLocation(s1);
+			resourcelocation = ResourceLocation.parse(s1);
 			HumanoidArmorLayer.ARMOR_LOCATION_CACHE.put(s1, resourcelocation);
 		}
 		

@@ -148,7 +148,7 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 	}
 	
 	public static Function<Entity, Supplier<EntityPatch<?>>> get(String registryName) {
-		ResourceLocation rl = new ResourceLocation(registryName);
+		ResourceLocation rl = ResourceLocation.parse(registryName);
 		EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
 		
 		return CAPABILITIES.get(entityType);

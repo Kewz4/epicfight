@@ -52,7 +52,7 @@ public class SkillBookItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
 		if (stack.getTag() != null && stack.getTag().contains("skill")) {
-			ResourceLocation rl = new ResourceLocation(stack.getTag().getString("skill"));
+			ResourceLocation rl = ResourceLocation.parse(stack.getTag().getString("skill"));
 			tooltip.add(Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).withStyle(ChatFormatting.DARK_GRAY));
 		}
 	}

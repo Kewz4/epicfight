@@ -16,9 +16,9 @@ import yesman.epicfight.world.capabilities.provider.SkillCapabilityProvider;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class CapabilityEvent {
-	private static final ResourceLocation ENTITY_CAPABILITY_KEY = new ResourceLocation(EpicFightMod.MODID, "entity_cap");
-	private static final ResourceLocation ITEM_CAPABILITY_KEY = new ResourceLocation(EpicFightMod.MODID, "item_cap");
-	private static final ResourceLocation SKILL_CAPABILITY_KEY = new ResourceLocation(EpicFightMod.MODID, "skill_cap");
+	private static final ResourceLocation ENTITY_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "entity_cap");
+	private static final ResourceLocation ITEM_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "item_cap");
+	private static final ResourceLocation SKILL_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill_cap");
 	
 	@SubscribeEvent
 	public static void attachItemCapability(AttachCapabilitiesEvent<ItemStack> event) {

@@ -26,7 +26,7 @@ public class RenderKatana extends RenderItemBase {
 		super(jsonElement);
 		
 		if (jsonElement.getAsJsonObject().has("sheath")) {
-			this.sheathStack = new ItemStack(ForgeRegistries.ITEMS.getValue(ResourceLocation.tryParse(jsonElement.getAsJsonObject().get("sheath").getAsString())));
+			this.sheathStack = new ItemStack(ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(jsonElement.getAsJsonObject().get("sheath").getAsString())));
 		} else {
 			this.sheathStack = new ItemStack(EpicFightItems.UCHIGATANA_SHEATH.get());
 		}

@@ -19,7 +19,7 @@ public class DatapackLongHitAnimation extends LongHitAnimation implements Datapa
 	public DatapackLongHitAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, path, armature);
 		
-		((DatapackAnimation<DatapackLongHitAnimation>)this).setRegistryName(ResourceLocation.tryParse(path));
+		((DatapackAnimation<DatapackLongHitAnimation>)this).setRegistryName(ResourceLocation.parse(path));
 		this.accessor = this;
 	}
 	

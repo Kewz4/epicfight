@@ -171,12 +171,12 @@ public class RenderEngine {
 		
 		Map<ResourceLocation, Function<JsonElement, RenderItemBase>> builder = Maps.newHashMap();
 		
-		builder.put(ResourceLocation.tryParse("base"), RenderItemBase::new);
-		builder.put(ResourceLocation.tryParse("ranged"), RenderTwoHandedRangedWeapon::new);
-		builder.put(ResourceLocation.tryParse("map"), RenderFilledMap::new);
-		builder.put(ResourceLocation.tryParse("shield"), RenderShield::new);
-		builder.put(ResourceLocation.tryParse("trident"), RenderTrident::new);
-		builder.put(ResourceLocation.tryBuild(EpicFightMod.MODID, "uchigatana"), RenderKatana::new);
+		builder.put(ResourceLocation.withDefaultNamespace("base"), RenderItemBase::new);
+		builder.put(ResourceLocation.withDefaultNamespace("ranged"), RenderTwoHandedRangedWeapon::new);
+		builder.put(ResourceLocation.withDefaultNamespace("map"), RenderFilledMap::new);
+		builder.put(ResourceLocation.withDefaultNamespace("shield"), RenderShield::new);
+		builder.put(ResourceLocation.withDefaultNamespace("trident"), RenderTrident::new);
+		builder.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "uchigatana"), RenderKatana::new);
 		
 		ModLoader.get().postEvent(new PatchedRenderersEvent.RegisterItemRenderer(builder));
 		
@@ -231,7 +231,7 @@ public class RenderEngine {
 		for (Map.Entry<ResourceLocation, JsonElement> entry : objects.entrySet()) {
 			ResourceLocation rl = entry.getKey();
 			String pathString = rl.getPath();
-			ResourceLocation registryName = ResourceLocation.tryBuild(rl.getNamespace(), pathString);
+			ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), pathString);
 			
 			if (!ForgeRegistries.ITEMS.containsKey(registryName)) {
 				EpicFightMod.LOGGER.warn("Failed to load item skin: no item named " + registryName);
@@ -242,7 +242,7 @@ public class RenderEngine {
 			Function<JsonElement, RenderItemBase> rendererProvider;
 			
 			if (entry.getValue().getAsJsonObject().has("renderer")) {
-				ResourceLocation rendererName = ResourceLocation.tryParse(entry.getValue().getAsJsonObject().get("renderer").getAsString());
+				ResourceLocation rendererName = ResourceLocation.parse(entry.getValue().getAsJsonObject().get("renderer").getAsString());
 				
 				if (itemRenderers.containsKey(rendererName)) {
 					rendererProvider = itemRenderers.get(rendererName);
@@ -304,12 +304,12 @@ public class RenderEngine {
 			this.entityRendererCache.put(entityType, this.basicHumanoidRenderer);
 		} else if ("epicfight:custom".equals(rendererName)) {
 			if (compound.getBoolean("humanoid")) {
-				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (Meshes.getOrCreate(ResourceLocation.tryParse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context, entityType));
+				this.entityRendererCache.put(entityType, new PCustomHumanoidEntityRenderer<> (Meshes.getOrCreate(ResourceLocation.parse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context, entityType));
 			} else {
-				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(Meshes.getOrCreate(ResourceLocation.tryParse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context));
+				this.entityRendererCache.put(entityType, new PCustomEntityRenderer(Meshes.getOrCreate(ResourceLocation.parse(compound.getString("model")), (jsonAssetLoader) -> jsonAssetLoader.loadSkinnedMesh(HumanoidMesh::new)), context));
 			}
 		} else {
-			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(rendererName));
+			EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.parse(rendererName));
 			
 			if (this.entityRendererProvider.containsKey(presetEntityType)) {
 				PatchedEntityRenderer renderer = this.entityRendererProvider.get(presetEntityType).apply(entityType);
@@ -375,7 +375,7 @@ public class RenderEngine {
 	
 	public Set<ResourceLocation> getRendererEntries() {
 		Set<ResourceLocation> availableRendererEntities = this.entityRendererProvider.keySet().stream().map((entityType) -> EntityType.getKey(entityType)).collect(Collectors.toSet());
-		availableRendererEntities.add(ResourceLocation.tryBuild(EpicFightMod.MODID, "custom"));
+		availableRendererEntities.add(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "custom"));
 		
 		return availableRendererEntities;
 	}

@@ -36,7 +36,6 @@ import yesman.epicfight.client.renderer.shader.IrisAnimationShader;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.main.EpicFightSharedConstants;
 
 @Mixin(value = net.irisshaders.iris.pipeline.programs.ExtendedShader.class)
 public abstract class IrisMixinExtendedShader {
@@ -51,7 +50,7 @@ public abstract class IrisMixinExtendedShader {
 				
 				try {
 					shaderParser = new ShaderParser(resourceFactory, name);
-					ResourceLocation shaderLocation = new ResourceLocation(name);
+					ResourceLocation shaderLocation = ResourceLocation.parse(name);
 					boolean hasNormalAttribute = shaderParser.hasAttribute("Normal");
 					boolean isEyesShader = "rendertype_eyes".equals(shaderLocation.getPath());
 					
@@ -126,7 +125,7 @@ public abstract class IrisMixinExtendedShader {
 					Map<ResourceLocation, Resource> cache = Maps.newHashMap();
 					shaderParser.addToResourceCache(cache);
 					GameRenderer.ResourceCache resourceProvider = new GameRenderer.ResourceCache(resourceFactory, cache);
-					ResourceLocation rl = new ResourceLocation(name);
+					ResourceLocation rl = ResourceLocation.parse(name);
 					VertexFormat animationvertexFormat = EpicFightRenderTypes.getAnimationVertexFormat(vertexFormat);
 					
 					return new IrisAnimationShader(resourceProvider, EpicFightMod.MODID + ":" + rl.getPath(), animationvertexFormat, usesTessellation, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alphaTest,

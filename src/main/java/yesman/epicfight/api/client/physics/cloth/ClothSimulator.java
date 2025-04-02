@@ -61,8 +61,8 @@ import yesman.epicfight.main.EpicFightSharedConstants;
  **/
 @OnlyIn(Dist.CLIENT)
 public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
-	public static final ResourceLocation PLAYER_CLOAK = ResourceLocation.tryBuild(EpicFightMod.MODID, "ingame_cloak");
-	public static final ResourceLocation MODELPREVIEWER_CLOAK = ResourceLocation.tryBuild(EpicFightMod.MODID, "previewer_cloak");
+	public static final ResourceLocation PLAYER_CLOAK = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "ingame_cloak");
+	public static final ResourceLocation MODELPREVIEWER_CLOAK = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "previewer_cloak");
 	private static final float SPATIAL_HASH_SPACING = 0.05F;
 	
 	@OnlyIn(Dist.CLIENT)

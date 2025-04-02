@@ -20,8 +20,8 @@ public class MirrorAnimation extends StaticAnimation {
 	public MirrorAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends MirrorAnimation> accessor, String path1, String path2, AssetAccessor<? extends Armature> armature) {
 		super(0.0F, false, accessor, armature);
 		
-		this.original = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path1), armature);
-		this.mirror = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path2), armature);
+		this.original = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path1), armature);
+		this.mirror = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path2), armature);
 	}
 	
 	@Override

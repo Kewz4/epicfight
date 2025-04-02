@@ -46,7 +46,7 @@ import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.skill.CapabilitySkill;
 
 public class SkillManager extends SimpleJsonResourceReloadListener {
-	public static final ResourceKey<Registry<Skill>> SKILL_REGISTRY_KEY = ResourceKey.createRegistryKey(ResourceLocation.tryBuild(EpicFightMod.MODID, "skill"));
+	public static final ResourceKey<Registry<Skill>> SKILL_REGISTRY_KEY = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill"));
 	private static final List<CompoundTag> SKILL_PARAMS = Lists.newArrayList();
 	private static final Gson GSON = (new GsonBuilder()).create();
 	private static Set<String> namespaces;
@@ -56,7 +56,7 @@ public class SkillManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static void createSkillRegistry(NewRegistryEvent event) {
-		event.create(RegistryBuilder.of(ResourceLocation.tryBuild(EpicFightMod.MODID, "skill")).addCallback(SkillRegistryCallbacks.INSTANCE));
+		event.create(RegistryBuilder.of(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill")).addCallback(SkillRegistryCallbacks.INSTANCE));
 	}
 	
 	public static void registerSkills(RegisterEvent event) {
@@ -79,9 +79,9 @@ public class SkillManager extends SimpleJsonResourceReloadListener {
 		ResourceLocation rl;
 		
 		if (name.indexOf(':') >= 0) {
-			rl = ResourceLocation.tryParse(name);
+			rl = ResourceLocation.parse(name);
 		} else {
-			rl = ResourceLocation.tryBuild(EpicFightMod.MODID, name);
+			rl = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, name);
 		}
 		
 		if (skillRegistry.containsKey(rl)) {
@@ -117,12 +117,12 @@ public class SkillManager extends SimpleJsonResourceReloadListener {
 		IForgeRegistry<Skill> skillRegistry = getSkillRegistry();
 		
 		for (CompoundTag tag : packet.getTags()) {
-			if (!skillRegistry.containsKey(ResourceLocation.tryParse(tag.getString("id")))) {
+			if (!skillRegistry.containsKey(ResourceLocation.parse(tag.getString("id")))) {
 				EpicFightMod.LOGGER.warn("Failed to syncronize Datapack for skill: " + tag.getString("id"));
 				continue;
 			}
 			
-			skillRegistry.getValue(ResourceLocation.tryParse(tag.getString("id"))).setParams(tag);
+			skillRegistry.getValue(ResourceLocation.parse(tag.getString("id"))).setParams(tag);
 		}
 		
 		LocalPlayerPatch localplayerpatch = ClientEngine.getInstance().getPlayerPatch();
@@ -188,7 +188,7 @@ public class SkillManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	private static class SkillRegistryCallbacks implements IForgeRegistry.BakeCallback<Skill>, IForgeRegistry.CreateCallback<Skill>, IForgeRegistry.ClearCallback<Skill> {
-		private static final ResourceLocation LEARNABLE_SKILLS = ResourceLocation.tryBuild(EpicFightMod.MODID, "learnableskills");
+		private static final ResourceLocation LEARNABLE_SKILLS = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "learnableskills");
 		private static final SkillRegistryCallbacks INSTANCE = new SkillRegistryCallbacks();
 		
 		@Override

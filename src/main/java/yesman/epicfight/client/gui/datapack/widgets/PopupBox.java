@@ -56,7 +56,7 @@ import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class PopupBox<T> extends AbstractWidget implements DataBindingComponent<T, Pair<String, T>> {
-	public static final ResourceLocation POPUP_ICON = new ResourceLocation(EpicFightMod.MODID, "textures/gui/popup_icon.png");
+	public static final ResourceLocation POPUP_ICON = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/popup_icon.png");
 	
 	protected final Screen owner;
 	protected final Font font;

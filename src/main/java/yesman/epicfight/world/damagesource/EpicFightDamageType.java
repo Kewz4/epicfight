@@ -43,6 +43,6 @@ public interface EpicFightDamageType {
 	TagKey<DamageType> BYPASS_DODGE = create("bypass_dodge");
 	
 	private static TagKey<DamageType> create(String tagName) {
-		return TagKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(EpicFightMod.MODID, tagName));
+		return TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, tagName));
 	}
 }

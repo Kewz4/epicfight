@@ -28,8 +28,8 @@ import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PWitherRenderer extends PatchedLivingEntityRenderer<WitherBoss, WitherPatch, WitherBossModel<WitherBoss>, WitherBossRenderer, WitherMesh> {
-	public static final ResourceLocation WITHER_INVULNERABLE_LOCATION = new ResourceLocation("textures/entity/wither/wither_invulnerable.png");
-	private static final ResourceLocation WITHER_LOCATION = new ResourceLocation("textures/entity/wither/wither.png");
+	public static final ResourceLocation WITHER_INVULNERABLE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/wither/wither_invulnerable.png");
+	private static final ResourceLocation WITHER_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/wither/wither.png");
 	
 	public PWitherRenderer(EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);

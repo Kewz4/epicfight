@@ -20,7 +20,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class RenderFilledMap extends RenderItemBase {
-	private static final RenderType MAP_BACKGROUND = RenderType.text(ResourceLocation.tryParse("textures/map/map_background.png"));
+	private static final RenderType MAP_BACKGROUND = RenderType.text(ResourceLocation.parse("textures/map/map_background.png"));
 	
 	public RenderFilledMap(JsonElement jsonElement) {
 		super(jsonElement);

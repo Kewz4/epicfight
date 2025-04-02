@@ -26,7 +26,7 @@ import org.joml.Matrix4f;
 @OnlyIn(Dist.CLIENT)
 public abstract class EntityIndicator extends ModIngameGui {
 	public static final List<EntityIndicator> ENTITY_INDICATOR_RENDERERS = Lists.newArrayList();
-	public static final ResourceLocation BATTLE_ICON = new ResourceLocation(EpicFightMod.MODID, "textures/gui/battle_icons.png");
+	public static final ResourceLocation BATTLE_ICON = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/battle_icons.png");
 	
 	public static void init() {
 		new TargetIndicator();

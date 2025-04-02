@@ -93,7 +93,7 @@ public abstract class Skill {
 			for (Tag tag : attributeList) {
 				CompoundTag comp = (CompoundTag)tag;
 				String attribute = comp.getString("attribute");
-				Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(ResourceLocation.tryParse(attribute));
+				Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(ResourceLocation.parse(attribute));
 				AttributeModifier modifier = ParseUtil.toAttributeModifier(comp);
 				
 				this.attributes.put(attr, modifier);
@@ -457,7 +457,7 @@ public abstract class Skill {
 	
 	@OnlyIn(Dist.CLIENT)
 	public ResourceLocation getSkillTexture() {
-		return ResourceLocation.tryBuild(this.getRegistryName().getNamespace(), String.format("textures/gui/skills/%s/%s.png", this.category.toString().toLowerCase(Locale.ROOT), this.getRegistryName().getPath()));
+		return ResourceLocation.fromNamespaceAndPath(this.getRegistryName().getNamespace(), String.format("textures/gui/skills/%s/%s.png", this.category.toString().toLowerCase(Locale.ROOT), this.getRegistryName().getPath()));
 	}
 	
 	@OnlyIn(Dist.CLIENT)

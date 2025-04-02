@@ -40,10 +40,10 @@ public class AimAnimation extends StaticAnimation {
 	public AimAnimation(float transitionTime, boolean repeatPlay, AnimationAccessor<? extends AimAnimation> accessor, String path1, String path2, String path3, String path4, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, repeatPlay, accessor, armature);
 		
-		this.lookForward = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path1), armature);
-		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path2), armature);
-		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path3), armature);
-		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.tryBuild(accessor.registryName().getNamespace(), path4), armature);
+		this.lookForward = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path1), armature);
+		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path2), armature);
+		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path3), armature);
+		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path4), armature);
 	}
 	
 	@Override

@@ -102,7 +102,7 @@ public class Armatures {
 	
 	//For presets
 	public static void registerEntityTypeArmatureByPreset(EntityType<?> entityType, String presetName) {
-		EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(presetName));
+		EntityType<?> presetEntityType = ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.parse(presetName));
 		ENTITY_TYPE_ARMATURE_MAPPER.put(entityType, ENTITY_TYPE_ARMATURE_MAPPER.get(presetEntityType));
 	}
 	
@@ -138,12 +138,12 @@ public class Armatures {
 	}
 	
 	public static ResourceLocation wrapLocation(ResourceLocation rl) {
-		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.tryBuild(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
 	}
 	
 	public static record ArmatureAccessor<A extends Armature> (ResourceLocation registryName, ArmatureContructor<A> armatureConstructor, boolean inRegistry) implements AssetAccessor<A> {
 		public static <A extends Armature> ArmatureAccessor<A> create(String namespaceId, String path, ArmatureContructor<A> armatureConstructor) {
-			return create(ResourceLocation.tryBuild(namespaceId, path), armatureConstructor, true);
+			return create(ResourceLocation.fromNamespaceAndPath(namespaceId, path), armatureConstructor, true);
 		}
 		
 		private static <A extends Armature> ArmatureAccessor<A> create(ResourceLocation id, ArmatureContructor<A> armatureConstructor, boolean inRegistry) {

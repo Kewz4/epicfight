@@ -121,7 +121,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 	@OnlyIn(Dist.CLIENT)
 	public void onCapabilityRegister(AttachCapabilitiesEvent<Entity> event) {
 		if (event.getObject().level().isClientSide() && event.getObject().getType() == EntityType.PLAYER) {
-			event.addCapability(ResourceLocation.tryBuild(EpicFightMod.MODID, "animated_3d_skinlayer_mesh"), new ICapabilityProvider() {
+			event.addCapability(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "animated_3d_skinlayer_mesh"), new ICapabilityProvider() {
 				final SkinLayer3DMeshes epicFight3dSkinLayerCapability = new SkinLayer3DMeshes();
 				
 				@Override

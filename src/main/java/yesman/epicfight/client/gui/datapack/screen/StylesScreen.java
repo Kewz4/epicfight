@@ -75,7 +75,7 @@ public class StylesScreen extends Screen {
 									for (Tag tag : caseCompound.getList("conditions", Tag.TAG_COMPOUND)) {
 										CompoundTag conditionCompound = (CompoundTag)tag;
 										parameters.newRow();
-										parameters.newValue("condition", EpicFightConditions.getConditionOrNull(new ResourceLocation(conditionCompound.getString("predicate"))));
+										parameters.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(conditionCompound.getString("predicate"))));
 									}
 									
 									this.conditionGrid._setValue(parameters);
@@ -393,7 +393,7 @@ public class StylesScreen extends Screen {
 			
 			for (Tag conditionTag : tag.getList("conditions", Tag.TAG_COMPOUND)) {
 				CompoundTag conditionCompound = (CompoundTag)conditionTag;
-				Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(new ResourceLocation(conditionCompound.getString("predicate")));
+				Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(conditionCompound.getString("predicate")));
 				condition.get().read(conditionCompound);
 			}
 			

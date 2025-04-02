@@ -394,6 +394,7 @@ public class MathUtils {
 		}
 		
 		dest.set(resultX, resultY, resultZ, resultW);
+		dest.normalize();
 		
 		return dest;
 	}

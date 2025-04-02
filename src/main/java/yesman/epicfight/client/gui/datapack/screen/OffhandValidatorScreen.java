@@ -157,7 +157,7 @@ public class OffhandValidatorScreen extends Screen {
 				this.conditionList.add(compTag);
 				
 				packImporter.newRow();
-				packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(new ResourceLocation(compTag.getString("predicate"))));
+				packImporter.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(compTag.getString("predicate"))));
 			}
 			
 			this.conditionGrid._setValue(packImporter);
@@ -234,7 +234,7 @@ public class OffhandValidatorScreen extends Screen {
 	
 	private void validateTagSave(CompoundTag tag) throws IllegalStateException {
 		try {
-			Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(new ResourceLocation(tag.getString("predicate")));
+			Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(tag.getString("predicate")));
 			condition.get().read(tag);
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage());

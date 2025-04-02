@@ -70,7 +70,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 			
 			if (path.contains("/") && !path.contains("types")) {
 				String[] str = path.split("/", 2);
-				ResourceLocation registryName = new ResourceLocation(rl.getNamespace(), str[1]);
+				ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), str[1]);
 				
 				if (!ForgeRegistries.ITEMS.containsKey(registryName)) {
 					new NoSuchElementException("Item Capability Exception: No Item named " + registryName).printStackTrace();
@@ -141,7 +141,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 			
 			for (Tag jsonElement : jsonArray) {
 				CompoundTag innerTag = ((CompoundTag)jsonElement);
-				Supplier<Condition<ItemStack>> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(innerTag.getString("condition")));
+				Supplier<Condition<ItemStack>> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(innerTag.getString("condition")));
 				Condition<ItemStack> condition = conditionProvider.get().read(innerTag.getCompound("predicate"));
 				
 				list.add(Pair.of(condition, deserializeWeapon(item, innerTag)));

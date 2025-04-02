@@ -22,7 +22,7 @@ import yesman.epicfight.skill.SkillContainer;
 
 @OnlyIn(Dist.CLIENT)
 public class SlotSelectScreen extends Screen {
-	private static final ResourceLocation BACKGROUND = new ResourceLocation(EpicFightMod.MODID, "textures/gui/screen/slot_select.png");
+	private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/screen/slot_select.png");
 	private final SkillBookScreen parent;
 	private final List<SkillContainer> containers;
 	

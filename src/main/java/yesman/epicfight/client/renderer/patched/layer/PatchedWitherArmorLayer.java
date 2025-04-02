@@ -21,7 +21,7 @@ import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PatchedWitherArmorLayer extends ModelRenderLayer<WitherBoss, WitherPatch, WitherBossModel<WitherBoss>, WitherArmorLayer, WitherMesh> {
-	private static final ResourceLocation WITHER_ARMOR_LOCATION = new ResourceLocation("textures/entity/wither/wither_armor.png");
+	private static final ResourceLocation WITHER_ARMOR_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/wither/wither_armor.png");
 	
 	public PatchedWitherArmorLayer() {
 		super(Meshes.WITHER);

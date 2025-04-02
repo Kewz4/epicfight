@@ -146,7 +146,7 @@ public class CombatBehaviorScreen extends Screen {
 						}
 						
 						conditionImporter.newRow();
-						conditionImporter.newValue("condition", EpicFightConditions.getConditionOrNull(new ResourceLocation(condtionName)));
+						conditionImporter.newValue("condition", EpicFightConditions.getConditionOrNull(ResourceLocation.parse(condtionName)));
 					}
 					
 					this.parameterGrid.reset();
@@ -581,7 +581,7 @@ public class CombatBehaviorScreen extends Screen {
 				}
 				
 				try {
-					Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(new ResourceLocation(conditionCompound.getString("predicate")));
+					Supplier<Condition<?>> condition = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(conditionCompound.getString("predicate")));
 					condition.get().read(conditionCompound);
 				} catch (Exception e) {
 					throw new IllegalStateException("Behavior" + idx + ": " + e.getMessage());

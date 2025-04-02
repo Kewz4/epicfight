@@ -31,7 +31,7 @@ import yesman.epicfight.world.capabilities.skill.CapabilitySkill;
 
 @OnlyIn(Dist.CLIENT)
 public class SkillEditScreen extends Screen {
-	private static final ResourceLocation SKILL_EDIT_UI = new ResourceLocation(EpicFightMod.MODID, "textures/gui/screen/skill_edit.png");
+	private static final ResourceLocation SKILL_EDIT_UI = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/screen/skill_edit.png");
 	private static final MutableComponent NO_SKILLS = Component.translatable("gui.epicfight.no_skills");
 	private static final int MAX_SHOWING_BUTTONS = 6;
 	

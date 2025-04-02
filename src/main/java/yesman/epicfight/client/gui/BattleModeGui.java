@@ -123,7 +123,7 @@ public class BattleModeGui extends ModIngameGui {
 			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
 			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
 
-			ResourceLocation rl = new ResourceLocation(playerpatch.getChargingSkill().toString());
+			ResourceLocation rl = ResourceLocation.parse(playerpatch.getChargingSkill().toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();
 			
 			int stringWidth = this.font.width(skillName);
