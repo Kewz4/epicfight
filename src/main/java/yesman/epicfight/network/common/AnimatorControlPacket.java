@@ -27,6 +27,9 @@ public class AnimatorControlPacket {
 		case RESERVE -> {
 			entitypatch.getAnimator().reserveAnimation(this.animationId);
 		}
+		case STOP -> {
+			entitypatch.getAnimator().stopPlaying(this.animationId);
+		}
 		case SOFT_PAUSE -> {
 			entitypatch.getAnimator().setSoftPause(this.pause);
 		}
@@ -37,6 +40,6 @@ public class AnimatorControlPacket {
 	}
 	
 	public enum Action {
-		PLAY, PLAY_INSTANTLY, RESERVE, SOFT_PAUSE, HARD_PAUSE
+		PLAY, PLAY_INSTANTLY, RESERVE, STOP, SOFT_PAUSE, HARD_PAUSE
 	}
 }

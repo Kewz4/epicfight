@@ -1,6 +1,7 @@
 package yesman.epicfight.api.animation;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -59,13 +60,36 @@ public abstract class Animator {
 		this.reserveAnimation(AnimationManager.byId(id));
 	}
 	
+	/**
+	 * Stop playing given animation if exist
+	 * @param targetAnimation
+	 * @return true when found and successfully stop the target animation
+	 */
+	public abstract boolean stopPlaying(AssetAccessor<? extends StaticAnimation> targetAnimation);
+	
+	public final boolean stopPlaying(int id) {
+		return this.stopPlaying(AnimationManager.byId(id));
+	}
+	
 	public abstract void setSoftPause(boolean paused);
 	public abstract void setHardPause(boolean paused);
 	public abstract void tick();
 	
 	public abstract EntityState getEntityState();
-	/** Give a null value as a parameter to get an animation that is highest priority on client **/
+	
+	/**
+	 * Searches an animation player playing the given animation parameter or return base layer if it's null
+	 * Secure non-null but returned animation player won't match with a given animation
+	 */
+	@Nullable
 	public abstract AnimationPlayer getPlayerFor(@Nullable AssetAccessor<? extends DynamicAnimation> playingAnimation);
+	
+	/**
+	 * Searches an animation player playing the given animation parameter
+	 */
+	@Nullable
+	public abstract Optional<AnimationPlayer> getPlayer(AssetAccessor<? extends DynamicAnimation> playingAnimation);
+	
 	public abstract <T> Pair<AnimationPlayer, T> findFor(Class<T> animationType);
 	public abstract Pose getPose(float partialTicks);
 	

@@ -117,7 +117,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		entitypatch.cancelItemUse();
 		
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
-			entitypatch.beginAction();
+			entitypatch.beginAction(this);
 			
 			this.initCoordVariables(entitypatch);
 			

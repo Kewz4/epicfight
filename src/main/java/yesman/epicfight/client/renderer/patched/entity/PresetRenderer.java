@@ -32,9 +32,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.model.Armature;
@@ -122,11 +120,7 @@ public class PresetRenderer extends PatchedEntityRenderer<LivingEntity, LivingEn
 		
 		if (renderType != null) {
 			if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-				for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
-					AnimationPlayer animPlayer = layer.animationPlayer;
-					float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-					animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
-				}
+				entitypatch.getClientAnimator().renderDebuggingInfoForAllLayers(poseStack, buffer, partialTicks);
 			}
 		}
 		

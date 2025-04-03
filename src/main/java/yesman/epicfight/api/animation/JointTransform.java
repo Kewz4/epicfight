@@ -199,6 +199,10 @@ public class JointTransform {
 		return JointTransform.fromMatrix(operation.mul(left.toMatrix(), right.toMatrix(), null));
 	}
 	
+	public static JointTransform fromPrimitives(float locX, float locY, float locZ, float quatX, float quatY, float quatZ, float quatW, float scaX, float scaY, float scaZ) {
+		return new JointTransform(new Vec3f(locX, locY, locZ), new Quaternionf(quatX, quatY, quatZ, quatW), new Vec3f(scaX, scaY, scaZ));
+	}
+	
 	public static JointTransform empty() {
 		return new JointTransform(new Vec3f(0.0F, 0.0F, 0.0F), new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F), new Vec3f(1.0F, 1.0F, 1.0F));
 	}

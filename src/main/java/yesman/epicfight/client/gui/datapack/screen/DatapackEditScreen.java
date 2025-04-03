@@ -618,7 +618,6 @@ public class DatapackEditScreen extends Screen {
 					
 					if (streamSupplier != null) {
 						AnimationSubFileReader.SUBFILE_CLIENT_PROPERTY.apply(streamSupplier.get(), animation.get());
-						//AnimationSubFileReader.readAndApplyInputStream(animation.get(), streamSupplier.get());
 					}
 					
 					JsonAssetLoader modelLoader = new JsonAssetLoader(jsonObject, resourceLocation);

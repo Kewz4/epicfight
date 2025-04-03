@@ -6,9 +6,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,21 +27,25 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.GsonHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.animation.property.LayerInfo;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
+import yesman.epicfight.api.exception.AssetLoadingException;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class AnimationSubFileReader {
 	public static final SubFileType<ClientProperty> SUBFILE_CLIENT_PROPERTY = new ClientPropertyType();
-	
 	public static final SubFileType<PovAnimation> SUBFILE_POV_ANIMATION = new PovAnimationType();
 	
 	public static void readAndApply(StaticAnimation animation, Resource iresource, SubFileType<?> subFileType) {
@@ -53,7 +59,12 @@ public class AnimationSubFileReader {
 		
 		assert inputstream != null : "Input stream is null";
 		
-		subFileType.apply(inputstream, animation);
+		try {
+			subFileType.apply(inputstream, animation);
+		} catch (JsonParseException e) {
+			EpicFightMod.LOGGER.warn("Can't read sub file " + subFileType.directory + " for " + animation);
+			e.printStackTrace();
+		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -149,7 +160,7 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class ClientAnimationPropertyDeserializer implements JsonDeserializer<ClientProperty> {
+	private static class ClientAnimationPropertyDeserializer implements JsonDeserializer<ClientProperty> {
 		private static LayerInfo deserializeLayerInfo(JsonObject jsonObject) {
 			return deserializeLayerInfo(jsonObject, null);
 		}
@@ -207,13 +218,12 @@ public class AnimationSubFileReader {
 				trailArray.forEach(element -> trailInfos.add(TrailInfo.deserialize(element)));
 			}
 			
-			return new ClientProperty(multilayerInfo, layerInfo, trailInfos);
+			return new ClientProperty(layerInfo, multilayerInfo, trailInfos);
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private record PovAnimation() {
-		
+	public static record PovAnimation(AnimationClip animationClip, TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -229,15 +239,26 @@ public class AnimationSubFileReader {
 		
 		@Override
 		public void applySubFileInfo(PovAnimation deserialized, StaticAnimation animation) {
-			
+			animation.addProperty(ClientAnimationProperties.POV_ANIMATION, deserialized);
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class PovAnimationDeserializer implements JsonDeserializer<PovAnimation> {
+	private static class PovAnimationDeserializer implements JsonDeserializer<PovAnimation> {
 		@Override
-		public PovAnimation deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-			return null;
+		public PovAnimation deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws AssetLoadingException, JsonParseException {
+			JsonObject jObject = json.getAsJsonObject();
+			JsonAssetLoader loader = new JsonAssetLoader(jObject, null);
+			AnimationClip clip = loader.loadAnimationClip(Armatures.BIPED.get());
+			
+			JsonObject cameraTransformJObject = jObject.getAsJsonObject("camera");
+			TransformSheet cameraTransform = JsonAssetLoader.getTransformSheet(cameraTransformJObject, null, false, JsonAssetLoader.TransformFormat.ATTRIBUTES);
+			
+			JsonObject visibilitiesObject = jObject.getAsJsonObject("visibilities");
+			ImmutableMap.Builder<String, Boolean> visibilitiesBuilder = ImmutableMap.builder();
+			visibilitiesObject.entrySet().stream().filter((e) -> "others".equals(e.getKey())).forEach((entry) -> visibilitiesBuilder.put(entry.getKey(), entry.getValue().getAsBoolean()));
+			
+			return new PovAnimation(clip, cameraTransform, visibilitiesBuilder.build(), visibilitiesObject.get("others").getAsBoolean());
 		}
 	}
 }

@@ -507,6 +507,20 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	/**
+	 * Stop playing an animation
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void stopPlaying(AssetAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.stopPlaying(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.STOP, animation, -1.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.STOP, animation, -1.0F, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
 	 * Play an animation with custom packet
 	 * @param animation
 	 * @param transitionTimeModifier
@@ -576,11 +590,14 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		case PLAY_INSTANTLY -> {
 			this.animator.playAnimationInstantly(animation);
 		}
+		case STOP -> {
+			this.animator.stopPlaying(animation);
+		}
 		case RESERVE -> {
 			this.animator.reserveAnimation(animation);
 		}
 		default -> {
-			throw new UnsupportedOperationException("Only PLAY, PLAY_INSTANTLY and RESERVE are allowed");
+			throw new UnsupportedOperationException("Only PLAY, PLAY_INSTANTLY, STOP and RESERVE are allowed");
 		}
 		}
 		
@@ -659,7 +676,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return false;
 	}
 	
-	public void beginAction() {
+	public void beginAction(ActionAnimation animation) {
 	}
 	
 	public void updateHeldItem(CapabilityItem fromCap, CapabilityItem toCap, ItemStack from, ItemStack to, InteractionHand hand) {

@@ -4,9 +4,9 @@ import java.util.List;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.client.animation.Layer;
 
 @OnlyIn(Dist.CLIENT)
@@ -34,7 +34,7 @@ public class ClientAnimationProperties {
 	/**
 	 * An animation clip being played in first person.
 	 */
-	public static final StaticAnimationProperty<AnimationClip> POV_CLIP = new StaticAnimationProperty<AnimationClip> ();
+	public static final StaticAnimationProperty<AnimationSubFileReader.PovAnimation> POV_ANIMATION = new StaticAnimationProperty<AnimationSubFileReader.PovAnimation> ();
 	
 	/**
 	 * Multilayer for living animations (e.g. Greatsword holding animation should be played simultaneously with jumping animation) 

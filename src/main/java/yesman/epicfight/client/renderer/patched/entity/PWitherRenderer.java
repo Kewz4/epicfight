@@ -16,9 +16,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.mesh.WitherMesh;
@@ -46,6 +44,7 @@ public class PWitherRenderer extends PatchedLivingEntityRenderer<WitherBoss, Wit
 		RenderType renderType = livingEntityRendererAccessor.invokeGetRenderType(entity, isVisible, isVisibleToPlayer, isGlowing);
 		WitherMesh mesh = this.getMeshProvider(entitypatch).get();
 		Armature armature = entitypatch.getArmature();
+		
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
 		this.setArmaturePose(entitypatch, armature, partialTicks);
@@ -69,15 +68,9 @@ public class PWitherRenderer extends PatchedLivingEntityRenderer<WitherBoss, Wit
 			}
 			
 			this.renderLayer(renderer, entitypatch, entity, armature.getPoseMatrices(), buffer, poseStack, packedLight, partialTicks);
-		}
-		
-		if (renderType != null) {
+			
 			if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-				for (Layer.Priority priority : Layer.Priority.HIGHEST.lowers()) {
-					AnimationPlayer animPlayer = entitypatch.getClientAnimator().getCompositeLayer(priority).animationPlayer;
-					float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-					animPlayer.getAnimation().get().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
-				}
+				entitypatch.getClientAnimator().renderDebuggingInfoForAllLayers(poseStack, buffer, partialTicks);
 			}
 		}
 		

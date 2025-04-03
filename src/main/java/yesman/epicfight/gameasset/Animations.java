@@ -652,9 +652,9 @@ public class Animations {
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.newTimePair(0.0F, 10000.0F)
-				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
-				.addStateRemoveOld(EntityState.INACTION, true));
+					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+					.addStateRemoveOld(EntityState.INACTION, true));
 		
 		BIPED_SLEEPING = builder.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
 		
@@ -724,7 +724,7 @@ public class Animations {
 		
 		STEEL_WHIRLWIND_CHARGING = builder.nextAccessor("biped/skill/steel_whirlwind_charging", (accessor) ->
 			new StaticAnimation(0.15F, false, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CHARGING));
+				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CHARGING));		
 		
 		/**
 		 * Main Frame Animations
@@ -787,16 +787,18 @@ public class Animations {
 					entitypatch.getClientAnimator().resumeLivingMotionUpdate(true);
 				}, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
-				.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true));
+					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true));
 		
-		BIPED_DEMOLITION_LEAP = builder.nextAccessor("biped/skill/demolition_leap", (accessor) -> new ActionAnimation(0.05F, 0.45F, accessor, Armatures.BIPED));
+		BIPED_DEMOLITION_LEAP = builder.nextAccessor("biped/skill/demolition_leap", (accessor) ->
+			new ActionAnimation(0.05F, 0.45F, accessor, Armatures.BIPED)
+				.addProperty(ActionAnimationProperty.SYNC_CAMERA, true));
 		
 		BIPED_PHANTOM_ASCENT_FORWARD = builder.nextAccessor("biped/skill/phantom_ascent_forward", (accessor) ->
 			new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
-				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
+					.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.newTimePair(0.0F, 0.5F)
-				.addStateRemoveOld(EntityState.INACTION, true)
+					.addStateRemoveOld(EntityState.INACTION, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
 					Vec3 pos = entitypatch.getOriginal().position();
 					
@@ -805,9 +807,9 @@ public class Animations {
 				}, Side.CLIENT)));
 		BIPED_PHANTOM_ASCENT_BACKWARD = builder.nextAccessor("biped/skill/phantom_ascent_backward", (accessor) ->
 			new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
-				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
+					.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, false)
 				.newTimePair(0.0F, 0.5F)
-				.addStateRemoveOld(EntityState.INACTION, true)
+					.addStateRemoveOld(EntityState.INACTION, true)
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
 					Vec3 pos = entitypatch.getOriginal().position();
 					
@@ -1707,104 +1709,105 @@ public class Animations {
 			new ActionAnimation(0.05F, accessor, Armatures.WITHER)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
 				.addEvents(
-				InTimeEvent.create(0.0F, (entitypatch, animation, params) -> {
-					entitypatch.playSound(EpicFightSounds.BUZZ.get(), 0.0F, 0.0F);
-					
-					if (entitypatch instanceof WitherPatch witherpatch) {
-						for (int i = 0; i < 3; i++) {
-							Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
-							
-							if (headTarget == null) {
-								headTarget = witherpatch.getAlternativeTargetEntity(0);
-							}
-							
-							if (headTarget != null) {
-								witherpatch.setLaserTarget(i, headTarget);
-							}
-						}
-					}
-				}, Side.SERVER),
-				InTimeEvent.create(0.7F, (entitypatch, animation, params) -> {
-					if (entitypatch instanceof WitherPatch witherpatch) {
-						for (int i = 0; i < 3; i++) {
-							Entity headTarget = witherpatch.getLaserTargetEntity(i);
-							
-							if (headTarget != null) {
-								Vec3 pos = headTarget.position().add(0.0D, headTarget.getBbHeight() * 0.5D, 0.0D);
-								witherpatch.setLaserTargetPosition(i, pos);
-								witherpatch.setLaserTarget(i, null);
-							}
-						}
-					}
-				}, Side.SERVER),
-				InTimeEvent.create(0.9F, (entitypatch, animation, params) -> {
-					if (entitypatch instanceof WitherPatch witherpatch) {
-						WitherBoss witherboss = witherpatch.getOriginal();
-						witherboss.level().playLocalSound(witherboss.getX(), witherboss.getY(), witherboss.getZ(), EpicFightSounds.LASER_BLAST.get(), SoundSource.HOSTILE, 1.0F, 1.0F, false);
+					InTimeEvent.create(0.0F, (entitypatch, animation, params) -> {
+						entitypatch.playSound(EpicFightSounds.BUZZ.get(), 0.0F, 0.0F);
 						
-						for (int i = 0; i < 3; i++) {
-							Vec3 laserDestination = witherpatch.getLaserTargetPosition(i);
-							Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
-							
-							if (headTarget != null) {
-								witherpatch.getOriginal().level().addAlwaysVisibleParticle(EpicFightParticles.LASER.get(), witherboss.getHeadX(i), witherboss.getHeadY(i), witherboss.getHeadZ(i), laserDestination.x, laserDestination.y, laserDestination.z);
-							}
-						}
-					}
-				}, Side.CLIENT),
-				InTimeEvent.create(0.9F, (entitypatch, animation, params) -> {
-					if (entitypatch instanceof WitherPatch witherpatch) {
-						WitherBoss witherboss = witherpatch.getOriginal();
-						List<Entity> hurted = Lists.newArrayList();
-						
-						for (int i = 0; i < 3; i++) {
-							Vec3 laserDestination = witherpatch.getLaserTargetPosition(i);
-							Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
-							
-							if (headTarget != null) {
-								double x = witherboss.getHeadX(i);
-								double y = witherboss.getHeadY(i);
-								double z = witherboss.getHeadZ(i);
-								Vec3 direction = laserDestination.subtract(x, y, z);
-								Vec3 start = new Vec3(x, y, z);
-								Vec3 destination = start.add(direction.normalize().scale(200.0D));
-								BlockHitResult hitResult = witherboss.level().clip(new ClipContext(start, destination, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
-								Vec3 hitLocation = hitResult.getLocation();
-								double xLength = hitLocation.x - x;
-								double yLength = hitLocation.y - y;
-								double zLength = hitLocation.z - z;
-								double horizontalDistance = Math.sqrt(xLength * xLength + zLength * zLength);
-								double length = Math.sqrt(xLength * xLength + yLength * yLength + zLength * zLength);
-								float yRot = (float)(-Math.atan2(zLength, xLength) * (180D / Math.PI)) - 90.0F;
-								float xRot = (float)(Math.atan2(yLength, horizontalDistance) * (180D / Math.PI));
-								OBBCollider collider = new OBBCollider(0.25D, 0.25D, length * 0.5D, 0.0D, 0.0D, length * 0.5D);
-								collider.transform(OpenMatrix4f.createTranslation((float)-x, (float)y, (float)-z).rotateDeg(yRot, Vec3f.Y_AXIS).rotateDeg(-xRot, Vec3f.X_AXIS));
-								List<Entity> hitEntities = collider.getCollideEntities(witherboss);
-
-								EpicFightDamageSources damageSources = EpicFightDamageSources.of(witherboss.level());
-								EpicFightDamageSource damagesource = damageSources.witherBeam(witherboss).setAnimation(WITHER_BEAM);
-
-								hitEntities.forEach((entity) -> {
-									if (!hurted.contains(entity)) {
-										hurted.add(entity);
-										entity.hurt(damagesource, 12.0F);
-									}
-								});
+						if (entitypatch instanceof WitherPatch witherpatch) {
+							for (int i = 0; i < 3; i++) {
+								Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
 								
-								Level.ExplosionInteraction explosion$blockinteraction = ForgeEventFactory.getMobGriefingEvent(witherboss.level(), witherboss) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
-								witherboss.level().explode(witherboss, hitLocation.x, hitLocation.y, hitLocation.z, 0.0F, false, explosion$blockinteraction);
+								if (headTarget == null) {
+									headTarget = witherpatch.getAlternativeTargetEntity(0);
+								}
+								
+								if (headTarget != null) {
+									witherpatch.setLaserTarget(i, headTarget);
+								}
 							}
 						}
-					}
-				}, Side.SERVER),
-				InTimeEvent.create(2.3F, (entitypatch, animation, params) -> {
-					if (entitypatch instanceof WitherPatch witherpatch) {
-						for (int i = 0; i < 3; i++) {
-							witherpatch.setLaserTargetPosition(i, new Vec3(Double.NaN, Double.NaN, Double.NaN));
+					}, Side.SERVER),
+					InTimeEvent.create(0.7F, (entitypatch, animation, params) -> {
+						if (entitypatch instanceof WitherPatch witherpatch) {
+							for (int i = 0; i < 3; i++) {
+								Entity headTarget = witherpatch.getLaserTargetEntity(i);
+								
+								if (headTarget != null) {
+									Vec3 pos = headTarget.position().add(0.0D, headTarget.getBbHeight() * 0.5D, 0.0D);
+									witherpatch.setLaserTargetPosition(i, pos);
+									witherpatch.setLaserTarget(i, null);
+								}
+							}
 						}
-					}
-				}, Side.SERVER)
-			));
+					}, Side.SERVER),
+					InTimeEvent.create(0.9F, (entitypatch, animation, params) -> {
+						if (entitypatch instanceof WitherPatch witherpatch) {
+							WitherBoss witherboss = witherpatch.getOriginal();
+							witherboss.level().playLocalSound(witherboss.getX(), witherboss.getY(), witherboss.getZ(), EpicFightSounds.LASER_BLAST.get(), SoundSource.HOSTILE, 1.0F, 1.0F, false);
+							
+							for (int i = 0; i < 3; i++) {
+								Vec3 laserDestination = witherpatch.getLaserTargetPosition(i);
+								Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
+								
+								if (headTarget != null) {
+									witherpatch.getOriginal().level().addAlwaysVisibleParticle(EpicFightParticles.LASER.get(), witherboss.getHeadX(i), witherboss.getHeadY(i), witherboss.getHeadZ(i), laserDestination.x, laserDestination.y, laserDestination.z);
+								}
+							}
+						}
+					}, Side.CLIENT),
+					InTimeEvent.create(0.9F, (entitypatch, animation, params) -> {
+						if (entitypatch instanceof WitherPatch witherpatch) {
+							WitherBoss witherboss = witherpatch.getOriginal();
+							List<Entity> hurted = Lists.newArrayList();
+							
+							for (int i = 0; i < 3; i++) {
+								Vec3 laserDestination = witherpatch.getLaserTargetPosition(i);
+								Entity headTarget = witherpatch.getAlternativeTargetEntity(i);
+								
+								if (headTarget != null) {
+									double x = witherboss.getHeadX(i);
+									double y = witherboss.getHeadY(i);
+									double z = witherboss.getHeadZ(i);
+									Vec3 direction = laserDestination.subtract(x, y, z);
+									Vec3 start = new Vec3(x, y, z);
+									Vec3 destination = start.add(direction.normalize().scale(200.0D));
+									BlockHitResult hitResult = witherboss.level().clip(new ClipContext(start, destination, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+									Vec3 hitLocation = hitResult.getLocation();
+									double xLength = hitLocation.x - x;
+									double yLength = hitLocation.y - y;
+									double zLength = hitLocation.z - z;
+									double horizontalDistance = Math.sqrt(xLength * xLength + zLength * zLength);
+									double length = Math.sqrt(xLength * xLength + yLength * yLength + zLength * zLength);
+									float yRot = (float)(-Math.atan2(zLength, xLength) * (180D / Math.PI)) - 90.0F;
+									float xRot = (float)(Math.atan2(yLength, horizontalDistance) * (180D / Math.PI));
+									OBBCollider collider = new OBBCollider(0.25D, 0.25D, length * 0.5D, 0.0D, 0.0D, length * 0.5D);
+									collider.transform(OpenMatrix4f.createTranslation((float)-x, (float)y, (float)-z).rotateDeg(yRot, Vec3f.Y_AXIS).rotateDeg(-xRot, Vec3f.X_AXIS));
+									List<Entity> hitEntities = collider.getCollideEntities(witherboss);
+	
+									EpicFightDamageSources damageSources = EpicFightDamageSources.of(witherboss.level());
+									EpicFightDamageSource damagesource = damageSources.witherBeam(witherboss).setAnimation(WITHER_BEAM);
+	
+									hitEntities.forEach((entity) -> {
+										if (!hurted.contains(entity)) {
+											hurted.add(entity);
+											entity.hurt(damagesource, 12.0F);
+										}
+									});
+									
+									Level.ExplosionInteraction explosion$blockinteraction = ForgeEventFactory.getMobGriefingEvent(witherboss.level(), witherboss) ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE;
+									witherboss.level().explode(witherboss, hitLocation.x, hitLocation.y, hitLocation.z, 0.0F, false, explosion$blockinteraction);
+								}
+							}
+						}
+					}, Side.SERVER),
+					InTimeEvent.create(2.3F, (entitypatch, animation, params) -> {
+						if (entitypatch instanceof WitherPatch witherpatch) {
+							for (int i = 0; i < 3; i++) {
+								witherpatch.setLaserTargetPosition(i, new Vec3(Double.NaN, Double.NaN, Double.NaN));
+							}
+						}
+					}, Side.SERVER)
+				)
+			);
 		
 		WITHER_BACKFLIP = builder.nextAccessor("wither/backflip", (accessor) ->
 			new AttackAnimation(0.2F, 0.3F, 0.5F, 0.66F, 2.1F, ColliderPreset.WITHER_CHARGE, Armatures.WITHER.get().torso, accessor, Armatures.WITHER)
@@ -1922,7 +1925,7 @@ public class Animations {
 					return 1.0F;
 				})
 				.newTimePair(0.0F, 2.55F)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BATTOJUTSU = builder.nextAccessor("biped/skill/battojutsu", (accessor) ->
 			new AttackAnimation(0.15F, 0.0F, 0.75F, 0.8F, 1.2F, ColliderPreset.BATTOJUTSU, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
@@ -1956,6 +1959,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER, false)
 				.newTimePair(0.0F, 0.25F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
+		
 		RUSHING_TEMPO2 = builder.nextAccessor("biped/skill/rushing_tempo2", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.15F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
@@ -1963,6 +1967,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.RESET_PLAYER_COMBO_COUNTER, false)
 				.newTimePair(0.0F, 0.25F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false));
+		
 		RUSHING_TEMPO3 = builder.nextAccessor("biped/skill/rushing_tempo3", (accessor) ->
 			new AttackAnimation(0.05F, 0.0F, 0.2F, 0.25F, 0.6F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.6F)
@@ -2012,7 +2017,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.65F)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BLADE_RUSH_COMBO2 = builder.nextAccessor("biped/skill/blade_rush_combo2", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.15F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
@@ -2030,7 +2035,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.65F)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BLADE_RUSH_COMBO3 = builder.nextAccessor("biped/skill/blade_rush_combo3", (accessor) ->
 			new AttackAnimation(0.1F, 0.0F, 0.2F, 0.35F, 0.85F, ColliderPreset.BIPED_BODY_COLLIDER, Armatures.BIPED.get().rootJoint, accessor, Armatures.BIPED)
@@ -2048,7 +2053,7 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.ENTITY_YROT_PROVIDER, MoveCoordFunctions.LOOK_DEST)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, Animations.ReusableSources.CONSTANT_ONE)
 				.newTimePair(0.0F, 0.6F)
-				.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false));
 		
 		BLADE_RUSH_HIT = builder.nextAccessor("biped/interact/blade_rush_hit", (accessor) ->
 			new LongHitAnimation(0.1F, accessor, Armatures.BIPED)

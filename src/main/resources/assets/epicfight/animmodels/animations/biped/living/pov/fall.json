@@ -167,6 +167,11 @@
             ]
         }
     ],
+    "visibilities": {
+    	"leftArm": true,
+    	"rightArm": true,
+    	"others": false
+    },
     "camera": {
         "time": [0.0, 0.0333, 0.0667, 0.1, 0.1333, 0.1667, 0.2],
         "transform": [

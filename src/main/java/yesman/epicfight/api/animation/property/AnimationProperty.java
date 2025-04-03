@@ -254,6 +254,11 @@ public abstract class AnimationProperty<T> {
 		 * Decides the index of destination key frame for coord transform, See also with {@link MoveCoordFunctions#TRACE_ORIGIN_AS_DESTINATION}
 		 */
 		public static final ActionAnimationProperty<Integer> COORD_DEST_KEYFRAME_INDEX = new ActionAnimationProperty<Integer> ();
+		
+		/**
+		 * Determines if an entity should look where a camera is looking at the beginning of an animation (player only)
+		 */
+		public static final ActionAnimationProperty<Boolean> SYNC_CAMERA = new ActionAnimationProperty<Boolean> ("sync_camera", Codec.BOOL);
 	}
 	
 	public static class AttackAnimationProperty<T> extends ActionAnimationProperty<T> {

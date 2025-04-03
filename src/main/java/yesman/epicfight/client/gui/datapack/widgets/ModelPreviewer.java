@@ -311,7 +311,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.animationsToPlay.clear();
 		this.animator.playAnimation(Animations.EMPTY_ANIMATION, 0.0F);
 		
-		((ClientAnimator)this.animator).getAllLayers().forEach((layer) -> {
+		((ClientAnimator)this.animator).iterAllLayers((layer) -> {
 			layer.off(this.animator.getEntityPatch());
 		});
 		
@@ -983,7 +983,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float convertTimeModifier) {
 				Priority priority = nextAnimation.get().getPriority();
 				this.baseLayerPriority = priority;
-				this.offCompositeLayerLowerThan(entitypatch, nextAnimation);
+				this.offCompositeLayersLowerThan(entitypatch, nextAnimation);
 				
 				Pose lastPose = entitypatch.getAnimator().getPose(1.0F);
 				this.resume();
@@ -1073,7 +1073,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			public void offCompositeLayerLowerThan(LivingEntityPatch<?> entitypatch, StaticAnimation nextAnimation) {
-				for (Priority p : nextAnimation.getPriority().lowerEquals()) {
+				for (Priority p : nextAnimation.getPriority().lowersAndEqual()) {
 					if (p == Priority.LOWEST && !nextAnimation.isMainFrameAnimation()) {
 						continue;
 					}

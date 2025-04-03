@@ -280,6 +280,18 @@ public class TransformSheet {
 		return new InterpolationInfo(prev, next, Float.isNaN(progression) ? 1.0F : progression);
 	}
 	
+	public float maxFrameTime() {
+		float maxFrameTime = -1.0F;
+		
+		for (Keyframe kf : this.keyframes) {
+			if (kf.time() > maxFrameTime) {
+				maxFrameTime = kf.time();
+			}
+		}
+		
+		return maxFrameTime;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

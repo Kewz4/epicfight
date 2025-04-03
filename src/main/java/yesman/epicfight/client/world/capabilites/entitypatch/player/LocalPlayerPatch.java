@@ -22,6 +22,7 @@ import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -31,9 +32,9 @@ import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPChangePlayerMode;
-import yesman.epicfight.network.client.CPSetStamina;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
 import yesman.epicfight.network.client.CPSetPlayerTarget;
+import yesman.epicfight.network.client.CPSetStamina;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
@@ -358,8 +359,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	@Override
-	public void beginAction() {
-		if (!this.useModelYRot) {
+	public void beginAction(ActionAnimation animation) {
+		if (!this.useModelYRot || animation.getProperty(ActionAnimationProperty.SYNC_CAMERA).orElse(false)) {
 			this.modelYRot = this.getOriginal().getYRot();
 		}
 		

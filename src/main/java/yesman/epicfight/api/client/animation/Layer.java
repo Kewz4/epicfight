@@ -15,7 +15,6 @@ import yesman.epicfight.api.animation.types.ConcurrentLinkAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LayerOffAnimation;
 import yesman.epicfight.api.animation.types.LinkAnimation;
-import yesman.epicfight.api.animation.types.MainFrameAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
@@ -225,15 +224,16 @@ public class Layer {
 		public BaseLayer(Supplier<AnimationPlayer> animationPlayerProvider) {
 			super(null, animationPlayerProvider);
 			
-			this.compositeLayers.computeIfAbsent(Priority.LOWEST, Layer::new);
-			this.compositeLayers.computeIfAbsent(Priority.MIDDLE, Layer::new);
-			this.compositeLayers.computeIfAbsent(Priority.HIGHEST, Layer::new);
+			for (Priority priority : Priority.values()) {
+				this.compositeLayers.computeIfAbsent(priority, Layer::new);
+			}
+			
 			this.baseLayerPriority = Priority.LOWEST;
 		}
 		
 		@Override
 		public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
-			this.offCompositeLayerLowerThan(entitypatch, nextAnimation);
+			this.offCompositeLayersLowerThan(entitypatch, nextAnimation);
 			super.playAnimation(nextAnimation, entitypatch, transitionTimeModifier);
 			this.baseLayerPriority = nextAnimation.get().getPriority();
 		}
@@ -264,8 +264,9 @@ public class Layer {
 			}
 		}
 		
-		public void offCompositeLayerLowerThan(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> nextAnimation) {
-			for (Priority p : nextAnimation.get().getPriority().lowerEquals()) {
+		public void offCompositeLayersLowerThan(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> nextAnimation) {
+			for (Priority p : nextAnimation.get().getPriority().lowersAndEqual()) {
+				// Lowest composite layer not off if the next animation is not a main frame animation. e.g. dual hold animation
 				if (p == Priority.LOWEST && !nextAnimation.get().isMainFrameAnimation()) {
 					continue;
 				}
@@ -312,23 +313,26 @@ public class Layer {
 	@OnlyIn(Dist.CLIENT)
 	public enum Priority {
 		/**
-		 * LOWEST: Common living motions (Composite layer having this priority will be overrided if base layer is {@link MainFrameAnimation})
-		 * MIDDLE: Composite living motions
-		 * HIGHEST: Not repeating composite motions (Shield hits, Katana sheath)
-		 * BASE: Base layer (not used)
-		 */
-		LOWEST, MIDDLE, HIGHEST;
+		 * The common usage of each layer
+		 * 
+		 * LOWEST: Most of living cycle animations. Also a default value for animations doesn't inherit {@link MainFrameAnimation.class}
+		 * LOW: A few {@link ActionAnimation.class} that allows showing living cycle animations. e.g. step
+		 * MIDDLE: Most of composite living cycle animations. e.g. weapon holding animations
+		 * HIGH: A few composite animations that doesn't repeat. e.g. Uchigatana sheathing, Shield hit
+		 * HIGHEST: Most of {@link MainFrameAnimation.class} and a few living cycle animations. e.g. ladder animation
+		 **/
+		LOWEST, LOW, MIDDLE, HIGH, HIGHEST;
 		
 		public Priority[] lowers() {
 			return Arrays.copyOfRange(Priority.values(), 0, this.ordinal());
 		}
 		
-		public Priority[] uppers() {
-			return Arrays.copyOfRange(Priority.values(), this == LOWEST ? this.ordinal() : this.ordinal() + 1, 3);
+		public Priority[] lowersAndEqual() {
+			return Arrays.copyOfRange(Priority.values(), 0, this.ordinal() + 1);
 		}
 		
-		public Priority[] lowerEquals() {
-			return Arrays.copyOfRange(Priority.values(), 0, this.ordinal() + 1);
+		public Priority[] highers() {
+			return Arrays.copyOfRange(Priority.values(), this == LOWEST ? this.ordinal() : this.ordinal() + 1, Priority.values().length);
 		}
 		
 		public boolean isHigherThan(Priority priority) {

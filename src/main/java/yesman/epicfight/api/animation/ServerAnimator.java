@@ -1,5 +1,7 @@
 package yesman.epicfight.api.animation;
 
+import java.util.Optional;
+
 import com.mojang.datafixers.util.Pair;
 
 import yesman.epicfight.api.animation.types.DynamicAnimation;
@@ -69,6 +71,16 @@ public class ServerAnimator extends Animator {
 	}
 	
 	@Override
+	public boolean stopPlaying(AssetAccessor<? extends StaticAnimation> targetAnimation) {
+		if (this.animationPlayer.getAnimation().get().getRealAnimation() == targetAnimation) {
+			this.animationPlayer.terminate();
+			return true;
+		}
+		
+		return false;
+	}
+	
+	@Override
 	public void tick() {
 		if (this.hardPaused || this.softPaused) {
 			this.entitypatch.updateEntityState();
@@ -103,6 +115,15 @@ public class ServerAnimator extends Animator {
 	@Override
 	public AnimationPlayer getPlayerFor(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
 		return this.animationPlayer;
+	}
+	
+	@Override
+	public Optional<AnimationPlayer> getPlayer(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
+		if (this.animationPlayer.getAnimation().get().getRealAnimation() == playingAnimation) {
+			return Optional.of(this.animationPlayer);
+		} else {
+			return Optional.empty();
+		}
 	}
 	
 	@Override

@@ -106,6 +106,11 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 	
 	@Override
 	public void resetCharging(PlayerPatch<?> caster) {
+		if (caster.isLogicalClient()) {
+			caster.getAnimator().stopPlaying(this.chargingAnimation);
+		} else {
+			caster.stopPlaying(this.chargingAnimation);
+		}
 	}
 	
 	@Override
