@@ -31,14 +31,14 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules;
 public class PlayerEvents {
 	@SubscribeEvent
 	public static void startTrackingEvent(StartTracking event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getTarget(), EntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getTarget(), EntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onStartTracking((ServerPlayer)event.getEntity());
 		});
 	}
 	
 	@SubscribeEvent
 	public static void playerLoadEvent(PlayerEvent.LoadFromFile event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 			File file = new File(event.getPlayerDirectory(), event.getPlayerUUID() + ".dat");
 			
 			if (!file.exists()) {
@@ -52,8 +52,8 @@ public class PlayerEvents {
 	public static void cloneEvent(PlayerEvent.Clone event) {
 		event.getOriginal().reviveCaps();
 		
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getOriginal(), ServerPlayerPatch.class).ifPresent(oldCap -> {
-			EpicFightCapabilities.<ServerPlayer, ServerPlayerPatch>getEntityPatchParameterized(event.getEntity(), ServerPlayer.class, ServerPlayerPatch.class).ifPresent(newCap -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getOriginal(), ServerPlayerPatch.class).ifPresent(oldCap -> {
+			EpicFightCapabilities.<ServerPlayer, ServerPlayerPatch>getParameterizedEntityPatch(event.getEntity(), ServerPlayer.class, ServerPlayerPatch.class).ifPresent(newCap -> {
 				if ((!event.isWasDeath() || EpicFightGameRules.KEEP_SKILLS.getRuleValue(event.getOriginal().level()))) {
 					newCap.copySkillsFrom(oldCap);
 				}
@@ -67,7 +67,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void changeDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 			playerpatch.getAnimator().resetLivingAnimations();
 			playerpatch.modifyLivingMotionByCurrentItem(true);
 			
@@ -78,7 +78,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void rightClickItemServerEvent(RightClickItem event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 			ItemStack itemstack = playerpatch.getOriginal().getOffhandItem();
 			
 			if (itemstack.getUseAnimation() == UseAnim.NONE || !playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(playerpatch).canUseOffhand()) {
@@ -95,7 +95,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void itemUseStartEvent(LivingEntityUseItemEvent.Start event) {
-		EpicFightCapabilities.<Player, PlayerPatch<Player>>getEntityPatchParameterized(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.<Player, PlayerPatch<Player>>getParameterizedEntityPatch(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(playerpatch -> {
 			InteractionHand hand = playerpatch.getOriginal().getItemInHand(InteractionHand.MAIN_HAND).equals(event.getItem()) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 			CapabilityItem itemCap = playerpatch.getHoldingItemCapability(hand);
 			
@@ -113,7 +113,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void itemUseStopEvent(LivingEntityUseItemEvent.Stop event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 			boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.SERVER_ITEM_STOP_EVENT, new ItemUseEndEvent(playerpatch, event));
 			event.setCanceled(canceled);
 		});
@@ -121,7 +121,7 @@ public class PlayerEvents {
 	
 	@SubscribeEvent
 	public static void attackEntityEvent(AttackEntityEvent event) {
-		EpicFightCapabilities.<Player, PlayerPatch<Player>>getEntityPatchParameterized(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(playerpatch -> {
+		EpicFightCapabilities.<Player, PlayerPatch<Player>>getParameterizedEntityPatch(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(playerpatch -> {
 			boolean isLivingTarget = event.getTarget() instanceof LivingEntity livingEntity && livingEntity.attackable();
 			
 			if (!EpicFightGameRules.DO_VANILLA_ATTACK.getRuleValue(event.getEntity().level()) && isLivingTarget && playerpatch.getEpicFightDamageSource() == null && !fakePlayerCheck(event.getEntity())) {

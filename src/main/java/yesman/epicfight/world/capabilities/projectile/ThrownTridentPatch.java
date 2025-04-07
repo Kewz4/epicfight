@@ -69,7 +69,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 		super.onJoinWorld(projectileEntity, event);
 		
 		if (!this.isLogicalClient()) {
-			EpicFightCapabilities.getEntityPatchUnparameterized(projectileEntity.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(projectileEntity.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 				
 				if (container.getSkill() instanceof EverlastingAllegiance) {
@@ -84,7 +84,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	public void tickEnd() {
 		if (!this.isLogicalClient()) {
 			if (this.original.dealtDamage) {
-				EpicFightCapabilities.getEntityPatchUnparameterized(this.original.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+				EpicFightCapabilities.getUnparameterizedEntityPatch(this.original.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 					SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 					
 					if (container.getSkill() instanceof EverlastingAllegiance) {

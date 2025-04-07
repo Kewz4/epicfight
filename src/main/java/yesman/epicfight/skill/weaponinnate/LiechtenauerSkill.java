@@ -93,7 +93,7 @@ public class LiechtenauerSkill extends WeaponInnateSkill {
 						knockback += EnchantmentHelper.getKnockbackBonus(livingentity) * 0.1F;
 					}
 					
-					EpicFightCapabilities.getEntityPatchUnparameterized(event.getDamageSource().getEntity(), LivingEntityPatch.class).ifPresent(attackerpatch -> {
+					EpicFightCapabilities.getUnparameterizedEntityPatch(event.getDamageSource().getEntity(), LivingEntityPatch.class).ifPresent(attackerpatch -> {
 						attackerpatch.setLastAttackEntity(event.getPlayerPatch().getOriginal());
 					});
 					

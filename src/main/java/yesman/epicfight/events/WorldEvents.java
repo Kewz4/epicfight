@@ -46,7 +46,7 @@ public class WorldEvents {
 			if (!event.getPlayer().getServer().isSingleplayerOwner(event.getPlayer().getGameProfile())) {
 				synchronizeWorldData(event.getPlayer());
 			} else {
-				EpicFightCapabilities.getEntityPatchUnparameterized(event.getPlayer(), ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
+				EpicFightCapabilities.getUnparameterizedEntityPatch(event.getPlayer(), ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
 					CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
 					
 					for (SkillContainer skill : skillCapability.skillContainers) {
@@ -63,7 +63,7 @@ public class WorldEvents {
     }
 	
 	public static void synchronizeWorldData(ServerPlayer player) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(player, ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(player, ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
 			CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
 			
 			for (SkillContainer skill : skillCapability.skillContainers) {

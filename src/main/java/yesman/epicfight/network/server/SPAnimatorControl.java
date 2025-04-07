@@ -28,7 +28,7 @@ public class SPAnimatorControl extends AnimatorControlPacket {
 	}
 	
 	public <T extends SPAnimatorControl> void onArrive() {
-		EpicFightCapabilities.getEntityPatchUnparameterized(Minecraft.getInstance().level.getEntity(this.entityId), LivingEntityPatch.class).ifPresent(this::process);
+		EpicFightCapabilities.getUnparameterizedEntityPatch(Minecraft.getInstance().level.getEntity(this.entityId), LivingEntityPatch.class).ifPresent(this::process);
 	}
 	
 	public static SPAnimatorControl fromBytes(FriendlyByteBuf buf) {

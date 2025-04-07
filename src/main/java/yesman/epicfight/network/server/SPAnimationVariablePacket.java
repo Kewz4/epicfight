@@ -50,7 +50,7 @@ public class SPAnimationVariablePacket<T> extends AnimationVariablePacket<T> {
 	
 	public static <T> void handle(SPAnimationVariablePacket<T> msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(Minecraft.getInstance().player.level().getEntity(msg.entityId), LivingEntityPatch.class).ifPresent(msg::process);
+			EpicFightCapabilities.getUnparameterizedEntityPatch(Minecraft.getInstance().player.level().getEntity(msg.entityId), LivingEntityPatch.class).ifPresent(msg::process);
 		});
 		ctx.get().setPacketHandled(true);
 	}

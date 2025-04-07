@@ -229,10 +229,10 @@ public class GuardSkill extends Skill {
 		event.setCanceled(true);
 		event.setResult(AttackResult.ResultType.BLOCKED);
 		
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getDamageSource().getEntity(), LivingEntityPatch.class)
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getDamageSource().getEntity(), LivingEntityPatch.class)
 			.ifPresent(attackerpatch -> attackerpatch.setLastAttackEntity(playerpatch.getOriginal()));
 		
-		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getDamageSource().getDirectEntity(), LivingEntity.class, LivingEntityPatch.class)
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(event.getDamageSource().getDirectEntity(), LivingEntity.class, LivingEntityPatch.class)
 			.ifPresent(entitypatch -> entitypatch.onAttackBlocked(event.getDamageSource(), playerpatch));
 	}
 	

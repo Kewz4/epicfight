@@ -30,7 +30,7 @@ public class CPSetPlayerTarget {
 	
 	public static void handle(CPSetPlayerTarget msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(entitypatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(entitypatch -> {
 				Entity entity = entitypatch.getOriginal().level().getEntity(msg.entityId);
 				
 				if (entity instanceof LivingEntity livingEntity) {

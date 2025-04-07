@@ -41,7 +41,6 @@ import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
 import yesman.epicfight.api.data.reloader.SkillManager;
-import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.client.gui.screen.config.IngameConfigurationScreen;
 import yesman.epicfight.client.renderer.patched.item.EpicFightItemProperties;
@@ -303,8 +302,6 @@ public class EpicFightMod {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-        	new ClientEngine();
-        	
     		event.enqueueWork(EntityPatchProvider::registerEntityPatchesClient);
     		event.enqueueWork(SkillBookScreen::registerIconItems);
     		event.enqueueWork(EpicFightItemProperties::registerItemProperties);

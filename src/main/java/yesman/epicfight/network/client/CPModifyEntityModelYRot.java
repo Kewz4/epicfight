@@ -39,7 +39,7 @@ public class CPModifyEntityModelYRot {
 	
 	public static void handle(CPModifyEntityModelYRot msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(( )-> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				if (msg.disable) {
 					playerpatch.disableModelYRot(false);
 					EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.disablePlayerYRot(playerpatch.getOriginal().getId()), playerpatch.getOriginal());

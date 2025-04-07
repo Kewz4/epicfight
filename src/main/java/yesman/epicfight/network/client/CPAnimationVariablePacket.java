@@ -41,7 +41,7 @@ public class CPAnimationVariablePacket<T> extends AnimationVariablePacket<T> {
 	
 	public static <T> void handle(CPAnimationVariablePacket<T> msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(()-> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				msg.process(playerpatch);
 				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimationVariablePacket<>(playerpatch, msg.animationVariableKey, msg.animation, msg.value, msg.action), playerpatch.getOriginal());
 			});

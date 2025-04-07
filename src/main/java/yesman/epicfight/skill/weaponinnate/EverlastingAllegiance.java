@@ -70,7 +70,7 @@ public class EverlastingAllegiance extends WeaponInnateSkill {
 		super.cancelOnClient(container, args);
 		
 		if (container.getExecutor().getOriginal().level().getEntity(container.getDataManager().getDataValue(SkillDataKeys.THROWN_TRIDENT_ENTITY_ID.get())) instanceof ThrownTrident trident) {
-			EpicFightCapabilities.getEntityPatchUnparameterized(trident, ThrownTridentPatch.class).ifPresent(ThrownTridentPatch::recalledBySkill);
+			EpicFightCapabilities.getUnparameterizedEntityPatch(trident, ThrownTridentPatch.class).ifPresent(ThrownTridentPatch::recalledBySkill);
 		}
 	}
 	

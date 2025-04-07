@@ -40,7 +40,7 @@ public class CPChangeSkill {
 	
 	public static void handle(CPChangeSkill msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				Skill skill = SkillManager.getSkill(msg.skillName);
 				playerpatch.getSkill(msg.skillSlotIndex).setSkill(skill);
 				

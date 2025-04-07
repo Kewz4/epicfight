@@ -51,7 +51,7 @@ public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 					witherskeletonminion.setYRot(projectile.getYRot() - 180.0F);
 					level.addFreshEntity(witherskeletonminion);
 					
-					EpicFightCapabilities.<WitherSkeletonMinion, WitherSkeletonPatch<WitherSkeletonMinion>>getEntityPatchParameterized(witherskeletonminion, WitherSkeletonMinion.class, WitherSkeletonPatch.class)
+					EpicFightCapabilities.<WitherSkeletonMinion, WitherSkeletonPatch<WitherSkeletonMinion>>getParameterizedEntityPatch(witherskeletonminion, WitherSkeletonMinion.class, WitherSkeletonPatch.class)
 						.ifPresent(witherskeletonpatch -> witherskeletonpatch.playAnimationInstantly(Animations.WITHER_SKELETON_SPECIAL_SPAWN));
 				}
 			}

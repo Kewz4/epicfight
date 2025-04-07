@@ -82,7 +82,7 @@ public class EntityEvents {
 	@SuppressWarnings("unchecked")
 	@SubscribeEvent
 	public static void spawnEvent(EntityJoinLevelEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), EntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), EntityPatch.class).ifPresent(entitypatch -> {
 			if (!entitypatch.isInitialized()) {
 				entitypatch.onJoinWorld(event.getEntity(), event);
 			}
@@ -91,7 +91,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void updateEvent(LivingEvent.LivingTickEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.getOriginal() != null) {
 				entitypatch.tick(event);
 			}
@@ -100,7 +100,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void deathEvent(LivingDeathEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onDeath(event);
 		});
 		
@@ -126,7 +126,7 @@ public class EntityEvents {
 
 	@SubscribeEvent
 	public static void knockBackEvent(LivingKnockBackEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), HurtableEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), HurtableEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.shouldCancelKnockback()) {
 				event.setCanceled(true);
 			}
@@ -373,14 +373,14 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void shieldEvent(ShieldBlockEvent event) {
-		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.playAnimationSynchronized(Animations.BIPED_HIT_SHIELD, 0.0F);
 		});
 	}
 	
 	@SubscribeEvent
 	public static void dropEvent(LivingDropsEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.onDrop(event)) {
 				event.setCanceled(true);
 			}
@@ -443,7 +443,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void equipChangeEvent(LivingEquipmentChangeEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), HurtableEntityPatch.class).ifPresent(hurtableEntitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), HurtableEntityPatch.class).ifPresent(hurtableEntitypatch -> {
 			hurtableEntitypatch.setDefaultStunReduction(event.getSlot(), event.getFrom(), event.getTo());
 		});
 		
@@ -501,7 +501,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void mountEvent(EntityMountEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntityMounting(), HumanoidMobPatch.class).ifPresent(humanoidMobPatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntityMounting(), HumanoidMobPatch.class).ifPresent(humanoidMobPatch -> {
 			if (!event.getLevel().isClientSide() && humanoidMobPatch.getOriginal() != null) {
 				if (event.getEntityBeingMounted() instanceof Mob) {
 					humanoidMobPatch.onMount(event.isMounting(), event.getEntityBeingMounted());
@@ -512,7 +512,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void tpEvent(EntityTeleportEvent.EnderEntity event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), EndermanPatch.class).ifPresent(enderManPatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), EndermanPatch.class).ifPresent(enderManPatch -> {
 			if (enderManPatch.getEntityState().inaction()) {
 				for (Entity collideEntity : enderManPatch.getOriginal().level().getEntitiesOfClass(Entity.class, enderManPatch.getOriginal().getBoundingBox().inflate(0.2D, 0.2D, 0.2D))) {
 					if (collideEntity instanceof Projectile) {
@@ -529,7 +529,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void jumpEvent(LivingJumpEvent event) {
-		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.isLogicalClient()) {
 				if (!entitypatch.getEntityState().inaction() && !event.getEntity().isInWater()) {
 					AssetAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
@@ -541,14 +541,14 @@ public class EntityEvents {
 
 	@SubscribeEvent
 	public static void fallEvent(LivingFallEvent event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onFall(event);
 		});
 	}
 	
 	@SubscribeEvent
 	public static void playerFallEvent(PlayerFlyableFallEvent event) {
-		EpicFightCapabilities.<Player, PlayerPatch<Player>>getEntityPatchParameterized(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.<Player, PlayerPatch<Player>>getParameterizedEntityPatch(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onFall(new LivingFallEvent(event.getEntity(), event.getDistance(), event.getMultiplier()));
 		});
 	}

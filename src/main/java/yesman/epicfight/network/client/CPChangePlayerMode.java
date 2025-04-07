@@ -27,7 +27,7 @@ public class CPChangePlayerMode {
 	
 	public static void handle(CPChangePlayerMode msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				playerpatch.toMode(msg.mode, false);
 				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.setPlayerMode(playerpatch.getOriginal().getId(), playerpatch.getPlayerMode()), playerpatch.getOriginal());
 			});

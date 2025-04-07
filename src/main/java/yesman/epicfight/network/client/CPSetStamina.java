@@ -27,7 +27,7 @@ public class CPSetStamina {
 	
 	public static void handle(CPSetStamina msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				playerpatch.setStamina(msg.consumption);
 				
 				if (msg.resetActionTick) {

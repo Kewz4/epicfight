@@ -106,7 +106,7 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void rightClickItemClient(PlayerInteractEvent.RightClickItem event) {
 		if (event.getSide() == LogicalSide.CLIENT) {
-			EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
 				if (playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
 					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.CLIENT_ITEM_USE_EVENT, new RightClickItemEvent<>(playerpatch));
 					
@@ -122,7 +122,7 @@ public class ClientEvents {
 	
 	@SubscribeEvent
 	public static void clientLoggingInEvent(ClientPlayerNetworkEvent.LoggingIn event) {
-		EpicFightCapabilities.getEntityPatchUnparameterized(event.getPlayer(), LocalPlayerPatch.class).ifPresent(ClientEngine.getInstance().controllEngine::setPlayerPatch);
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getPlayer(), LocalPlayerPatch.class).ifPresent(ClientEngine.getInstance().controllEngine::setPlayerPatch);
 		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
 		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
 	}

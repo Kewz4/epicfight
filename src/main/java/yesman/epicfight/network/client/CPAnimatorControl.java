@@ -42,7 +42,7 @@ public class CPAnimatorControl extends AnimatorControlPacket {
 	
 	public static void handle(CPAnimatorControl msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(()-> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				if (!msg.isClientOnly) {
 					msg.process(playerpatch);
 				}

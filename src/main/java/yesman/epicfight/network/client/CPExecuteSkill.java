@@ -63,7 +63,7 @@ public class CPExecuteSkill {
 	
 	public static void handle(CPExecuteSkill msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				SkillContainer skillContainer = playerpatch.getSkill(msg.skillSlot);
 				
 				switch (msg.workType) {

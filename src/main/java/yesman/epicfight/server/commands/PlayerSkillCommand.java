@@ -77,7 +77,7 @@ public class PlayerSkillCommand {
 		int i = 0;
 		
 		for (ServerPlayer player : targets) {
-			EpicFightCapabilities.getEntityPatchUnparameterized(player, ServerPlayerPatch.class).ifPresent(playerpatch -> playerpatch.getSkillCapability().clear());
+			EpicFightCapabilities.getUnparameterizedEntityPatch(player, ServerPlayerPatch.class).ifPresent(playerpatch -> playerpatch.getSkillCapability().clear());
 			EpicFightNetworkManager.sendToPlayer(new SPClearSkills(), player);
 			i++;
 		}

@@ -605,12 +605,14 @@ public class RenderEngine {
 				}
 			}
 			
-			if (ClientEngine.getInstance().getPlayerPatch() != null && !renderEngine.minecraft.options.hideGui && !EpicFightGameRules.DISABLE_ENTITY_UI.getRuleValue(livingentity.level())) {
+			LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
+			
+			if (playerpatch != null && !renderEngine.minecraft.options.hideGui && !EpicFightGameRules.DISABLE_ENTITY_UI.getRuleValue(livingentity.level())) {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(livingentity, LivingEntityPatch.class);
 				
 				for (EntityIndicator entityIndicator : EntityIndicator.ENTITY_INDICATOR_RENDERERS) {
-					if (entityIndicator.shouldDraw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch())) {
-						entityIndicator.drawIndicator(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch(), event.getPoseStack(), event.getMultiBufferSource(), event.getPartialTick());
+					if (entityIndicator.shouldDraw(livingentity, entitypatch, playerpatch)) {
+						entityIndicator.drawIndicator(livingentity, entitypatch, playerpatch, event.getPoseStack(), event.getMultiBufferSource(), event.getPartialTick());
 					}
 				}
 			}
@@ -619,7 +621,7 @@ public class RenderEngine {
 		@SubscribeEvent
 		public static void itemTooltip(ItemTooltipEvent event) {
 			if (ClientConfig.showEpicFightAttributesInTooltip && event.getEntity() != null && event.getEntity().level().isClientSide) {
-				EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
+				EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
 					CapabilityItem cap = EpicFightCapabilities.getItemStackCapabilityOr(event.getItemStack(), null);
 					
 					if (cap != null) {
@@ -790,7 +792,7 @@ public class RenderEngine {
 			EnderDragon livingentity = event.getEntity();
 			
 			if (renderEngine.hasRendererFor(livingentity)) {
-				EpicFightCapabilities.getEntityPatchUnparameterized(livingentity, EnderDragonPatch.class).ifPresent(enderdragonpatch -> {
+				EpicFightCapabilities.getUnparameterizedEntityPatch(livingentity, EnderDragonPatch.class).ifPresent(enderdragonpatch -> {
 					event.setCanceled(true);
 					renderEngine.getEntityRenderer(livingentity).render(livingentity, enderdragonpatch, event.getRenderer(), event.getBuffers(), event.getPoseStack(), event.getLight(), event.getPartialRenderTick());
 				});
