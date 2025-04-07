@@ -20,7 +20,6 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.phys.Vec3;
@@ -230,18 +229,11 @@ public class GuardSkill extends Skill {
 		event.setCanceled(true);
 		event.setResult(AttackResult.ResultType.BLOCKED);
 		
-		LivingEntityPatch<?> attackerpatch = EpicFightCapabilities.getEntityPatch(event.getDamageSource().getEntity(), LivingEntityPatch.class);
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getDamageSource().getEntity(), LivingEntityPatch.class)
+			.ifPresent(attackerpatch -> attackerpatch.setLastAttackEntity(playerpatch.getOriginal()));
 		
-		if (attackerpatch != null) {
-			attackerpatch.setLastAttackEntity(playerpatch.getOriginal());
-		}
-		
-		Entity directEntity = event.getDamageSource().getDirectEntity();
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(directEntity, LivingEntityPatch.class);
-		
-		if (entitypatch != null) {
-			entitypatch.onAttackBlocked(event.getDamageSource(), playerpatch);
-		}
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getDamageSource().getDirectEntity(), LivingEntity.class, LivingEntityPatch.class)
+			.ifPresent(entitypatch -> entitypatch.onAttackBlocked(event.getDamageSource(), playerpatch));
 	}
 	
 	protected float getPenalizer(CapabilityItem itemCapability) {

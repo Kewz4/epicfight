@@ -71,6 +71,7 @@ public class RenderItemBase {
 	protected final Map<String, OpenMatrix4f> mainhandCorrectionTransforms;
 	protected final Map<String, OpenMatrix4f> offhandCorrectionTransforms;
 	private final TrailInfo trailInfo;
+	private final boolean alwaysInHand;
 	private final boolean forceVanillaFirstPerson;
 	
 	public RenderItemBase(JsonElement jsonElement) {
@@ -78,6 +79,7 @@ public class RenderItemBase {
 		
 		this.trailInfo = jsonObj.has("trail") ? TrailInfo.deserialize(jsonObj.get("trail")) : null;
 		this.forceVanillaFirstPerson = jsonObj.has("force_vanilla_first_person") ? GsonHelper.getAsBoolean(jsonObj, "force_vanilla_first_person") : false;
+		this.alwaysInHand = jsonObj.has("alwaysInHand") ? GsonHelper.getAsBoolean(jsonObj, "alwaysInHand") : false;
 		
 		if (!jsonObj.has("transforms")) {
 			// Set a global transformation
@@ -154,7 +156,6 @@ public class RenderItemBase {
 	
 	public void renderItemInHand(ItemStack stack, LivingEntityPatch<?> entitypatch, InteractionHand hand, HumanoidArmature armature, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
 		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(entitypatch, hand, poses);
-		
 		poseStack.pushPose();
 		MathUtils.mulStack(poseStack, modelMatrix);
 		ItemDisplayContext transformType = (hand == InteractionHand.MAIN_HAND) ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
@@ -165,7 +166,17 @@ public class RenderItemBase {
 	public final OpenMatrix4f transformHolder = new OpenMatrix4f();
 	
 	protected OpenMatrix4f getCorrectionMatrix(LivingEntityPatch<?> entitypatch, InteractionHand hand, OpenMatrix4f[] poses) {
-		Joint parentJoint = entitypatch.getParentJointOfHand(hand);
+		Joint parentJoint;
+		
+		if (this.alwaysInHand) {
+			parentJoint = entitypatch.getArmature().searchJointByName(hand == InteractionHand.MAIN_HAND ? "Tool_R" : "Tool_L");
+			
+			if (parentJoint == null) {
+				entitypatch.getArmature().searchJointByName("Root");
+			}
+		} else {
+			parentJoint = entitypatch.getParentJointOfHand(hand);
+		}
 		
 		switch (hand) {
 		case MAIN_HAND -> {

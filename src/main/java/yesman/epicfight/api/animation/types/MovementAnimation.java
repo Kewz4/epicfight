@@ -16,7 +16,7 @@ public class MovementAnimation extends StaticAnimation {
 	}
 	
 	/**
-	 * For internal use
+	 * For datapack animations
 	 */
 	public MovementAnimation(float transitionTime, boolean isRepeat, String path, AssetAccessor<? extends Armature> armature) {
 		super(transitionTime, isRepeat, path, armature);

@@ -6,6 +6,7 @@ import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedMo
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackTimeModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -117,6 +118,10 @@ public class AnimationPlayer {
 	
 	public AssetAccessor<? extends DynamicAnimation> getAnimation() {
 		return this.play;
+	}
+	
+	public AssetAccessor<? extends StaticAnimation> getRealAnimation() {
+		return this.play.get().getRealAnimation();
 	}
 	
 	public void markDoNotResetTime() {

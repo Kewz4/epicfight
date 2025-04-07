@@ -1,7 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -135,8 +134,8 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		
 		if (CrossbowItem.isCharged(this.original.getMainHandItem()))
 			currentCompositeMotion = LivingMotions.AIM;
-		else if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM)
-			this.playReboundAnimation();
+		else if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM)
+			this.playShootingAnimation();
 	}
 	
 	@Override
@@ -154,12 +153,13 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 	
 	@Override
 	public boolean isTargetInvulnerable(Entity entity) {
-		EntityPatch<?> cap = EpicFightCapabilities.getEntityPatch(entity, EntityPatch.class);
+		MobPatch<?> mobpatch = EpicFightCapabilities.getEntityPatch(entity, MobPatch.class);
 		
-		if (cap != null && cap instanceof MobPatch mobpatch) {
-			if (mobpatch.mobFaction.equals(this.mobFaction)) {
-				Optional<LivingEntity> opt = Optional.ofNullable(this.getTarget());
-				return opt.map((attackTarget) -> !attackTarget.is(entity)).orElse(true);
+		if (mobpatch != null && mobpatch.mobFaction.equals(this.mobFaction)) {
+			if (this.getTarget() == null) {
+				return true;
+			} else {
+				return this.getTarget().is(entity);
 			}
 		}
 		

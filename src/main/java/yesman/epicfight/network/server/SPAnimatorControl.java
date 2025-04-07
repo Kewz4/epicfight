@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -29,18 +28,7 @@ public class SPAnimatorControl extends AnimatorControlPacket {
 	}
 	
 	public <T extends SPAnimatorControl> void onArrive() {
-		Minecraft mc = Minecraft.getInstance();
-		Entity entity = mc.level.getEntity(this.entityId);
-		
-		if (entity == null) {
-			return;
-		}
-		
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
-		
-		if (entitypatch != null) {
-			this.process(entitypatch);
-		}
+		EpicFightCapabilities.getEntityPatchUnparameterized(Minecraft.getInstance().level.getEntity(this.entityId), LivingEntityPatch.class).ifPresent(this::process);
 	}
 	
 	public static SPAnimatorControl fromBytes(FriendlyByteBuf buf) {

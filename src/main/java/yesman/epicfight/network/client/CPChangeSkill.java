@@ -3,7 +3,6 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.skill.Skill;
@@ -41,10 +40,7 @@ public class CPChangeSkill {
 	
 	public static void handle(CPChangeSkill msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			ServerPlayer serverPlayer = ctx.get().getSender();
-			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(serverPlayer, ServerPlayerPatch.class);
-			
-			if (playerpatch != null) {
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				Skill skill = SkillManager.getSkill(msg.skillName);
 				playerpatch.getSkill(msg.skillSlotIndex).setSkill(skill);
 				
@@ -53,13 +49,13 @@ public class CPChangeSkill {
 				}
 				
 				if (msg.consumeXp) {
-					serverPlayer.giveExperienceLevels(-skill.getRequiredXp());
+					playerpatch.getOriginal().giveExperienceLevels(-skill.getRequiredXp());
 				} else {
-					if (!serverPlayer.isCreative()) {
-						serverPlayer.getInventory().removeItem(serverPlayer.getInventory().getItem(msg.itemSlotIndex));
+					if (!playerpatch.getOriginal().isCreative()) {
+						playerpatch.getOriginal().getInventory().removeItem(playerpatch.getOriginal().getInventory().getItem(msg.itemSlotIndex));
 					}
 				}
-			}
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

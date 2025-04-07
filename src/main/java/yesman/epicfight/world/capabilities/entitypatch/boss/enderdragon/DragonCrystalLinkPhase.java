@@ -85,12 +85,12 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	
 	@Override
 	public float onHurt(DamageSource damagesource, float amount) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(damagesource.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null && entitypatch.getEpicFightDamageSource() != null) {
-			float impact = entitypatch.getEpicFightDamageSource().getImpact();
-			this.dragonpatch.setStunShield(this.dragonpatch.getStunShield() - impact);
-		}
+		EpicFightCapabilities.getEntityPatchUnparameterized(damagesource.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.getEpicFightDamageSource() != null) {
+				float impact = entitypatch.getEpicFightDamageSource().getImpact();
+				this.dragonpatch.setStunShield(this.dragonpatch.getStunShield() - impact);
+			}
+		});
 		
 		return amount;
 	}

@@ -50,6 +50,7 @@ public class ClientConfig {
 	public static final BooleanValue SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP = BUILDER.define("ingame.show_epicfight_attributes", () -> true);
 	public static final BooleanValue ACTIVATE_ANIMATION_SHADER = BUILDER.define("ingame.use_animation_shader", () -> false);
 	public static final BooleanValue ENABLE_ANIMATED_FIRST_PERSON_MODEL = BUILDER.define("ingame.first_person_model", () -> true);
+	public static final BooleanValue ENABLE_POV_ACTION = BUILDER.define("ingame.enable_pov_action", () -> true);
 	public static final BooleanValue ENABLE_COSMETICS = BUILDER.define("ingame.enable_cosmetics", () -> true);
 	
 	public static final ConfigValue<List<? extends String>> BATTLE_MODE_SWITCHING_ITEMS = BUILDER.defineList("ingame.battle_autoswitch_items", Lists.newArrayList(), (element) -> {
@@ -114,6 +115,7 @@ public class ClientConfig {
 	public static boolean activateAnimationShader;
 	public static boolean animationShaderLockedByException = false;
 	public static boolean enableAnimatedFirstPersonModel;
+	public static boolean enablePovAction;
 	public static boolean enableCosmetics;
 	public static Set<Item> battleModeSwitchingItems;
 	public static Set<Item> miningModeSwitchingItems;
@@ -159,6 +161,7 @@ public class ClientConfig {
 		showEpicFightAttributesInTooltip = SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.get();
 		activateAnimationShader = ACTIVATE_ANIMATION_SHADER.get();
 		enableAnimatedFirstPersonModel = ENABLE_ANIMATED_FIRST_PERSON_MODEL.get();
+		enablePovAction = ENABLE_POV_ACTION.get();
 		enableCosmetics = ENABLE_COSMETICS.get();
 		
 		battleModeSwitchingItems = BATTLE_MODE_SWITCHING_ITEMS.get().stream()
@@ -212,6 +215,7 @@ public class ClientConfig {
 		if (showEpicFightAttributesInTooltip != SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.get()) SHOW_EPICFIGHT_ATTRIBUTES_IN_TOOLTIP.set(showEpicFightAttributesInTooltip);
 		if (activateAnimationShader != ACTIVATE_ANIMATION_SHADER.get()) ACTIVATE_ANIMATION_SHADER.set(activateAnimationShader);
 		if (enableAnimatedFirstPersonModel != ENABLE_ANIMATED_FIRST_PERSON_MODEL.get()) ENABLE_ANIMATED_FIRST_PERSON_MODEL.set(enableAnimatedFirstPersonModel);
+		if (enablePovAction != ENABLE_POV_ACTION.get()) ENABLE_POV_ACTION.set(enablePovAction);
 		if (enableCosmetics != ENABLE_COSMETICS.get()) ENABLE_COSMETICS.set(enableCosmetics);
 		
 		if (!battleModeSwitchingItems.equals(BATTLE_MODE_SWITCHING_ITEMS.get().stream()

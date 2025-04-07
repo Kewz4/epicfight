@@ -6,6 +6,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
@@ -68,6 +71,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEnderDragonEvent;
 import yesman.epicfight.api.client.model.Meshes;
@@ -337,6 +341,7 @@ public class RenderEngine {
 			}
 			
 			if (renderItem == null) {
+				// Get generic renderer
 				renderItem = this.itemRendererMapByInstance.get(Items.AIR);
 			}
 			
@@ -468,6 +473,9 @@ public class RenderEngine {
 		camera.setPosition(totalX, totalY, totalZ);
 	}
 	
+	private static final OpenMatrix4f PLAYER_ROTATION = new OpenMatrix4f();
+	private static final Vector3f CAMERA_ROTATION_EULER = new Vector3f();
+	
 	public void correctCamera(ViewportEvent.ComputeCameraAngles event, float partialTicks) {
 		LocalPlayerPatch localPlayerPatch = ClientEngine.getInstance().getPlayerPatch();
 		Camera camera = event.getCamera();
@@ -496,6 +504,28 @@ public class RenderEngine {
 					
 					camera.move(-camera.getMaxZoom(4.0D), 0.0D, 0.0D);
 				}
+			}
+			
+			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.getPovSettings() != null && localPlayerPatch.getPovSettings().cameraTransform() != null) {
+				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
+				JointTransform cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+				
+				float xRot = localPlayerPatch.getOriginal().getXRot();
+				float yRot = localPlayerPatch.getOriginal().getYRot();
+				
+				Vec3f translation = OpenMatrix4f.transform3v(OpenMatrix4f.ofRotationDegree(yRot, Vec3f.Y_AXIS, PLAYER_ROTATION).rotate(xRot, Vec3f.X_AXIS), cameraTransform.translation(), null);
+				Quaternionf rot = cameraTransform.rotation();
+				rot.getEulerAnglesXYZ(CAMERA_ROTATION_EULER);
+				
+				CAMERA_ROTATION_EULER.x = (float)Math.toDegrees(CAMERA_ROTATION_EULER.x);
+				CAMERA_ROTATION_EULER.y = (float)Math.toDegrees(CAMERA_ROTATION_EULER.y);
+				CAMERA_ROTATION_EULER.z = (float)Math.toDegrees(CAMERA_ROTATION_EULER.z);
+				
+				camera.move(translation.x, translation.y, translation.z);
+				
+				event.setPitch(event.getPitch() - CAMERA_ROTATION_EULER.x);
+				event.setYaw(event.getYaw() + CAMERA_ROTATION_EULER.y);
+				event.setRoll(event.getRoll() + CAMERA_ROTATION_EULER.z);
 			}
 		}
 	}
@@ -588,12 +618,11 @@ public class RenderEngine {
 		
 		@SubscribeEvent
 		public static void itemTooltip(ItemTooltipEvent event) {
-			if (event.getEntity() != null && event.getEntity().level().isClientSide) {
-				if (ClientConfig.showEpicFightAttributesInTooltip) {
+			if (ClientConfig.showEpicFightAttributesInTooltip && event.getEntity() != null && event.getEntity().level().isClientSide) {
+				EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
 					CapabilityItem cap = EpicFightCapabilities.getItemStackCapabilityOr(event.getItemStack(), null);
-					LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LocalPlayerPatch.class);
 					
-					if (cap != null && playerpatch != null) {
+					if (cap != null) {
 						if (ControllEngine.isKeyDown(EpicFightKeyMappings.WEAPON_INNATE_SKILL_TOOLTIP)) {
 							Skill weaponInnateSkill = cap.getInnateSkill(playerpatch, event.getItemStack());
 
@@ -647,7 +676,7 @@ public class RenderEngine {
 							}
 						}
 					}
-				}
+				});
 			}
 		}
 		
@@ -731,8 +760,15 @@ public class RenderEngine {
 					
 					if (useEpicFightModel) {
 						if (event.getHand() == InteractionHand.MAIN_HAND) {
-							renderEngine.firstPersonRenderer.render(playerpatch.getOriginal(), playerpatch, (LivingEntityRenderer)renderEngine.minecraft.getEntityRenderDispatcher().getRenderer(playerpatch.getOriginal()), event.getMultiBufferSource(),
-																	event.getPoseStack(), event.getPackedLight(), event.getPartialTick());
+							renderEngine.firstPersonRenderer.render(
+								  playerpatch.getOriginal()
+								, playerpatch
+								, (LivingEntityRenderer)renderEngine.minecraft.getEntityRenderDispatcher().getRenderer(playerpatch.getOriginal())
+								, event.getMultiBufferSource()
+								, event.getPoseStack()
+								, event.getPackedLight()
+								, event.getPartialTick()
+							);
 						}
 						
 						event.setCanceled(true);
@@ -754,12 +790,10 @@ public class RenderEngine {
 			EnderDragon livingentity = event.getEntity();
 			
 			if (renderEngine.hasRendererFor(livingentity)) {
-				EnderDragonPatch entitypatch = EpicFightCapabilities.getEntityPatch(livingentity, EnderDragonPatch.class);
-				
-				if (entitypatch != null) {
+				EpicFightCapabilities.getEntityPatchUnparameterized(livingentity, EnderDragonPatch.class).ifPresent(enderdragonpatch -> {
 					event.setCanceled(true);
-					renderEngine.getEntityRenderer(livingentity).render(livingentity, entitypatch, event.getRenderer(), event.getBuffers(), event.getPoseStack(), event.getLight(), event.getPartialRenderTick());
-				}
+					renderEngine.getEntityRenderer(livingentity).render(livingentity, enderdragonpatch, event.getRenderer(), event.getBuffers(), event.getPoseStack(), event.getLight(), event.getPartialRenderTick());
+				});
 			}
 		}
 	}

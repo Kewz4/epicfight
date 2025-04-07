@@ -43,8 +43,11 @@ public class ConcurrentLinkAnimation extends DynamicAnimation implements Animati
 			this.nextAnimation.get().end(entitypatch, nextAnimation, isEnd);
 		} else {
 			if (this.startsAt > 0.0F) {
-				entitypatch.getAnimator().getPlayerFor(this).setElapsedTime(this.startsAt);
-				entitypatch.getAnimator().getPlayerFor(this).markDoNotResetTime();
+				entitypatch.getAnimator().getPlayer(this).ifPresent(player -> {
+					player.setElapsedTime(this.startsAt);
+					player.markDoNotResetTime();
+				});
+				
 				this.startsAt = 0.0F;
 			}
 		}

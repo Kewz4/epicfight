@@ -510,6 +510,7 @@ public class JsonAssetLoader {
 			EpicFightMod.LOGGER.error("Animation " + animation + " doesn't have an armature.");
 		}
 		
+		TransformFormat format = this.rootJson.has("format") ? ParseUtil.enumValueOfOrNull(TransformFormat.class, GsonHelper.getAsString(this.rootJson, "format")) : TransformFormat.MATRIX;
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		boolean action = animation instanceof ActionAnimation;
 		boolean attack = animation instanceof AttackAnimation;
@@ -546,7 +547,7 @@ public class JsonAssetLoader {
 			
 			if (joint == null) {
 				if (name.equals("Coord") && action) {
-					TransformSheet sheet = getTransformSheet(jObject, new OpenMatrix4f(), true, TransformFormat.MATRIX);
+					TransformSheet sheet = getTransformSheet(jObject, new OpenMatrix4f(), true, format);
 					((ActionAnimation)animation).addProperty(ActionAnimationProperty.COORD, sheet);
 					root = false;
 					continue;
@@ -556,7 +557,7 @@ public class JsonAssetLoader {
 				}
 			}
 			
-			TransformSheet sheet = getTransformSheet(jObject, OpenMatrix4f.invert(joint.getLocalTransform(), null), root, TransformFormat.MATRIX);
+			TransformSheet sheet = getTransformSheet(jObject, OpenMatrix4f.invert(joint.getLocalTransform(), null), root, format);
 			
 			if (!noTransformData) {
 				clip.addJointTransform(name, sheet);
@@ -575,6 +576,7 @@ public class JsonAssetLoader {
 	}
 	
 	public AnimationClip loadAllJointsClipForAnimation(StaticAnimation animation) {
+		TransformFormat format = this.rootJson.has("format") ? ParseUtil.enumValueOfOrNull(TransformFormat.class, GsonHelper.getAsString(this.rootJson, "format")) : TransformFormat.MATRIX;
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		boolean root = true;
 		
@@ -598,7 +600,7 @@ public class JsonAssetLoader {
 				continue;
 			}
 			
-			TransformSheet sheet = getTransformSheet(jObject, OpenMatrix4f.invert(joint.getLocalTransform(), null), root, TransformFormat.MATRIX);
+			TransformSheet sheet = getTransformSheet(jObject, OpenMatrix4f.invert(joint.getLocalTransform(), null), root, format);
 			clip.addJointTransform(name, sheet);
 			float maxFrameTime = sheet.maxFrameTime();
 			
@@ -621,6 +623,7 @@ public class JsonAssetLoader {
 	}
 	
 	public AnimationClip loadAnimationClip(Armature armature) {
+		TransformFormat format = this.rootJson.has("format") ? ParseUtil.enumValueOfOrNull(TransformFormat.class, GsonHelper.getAsString(this.rootJson, "format")) : TransformFormat.MATRIX;
 		JsonArray array = this.rootJson.get("animation").getAsJsonArray();
 		AnimationClip clip = new AnimationClip();
 		boolean root = true;
@@ -634,7 +637,7 @@ public class JsonAssetLoader {
 				continue;
 			}
 			
-			TransformSheet sheet = getTransformSheet(element.getAsJsonObject(), OpenMatrix4f.invert(joint.getLocalTransform(), null), root, TransformFormat.MATRIX);
+			TransformSheet sheet = getTransformSheet(element.getAsJsonObject(), OpenMatrix4f.invert(joint.getLocalTransform(), null), root, format);
 			clip.addJointTransform(name, sheet);
 			float maxFrameTime = sheet.maxFrameTime();
 			
@@ -705,9 +708,9 @@ public class JsonAssetLoader {
 						  locArray.get(0).getAsFloat()
 						, locArray.get(1).getAsFloat()
 						, locArray.get(2).getAsFloat()
-						, rotArray.get(1).getAsFloat()
-						, rotArray.get(2).getAsFloat()
-						, rotArray.get(3).getAsFloat()
+						, -rotArray.get(1).getAsFloat()
+						, -rotArray.get(2).getAsFloat()
+						, -rotArray.get(3).getAsFloat()
 						, rotArray.get(0).getAsFloat()
 						, scaArray.get(0).getAsFloat()
 						, scaArray.get(1).getAsFloat()

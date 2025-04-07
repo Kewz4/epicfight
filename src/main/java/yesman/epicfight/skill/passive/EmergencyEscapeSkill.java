@@ -54,7 +54,7 @@ public class EmergencyEscapeSkill extends PassiveSkill {
 					&& this.availableWeapons.contains(container.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND).getWeaponCategory())) {
 				
 				EntityState state = container.getExecutor().getEntityState();
-				DynamicAnimation animation = container.getExecutor().getAnimator().getPlayerFor(null).getAnimation().get().getRealAnimation().get();
+				DynamicAnimation animation = container.getExecutor().getAnimator().getPlayerFor(null).getRealAnimation().get();
 				
 				if (!state.hurt() && !state.knockDown() && animation instanceof AttackAnimation) {
 					event.setStateExecutable(true);

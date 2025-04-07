@@ -13,6 +13,9 @@ public class Vec3f extends Vec2f {
 	public static final Vec3f X_AXIS = new Vec3f(1.0F, 0.0F, 0.0F);
 	public static final Vec3f Y_AXIS = new Vec3f(0.0F, 1.0F, 0.0F);
 	public static final Vec3f Z_AXIS = new Vec3f(0.0F, 0.0F, 1.0F);
+	public static final Vec3f M_X_AXIS = new Vec3f(-1.0F, 0.0F, 0.0F);
+	public static final Vec3f M_Y_AXIS = new Vec3f(0.0F, -1.0F, 0.0F);
+	public static final Vec3f M_Z_AXIS = new Vec3f(0.0F, 0.0F, -1.0F);
 	public static final Vec3f ZERO = new Vec3f(0.0F, 0.0F, 0.0F);
 	
 	public float z;

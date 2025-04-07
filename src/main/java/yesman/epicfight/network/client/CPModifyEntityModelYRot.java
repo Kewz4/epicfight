@@ -3,12 +3,11 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPModifyPlayerData;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
-import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
+import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 public class CPModifyEntityModelYRot {
 	private final float modelYRot;
@@ -39,22 +38,16 @@ public class CPModifyEntityModelYRot {
 	}
 	
 	public static void handle(CPModifyEntityModelYRot msg, Supplier<NetworkEvent.Context> ctx) {
-		ctx.get().enqueueWork(()->{
-			ServerPlayer player = ctx.get().getSender();
-			
-			if (player != null) {
-				PlayerPatch<?> playerpatch = EpicFightCapabilities.getEntityPatch(player, PlayerPatch.class);
-				
-				if (playerpatch != null) {
-					if (msg.disable) {
-						playerpatch.disableModelYRot(false);
-						EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.disablePlayerYRot(player.getId()), player);
-					} else {
-						playerpatch.setModelYRot(msg.modelYRot, false);
-						EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.setPlayerYRot(player.getId(), msg.modelYRot), player);
-					}
+		ctx.get().enqueueWork(( )-> {
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+				if (msg.disable) {
+					playerpatch.disableModelYRot(false);
+					EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.disablePlayerYRot(playerpatch.getOriginal().getId()), playerpatch.getOriginal());
+				} else {
+					playerpatch.setModelYRot(msg.modelYRot, false);
+					EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.setPlayerYRot(playerpatch.getOriginal().getId(), msg.modelYRot), playerpatch.getOriginal());
 				}
-			}
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

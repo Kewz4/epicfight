@@ -46,15 +46,16 @@ public class WorldEvents {
 			if (!event.getPlayer().getServer().isSingleplayerOwner(event.getPlayer().getGameProfile())) {
 				synchronizeWorldData(event.getPlayer());
 			} else {
-				ServerPlayerPatch serverplayerpatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), ServerPlayerPatch.class);
-				CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
-				
-				for (SkillContainer skill : skillCapability.skillContainers) {
-					if (skill.getSkill() != null) {
-						// Reload skill
-						skill.setSkill(SkillManager.getSkill(skill.getSkill().toString()), true);
+				EpicFightCapabilities.getEntityPatchUnparameterized(event.getPlayer(), ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
+					CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
+					
+					for (SkillContainer skill : skillCapability.skillContainers) {
+						if (skill.getSkill() != null) {
+							// Reload skill
+							skill.setSkill(SkillManager.getSkill(skill.getSkill().toString()), true);
+						}
 					}
-				}
+				});
 			}
 		} else {
 			event.getPlayerList().getPlayers().forEach(WorldEvents::synchronizeWorldData);
@@ -62,27 +63,28 @@ public class WorldEvents {
     }
 	
 	public static void synchronizeWorldData(ServerPlayer player) {
-		ServerPlayerPatch serverplayerpatch = EpicFightCapabilities.getEntityPatch(player, ServerPlayerPatch.class);
-		CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
-		
-		for (SkillContainer skill : skillCapability.skillContainers) {
-			if (skill.getSkill() != null) {
-				// Reload skill
-				skill.setSkill(SkillManager.getSkill(skill.getSkill().toString()), true);
+		EpicFightCapabilities.getEntityPatchUnparameterized(player, ServerPlayerPatch.class).ifPresent(serverplayerpatch -> {
+			CapabilitySkill skillCapability = serverplayerpatch.getSkillCapability();
+			
+			for (SkillContainer skill : skillCapability.skillContainers) {
+				if (skill.getSkill() != null) {
+					// Reload skill
+					skill.setSkill(SkillManager.getSkill(skill.getSkill().toString()), true);
+				}
 			}
-		}
-		
-		List<CompoundTag> skillParams = SkillManager.getSkillParams();
-		SPDatapackSyncSkill skillParamsPacket = new SPDatapackSyncSkill(skillParams.size(), SPDatapackSync.Type.SKILL_PARAMS);
-		
-		for (SkillCategory category : SkillCategory.ENUM_MANAGER.universalValues()) {
-			if (skillCapability.hasCategory(category)) {
-				skillParamsPacket.addLearnedSkill(Lists.newArrayList(skillCapability.getLearnedSkills(category).stream().map((skill) -> skill.toString()).iterator()));
+			
+			List<CompoundTag> skillParams = SkillManager.getSkillParams();
+			SPDatapackSyncSkill skillParamsPacket = new SPDatapackSyncSkill(skillParams.size(), SPDatapackSync.Type.SKILL_PARAMS);
+			
+			for (SkillCategory category : SkillCategory.ENUM_MANAGER.universalValues()) {
+				if (skillCapability.hasCategory(category)) {
+					skillParamsPacket.addLearnedSkill(Lists.newArrayList(skillCapability.getLearnedSkills(category).stream().map((skill) -> skill.toString()).iterator()));
+				}
 			}
-		}
-		
-		skillParams.forEach(skillParamsPacket::write);
-		EpicFightNetworkManager.sendToPlayer(skillParamsPacket, player);
+			
+			skillParams.forEach(skillParamsPacket::write);
+			EpicFightNetworkManager.sendToPlayer(skillParamsPacket, player);
+		});
 		
 		SPDatapackSync animationPacket = new SPDatapackSync(AnimationManager.getInstance().getResourcepackAnimationCount(), player.getServer().isResourcePackRequired() ? SPDatapackSync.Type.MANDATORY_RESOURCE_PACK_ANIMATION : SPDatapackSync.Type.RESOURCE_PACK_ANIMATION);
 		SPDatapackSync armorPacket = new SPDatapackSync(ItemCapabilityReloadListener.armorCount(), SPDatapackSync.Type.ARMOR);

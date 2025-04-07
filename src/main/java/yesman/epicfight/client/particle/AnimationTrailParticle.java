@@ -163,7 +163,7 @@ public class AnimationTrailParticle extends AbstractTrailParticle<LivingEntityPa
 	@Override
 	protected boolean canContinue() {
 		AnimationPlayer animPlayer = this.owner.getAnimator().getPlayerFor(this.animation);
-		return this.owner.getOriginal().isAlive() && this.animation == animPlayer.getAnimation().get().getRealAnimation() && animPlayer.getElapsedTime() <= this.trailInfo.endTime();
+		return this.owner.getOriginal().isAlive() && this.animation == animPlayer.getRealAnimation() && animPlayer.getElapsedTime() <= this.trailInfo.endTime();
 	}
 	
 	@Override

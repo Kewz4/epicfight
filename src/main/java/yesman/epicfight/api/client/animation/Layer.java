@@ -45,8 +45,8 @@ public class Layer {
 	}
 	
 	public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
-		// Get pose before calling end()
-		Pose lastPose = entitypatch.getClientAnimator().getPose(0.0F, false);
+		// Get pose before StaticAnimation#end is called
+		Pose lastPose = this.getCurrentPose(entitypatch);
 		
 		if (!this.animationPlayer.isEnd()) {
 			this.animationPlayer.getAnimation().get().end(entitypatch, nextAnimation, false);
@@ -88,11 +88,15 @@ public class Layer {
 		nextAnimation.get().begin(entitypatch);
 		
 		if (!nextAnimation.get().isMetaAnimation()) {
-			this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getAnimation().get().getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
+			this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
 			this.concurrentLinkAnimation.putOnPlayer(this.animationPlayer, entitypatch);
 			entitypatch.updateEntityState();
 			this.nextAnimation = nextAnimation;
 		}
+	}
+	
+	protected Pose getCurrentPose(LivingEntityPatch<?> entitypatch) {
+		return entitypatch.getClientAnimator().getPose(0.0F, false);
 	}
 	
 	protected void setLinkAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float transitionTimeModifier) {
@@ -150,6 +154,10 @@ public class Layer {
 		return this.disabled;
 	}
 	
+	public boolean isOff() {
+		return this.isDisabled() || this.animationPlayer.isEmpty();
+	}
+	
 	protected boolean isBaseLayer() {
 		return false;
 	}
@@ -183,10 +191,19 @@ public class Layer {
 	
 	public void off(LivingEntityPatch<?> entitypatch) {
 		if (!this.isDisabled() && !(this.animationPlayer.getAnimation() instanceof LayerOffAnimation)) {
-			float transitionTimeModifier = entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation().get().getTransitionTime();
-			setLayerOffAnimation(this.animationPlayer.getAnimation(), this.getEnabledPose(entitypatch, false, 1.0F), this.layerOffAnimation, transitionTimeModifier);
-			this.playAnimationInstantly(this.layerOffAnimation, entitypatch);
+			if (this.priority == null) {
+				this.disableLayer();
+			} else {
+				float transitionTimeModifier = entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation().get().getTransitionTime();
+				setLayerOffAnimation(this.animationPlayer.getAnimation(), this.getEnabledPose(entitypatch, false, 1.0F), this.layerOffAnimation, transitionTimeModifier);
+				this.playAnimationInstantly(this.layerOffAnimation, entitypatch);
+			}
 		}
+	}
+	
+	public void disableLayer() {
+		this.disabled = true;
+		this.animationPlayer.setPlayAnimation(Animations.EMPTY_ANIMATION);
 	}
 	
 	public static void setLayerOffAnimation(AssetAccessor<? extends DynamicAnimation> currentAnimation, Pose currentPose, LayerOffAnimation offAnimation, float transitionTimeModifier) {
@@ -248,7 +265,7 @@ public class Layer {
 			nextAnimation.get().begin(entitypatch);
 			
 			if (!nextAnimation.get().isMetaAnimation()) {
-				this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getAnimation().get().getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
+				this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
 				this.concurrentLinkAnimation.putOnPlayer(this.animationPlayer, entitypatch);
 				entitypatch.updateEntityState();
 				this.nextAnimation = nextAnimation;
@@ -276,9 +293,7 @@ public class Layer {
 		}
 		
 		public void disableLayer(Priority priority) {
-			Layer layer = this.compositeLayers.get(priority);
-			layer.disabled = true;
-			layer.animationPlayer.setPlayAnimation(Animations.EMPTY_ANIMATION);
+			this.compositeLayers.get(priority).disableLayer();
 		}
 		
 		public Layer getLayer(Priority priority) {
@@ -332,11 +347,15 @@ public class Layer {
 		}
 		
 		public Priority[] highers() {
-			return Arrays.copyOfRange(Priority.values(), this == LOWEST ? this.ordinal() : this.ordinal() + 1, Priority.values().length);
+			return Arrays.copyOfRange(Priority.values(), this.ordinal(), Priority.values().length);
 		}
 		
 		public boolean isHigherThan(Priority priority) {
 			return this.ordinal() > priority.ordinal();
+		}
+		
+		public boolean isHigherOrEqual(Priority priority) {
+			return this.ordinal() >= priority.ordinal();
 		}
 	}
 }

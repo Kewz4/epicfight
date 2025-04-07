@@ -110,8 +110,8 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 			else
 				currentCompositeMotion = currentLivingMotion;
 			
-			if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM) {
-				this.playReboundAnimation();
+			if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM) {
+				this.playShootingAnimation();
 			}
 		}
 	}

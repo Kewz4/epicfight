@@ -10,14 +10,13 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
-import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.property.AnimationProperty;
+import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
@@ -44,6 +43,21 @@ public class AimAnimation extends StaticAnimation {
 		this.lookUp = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path2), armature);
 		this.lookDown = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path3), armature);
 		this.lying = new DirectStaticAnimation(transitionTime, repeatPlay, ResourceLocation.fromNamespaceAndPath(accessor.registryName().getNamespace(), path4), armature);
+		
+		this.addProperty(
+			StaticAnimationProperty.PLAY_SPEED_MODIFIER,
+			(DynamicAnimation animation, LivingEntityPatch<?> entitypatch, float speed, float prevElapsedTime, float elapsedTime) -> {
+				if (animation.isLinkAnimation()) {
+					return 1.0F;
+				}
+				
+				if (entitypatch.getOriginal().isUsingItem()) {
+					return (this.getTotalTime() - elapsedTime) / this.getTotalTime();
+				}
+				
+				return 1.0F;
+			}
+		);
 	}
 	
 	@Override
@@ -52,19 +66,6 @@ public class AimAnimation extends StaticAnimation {
 		this.lookUp.loadAnimation();
 		this.lookDown.loadAnimation();
 		this.lying.loadAnimation();
-	}
-	
-	@Override
-	public void tick(LivingEntityPatch<?> entitypatch) {
-		super.tick(entitypatch);
-		
-		ClientAnimator animator = entitypatch.getClientAnimator();
-		Layer layer = animator.getCompositeLayer(this.getPriority());
-		AnimationPlayer player = layer.animationPlayer;
-		
-		if (player.getElapsedTime() >= this.getTotalTime() - 0.06F) {
-			layer.pause();
-		}
 	}
 	
 	@Override

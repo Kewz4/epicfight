@@ -3,10 +3,12 @@ package yesman.epicfight.api.animation.types;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.types.EntityState.StateFactor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.entity.eventlistener.ActionEvent;
@@ -25,9 +27,13 @@ public class MainFrameAnimation extends StaticAnimation {
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		super.begin(entitypatch);
 		
-		entitypatch.updateEntityState();
+		TypeFlexibleHashMap<StateFactor<?>> stateMap = this.stateSpectrum.getStateMap(entitypatch, 0.0F);
+		TypeFlexibleHashMap<StateFactor<?>> modifiedStateMap = new TypeFlexibleHashMap<> (false);
+		stateMap.forEach((k, v) -> modifiedStateMap.put(k, this.getModifiedLinkState(k, v, entitypatch, 0.0F)));
+		entitypatch.updateEntityState(new EntityState(modifiedStateMap));
 		
 		if (entitypatch.isLogicalClient()) {
+			entitypatch.updateMotion(false);
 			entitypatch.getClientAnimator().resetMotion();
 			entitypatch.getClientAnimator().resetCompositeMotion();
 			entitypatch.getClientAnimator().getPlayerFor(this.getAccessor()).setReversed(false);

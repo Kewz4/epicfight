@@ -69,15 +69,13 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 		super.onJoinWorld(projectileEntity, event);
 		
 		if (!this.isLogicalClient()) {
-			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(projectileEntity.getOwner(), ServerPlayerPatch.class);
-			
-			if (playerpatch != null) {
+			EpicFightCapabilities.getEntityPatchUnparameterized(projectileEntity.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 				
 				if (container.getSkill() instanceof EverlastingAllegiance) {
 					EverlastingAllegiance.setThrownTridentEntityId(playerpatch.getOriginal(), container, projectileEntity.getId());
 				}
-			}
+			});
 			
 			this.armorNegation = 20.0F;
 		}
@@ -86,9 +84,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	public void tickEnd() {
 		if (!this.isLogicalClient()) {
 			if (this.original.dealtDamage) {
-				ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(this.original.getOwner(), ServerPlayerPatch.class);
-				
-				if (playerpatch != null) {
+				EpicFightCapabilities.getEntityPatchUnparameterized(this.original.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 					SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 					
 					if (container.getSkill() instanceof EverlastingAllegiance) {
@@ -96,7 +92,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 							EverlastingAllegiance.setThrownTridentEntityId(playerpatch.getOriginal(), container, -1);
 						}
 					}
-				}
+				});
 			}
 			
 			if (this.innateActivated) {

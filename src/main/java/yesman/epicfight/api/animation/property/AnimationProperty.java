@@ -105,9 +105,9 @@ public abstract class AnimationProperty<T> {
 		public static final StaticAnimationProperty<List<SimpleEvent<?>>> ON_END_EVENTS = new StaticAnimationProperty<List<SimpleEvent<?>>> ();
 		
 		/**
-		 * Events that are fired when an entity changes an item in hand.
+		 * An event triggered when entity changes an item in hand.
 		 */
-		public static final StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ON_ITEM_UPDATE_EVENT = new StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ();
+		public static final StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ON_ITEM_CHANGE_EVENT = new StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ();
 		
 		/**
 		 * You can modify the playback speed of the animation.

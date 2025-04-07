@@ -13,7 +13,6 @@ public class DirectStaticAnimation extends StaticAnimation implements AnimationA
 	private ResourceLocation registryName;
 	
 	public DirectStaticAnimation() {
-		super();
 		this.accessor = this;
 	}
 	
@@ -59,6 +58,11 @@ public class DirectStaticAnimation extends StaticAnimation implements AnimationA
 
 	@Override
 	public int id() {
+		return -1;
+	}
+	
+	@Override
+	public int getId() {
 		return -1;
 	}
 	

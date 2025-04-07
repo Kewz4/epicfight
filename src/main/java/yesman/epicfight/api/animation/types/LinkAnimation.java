@@ -38,8 +38,10 @@ public class LinkAnimation extends DynamicAnimation implements AnimationAccessor
 			this.toAnimation.get().end(entitypatch, nextAnimation, isEnd);
 		} else {
 			if (this.nextStartTime > 0.0F) {
-				entitypatch.getAnimator().getPlayerFor(this).setElapsedTime(this.nextStartTime);
-				entitypatch.getAnimator().getPlayerFor(this).markDoNotResetTime();
+				entitypatch.getAnimator().getPlayer(this).ifPresent(player -> {
+					player.setElapsedTime(this.nextStartTime);
+					player.markDoNotResetTime();
+				});
 			}
 		}
 	}

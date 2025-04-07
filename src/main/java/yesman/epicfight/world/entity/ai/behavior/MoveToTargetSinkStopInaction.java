@@ -11,7 +11,10 @@ public class MoveToTargetSinkStopInaction extends MoveToTargetSink {
 	protected boolean canStillUse(ServerLevel level, Mob mob, long gameTime) {
 		if (super.canStillUse(level, mob, gameTime)) {
 			MobPatch<?> mobpatch = EpicFightCapabilities.getEntityPatch(mob, MobPatch.class);
-			return !mobpatch.getEntityState().inaction();
+			
+			if (mobpatch != null) {
+				return !mobpatch.getEntityState().inaction();
+			}
 		}
 		
 		return false;

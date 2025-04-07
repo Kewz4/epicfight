@@ -3,7 +3,6 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -39,24 +38,21 @@ public class CPAnimatorControl extends AnimatorControlPacket {
 		buf.writeBoolean(msg.pause);
 		buf.writeBoolean(msg.isClientOnly);
 		buf.writeBoolean(msg.responseToSender);
-	}
+	}	
 	
 	public static void handle(CPAnimatorControl msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(()-> {
-			ServerPlayer serverPlayer = ctx.get().getSender();
-			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(serverPlayer, ServerPlayerPatch.class);
-			
-			if (playerpatch != null) {
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				if (!msg.isClientOnly) {
 					msg.process(playerpatch);
 				}
-			}
-			
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimatorControl(msg.action, msg.animationId, serverPlayer.getId(), msg.transitionTimeModifier, msg.pause), serverPlayer);
-			
-			if (msg.responseToSender) {
-				EpicFightNetworkManager.sendToPlayer(new SPAnimatorControl(msg.action, msg.animationId, serverPlayer.getId(), msg.transitionTimeModifier, msg.pause), serverPlayer);
-			}
+				
+				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimatorControl(msg.action, msg.animationId, playerpatch.getOriginal().getId(), msg.transitionTimeModifier, msg.pause), playerpatch.getOriginal());
+				
+				if (msg.responseToSender) {
+					EpicFightNetworkManager.sendToPlayer(new SPAnimatorControl(msg.action, msg.animationId, playerpatch.getOriginal().getId(), msg.transitionTimeModifier, msg.pause), playerpatch.getOriginal());
+				}
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

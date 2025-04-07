@@ -1159,7 +1159,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					this.remove();
 				}
 			} else {
-				if (this.animation != animPlayer.getAnimation().get().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime()) {
+				if (this.animation != animPlayer.getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime()) {
 					this.shouldRemove = true;
 					this.lifetime = this.trailInfo.trailLifetime();
 				}

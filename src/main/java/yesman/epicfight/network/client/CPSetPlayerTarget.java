@@ -3,7 +3,6 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.network.NetworkEvent;
@@ -31,21 +30,15 @@ public class CPSetPlayerTarget {
 	
 	public static void handle(CPSetPlayerTarget msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			ServerPlayer player = ctx.get().getSender();
-			
-			if (player != null) {
-				ServerPlayerPatch entitypatch = EpicFightCapabilities.getEntityPatch(player, ServerPlayerPatch.class);
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(entitypatch -> {
+				Entity entity = entitypatch.getOriginal().level().getEntity(msg.entityId);
 				
-				if (entitypatch != null) {
-					Entity entity = entitypatch.getOriginal().level().getEntity(msg.entityId);
-					
-					if (entity instanceof LivingEntity livingEntity) {
-						entitypatch.setAttackTarget(livingEntity);
-					} else if (entity == null) {
-						entitypatch.setAttackTarget(null);
-					}
+				if (entity instanceof LivingEntity livingEntity) {
+					entitypatch.setAttackTarget(livingEntity);
+				} else if (entity == null) {
+					entitypatch.setAttackTarget(null);
 				}
-			}
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

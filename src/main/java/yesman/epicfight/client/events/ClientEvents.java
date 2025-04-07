@@ -106,28 +106,23 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void rightClickItemClient(PlayerInteractEvent.RightClickItem event) {
 		if (event.getSide() == LogicalSide.CLIENT) {
-			LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LocalPlayerPatch.class);
-			
-			if (playerpatch != null && playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
-				boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.CLIENT_ITEM_USE_EVENT, new RightClickItemEvent<>(playerpatch));
-				
-				if (playerpatch.getEntityState().movementLocked()) {
-					canceled = true;
+			EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
+				if (playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
+					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.CLIENT_ITEM_USE_EVENT, new RightClickItemEvent<>(playerpatch));
+					
+					if (playerpatch.getEntityState().movementLocked()) {
+						canceled = true;
+					}
+					
+					event.setCanceled(canceled);
 				}
-				
-				event.setCanceled(canceled);
-			}
+			});
 		}
 	}
 	
 	@SubscribeEvent
 	public static void clientLoggingInEvent(ClientPlayerNetworkEvent.LoggingIn event) {
-		LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), LocalPlayerPatch.class);
-		
-		if (playerpatch != null) {
-			ClientEngine.getInstance().controllEngine.setPlayerPatch(playerpatch);
-		}
-		
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getPlayer(), LocalPlayerPatch.class).ifPresent(ClientEngine.getInstance().controllEngine::setPlayerPatch);
 		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
 		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
 	}
@@ -146,16 +141,14 @@ public class ClientEvents {
 		/**
 		 * oldCap == null when a player revives after it disappears
 		 */
-		if (oldCap != null) {
-			if (newCap != null) {
-				if (packet != null && packet.shouldKeep((byte)3)) {
-					newCap.copySkillsFrom(oldCap);
-				}
-				
-				packet = null;
-				newCap.onRespawnLocalPlayer(event);
-				newCap.toMode(oldCap.getPlayerMode(), false);
+		if (oldCap != null && newCap != null) {
+			if (packet != null && packet.shouldKeep((byte)3)) {
+				newCap.copySkillsFrom(oldCap);
 			}
+			
+			packet = null;
+			newCap.onRespawnLocalPlayer(event);
+			newCap.toMode(oldCap.getPlayerMode(), false);
 		}
 		
 		ClientEngine.getInstance().controllEngine.setPlayerPatch(newCap);

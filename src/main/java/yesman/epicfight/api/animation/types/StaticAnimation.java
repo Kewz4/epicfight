@@ -19,7 +19,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
-import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.AnimationVariables;
 import yesman.epicfight.api.animation.AnimationVariables.IndependentAnimationVariableKey;
 import yesman.epicfight.api.animation.JointTransform;
@@ -296,14 +295,14 @@ public class StaticAnimation extends DynamicAnimation {
 		});
 		
 		this.getProperty(StaticAnimationProperty.TICK_EVENTS).ifPresent((events) -> {
-			AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
-			
-			for (AnimationEvent<?, ?> event : events) {
-				float prevElapsed = player.getPrevElapsedTime();
-				float elapsed = player.getElapsedTime();
-				
-				event.execute(entitypatch, this.getAccessor(), prevElapsed, elapsed);
-			}
+			entitypatch.getAnimator().getPlayer(this.getAccessor()).ifPresent(player -> {
+				for (AnimationEvent<?, ?> event : events) {
+					float prevElapsed = player.getPrevElapsedTime();
+					float elapsed = player.getElapsedTime();
+					
+					event.execute(entitypatch, this.getAccessor(), prevElapsed, elapsed);
+				}
+			});
 		});
 	}
 	
@@ -354,7 +353,9 @@ public class StaticAnimation extends DynamicAnimation {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof StaticAnimation staticAnimation) {
-			return this.getId() == staticAnimation.getId();
+			if (this.accessor != null && staticAnimation.accessor != null) {
+				return this.getId() == staticAnimation.getId();
+			}
 		}
 		
 		return super.equals(obj);

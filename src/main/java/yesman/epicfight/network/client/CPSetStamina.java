@@ -3,7 +3,6 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
@@ -28,19 +27,13 @@ public class CPSetStamina {
 	
 	public static void handle(CPSetStamina msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			ServerPlayer player = ctx.get().getSender();
-			
-			if (player != null) {
-				ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(player, ServerPlayerPatch.class);
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+				playerpatch.setStamina(msg.consumption);
 				
-				if (playerpatch != null) {
-					playerpatch.setStamina(msg.consumption);
-					
-					if (msg.resetActionTick) {
-						playerpatch.resetActionTick();
-					}
+				if (msg.resetActionTick) {
+					playerpatch.resetActionTick();
 				}
-			}
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

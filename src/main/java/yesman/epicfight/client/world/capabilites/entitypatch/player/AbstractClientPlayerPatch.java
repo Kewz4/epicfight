@@ -92,9 +92,9 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			} else if (!original.onGround() && original.onClimbable()) {
 				currentLivingMotion = LivingMotions.CLIMB;
 			} else if (!original.getAbilities().flying) {
-				if (original.isUnderWater() && (original.yCloak - original.yCloakO) < -0.005)
+				if (original.isUnderWater() && (original.getY() - this.yo) < -0.005)
 					currentLivingMotion = LivingMotions.FLOAT;
-				else if (original.yCloak - original.yCloakO < -0.4F || this.isAirborneState())
+				else if (original.getY() - this.yo < -0.4F || this.isAirborneState())
 					currentLivingMotion = LivingMotions.FALL;
 				else if (this.isMoving()) {
 					if (original.isCrouching())
@@ -126,14 +126,14 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
 		
 		this.currentLivingMotion = baseLayerEvent.getMotion();
-		CapabilityItem activeItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
+		CapabilityItem holdingItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
 		
 		if (this.original.isUsingItem()) {
 			UseAnim useAnim = this.original.getUseItem().getUseAnimation();
-			UseAnim capUseAnim = activeItemCap.getUseAnimation(this);
+			UseAnim capUseAnim = holdingItemCap.getUseAnimation(this);
 			
 			if (useAnim == UseAnim.BLOCK || capUseAnim == UseAnim.BLOCK)
-				if (activeItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
+				if (holdingItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
 					currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
 				else
 					currentCompositeMotion = LivingMotions.BLOCK;
@@ -150,7 +150,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			else
 				currentCompositeMotion = currentLivingMotion;
 		} else {
-			if (this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
+			if (!this.getEntityState().inaction() && this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
 			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
@@ -159,8 +159,8 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			else
 				currentCompositeMotion = currentLivingMotion;
 			
-			if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && activeItemCap instanceof RangedWeaponCapability) {
-				this.playReboundAnimation();
+			if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && holdingItemCap instanceof RangedWeaponCapability) {
+				this.playShootingAnimation();
 			}
 		}
 		
@@ -220,10 +220,16 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
 		this.cancelItemUse();
 		
-		this.getClientAnimator().iterAllLayers((layer) -> layer.animationPlayer.getAnimation().get().getRealAnimation().get().getProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT).ifPresent((event) -> {
-			event.params(mainHandCap, offHandCap);
-			event.execute(this, layer.animationPlayer.getAnimation().get().getRealAnimation(), layer.animationPlayer.getPrevElapsedTime(), layer.animationPlayer.getElapsedTime());
-		}));
+		this.getClientAnimator().iterAllLayers((layer) -> {
+			if (layer.isOff()) {
+				return;
+			}
+			
+			layer.animationPlayer.getRealAnimation().get().getProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT).ifPresent((event) -> {
+				event.params(mainHandCap, offHandCap);
+				event.execute(this, layer.animationPlayer.getRealAnimation(), layer.animationPlayer.getPrevElapsedTime(), layer.animationPlayer.getElapsedTime());
+			});
+		});
 	}
 	
 	@Override

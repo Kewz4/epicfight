@@ -64,11 +64,7 @@ public class GrapplingTryAnimation extends AttackAnimation {
 			LivingEntity hitEntity = entitypatch.getTarget();
 			
 			if (hitEntity != null) {
-				LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
-				
-				if (hitEntityPatch != null) {
-					hitEntityPatch.notifyGrapplingWarning();
-				}
+				EpicFightCapabilities.getEntityPatchUnparameterized(hitEntity, LivingEntityPatch.class).ifPresent(LivingEntityPatch::notifyGrapplingWarning);
 			}
 		}
 	}
@@ -93,12 +89,11 @@ public class GrapplingTryAnimation extends AttackAnimation {
 					if (entitypatch.tryHurt(dmgSource, 0.0F).resultType.dealtDamage()) {
 						entitypatch.reserveAnimation(this.grapplingAttackAnimation);
 						entitypatch.setGrapplingTarget(hitEntity);
-						LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
 						
-						if (hitEntityPatch != null) {
+						EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(hitEntity, LivingEntity.class, LivingEntityPatch.class).ifPresent(hitEntityPatch -> {
 							hitEntity.lookAt(EntityAnchorArgument.Anchor.FEET, entitypatch.getOriginal().position());
 							hitEntityPatch.playAnimationSynchronized(this.grapplingHitAnimation, 0.0F);
-						}
+						});
 						
 						return;
 					}

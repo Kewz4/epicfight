@@ -3,6 +3,7 @@ package yesman.epicfight.api.client.model;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -80,6 +81,10 @@ public abstract class StaticMesh<P extends MeshPart> implements Mesh, SoftBodyTr
 	
 	public Collection<P> getAllParts() {
 		return this.parts.values();
+	}
+	
+	public Set<Map.Entry<String, P>> getPartEntry() {
+		return this.parts.entrySet();
 	}
 	
 	public void putSoftBodySimulationInfo(Map<String, ClothSimulationInfo> sofyBodySimulationInfo) {

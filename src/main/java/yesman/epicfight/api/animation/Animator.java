@@ -67,6 +67,11 @@ public abstract class Animator {
 	 */
 	public abstract boolean stopPlaying(AssetAccessor<? extends StaticAnimation> targetAnimation);
 	
+	/**
+	 * Play an shooting animation to end aiming pose
+	 */
+	public abstract void playShootingAnimation();
+	
 	public final boolean stopPlaying(int id) {
 		return this.stopPlaying(AnimationManager.byId(id));
 	}

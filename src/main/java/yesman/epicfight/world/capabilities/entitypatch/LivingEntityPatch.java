@@ -234,6 +234,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.state = this.animator.getEntityState();
 	}
 	
+	public void updateEntityState(EntityState entityState) {
+		this.state = entityState;
+	}
+	
 	public void cancelItemUse() {
 		this.original.stopUsingItem();
 		ForgeEventFactory.onUseItemStop(this.original, this.original.getUseItem(), this.original.getUseItemRemainingTicks());
@@ -573,6 +577,18 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	/**
+	 * Play a shooting animation to end aim pose
+	 * This method doesn't send packet from client to server
+	 */
+	public void playShootingAnimation() {
+		if (this.isLogicalClient()) {
+			this.animator.playShootingAnimation();
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(AnimatorControlPacket.Action.SHOT, -1, this.getOriginal().getId(), 0.0F, false));
+		}
+	}
+	
+	/**
 	 * Play an animation with custom packet
 	 * @param animation
 	 * @param transitionTimeModifier
@@ -595,6 +611,9 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 		case RESERVE -> {
 			this.animator.reserveAnimation(animation);
+		}
+		case SHOT -> {
+			this.animator.playShootingAnimation();
 		}
 		default -> {
 			throw new UnsupportedOperationException("Only PLAY, PLAY_INSTANTLY, STOP and RESERVE are allowed");
@@ -633,10 +652,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		SPAnimatorControl get(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
 	}
 	
-	protected void playReboundAnimation() {
-		this.getClientAnimator().playReboundAnimation();
-	}
-	
 	public void resetSize(EntityDimensions size) {
 		EntityDimensions entitysize = this.original.dimensions;
 		EntityDimensions entitysize1 = size;
@@ -644,12 +659,28 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		
 	    if (entitysize1.width < entitysize.width) {
 	    	double d0 = (double)entitysize1.width / 2.0D;
-	    	this.original.setBoundingBox(new AABB(this.original.getX() - d0, this.original.getY(), this.original.getZ() - d0, this.original.getX() + d0,
-	    			this.original.getY() + (double)entitysize1.height, this.original.getZ() + d0));
+	    	this.original.setBoundingBox(
+	    		new AABB(
+	    			  this.original.getX() - d0
+	    			, this.original.getY()
+	    			, this.original.getZ() - d0
+	    			, this.original.getX() + d0
+	    			, this.original.getY() + (double)entitysize1.height
+	    			, this.original.getZ() + d0
+	    		)
+	    	);
 	    } else {
 	    	AABB axisalignedbb = this.original.getBoundingBox();
-	    	this.original.setBoundingBox(new AABB(axisalignedbb.minX, axisalignedbb.minY, axisalignedbb.minZ, axisalignedbb.minX + (double)entitysize1.width,
-	    			axisalignedbb.minY + (double)entitysize1.height, axisalignedbb.minZ + (double)entitysize1.width));
+	    	this.original.setBoundingBox(
+	    		new AABB(
+	    			  axisalignedbb.minX
+	    			, axisalignedbb.minY
+	    			, axisalignedbb.minZ
+	    			, axisalignedbb.minX + (double)entitysize1.width
+	    			, axisalignedbb.minY + (double)entitysize1.height
+	    			, axisalignedbb.minZ + (double)entitysize1.width
+	    		)
+	    	);
 	    	
 	    	if (entitysize1.width > entitysize.width && !this.original.level().isClientSide()) {
 	    		float f = entitysize.width - entitysize1.width;
@@ -788,7 +819,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void setParentJointOfHand(InteractionHand hand, Joint joint) {
 		this.parentJointOfHands.put(hand, joint);
 	}
-	
 	
 	public boolean isTargetInvulnerable(Entity taget) {
 		if (!taget.isPickable() || taget.isSpectator()) {
@@ -937,7 +967,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HIT_ENTITIES).clear();
 		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HURT_ENTITIES).clear();
 	}
-
+	
 	@OnlyIn(Dist.CLIENT)
 	public boolean flashTargetIndicator(LocalPlayerPatch playerpatch) {
 		TargetIndicatorCheckEvent event = new TargetIndicatorCheckEvent(playerpatch, this);

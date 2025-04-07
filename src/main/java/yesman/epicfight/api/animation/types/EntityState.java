@@ -117,4 +117,9 @@ public class EntityState {
 	public int getLevel() {
 		return this.getState(EntityState.PHASE_LEVEL);
 	}
+	
+	@Override
+	public String toString() {
+		return this.stateMap.toString();
+	}
 }

@@ -131,12 +131,17 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		buttonHeight += 24;
 		
+		Button enablePovAction = Button.builder(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")), (button) -> {
+			ClientConfig.enablePovAction = !ClientConfig.enablePovAction;
+			button.setMessage(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_pov_action.tooltip"))).build();
+		
 		Button enableCosmetics = Button.builder(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")), (button) -> {
 			ClientConfig.enableCosmetics = !ClientConfig.enableCosmetics;
 			button.setMessage(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_cosmetics.tooltip"))).build();
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_cosmetics.tooltip"))).build();
 		
-		this.optionsList.addSmall(enableCosmetics, null);
+		this.optionsList.addSmall(enablePovAction, enableCosmetics);
 		
 		buttonHeight += 30;
 		

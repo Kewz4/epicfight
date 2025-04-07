@@ -23,15 +23,17 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.ibm.icu.impl.Pair;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.GsonHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationClip;
+import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
+import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
@@ -40,13 +42,13 @@ import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.animation.property.LayerInfo;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.exception.AssetLoadingException;
-import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class AnimationSubFileReader {
 	public static final SubFileType<ClientProperty> SUBFILE_CLIENT_PROPERTY = new ClientPropertyType();
-	public static final SubFileType<PovAnimation> SUBFILE_POV_ANIMATION = new PovAnimationType();
+	public static final SubFileType<PovSettings> SUBFILE_POV_ANIMATION = new PovAnimationType();
 	
 	public static void readAndApply(StaticAnimation animation, Resource iresource, SubFileType<?> subFileType) {
 		InputStream inputstream = null;
@@ -223,42 +225,66 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record PovAnimation(AnimationClip animationClip, TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
+	public static record PovSettings(TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private static class PovAnimationType extends SubFileType<PovAnimation> {
+	private static class PovAnimationType extends SubFileType<PovSettings> {
 		private PovAnimationType() {
 			super(
 				  "pov"
-				, PovAnimation.class
-				, new TypeToken<PovAnimation>() {}
+				, PovSettings.class
+				, new TypeToken<PovSettings>() {}
 				, new AnimationSubFileReader.PovAnimationDeserializer()
 			);
 		}
 		
 		@Override
-		public void applySubFileInfo(PovAnimation deserialized, StaticAnimation animation) {
-			animation.addProperty(ClientAnimationProperties.POV_ANIMATION, deserialized);
+		public void applySubFileInfo(PovSettings deserialized, StaticAnimation animation) {
+			ResourceLocation povAnimationLocation = AnimationManager.getSubAnimationFileLocation(animation.getLocation(), SUBFILE_POV_ANIMATION);
+			DirectStaticAnimation multilayerAnimation = new DirectStaticAnimation(povAnimationLocation, animation.getTransitionTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_pov", animation.getArmature()) {
+				@Override
+				public float getPlaySpeed(LivingEntityPatch<?> entitypatch, DynamicAnimation pAnimation) {
+					return animation.getPlaySpeed(entitypatch, pAnimation);
+				}
+			};
+			
+			animation.getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).ifPresent(speedModifier -> {
+				multilayerAnimation.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, speedModifier);
+			});
+			
+			animation.addProperty(ClientAnimationProperties.POV_ANIMATION, multilayerAnimation);
+			animation.addProperty(ClientAnimationProperties.POV_SETTINGS, deserialized);
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private static class PovAnimationDeserializer implements JsonDeserializer<PovAnimation> {
+	private static class PovAnimationDeserializer implements JsonDeserializer<PovSettings> {
 		@Override
-		public PovAnimation deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws AssetLoadingException, JsonParseException {
+		public PovSettings deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws AssetLoadingException, JsonParseException {
 			JsonObject jObject = json.getAsJsonObject();
-			JsonAssetLoader loader = new JsonAssetLoader(jObject, null);
-			AnimationClip clip = loader.loadAnimationClip(Armatures.BIPED.get());
+			TransformSheet cameraTransform = null;
 			
-			JsonObject cameraTransformJObject = jObject.getAsJsonObject("camera");
-			TransformSheet cameraTransform = JsonAssetLoader.getTransformSheet(cameraTransformJObject, null, false, JsonAssetLoader.TransformFormat.ATTRIBUTES);
+			if (jObject.has("camera")) {
+				JsonObject cameraTransformJObject = jObject.getAsJsonObject("camera");
+				cameraTransform = JsonAssetLoader.getTransformSheet(cameraTransformJObject, null, false, JsonAssetLoader.TransformFormat.ATTRIBUTES);
+			}
 			
-			JsonObject visibilitiesObject = jObject.getAsJsonObject("visibilities");
 			ImmutableMap.Builder<String, Boolean> visibilitiesBuilder = ImmutableMap.builder();
-			visibilitiesObject.entrySet().stream().filter((e) -> "others".equals(e.getKey())).forEach((entry) -> visibilitiesBuilder.put(entry.getKey(), entry.getValue().getAsBoolean()));
+			boolean others = false;
 			
-			return new PovAnimation(clip, cameraTransform, visibilitiesBuilder.build(), visibilitiesObject.get("others").getAsBoolean());
+			if (jObject.has("visibilities")) {
+				JsonObject visibilitiesObject = jObject.getAsJsonObject("visibilities");
+				visibilitiesObject.entrySet().stream().filter((e) -> !"others".equals(e.getKey())).forEach((entry) -> visibilitiesBuilder.put(entry.getKey(), entry.getValue().getAsBoolean()));
+				others = visibilitiesObject.get("others").getAsBoolean();
+			} else {
+				visibilitiesBuilder.put("leftArm", true);
+				visibilitiesBuilder.put("leftSleeve", true);
+				visibilitiesBuilder.put("rightArm", true);
+				visibilitiesBuilder.put("rightSleeve", true);
+			}
+			
+			return new PovSettings(cameraTransform, visibilitiesBuilder.build(), others);
 		}
 	}
 }

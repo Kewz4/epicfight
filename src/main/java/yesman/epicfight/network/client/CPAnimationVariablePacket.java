@@ -5,7 +5,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKey;
@@ -42,14 +41,10 @@ public class CPAnimationVariablePacket<T> extends AnimationVariablePacket<T> {
 	
 	public static <T> void handle(CPAnimationVariablePacket<T> msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(()-> {
-			ServerPlayer serverPlayer = ctx.get().getSender();
-			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(serverPlayer, ServerPlayerPatch.class);
-			
-			if (playerpatch != null) {
+			EpicFightCapabilities.getEntityPatchUnparameterized(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				msg.process(playerpatch);
-			}
-			
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimationVariablePacket<>(playerpatch, msg.animationVariableKey, msg.animation, msg.value, msg.action), serverPlayer);
+				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimationVariablePacket<>(playerpatch, msg.animationVariableKey, msg.animation, msg.value, msg.action), playerpatch.getOriginal());
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

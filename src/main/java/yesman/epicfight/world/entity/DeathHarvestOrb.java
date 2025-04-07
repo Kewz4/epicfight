@@ -51,12 +51,10 @@ public class DeathHarvestOrb extends Entity {
 			this.move(MoverType.SELF, v1.add(v2).scale(0.23D));
 			
 			if (this.position().distanceToSqr(destCenter) < 0.5625D || this.tickCount > 40) {
-				ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(this.dest, ServerPlayerPatch.class);
-				
-				if (playerpatch != null) {
+				EpicFightCapabilities.getEntityPatchUnparameterized(this.dest, ServerPlayerPatch.class).ifPresent(playerpatch -> {
 					SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 					container.getSkill().setConsumptionSynchronize(container, container.getResource() + this.value);
-				}
+				});
 				
 				this.discard();
 			}

@@ -539,7 +539,7 @@ public class Animations {
 		BIPED_MOUNT = builder.nextAccessor("biped/living/mount", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
-				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
@@ -552,8 +552,8 @@ public class Animations {
 									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
 									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)));
 		
-		BIPED_BOW_AIM = builder.nextAccessor("biped/living/bow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
-		BIPED_BOW_SHOT = builder.nextAccessor("biped/living/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));
+		BIPED_BOW_AIM = builder.nextAccessor("biped/combat/bow_aim", (accessor) -> new AimAnimation(true, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
+		BIPED_BOW_SHOT = builder.nextAccessor("biped/combat/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));
 		BIPED_DRINK = builder.nextAccessor("biped/living/drink", (accessor) ->
 			new MirrorAnimation(0.35F, true, accessor, "biped/living/drink_mainhand", "biped/living/drink_offhand", Armatures.BIPED)
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
@@ -596,8 +596,8 @@ public class Animations {
 				})
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
 		
-		BIPED_CROSSBOW_AIM = builder.nextAccessor("biped/combat/crossbow_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/crossbow_aim_mid", "biped/combat/crossbow_aim_up", "biped/combat/crossbow_aim_down", "biped/combat/crossbow_aim_lying", Armatures.BIPED));
-		BIPED_CROSSBOW_SHOT = builder.nextAccessor("biped/living/crossbow_shot", (accessor) -> new ReboundAnimation(false, accessor, "biped/combat/crossbow_shot_mid", "biped/combat/crossbow_shot_up", "biped/combat/crossbow_shot_down", "biped/combat/crossbow_shot_lying", Armatures.BIPED));
+		BIPED_CROSSBOW_AIM = builder.nextAccessor("biped/combat/crossbow_aim", (accessor) -> new AimAnimation(true, accessor, "biped/combat/crossbow_aim_mid", "biped/combat/crossbow_aim_up", "biped/combat/crossbow_aim_down", "biped/combat/crossbow_aim_lying", Armatures.BIPED));
+		BIPED_CROSSBOW_SHOT = builder.nextAccessor("biped/combat/crossbow_shot", (accessor) -> new ReboundAnimation(false, accessor, "biped/combat/crossbow_shot_mid", "biped/combat/crossbow_shot_up", "biped/combat/crossbow_shot_down", "biped/combat/crossbow_shot_lying", Armatures.BIPED));
 		BIPED_CROSSBOW_RELOAD = builder.nextAccessor("biped/combat/crossbow_reload", (accessor) -> new StaticAnimation(false, accessor, Armatures.BIPED));
 		BIPED_JUMP = builder.nextAccessor("biped/living/jump", (accessor) -> new StaticAnimation(0.083F, false, accessor, Armatures.BIPED));
 		BIPED_RUN_SPEAR = builder.nextAccessor("biped/living/run_spear", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
@@ -648,7 +648,7 @@ public class Animations {
 					}
 				})
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
-				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.newTimePair(0.0F, 10000.0F)
@@ -1212,7 +1212,7 @@ public class Animations {
 		BIPED_HIT_SHORT = builder.nextAccessor("biped/combat/hit_short", (accessor) -> new HitAnimation(0.05F, accessor, Armatures.BIPED));
 		BIPED_HIT_LONG = builder.nextAccessor("biped/combat/hit_long", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED));
 		BIPED_HIT_ON_MOUNT = builder.nextAccessor("biped/combat/hit_on_mount", (accessor) -> new LongHitAnimation(0.08F, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.ON_ITEM_UPDATE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
@@ -2284,7 +2284,7 @@ public class Animations {
 		}
 		
 		public static final AnimationEvent.E0 SET_TOOLS_BACK = (entitypatch, animation, params) -> {
-			if (!entitypatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).isEmpty() && entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
+			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
 				moveToolBonesToBack(entitypatch, animation, humanoidArmature);
 			}
 		};

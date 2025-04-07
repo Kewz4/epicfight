@@ -111,14 +111,14 @@ public class RevelationSkill extends Skill {
 				}
 				
 				if (container.getExecutor().getTarget() != null) {
-					LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(container.getExecutor().getTarget(), LivingEntityPatch.class);
-					
-					if (entitypatch != null && this.isActivated(container)) {
-						if (container.sendExecuteRequest((LocalPlayerPatch)container.getExecutor(), ClientEngine.getInstance().controllEngine).isExecutable()) {
-							container.setDuration(0);
-							event.setCanceled(true);
+					EpicFightCapabilities.getEntityPatchUnparameterized(container.getExecutor().getTarget(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+						if (this.isActivated(container)) {
+							if (container.sendExecuteRequest((LocalPlayerPatch)container.getExecutor(), ClientEngine.getInstance().controllEngine).isExecutable()) {
+								container.setDuration(0);
+								event.setCanceled(true);
+							}
 						}
-					}
+					});
 				}
 			}
 		});

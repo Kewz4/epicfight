@@ -34,7 +34,12 @@ public class ClientAnimationProperties {
 	/**
 	 * An animation clip being played in first person.
 	 */
-	public static final StaticAnimationProperty<AnimationSubFileReader.PovAnimation> POV_ANIMATION = new StaticAnimationProperty<AnimationSubFileReader.PovAnimation> ();
+	public static final StaticAnimationProperty<DirectStaticAnimation> POV_ANIMATION = new StaticAnimationProperty<DirectStaticAnimation> ();
+	
+	/**
+	 * An animation clip being played in first person.
+	 */
+	public static final StaticAnimationProperty<AnimationSubFileReader.PovSettings> POV_SETTINGS = new StaticAnimationProperty<AnimationSubFileReader.PovSettings> ();
 	
 	/**
 	 * Multilayer for living animations (e.g. Greatsword holding animation should be played simultaneously with jumping animation) 

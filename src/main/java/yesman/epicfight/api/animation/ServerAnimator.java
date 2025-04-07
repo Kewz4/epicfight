@@ -72,12 +72,16 @@ public class ServerAnimator extends Animator {
 	
 	@Override
 	public boolean stopPlaying(AssetAccessor<? extends StaticAnimation> targetAnimation) {
-		if (this.animationPlayer.getAnimation().get().getRealAnimation() == targetAnimation) {
+		if (this.animationPlayer.getRealAnimation() == targetAnimation) {
 			this.animationPlayer.terminate();
 			return true;
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public void playShootingAnimation() {
 	}
 	
 	@Override
@@ -119,7 +123,7 @@ public class ServerAnimator extends Animator {
 	
 	@Override
 	public Optional<AnimationPlayer> getPlayer(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
-		if (this.animationPlayer.getAnimation().get().getRealAnimation() == playingAnimation) {
+		if (this.animationPlayer.getRealAnimation() == playingAnimation) {
 			return Optional.of(this.animationPlayer);
 		} else {
 			return Optional.empty();

@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.SynchedAnimationVariableKey;
@@ -51,18 +50,7 @@ public class SPAnimationVariablePacket<T> extends AnimationVariablePacket<T> {
 	
 	public static <T> void handle(SPAnimationVariablePacket<T> msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			Minecraft mc = Minecraft.getInstance();
-			Entity entity = mc.player.level().getEntity(msg.entityId);
-			
-			if (entity == null) {
-				return;
-			}
-			
-			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(entity, LivingEntityPatch.class);
-			
-			if (entitypatch != null) {
-				msg.process(entitypatch);
-			}
+			EpicFightCapabilities.getEntityPatchUnparameterized(Minecraft.getInstance().player.level().getEntity(msg.entityId), LivingEntityPatch.class).ifPresent(msg::process);
 		});
 		ctx.get().setPacketHandled(true);
 	}

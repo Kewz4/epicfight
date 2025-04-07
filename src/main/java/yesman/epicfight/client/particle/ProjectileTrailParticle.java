@@ -67,6 +67,8 @@ public class ProjectileTrailParticle extends AbstractTrailParticle<ProjectilePat
 		
 		if (isFirstTrail) {
 			this.lastPos = this.owner.getOriginal().getPosition(0.0F);
+			this.lastXRot = this.owner.getOriginal().getXRot();
+			this.lastYRot = 180.0F + this.owner.getOriginal().getYRot();
 		}
 		
 		TrailInfo trailInfo = this.trailInfo;

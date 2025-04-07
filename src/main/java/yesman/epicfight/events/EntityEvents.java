@@ -17,7 +17,6 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
-import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.EntityHitResult;
@@ -29,6 +28,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -82,29 +82,27 @@ public class EntityEvents {
 	@SuppressWarnings("unchecked")
 	@SubscribeEvent
 	public static void spawnEvent(EntityJoinLevelEvent event) {
-		EntityPatch<Entity> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), EntityPatch.class);
-		
-		if (entitypatch != null && !entitypatch.isInitialized()) {
-			entitypatch.onJoinWorld(event.getEntity(), event);
-		}
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), EntityPatch.class).ifPresent(entitypatch -> {
+			if (!entitypatch.isInitialized()) {
+				entitypatch.onJoinWorld(event.getEntity(), event);
+			}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void updateEvent(LivingEvent.LivingTickEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null && entitypatch.getOriginal() != null) {
-			entitypatch.tick(event);
-		}
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.getOriginal() != null) {
+				entitypatch.tick(event);
+			}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void deathEvent(LivingDeathEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-
-		if (entitypatch != null) {
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onDeath(event);
-		}
+		});
 		
 		/** Chicken explosion code 
 		if (event.getEntity() instanceof Chicken) {
@@ -128,11 +126,11 @@ public class EntityEvents {
 
 	@SubscribeEvent
 	public static void knockBackEvent(LivingKnockBackEvent event) {
-		HurtableEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), HurtableEntityPatch.class);
-		
-		if (entitypatch != null && entitypatch.shouldCancelKnockback()) {
-			event.setCanceled(true);
-		}
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), HurtableEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.shouldCancelKnockback()) {
+				event.setCanceled(true);
+			}
+		});
 	}
 	
 	@SubscribeEvent
@@ -322,7 +320,6 @@ public class EntityEvents {
 			return;
 		}
 		
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 		DamageSource damageSource = null;
 		
 		if (event.getEntity().getHealth() > 0.0F) {
@@ -355,6 +352,7 @@ public class EntityEvents {
 				}
 			}
 			
+			LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 			AttackResult result = entitypatch != null ? entitypatch.tryHurt(damageSource, event.getAmount()) : AttackResult.success(event.getAmount());
 			
 			if (attackerPatch != null) {
@@ -375,31 +373,27 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void shieldEvent(ShieldBlockEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null) {
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.playAnimationSynchronized(Animations.BIPED_HIT_SHIELD, 0.0F);
-		}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void dropEvent(LivingDropsEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null) {
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.onDrop(event)) {
 				event.setCanceled(true);
 			}
-		}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void projectileImpactEvent(ProjectileImpactEvent event) {
 		ProjectilePatch<?> projectilepatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), ProjectilePatch.class);
 		
-		if (!event.getProjectile().level().isClientSide() && projectilepatch != null) {
+		if (projectilepatch != null && !event.getProjectile().level().isClientSide()) {
 			if (projectilepatch.onProjectileImpact(event)) {
-				//event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+				event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
 				return;
 			}
 		}
@@ -411,20 +405,20 @@ public class EntityEvents {
 					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.PROJECTILE_HIT_EVENT, new ProjectileHitEvent(playerpatch, event));
 					
 					if (canceled) {
-						//event.setImpactResult(ImpactResult.SKIP_ENTITY);
+						event.setImpactResult(ImpactResult.SKIP_ENTITY);
 					}
 				}
 				
 				if (event.getProjectile().getOwner() != null) {
 					if (rayresult.getEntity().equals(event.getProjectile().getOwner().getVehicle())) {
-						//event.setImpactResult(ImpactResult.SKIP_ENTITY);
+						event.setImpactResult(ImpactResult.SKIP_ENTITY);
 					}
 					
 					if (rayresult.getEntity() instanceof PartEntity<?> partEntity) {
 						Entity parent = partEntity.getParent();
 						
 						if (event.getProjectile().getOwner().is(parent)) {
-							//event.setImpactResult(ImpactResult.SKIP_ENTITY);
+							event.setImpactResult(ImpactResult.SKIP_ENTITY);
 						}
 					}
 				}
@@ -449,11 +443,9 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void equipChangeEvent(LivingEquipmentChangeEvent event) {
-		HurtableEntityPatch<?> hurtableEntitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), HurtableEntityPatch.class);
-		
-		if (hurtableEntitypatch != null) {
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), HurtableEntityPatch.class).ifPresent(hurtableEntitypatch -> {
 			hurtableEntitypatch.setDefaultStunReduction(event.getSlot(), event.getFrom(), event.getTo());
-		}
+		});
 		
 		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
 		CapabilityItem fromCap = EpicFightCapabilities.getItemStackCapability(event.getFrom());
@@ -509,63 +501,55 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void mountEvent(EntityMountEvent event) {
-		EntityPatch<?> mountEntity = EpicFightCapabilities.getEntityPatch(event.getEntityMounting(), EntityPatch.class);
-		
-		if (!event.getLevel().isClientSide() && mountEntity instanceof HumanoidMobPatch && mountEntity.getOriginal() != null) {
-			if (event.getEntityBeingMounted() instanceof Mob) {
-				((HumanoidMobPatch<?>)mountEntity).onMount(event.isMounting(), event.getEntityBeingMounted());
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntityMounting(), HumanoidMobPatch.class).ifPresent(humanoidMobPatch -> {
+			if (!event.getLevel().isClientSide() && humanoidMobPatch.getOriginal() != null) {
+				if (event.getEntityBeingMounted() instanceof Mob) {
+					humanoidMobPatch.onMount(event.isMounting(), event.getEntityBeingMounted());
+				}
 			}
-		}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void tpEvent(EntityTeleportEvent.EnderEntity event) {
-		if (event.getEntityLiving() instanceof EnderMan enderman) {
-			EndermanPatch endermanpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), EndermanPatch.class);
-			
-			if (endermanpatch != null) {
-				if (endermanpatch.getEntityState().inaction()) {
-					for (Entity collideEntity : enderman.level().getEntitiesOfClass(Entity.class, enderman.getBoundingBox().inflate(0.2D, 0.2D, 0.2D))) {
-						if (collideEntity instanceof Projectile) {
-	                    	return;
-	                    }
-	                }
-					
-					event.setCanceled(true);
-				} else if (endermanpatch.isRaging()) {
-					event.setCanceled(true);
-				}
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), EndermanPatch.class).ifPresent(enderManPatch -> {
+			if (enderManPatch.getEntityState().inaction()) {
+				for (Entity collideEntity : enderManPatch.getOriginal().level().getEntitiesOfClass(Entity.class, enderManPatch.getOriginal().getBoundingBox().inflate(0.2D, 0.2D, 0.2D))) {
+					if (collideEntity instanceof Projectile) {
+                    	return;
+                    }
+                }
+				
+				event.setCanceled(true);
+			} else if (enderManPatch.isRaging()) {
+				event.setCanceled(true);
 			}
-		}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void jumpEvent(LivingJumpEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null && entitypatch.isLogicalClient()) {
-			if (!entitypatch.getEntityState().inaction() && !event.getEntity().isInWater()) {
-				AssetAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
-				entitypatch.playAnimationInClientSide(jumpAnimation, 0.0F);
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getEntityPatchParameterized(event.getEntity(), LivingEntity.class, LivingEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.isLogicalClient()) {
+				if (!entitypatch.getEntityState().inaction() && !event.getEntity().isInWater()) {
+					AssetAccessor<? extends StaticAnimation> jumpAnimation = entitypatch.getClientAnimator().getJumpAnimation();
+					entitypatch.playAnimationInClientSide(jumpAnimation, 0.0F);
+				}
 			}
-		}
+		});
 	}
 
 	@SubscribeEvent
 	public static void fallEvent(LivingFallEvent event) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null) {
+		EpicFightCapabilities.getEntityPatchUnparameterized(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onFall(event);
-		}
+		});
 	}
 	
 	@SubscribeEvent
 	public static void playerFallEvent(PlayerFlyableFallEvent event) {
-		PlayerPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), PlayerPatch.class);
-		
-		if (entitypatch != null) {
+		EpicFightCapabilities.<Player, PlayerPatch<Player>>getEntityPatchParameterized(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onFall(new LivingFallEvent(event.getEntity(), event.getDistance(), event.getMultiplier()));
-		}
+		});
 	}
 }
