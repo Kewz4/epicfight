@@ -974,9 +974,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				super(NoEntityAnimationPlayer::new);
 				
 				this.compositeLayers.clear();
-				this.compositeLayers.computeIfAbsent(Priority.LOWEST, NoEntityLayer::new);
-				this.compositeLayers.computeIfAbsent(Priority.MIDDLE, NoEntityLayer::new);
-				this.compositeLayers.computeIfAbsent(Priority.HIGHEST, NoEntityLayer::new);
+				
+				for (Priority priority : Priority.values()) {
+					this.compositeLayers.computeIfAbsent(priority, NoEntityLayer::new);
+				}
+				
+				this.baseLayerPriority = Priority.LOWEST;
 			}
 			
 			@Override

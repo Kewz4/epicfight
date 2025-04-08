@@ -506,6 +506,7 @@ public class RenderEngine {
 				}
 			}
 			
+			// First person camera correction
 			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.getPovSettings() != null && localPlayerPatch.getPovSettings().cameraTransform() != null) {
 				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
 				JointTransform cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);

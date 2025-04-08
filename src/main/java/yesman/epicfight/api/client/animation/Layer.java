@@ -282,12 +282,9 @@ public class Layer {
 		}
 		
 		public void offCompositeLayersLowerThan(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> nextAnimation) {
-			for (Priority p : nextAnimation.get().getPriority().lowersAndEqual()) {
-				// Lowest composite layer not off if the next animation is not a main frame animation. e.g. dual hold animation
-				if (p == Priority.LOWEST && !nextAnimation.get().isMainFrameAnimation()) {
-					continue;
-				}
-				
+			Priority[] layersToOff = nextAnimation.get().isMainFrameAnimation() ? nextAnimation.get().getPriority().lowersAndEqual() : nextAnimation.get().getPriority().lowers();
+			
+			for (Priority p : layersToOff) {
 				this.compositeLayers.get(p).off(entitypatch);
 			}
 		}

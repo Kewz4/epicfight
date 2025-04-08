@@ -3,7 +3,6 @@ package yesman.epicfight.api.data.reloader;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -100,7 +99,7 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), pathString);
 			
 			if (!ForgeRegistries.ENTITY_TYPES.containsKey(registryName)) {
-				new NoSuchElementException("Mob Patch Exception: No Entity named " + registryName).printStackTrace();
+				EpicFightMod.LOGGER.warn("Mob Patch Exception: No Entity named " + registryName);
 				continue;
 			}
 			
@@ -110,7 +109,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			try {
 				tag = TagParser.parseTag(entry.getValue().toString());
 			} catch (CommandSyntaxException e) {
-				e.printStackTrace();
+				EpicFightMod.LOGGER.warn("Error while deserializing datapack for " + registryName + ": " + e.getLocalizedMessage());
+				continue;
 			}
 			
 			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, false, resourceManager));
@@ -279,13 +279,14 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 		
 		if ("has_tags".equals(predicateType)) {
 			if (!tag.contains("tags", 9)) {
-				EpicFightMod.LOGGER.info("[Custom Entity Error] can't find a proper argument for %s. [name: %s, type: %s]".formatted("has_tags", "tags", "string list"));
+				EpicFightMod.LOGGER.info("Mob capability deserializing exception: Can't find a proper argument for %s. [name: %s, type: %s]".formatted("has_tags", "tags", "string list"));
 			}
+			
 			predicate = new HasCustomTag(tag.getList("tags", 8));
 		}
 		
 		if (predicate == null) {
-			throw new IllegalArgumentException("[Custom Entity Error] No predicate type: " + predicateType);
+			throw new IllegalArgumentException("Mob capability deserializing exception: No predicate type: " + predicateType);
 		}
 		
 		return predicate;

@@ -97,7 +97,7 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
- *  Changes from 20.9.5 -> 20.10.1
+ *  Changes from 20.9.7 -> 20.10.1
  *  
  *  1. Fixed skill book screen not showing up when Enhanced Visuals installed
  *  
@@ -107,13 +107,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  4. Fixed a crash when selecting mob capability model in datapack editor
  *  
- *  Changes from 20.9.6 -> 20.10.1
+ *  5. Enhanced the accuracy of tracing ability of the player when attacking
  *  
- *  1. Enhanced the accuracy of tracing ability of the player when attacking
+ *  6. Cloth simulation for cape
  *  
- *  2. Cloth simulation for cape
+ *  7. Fixed player model jitters when flying with elytra
  *  
- *  3. Config to enable dummy cape (experimental version only)
+ *  8. 
  *  
  *  --- TO DO ---
  *  
