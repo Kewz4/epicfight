@@ -9,14 +9,13 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Maps;
 
-import net.minecraft.resources.ResourceLocation;
 import yesman.epicfight.api.physics.PhysicsSimulator;
 import yesman.epicfight.api.physics.SimulationObject;
 import yesman.epicfight.api.physics.SimulationObject.SimulationObjectBuilder;
 import yesman.epicfight.api.physics.SimulationProvider;
 
-public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV extends SimulationProvider<O, SO, B, PV>, O, SO extends SimulationObject<B, PV, O>> implements PhysicsSimulator<B, PV, O, SO> {
-	protected Map<ResourceLocation, ObjectWrapper> simulationObjects = Maps.newHashMap();
+public abstract class AbstractSimulator<KEY, B extends SimulationObjectBuilder, PV extends SimulationProvider<O, SO, B, PV>, O, SO extends SimulationObject<B, PV, O>> implements PhysicsSimulator<KEY, B, PV, O, SO> {
+	protected Map<KEY, ObjectWrapper> simulationObjects = Maps.newHashMap();
 	
 	@Override
 	public void tick(O simObject) {
@@ -40,18 +39,18 @@ public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV ex
 	}
 	
 	/**
-	 * Run until the condition fails
+	 * Add a simulation object and run. Remove when @Param until returns false
 	 */
 	@Override
-	public void runWhen(ResourceLocation key, PV provider, B builder, BooleanSupplier when) {
-		this.simulationObjects.put(key, new ObjectWrapper(provider, when, false, builder));
+	public void runUntil(KEY key, PV provider, B builder, BooleanSupplier until) {
+		this.simulationObjects.put(key, new ObjectWrapper(provider, until, false, builder));
 	}
 	
 	/**
-	 * Run permanently and pause simulation when condition fails
+	 * Add an undeleted simulation object. Run simulation when @Param when returns true
 	 */
 	@Override
-	public void runWhenPermanent(ResourceLocation key, PV provider, B builder, BooleanSupplier when) {
+	public void runWhen(KEY key, PV provider, B builder, BooleanSupplier when) {
 		this.simulationObjects.put(key, new ObjectWrapper(provider, when, true, builder));
 	}
 	
@@ -59,7 +58,7 @@ public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV ex
 	 * Stop simulation
 	 */
 	@Override
-	public void stop(ResourceLocation key) {
+	public void stop(KEY key) {
 		this.simulationObjects.remove(key);
 	}
 	
@@ -67,7 +66,7 @@ public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV ex
 	 * Restart with the same condition but with another provider
 	 */
 	@Override
-	public void restart(ResourceLocation key) {
+	public void restart(KEY key) {
 		ObjectWrapper kwrap = this.simulationObjects.get(key);
 		
 		if (kwrap != null) {
@@ -77,12 +76,12 @@ public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV ex
 	}
 	
 	@Override
-	public boolean isRunning(ResourceLocation key) {
-		return this.simulationObjects.get(key).isRunning();
+	public boolean isRunning(KEY key) {
+		return this.simulationObjects.containsKey(key) ? this.simulationObjects.get(key).isRunning() : false;
 	}
 	
 	@Override
-	public Optional<SO> getRunningObject(ResourceLocation key) {
+	public Optional<SO> getRunningObject(KEY key) {
 		if (!this.simulationObjects.containsKey(key)) {
 			return Optional.empty();
 		}
@@ -90,7 +89,7 @@ public abstract class AbstractSimulator<B extends SimulationObjectBuilder, PV ex
 		return Optional.ofNullable(this.simulationObjects.get(key).simulationObject);
 	}
 	
-	public List<Pair<ResourceLocation, SO>> getAllRunningObjects() {
+	public List<Pair<KEY, SO>> getAllRunningObjects() {
 		return this.simulationObjects.entrySet().stream().filter((entry) -> entry.getValue().isRunning()).map((entry) -> Pair.of(entry.getKey(), entry.getValue().simulationObject)).toList();
 	}
 	

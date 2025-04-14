@@ -60,7 +60,7 @@ import yesman.epicfight.main.EpicFightSharedConstants;
  * https://www.youtube.com/@TenMinutePhysics
  **/
 @OnlyIn(Dist.CLIENT)
-public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
+public class ClothSimulator extends AbstractSimulator<ResourceLocation, ClothObjectBuilder, SoftBodyTranslatable, ClothSimulatable, ClothSimulator.ClothObject> {
 	public static final ResourceLocation PLAYER_CLOAK = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "ingame_cloak");
 	public static final ResourceLocation MODELPREVIEWER_CLOAK = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "previewer_cloak");
 	private static final float SPATIAL_HASH_SPACING = 0.05F;
@@ -173,11 +173,6 @@ public class ClothSimulator extends AbstractSimulator<ClothObjectBuilder, SoftBo
 			this.parts = partBuilder.build();
 		}
 
-		@Override
-		public SoftBodyTranslatable getProvider() {
-			return this.provider;
-		}
-		
 		private static final int SUB_STEPS = 6;
 		private static final Vec3f EXTERNAL_FORCE = new Vec3f();
 		private static final Vec3f OFFSET = new Vec3f();

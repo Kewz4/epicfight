@@ -338,7 +338,6 @@ public class ActionAnimation extends MainFrameAnimation {
 		TimePairList coordUpdateTime = this.getProperty(ActionAnimationProperty.COORD_UPDATE_TIME).orElse(null);
 		boolean inUpdateTime = coordUpdateTime == null || coordUpdateTime.isTimeInPairs(player.getElapsedTime());
 		boolean getRawCoord = this.getProperty(AttackAnimationProperty.FIXED_MOVE_DISTANCE).orElse(!inUpdateTime);
-		
 		TransformSheet transformSheet = entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD);
 		MoveCoordSetter moveCoordsetter = getRawCoord ? MoveCoordFunctions.RAW_COORD : this.getProperty(ActionAnimationProperty.COORD_SET_TICK).orElse(null);
 		
@@ -349,6 +348,7 @@ public class ActionAnimation extends MainFrameAnimation {
 		boolean hasNoGravity = entitypatch.getOriginal().isNoGravity();
 		boolean moveVertical = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(this.getProperty(ActionAnimationProperty.COORD).isPresent());
 		MoveCoordGetter moveGetter = getRawCoord ? MoveCoordFunctions.MODEL_COORD : this.getProperty(ActionAnimationProperty.COORD_GET).orElse(MoveCoordFunctions.MODEL_COORD);
+		
 		Vec3f move = moveGetter.get(animation.get(), entitypatch, transformSheet, player.getPrevElapsedTime(), player.getElapsedTime());
 		LivingEntity livingentity = entitypatch.getOriginal();
 		Vec3 motion = livingentity.getDeltaMovement();

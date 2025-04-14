@@ -9,12 +9,15 @@ import com.google.common.collect.ImmutableList;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -62,7 +65,7 @@ import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
-public class WitherPatch extends MobPatch<WitherBoss> {
+public class WitherPatch extends MobPatch<WitherBoss> implements BossPatch<WitherBoss> {
 	private static final EntityDataAccessor<Boolean> DATA_ARMOR_ACTIVED = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Boolean> DATA_GHOST = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Integer> DATA_TRANSPARENCY = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.INT);
@@ -95,6 +98,21 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 		this.original.getEntityData().define(DATA_LASER_TARGET_A, 0);
 		this.original.getEntityData().define(DATA_LASER_TARGET_B, 0);
 		this.original.getEntityData().define(DATA_LASER_TARGET_C, 0);
+	}
+	
+	@Override
+	public void onStartTracking(ServerPlayer trackingPlayer) {
+		this.recordBossEventOwner(trackingPlayer);
+	}
+	
+	@Override
+	public void onStopTracking(ServerPlayer trackingPlayer) {
+		this.removeBossEventOwner(trackingPlayer);
+	}
+	
+	@Override
+	public void processEntityPacket(FriendlyByteBuf buf) {
+		this.processOwnerRecordPacket(buf);
 	}
 	
 	@Override
@@ -410,6 +428,11 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 			float f1 = Mth.sin(f);
 			return this.original.getZ() + (double) f1 * 1.3D;
 		}
+	}
+	
+	@Override
+	public BossEvent getBossEvent() {
+		return this.original.bossEvent;
 	}
 	
 	public class WitherGhostAttackGoal extends Goal {

@@ -97,9 +97,9 @@ import yesman.epicfight.api.animation.types.procedural.EnderDragonAttackAnimatio
 import yesman.epicfight.api.animation.types.procedural.EnderDragonDeathAnimation;
 import yesman.epicfight.api.animation.types.procedural.EnderDragonDynamicActionAnimation;
 import yesman.epicfight.api.animation.types.procedural.EnderDragonWalkAnimation;
-import yesman.epicfight.api.animation.types.procedural.IKInfo;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.OBBCollider;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.InverseKinematicsDefinition;
 import yesman.epicfight.api.utils.HitEntityList;
 import yesman.epicfight.api.utils.HitEntityList.Priority;
 import yesman.epicfight.api.utils.LevelUtil;
@@ -479,6 +479,7 @@ public class Animations {
 	public static AnimationAccessor<ActionAnimation> EVERLASTING_ALLEGIANCE_CALL;
 	public static AnimationAccessor<ActionAnimation> EVERLASTING_ALLEGIANCE_CATCH;
 	public static AnimationAccessor<AttackAnimation> SHARP_STAB;
+	
 	public static AnimationAccessor<OffAnimation> OFF_ANIMATION_HIGHEST;
 	public static AnimationAccessor<OffAnimation> OFF_ANIMATION_MIDDLE;
 	public static AnimationAccessor<OffAnimation> OFF_ANIMATION_LOWEST;
@@ -1251,27 +1252,32 @@ public class Animations {
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true));
 		
 		DRAGON_IDLE = builder.nextAccessor("dragon/idle", (accessor) -> new StaticAnimation(0.6F, true, accessor, Armatures.DRAGON));
+		
 		DRAGON_WALK = builder.nextAccessor("dragon/walk", (accessor) ->
-			new EnderDragonWalkAnimation(0.35F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, Armatures.DRAGON.get().legFrontR3, IntIntPair.of(0, 3), 0.12F, 0, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, Armatures.DRAGON.get().legFrontL3, IntIntPair.of(2, 5), 0.12F, 2, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, Armatures.DRAGON.get().legBackR3, IntIntPair.of(2, 5), 0.1344F, 4, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, Armatures.DRAGON.get().legBackL3, IntIntPair.of(0, 3), 0.1344F, 2, new boolean[] {true, true, true})
-				}));
-		DRAGON_FLY = builder.nextAccessor("dragon/fly", (accessor) -> new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
+			new EnderDragonWalkAnimation(0.35F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, Armatures.DRAGON.get().legFrontR3, IntIntPair.of(0, 3), 0.12F, 0, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, Armatures.DRAGON.get().legFrontL3, IntIntPair.of(2, 5), 0.12F, 2, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, Armatures.DRAGON.get().legBackR3, IntIntPair.of(2, 5), 0.1344F, 4, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, Armatures.DRAGON.get().legBackL3, IntIntPair.of(0, 3), 0.1344F, 2, new boolean[] {true, true, true})
+				)));
+		
+		DRAGON_FLY = builder.nextAccessor("dragon/fly", (accessor) ->
+			new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
 				.addEvents(InTimeEvent.create(0.4F, Animations.ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT)));
+		
 		DRAGON_DEATH = builder.nextAccessor("dragon/death", (accessor) -> new EnderDragonDeathAnimation(1.0F, accessor, Armatures.DRAGON));
 		
 		DRAGON_GROUND_TO_FLY = builder.nextAccessor("dragon/ground_to_fly", (accessor) -> 
-			new EnderDragonActionAnimation(0.25F, accessor, Armatures.DRAGON, new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(4, 7), 0.1344F, 0, new boolean[] {true, false, false, false}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(4, 7), 0.1344F, 0, new boolean[] {true, false, false, false})
-				})
+			new EnderDragonActionAnimation(0.25F, accessor, Armatures.DRAGON)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(3, 7), 0.12F, 0, new boolean[] {true, false, false, false})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(4, 7), 0.1344F, 0, new boolean[] {true, false, false, false})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(4, 7), 0.1344F, 0, new boolean[] {true, false, false, false})
+				))
 				.addEvents(
 					InTimeEvent.create(0.25F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT),
 					InTimeEvent.create(1.05F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT),
@@ -1283,12 +1289,7 @@ public class Animations {
 				));
 		
 		DRAGON_FLY_TO_GROUND = builder.nextAccessor("dragon/fly_to_ground", (accessor) ->
-			new EnderDragonDynamicActionAnimation(0.35F, accessor, Armatures.DRAGON, new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 7, new boolean[] {false, false, false, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 7, new boolean[] {false, false, false, true})
-				})
+			new EnderDragonDynamicActionAnimation(0.35F, accessor, Armatures.DRAGON)
 				.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
@@ -1307,11 +1308,18 @@ public class Animations {
 						Vec3f jointCoord = OpenMatrix4f.transform3v(coordReverse, new Vec3f(jt0.translation().x, verticalDistance, horizontalDistance), null);
 						jt0.translation().set(jointCoord);
 						jt1.translation().set(MathUtils.lerpVector(jt0.translation(), jt2.translation(), transform.getKeyframes()[1].time() / transform.getKeyframes()[2].time()));
+						
 						transformSheet.readFrom(transform);
 					} else {
-						transformSheet.readFrom(self.getCoord().copyAll());
+						transformSheet.readFrom(TransformSheet.EMPTY_SHEET);
 					}
 				})
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 9, new boolean[] {false, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 7, new boolean[] {false, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 7, new boolean[] {false, false, false, true})
+				))
 				.addEvents(
 					InTimeEvent.create(0.3F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT), InTimeEvent.create(1.1F, (entitypatch, animation, params) -> {
 						entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
@@ -1330,120 +1338,123 @@ public class Animations {
 				));
 		
 		DRAGON_ATTACK1 = builder.nextAccessor("dragon/attack1", (accessor) ->
-			new EnderDragonAttackAnimation(0.35F, 0.4F, 0.65F, 0.76F, 1.9F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON, new IKInfo[] {
-				IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(2, 4), 0.12F, 0, new boolean[] {true, true}),
-				IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {false, false, false, false, true}),
-				IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {}),
-				IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(1, 4), 0.1344F, 0, new boolean[] {true, false, true})
-			})
-			.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
-			.addEvents(InTimeEvent.create(0.65F, (entitypatch, animation, params) -> {
-				entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
-				
-				if (entitypatch instanceof EnderDragonPatch dragonpatch) {
-					Vec3f tipPosition = dragonpatch.getTipPointAnimation(Armatures.DRAGON.get().legFrontR3.getName()).getTargetPosition();
-					LivingEntity original = entitypatch.getOriginal();
-					original.level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 0.5D, 100.0D, 0.5D);
-				}
-			}, AnimationEvent.Side.CLIENT)));
-		
-		DRAGON_ATTACK2 = builder.nextAccessor("dragon/attack2", (accessor) ->
-			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
-				}));
-		
-		DRAGON_ATTACK3 = builder.nextAccessor("dragon/attack3", (accessor) ->
-			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontL3, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
-				}));
-		
-		DRAGON_ATTACK4 = builder.nextAccessor("dragon/attack4", (accessor) ->
-			new EnderDragonAttackAnimation(0.35F, 0.5F, 1.15F, 1.26F, 1.9F, ColliderPreset.DRAGON_BODY, Armatures.DRAGON.get().rootJoint, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 7), 0.12F, 0, new boolean[] {false, false, false, false, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 7), 0.12F, 0, new boolean[] {false, false, false, false, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(3, 8), 0.1344F, 0, new boolean[] {false, false, false, false, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(3, 8), 0.1344F, 0, new boolean[] {false, false, false, false, true})
-				})
-			.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
-			.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
-			.addEvents(
-				InTimeEvent.create(1.2F, (entitypatch, animation, params) -> {
+			new EnderDragonAttackAnimation(0.35F, 0.4F, 0.65F, 0.76F, 1.9F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON)
+				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(2, 4), 0.12F, 0, new boolean[] {true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {false, false, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(1, 4), 0.1344F, 0, new boolean[] {true, false, true})
+				))
+				.addEvents(InTimeEvent.create(0.65F, (entitypatch, animation, params) -> {
 					entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
 					
 					if (entitypatch instanceof EnderDragonPatch dragonpatch) {
-						Vec3f tipPosition = dragonpatch.getTipPointAnimation(Armatures.DRAGON.get().legFrontR3.getName()).getTargetPosition();
-						LivingEntity original = entitypatch.getOriginal();
-						original.level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 3.0D, 100.0D, 1.0D);
+						dragonpatch.getIKSimulator().getRunningObject(Armatures.DRAGON.get().legFrontR3).ifPresent((ikObject) -> {
+							Vec3f tipPosition = ikObject.getDestination();
+							entitypatch.getOriginal().level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 0.5D, 100.0D, 0.5D);
+						});
 					}
-				}, AnimationEvent.Side.CLIENT),
-				InTimeEvent.create(1.85F, (entitypatch, animation, params) -> {
-					entitypatch.getAnimator().reserveAnimation(DRAGON_ATTACK4_RECOVERY);
-				}, AnimationEvent.Side.BOTH))
-			);
+				}, AnimationEvent.Side.CLIENT)));
+		
+		DRAGON_ATTACK2 = builder.nextAccessor("dragon/attack2", (accessor) ->
+			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontR3, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
+				)));
+		
+		DRAGON_ATTACK3 = builder.nextAccessor("dragon/attack3", (accessor) ->
+			new EnderDragonAttackAnimation(0.35F, 0.25F, 0.45F, 0.66F, 0.75F, ColliderPreset.DRAGON_LEG, Armatures.DRAGON.get().legFrontL3, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(1, 4), 0.12F, 0, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, null, 0.1344F, 0, new boolean[] {})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, null, 0.1344F, 0, new boolean[] {})
+				)));
+		
+		DRAGON_ATTACK4 = builder.nextAccessor("dragon/attack4", (accessor) ->
+			new EnderDragonAttackAnimation(0.35F, 0.5F, 1.15F, 1.26F, 1.9F, ColliderPreset.DRAGON_BODY, Armatures.DRAGON.get().rootJoint, accessor, Armatures.DRAGON)
+				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
+				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 7), 0.12F, 0, new boolean[] {false, false, false, false, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 7), 0.12F, 0, new boolean[] {false, false, false, false, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(3, 8), 0.1344F, 0, new boolean[] {false, false, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(3, 8), 0.1344F, 0, new boolean[] {false, false, false, false, true})
+				))
+				.addEvents(
+					InTimeEvent.create(1.2F, (entitypatch, animation, params) -> {
+						entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
+						
+						if (entitypatch instanceof EnderDragonPatch dragonpatch) {
+							dragonpatch.getIKSimulator().getRunningObject(Armatures.DRAGON.get().legFrontR3).ifPresent((ikObject) -> {
+								Vec3f tipPosition = ikObject.getDestination();
+								entitypatch.getOriginal().level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 3.0D, 100.0D, 1.0D);
+							});
+						}
+					}, AnimationEvent.Side.CLIENT),
+					InTimeEvent.create(1.85F, (entitypatch, animation, params) -> {
+						entitypatch.getAnimator().reserveAnimation(DRAGON_ATTACK4_RECOVERY);
+					}, AnimationEvent.Side.BOTH))
+				);
 		
 		DRAGON_ATTACK4_RECOVERY = builder.nextAccessor("dragon/attack4_recovery", (accessor) ->
-			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, false, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 3), 0.12F, 0, new boolean[] {true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, false, false, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, false, false})
-				}));
+			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, false, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 3), 0.12F, 0, new boolean[] {true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, false, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, false, false})
+				)));
 		
 		DRAGON_FIREBALL = builder.nextAccessor("dragon/fireball", (accessor) ->
-			new EnderDragonActionAnimation(0.16F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true})
-				})
-			.addEvents(
-				InTimeEvent.create(0.65F, (entitypatch, animation, params) -> {
-					LivingEntity original = entitypatch.getOriginal();
-					Entity target = entitypatch.getTarget();
-		            Vec3 pos = original.position();
-		            Vec3 toTarget = target.position().subtract(original.position()).normalize().scale(original.getBbWidth() * 0.5D);
-		            
-		            double d6 = (float)(pos.x + toTarget.x);
-		            double d7 = (float)(pos.y + 2.0F);
-		            double d8 = (float)(pos.z + toTarget.z);
-		            double d9 = target.getX() - d6;
-		            double d10 = target.getY(0.5D) - d7;
-		            double d11 = target.getZ() - d8;
-		            
-		            if (!original.isSilent()) {
-		               original.level().levelEvent(null, 1017, original.blockPosition(), 0);
-		            }
-		            
-		            DragonFireball dragonfireball = new DragonFireball(original.level(), original, d9, d10, d11);
-		            dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
-		            original.level().addFreshEntity(dragonfireball);
-				}, Side.SERVER))
-			);
+			new EnderDragonActionAnimation(0.16F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true})
+				))
+				.addEvents(
+					InTimeEvent.create(0.65F, (entitypatch, animation, params) -> {
+						LivingEntity original = entitypatch.getOriginal();
+						Entity target = entitypatch.getTarget();
+			            Vec3 pos = original.position();
+			            Vec3 toTarget = target.position().subtract(original.position()).normalize().scale(original.getBbWidth() * 0.5D);
+			            
+			            double d6 = (float)(pos.x + toTarget.x);
+			            double d7 = (float)(pos.y + 2.0F);
+			            double d8 = (float)(pos.z + toTarget.z);
+			            double d9 = target.getX() - d6;
+			            double d10 = target.getY(0.5D) - d7;
+			            double d11 = target.getZ() - d8;
+			            
+			            if (!original.isSilent()) {
+			               original.level().levelEvent(null, 1017, original.blockPosition(), 0);
+			            }
+			            
+			            DragonFireball dragonfireball = new DragonFireball(original.level(), original, d9, d10, d11);
+			            dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
+			            original.level().addFreshEntity(dragonfireball);
+					}, Side.SERVER))
+				);
 		
 		DRAGON_AIRSTRIKE = builder.nextAccessor("dragon/airstrike", (accessor) ->
 			new StaticAnimation(0.35F, true, accessor, Armatures.DRAGON)
 				.addEvents(InTimeEvent.create(0.3F, ReusableSources.WING_FLAP, AnimationEvent.Side.CLIENT)));
 		
 		DRAGON_BACKJUMP_PREPARE = builder.nextAccessor("dragon/backjump_prepare", (accessor) ->
-			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
-				})
-			.addEvents(InTimeEvent.create(0.3F, (entitypatch, animation, params) -> {
-				entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_MOVE);
-			}, Side.BOTH)));
+			new EnderDragonActionAnimation(0.35F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+				))
+				.addEvents(InTimeEvent.create(0.3F, (entitypatch, animation, params) -> {
+					entitypatch.getAnimator().reserveAnimation(DRAGON_BACKJUMP_MOVE);
+				}, Side.BOTH)));
 		
 		DRAGON_BACKJUMP_MOVE = builder.nextAccessor("dragon/backjump_move", (accessor) ->
 			new AttackAnimation(0.0F, 10.0F, 10.0F, 10.0F, 10.0F, ColliderPreset.FIST, Armatures.DRAGON.get().rootJoint, accessor, Armatures.DRAGON)
@@ -1454,34 +1465,35 @@ public class Animations {
 				}, Side.BOTH)));
 		
 		DRAGON_BACKJUMP_RECOVERY = builder.nextAccessor("dragon/backjump_recovery", (accessor) ->
-			new EnderDragonActionAnimation(0.0F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {false, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {false, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
-				})
+			new EnderDragonActionAnimation(0.0F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {false, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {false, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+				))
 			.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
 			.addEvents(
 				InTimeEvent.create(0.15F, (entitypatch, animation, params) -> {
 					entitypatch.playSound(EpicFightSounds.GROUND_SLAM.get(), 0, 0);
 					
 					if (entitypatch instanceof EnderDragonPatch dragonpatch) {
-						Vec3f tipPosition = dragonpatch.getTipPointAnimation(Armatures.DRAGON.get().legFrontR3.getName()).getTargetPosition();
-						LivingEntity original = entitypatch.getOriginal();
-						original.level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 3.0D, 100.0D, 1.0D);
+						dragonpatch.getIKSimulator().getRunningObject(Armatures.DRAGON.get().legFrontR3).ifPresent((ikObject) -> {
+							Vec3f tipPosition = ikObject.getDestination();
+							entitypatch.getOriginal().level().addParticle(EpicFightParticles.GROUND_SLAM.get(), tipPosition.x, tipPosition.y, tipPosition.z, 3.0D, 100.0D, 1.0D);
+						});
 					}
 				}, AnimationEvent.Side.CLIENT))
 			);
 		
 		DRAGON_CRYSTAL_LINK = builder.nextAccessor("dragon/crystal_link", (accessor) ->
-			new EnderDragonActionAnimation(0.5F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 2), 0.12F, 0, new boolean[] {true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 2), 0.12F, 0, new boolean[] {true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 2), 0.1344F, 0, new boolean[] {true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 2), 0.1344F, 0, new boolean[] {true, true})
-				})
+			new EnderDragonActionAnimation(0.5F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 2), 0.12F, 0, new boolean[] {true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 2), 0.12F, 0, new boolean[] {true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 2), 0.1344F, 0, new boolean[] {true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 2), 0.1344F, 0, new boolean[] {true, true})
+				))
 			.addEvents(
 				InTimeEvent.create(7.0F, (entitypatch, animation, params) -> {
 					entitypatch.getOriginal().playSound(SoundEvents.ENDER_DRAGON_GROWL, 7.0F, 0.8F + entitypatch.getOriginal().getRandom().nextFloat() * 0.3F);
@@ -1499,29 +1511,30 @@ public class Animations {
 			);
 		
 		DRAGON_NEUTRALIZED = builder.nextAccessor("dragon/neutralized", (accessor) ->
-			new EnderDragonActionAnimation(0.1F, accessor, Armatures.DRAGON,
-				new IKInfo[] {
-					IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true}),
-					IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
-				})
+			new EnderDragonActionAnimation(0.1F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 4), 0.12F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+				))
 			.addEvents(InTimeEvent.create(3.95F, (entitypatch, animation, params) -> {
 				entitypatch.getAnimator().playAnimation(DRAGON_NEUTRALIZED_RECOVERY, 0);
 			}, AnimationEvent.Side.BOTH)));
 		
 		DRAGON_NEUTRALIZED_RECOVERY = builder.nextAccessor("dragon/neutralized_recovery", (accessor) ->
-			new EnderDragonActionAnimation(0.05F, accessor, Armatures.DRAGON, new IKInfo[] {
-				IKInfo.make(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, false, true}),
-				IKInfo.make(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, false, true, true, true}),
-				IKInfo.make(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true}),
-				IKInfo.make(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
-			})
-			.addEvents(InTimeEvent.create(1.6F, (entitypatch, animation, params) -> {
-				if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
-					enderdragonpatch.getOriginal().getPhaseManager().getPhase(PatchedPhases.GROUND_BATTLE).fly();
-				}
-			}, AnimationEvent.Side.SERVER)));
+			new EnderDragonActionAnimation(0.05F, accessor, Armatures.DRAGON)
+				.addProperty(StaticAnimationProperty.IK_DEFINITION, List.of(
+					  InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontL1, Armatures.DRAGON.get().legFrontL3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, true, true, false, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legFrontR1, Armatures.DRAGON.get().legFrontR3, null, IntIntPair.of(0, 5), 0.12F, 0, new boolean[] {true, false, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackL1, Armatures.DRAGON.get().legBackL3, null, IntIntPair.of(0, 5), 0.1344F, 0, new boolean[] {true, true, true, true, true})
+					, InverseKinematicsDefinition.create(Armatures.DRAGON.get().legBackR1, Armatures.DRAGON.get().legBackR3, null, IntIntPair.of(0, 4), 0.1344F, 0, new boolean[] {true, true, true, true})
+				))
+				.addEvents(InTimeEvent.create(1.6F, (entitypatch, animation, params) -> {
+					if (entitypatch instanceof EnderDragonPatch enderdragonpatch) {
+						enderdragonpatch.getOriginal().getPhaseManager().getPhase(PatchedPhases.GROUND_BATTLE).fly();
+					}
+				}, AnimationEvent.Side.SERVER)));
 		
 		SPIDER_ATTACK = builder.nextAccessor("spider/attack", (accessor) -> new AttackAnimation(0.15F, 0.31F, 0.31F, 0.36F, 0.44F, ColliderPreset.SPIDER, Armatures.SPIDER.get().head, accessor, Armatures.SPIDER));
 		SPIDER_JUMP_ATTACK = builder.nextAccessor("spider/jump_attack", (accessor) ->

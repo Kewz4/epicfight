@@ -1,18 +1,19 @@
 package yesman.epicfight.client.events;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import yesman.epicfight.api.client.model.SoftBodyTranslatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
-import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.particle.AirBurstParticle;
 import yesman.epicfight.client.particle.AnimationTrailParticle;
@@ -22,7 +23,6 @@ import yesman.epicfight.client.particle.CutParticle;
 import yesman.epicfight.client.particle.DustParticle;
 import yesman.epicfight.client.particle.EnderParticle;
 import yesman.epicfight.client.particle.EntityAfterImageParticle;
-import yesman.epicfight.client.particle.ProjectileTrailParticle;
 import yesman.epicfight.client.particle.EviscerateParticle;
 import yesman.epicfight.client.particle.FeatherParticle;
 import yesman.epicfight.client.particle.ForceFieldEndParticle;
@@ -31,11 +31,13 @@ import yesman.epicfight.client.particle.GroundSlamParticle;
 import yesman.epicfight.client.particle.HitBluntParticle;
 import yesman.epicfight.client.particle.HitCutParticle;
 import yesman.epicfight.client.particle.LaserParticle;
+import yesman.epicfight.client.particle.ProjectileTrailParticle;
 import yesman.epicfight.client.particle.TsunamiSplashParticle;
 import yesman.epicfight.client.renderer.blockentity.FractureBlockRenderer;
 import yesman.epicfight.client.renderer.entity.DroppedNetherStarRenderer;
 import yesman.epicfight.client.renderer.entity.WitherGhostRenderer;
 import yesman.epicfight.client.renderer.entity.WitherSkeletonMinionRenderer;
+import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.client.renderer.patched.layer.WearableItemLayer;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -84,18 +86,24 @@ public class ClientModBusEvent {
 		event.registerBlockEntityRenderer(EpicFightBlockEntities.FRACTURE.get(), FractureBlockRenderer::new);
 	}
 	
+	/**
+	 * Not directly related, but used this method to initialize {@link RenderItemBase#itemRenderer} and {@link RenderItemBase#itemInHandRenderer} because the event called right after gameRenerer created
+	 * @param event
+	 */
+	@SubscribeEvent
+	public static void registerStageEvent(RenderLevelStageEvent.RegisterStageEvent event) {
+		RenderItemBase.initItemRenderers(Minecraft.getInstance());
+	}
+	
 	@SubscribeEvent
 	public static void addLayersEvent(EntityRenderersEvent.AddLayers event) {
 		WearableItemLayer.clearModels();
 		ClientEngine.getInstance().renderEngine.reloadEntityRenderers(event.getContext());
-		
 		SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.removeIf(ClothSimulatable::invalid);
 		
 		for (ClothSimulatable simOwner : SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS) {
-			simOwner.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
-				simulator.getAllRunningObjects().forEach((entry) -> {
-					simulator.restart(entry.getKey());
-				});
+			simOwner.getClothSimulator().getAllRunningObjects().forEach((entry) -> {
+				simOwner.getClothSimulator().restart(entry.getKey());
 			});
 		}
 	}

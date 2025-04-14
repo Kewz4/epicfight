@@ -75,7 +75,6 @@ import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.SoftBodyTranslatable;
-import yesman.epicfight.api.client.physics.bezier.CubicBezierCurve;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.collider.Collider;
@@ -83,6 +82,7 @@ import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.physics.PhysicsSimulator;
 import yesman.epicfight.api.physics.SimulatableObject;
 import yesman.epicfight.api.physics.SimulationTypes;
+import yesman.epicfight.api.physics.bezier.CubicBezierCurve;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
@@ -175,7 +175,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		
 		if (builder != null) {
 			this.clothSimulator = new ClothSimulator();
-			this.clothSimulator.runWhenPermanent(ClothSimulator.MODELPREVIEWER_CLOAK, cloakMesh, builder, () -> true);
+			this.clothSimulator.runWhen(ClothSimulator.MODELPREVIEWER_CLOAK, cloakMesh, builder, () -> true);
 		}
 	}
 	
@@ -770,7 +770,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public <SIM extends PhysicsSimulator<?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, SIM> simulationType) {
+		public <SIM extends PhysicsSimulator<?, ?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, ?, SIM> simulationType) {
 			return Optional.empty();
 		}
 
@@ -787,6 +787,11 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		@Override
 		public float getGravity() {
 			return 9.8F;
+		}
+
+		@Override
+		public ClothSimulator getClothSimulator() {
+			return null;
 		}
 	}
 	

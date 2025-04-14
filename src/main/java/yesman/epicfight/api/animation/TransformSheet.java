@@ -133,6 +133,14 @@ public class TransformSheet {
 		return this;
 	}
 	
+	public TransformSheet getFirstFrame() {
+		TransformSheet part = this.copy(0, 2);
+		Keyframe[] keyframes = part.getKeyframes();
+		keyframes[1].transform().copyFrom(keyframes[0].transform());
+		
+		return part;
+	}
+	
 	public void correctAnimationByNewPosition(Vec3f startpos, Vec3f startToEnd, Vec3f modifiedStart, Vec3f modifiedStartToEnd) {
 		Keyframe[] keyframes = this.getKeyframes();
 		Keyframe startKeyframe = keyframes[0];

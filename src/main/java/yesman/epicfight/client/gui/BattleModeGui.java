@@ -47,7 +47,7 @@ public class BattleModeGui extends ModIngameGui {
 		new Vec2f(1.0F, 0.0F)
 	};
 	
-	public Font font;
+	private Minecraft minecraft;
 	private int sliding;
 	private boolean slidingToggle;
 	private final List<SkillContainer> skillIcons = Lists.newLinkedList();
@@ -55,7 +55,7 @@ public class BattleModeGui extends ModIngameGui {
 	public BattleModeGui(Minecraft minecraft) {
 		this.sliding = 29;
 		this.slidingToggle = false;
-		this.font = minecraft.font;
+		this.minecraft = minecraft;
 	}
 	
 	public void renderGui(LocalPlayerPatch playerpatch, GuiGraphics guiGraphics, float partialTicks) {
@@ -126,8 +126,8 @@ public class BattleModeGui extends ModIngameGui {
 			ResourceLocation rl = ResourceLocation.parse(playerpatch.getChargingSkill().toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();
 			
-			int stringWidth = this.font.width(skillName);
-			guiGraphics.drawString(this.font, skillName, (pos.x + 120 - stringWidth * 0.5F), pos.y - 12, 16777215, true);
+			int stringWidth = this.minecraft.font.width(skillName);
+			guiGraphics.drawString(this.minecraft.font, skillName, (pos.x + 120 - stringWidth * 0.5F), pos.y - 12, 16777215, true);
 
 			poseStack.popPose();
 		}
@@ -295,18 +295,18 @@ public class BattleModeGui extends ModIngameGui {
         
         if (container.isActivated() && (container.getSkill().getActivateType() == ActivateType.DURATION || container.getSkill().getActivateType() == ActivateType.DURATION_INFINITE)) {
 			String s = String.format("%.0f", container.getRemainDuration() / 20.0F);
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(this.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
 		} else if (!fullstack) {
 			String s = String.valueOf((int)(cooldownRatio * 100.0F));
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(this.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
 		}
 		
 		if (container.getSkill().getMaxStack() > 1) {
 			String s = String.valueOf(container.getStack());
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(font, s, pos.x + 25 - stringWidth, pos.y + 22, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 25 - stringWidth, pos.y + 22, 16777215, true);
 		}
 		
 		poseStack.popPose();
@@ -322,11 +322,15 @@ public class BattleModeGui extends ModIngameGui {
 		this.slidingToggle = false;
 	}
 	
-	public void reset() {
+	public void init() {
 		this.skillIcons.clear();
 	}
 
 	public int getSlidingProgression() {
 		return this.sliding;
+	}
+	
+	public Font getFont() {
+		return this.minecraft.font;
 	}
 }

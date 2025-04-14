@@ -10,10 +10,15 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Maps;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import io.netty.util.internal.StringUtil;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationClip;
@@ -42,8 +47,17 @@ import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.physics.ik.InverseKinematicsProvider;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulatable;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.BakedInverseKinematicsDefinition;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.InverseKinematicsObject;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
+import yesman.epicfight.api.utils.math.OpenMatrix4f;
+import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
+import yesman.epicfight.client.renderer.EpicFightRenderTypes;
+import yesman.epicfight.client.renderer.RenderingTool;
 import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightMod;
@@ -54,7 +68,7 @@ import yesman.epicfight.world.entity.eventlistener.AnimationBeginEvent;
 import yesman.epicfight.world.entity.eventlistener.AnimationEndEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
-public class StaticAnimation extends DynamicAnimation {
+public class StaticAnimation extends DynamicAnimation implements InverseKinematicsProvider {
 	public static final IndependentAnimationVariableKey<Boolean> HAD_NO_PHYSICS = AnimationVariables.independent(() -> false, true);
 	
 	public static String getFileHash(ResourceLocation rl) {
@@ -126,6 +140,19 @@ public class StaticAnimation extends DynamicAnimation {
 	public void loadAnimation() {
 		if (!this.isMetaAnimation()) {
 			this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
+			
+			if (this.properties.containsKey(StaticAnimationProperty.IK_DEFINITION)) {
+				this.getProperty(StaticAnimationProperty.IK_DEFINITION).ifPresent((ikDefinitions) -> {
+					boolean correctY = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false);
+					boolean correctZ = this.isMainFrameAnimation();
+					
+					List<BakedInverseKinematicsDefinition> bakedIKDefinitionList = ikDefinitions.stream().map((ikDefinition) -> ikDefinition.bake(this.armature, this.animationClip.getJointTransforms(), correctY, correctZ)).toList();
+					this.addProperty(StaticAnimationProperty.BAKED_IK_DEFINITION, bakedIKDefinitionList);
+					
+					// Remove the unbaked data
+					this.properties.remove(StaticAnimationProperty.IK_DEFINITION);
+				});
+			}
 		}
 	}
 	
@@ -559,5 +586,46 @@ public class StaticAnimation extends DynamicAnimation {
 	
 	public boolean isInvalid() {
 		return this.accessor == null;
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public void renderDebugging(PoseStack poseStack, MultiBufferSource buffer, LivingEntityPatch<?> entitypatch, float playTime, float partialTicks) {
+		if (entitypatch instanceof InverseKinematicsSimulatable ikSimulatable) {
+			this.getProperty(StaticAnimationProperty.BAKED_IK_DEFINITION).ifPresent((ikDefinitions) -> {
+				OpenMatrix4f modelmat = ikSimulatable.getModelMatrix(partialTicks);
+				LivingEntity originalEntity = entitypatch.getOriginal();
+				Vec3 entitypos = originalEntity.position();
+				float x = (float)entitypos.x;
+		       	float y = (float)entitypos.y;
+		       	float z = (float)entitypos.z;
+		       	float xo = (float)originalEntity.xo;
+		       	float yo = (float)originalEntity.yo;
+		       	float zo = (float)originalEntity.zo;
+		       	OpenMatrix4f toModelPos = OpenMatrix4f.mul(OpenMatrix4f.createTranslation(xo + (x - xo) * partialTicks, yo + (y - yo) * partialTicks, zo + (z - zo) * partialTicks), modelmat, null).invert();
+		       	
+				for (BakedInverseKinematicsDefinition bakedIKInfo : this.getProperty(StaticAnimationProperty.BAKED_IK_DEFINITION).orElse(null)) {
+					ikSimulatable.getIKSimulator().getRunningObject(bakedIKInfo.endJoint()).ifPresent((ikObjet) -> {
+						VertexConsumer vertexBuilder = buffer.getBuffer(EpicFightRenderTypes.debugQuads());
+						Vec3f worldtargetpos = ikObjet.getDestination();
+						Vec3f modeltargetpos = OpenMatrix4f.transform3v(toModelPos, worldtargetpos, null).multiply(-1.0F, 1.0F, -1.0F);
+						RenderingTool.drawQuad(poseStack, vertexBuilder, modeltargetpos, 0.5F, 1.0F, 0.0F, 0.0F);
+				       	Vec3f jointWorldPos = ikObjet.getTipPosition(partialTicks);
+				       	Vec3f jointModelpos = OpenMatrix4f.transform3v(toModelPos, jointWorldPos, null);
+				       	RenderingTool.drawQuad(poseStack, vertexBuilder, jointModelpos.multiply(-1.0F, 1.0F, -1.0F), 0.4F, 0.0F, 0.0F, 1.0F);
+				       	
+				       	Pose pose = new Pose();
+				       	
+						for (String jointName : this.getTransfroms().keySet()) {
+							pose.putJointData(jointName, this.getTransfroms().get(jointName).getInterpolatedTransform(playTime));
+						}
+					});
+				}
+			});
+		}
+	}
+	
+	@Override
+	public InverseKinematicsObject createSimulationData(InverseKinematicsProvider provider, InverseKinematicsSimulatable simOwner, InverseKinematicsSimulator.InverseKinematicsBuilder simBuilder) {
+		return new InverseKinematicsObject(simBuilder);
 	}
 }

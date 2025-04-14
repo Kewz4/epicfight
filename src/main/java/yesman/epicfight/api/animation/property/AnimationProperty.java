@@ -29,6 +29,8 @@ import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LinkAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.BakedInverseKinematicsDefinition;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.InverseKinematicsDefinition;
 import yesman.epicfight.api.utils.HitEntityList.Priority;
 import yesman.epicfight.api.utils.TimePairList;
 import yesman.epicfight.api.utils.math.ValueModifier;
@@ -143,6 +145,16 @@ public abstract class AnimationProperty<T> {
 		 * Disable physics while playing animation
 		 */
 		public static final StaticAnimationProperty<Boolean> NO_PHYSICS = new StaticAnimationProperty<Boolean> ("no_physics", Codec.BOOL);
+		
+		/**
+		 * Inverse kinematics information
+		 */
+		public static final StaticAnimationProperty<List<InverseKinematicsDefinition>> IK_DEFINITION = new StaticAnimationProperty<List<InverseKinematicsDefinition>> ();
+		
+		/**
+		 * This property automatically baked when animation is loaded
+		 */
+		public static final StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> BAKED_IK_DEFINITION = new StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> ();
 	}
 	
 	public static class ActionAnimationProperty<T> extends StaticAnimationProperty<T> {

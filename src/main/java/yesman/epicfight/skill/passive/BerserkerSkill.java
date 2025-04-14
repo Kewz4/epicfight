@@ -89,7 +89,7 @@ public class BerserkerSkill extends PassiveSkill {
 		float maxHealth = player.getMaxHealth();
 		float lostHealthPercentage = (maxHealth - health) / maxHealth;
 		lostHealthPercentage = (float)Math.floor(lostHealthPercentage * 100.0F);
-		guiGraphics.drawString(gui.font, String.format("%.0f%%", lostHealthPercentage), x + 4, y + 6, 16777215, true);
+		guiGraphics.drawString(gui.getFont(), String.format("%.0f%%", lostHealthPercentage), x + 4, y + 6, 16777215, true);
 		poseStack.popPose();
 	}
 	

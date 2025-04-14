@@ -29,4 +29,6 @@ public interface ClothSimulatable extends SimulatableObject {
 	public float getYRotDelta(float partialFrame);
 	public float getScale();
 	public float getGravity();
+	
+	ClothSimulator getClothSimulator();
 }

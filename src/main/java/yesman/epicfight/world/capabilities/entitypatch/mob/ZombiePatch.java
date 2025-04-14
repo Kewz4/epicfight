@@ -1,6 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch.mob;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
@@ -11,7 +11,7 @@ import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPSpawnData;
+import yesman.epicfight.network.server.SPEntityPacket;
 import yesman.epicfight.world.capabilities.entitypatch.Faction;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
@@ -24,7 +24,7 @@ public class ZombiePatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 		if (!this.getHoldingItemCapability(InteractionHand.MAIN_HAND).isEmpty()) {
-			SPSpawnData packet = new SPSpawnData(this.original.getId());
+			SPEntityPacket packet = new SPEntityPacket(this.original.getId());
 			EpicFightNetworkManager.sendToPlayer(packet, trackingPlayer);
 		}
 		
@@ -32,7 +32,7 @@ public class ZombiePatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 	}
 	
 	@Override
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 		ClientAnimator animator = this.getClientAnimator();
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.BIPED_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_WALK);

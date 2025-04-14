@@ -1,6 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -26,8 +26,11 @@ public abstract class EntityPatch<T extends Entity> {
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 	}
 	
+	public void onStopTracking(ServerPlayer trackingPlayer) {
+	}
+	
 	@OnlyIn(Dist.CLIENT)
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 	}
 	
 	public void onConstructed(T entity) {

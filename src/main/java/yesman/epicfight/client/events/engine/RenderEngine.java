@@ -3,6 +3,7 @@ package yesman.epicfight.client.events.engine;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.BossHealthOverlay;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -65,6 +65,7 @@ import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -124,6 +125,7 @@ import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.capabilities.entitypatch.boss.BossPatch;
 import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.EnderDragonPatch;
 import yesman.epicfight.world.capabilities.item.BowCapability;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -137,8 +139,8 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules;
 @SuppressWarnings("rawtypes")
 @OnlyIn(Dist.CLIENT)
 public class RenderEngine {
-	public final BattleModeGui battleModeUI = new BattleModeGui(Minecraft.getInstance());
-	public final VersionNotifier versionNotifier = new VersionNotifier(Minecraft.getInstance());
+	public final BattleModeGui battleModeUI;
+	public final VersionNotifier versionNotifier;
 	public final Minecraft minecraft;
 	
 	private final Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers;
@@ -146,6 +148,7 @@ public class RenderEngine {
 	private final Map<EntityType<?>, PatchedEntityRenderer> entityRendererCache;
 	private final Map<Item, RenderItemBase> itemRendererMapByInstance;
 	private final Map<Class<?>, RenderItemBase> itemRendererMapByClass;
+	private final Map<UUID, BossPatch> bossEventOwners = Maps.newHashMap();
 	private final Set<Component> sentMessages;
 	private final OverlayManager overlayManager;
 	
@@ -164,14 +167,14 @@ public class RenderEngine {
 		EntityIndicator.init();
 		
 		this.minecraft = Minecraft.getInstance();
+		this.battleModeUI = new BattleModeGui(this.minecraft);
+		this.versionNotifier = new VersionNotifier(this.minecraft);
 		this.entityRendererProvider = HashBiMap.create();
 		this.entityRendererCache = Maps.newHashMap();
 		this.itemRendererMapByInstance = Maps.newHashMap();
 		this.itemRendererMapByClass = Maps.newHashMap();
 		this.sentMessages = Sets.newHashSet();
 		this.overlayManager = new OverlayManager();
-		
-		RenderItemBase.initItemRenderers(this.minecraft);
 		
 		Map<ResourceLocation, Function<JsonElement, RenderItemBase>> builder = Maps.newHashMap();
 		
@@ -497,20 +500,20 @@ public class RenderEngine {
 				
 				if (!cameraType.isFirstPerson()) {
 					Entity cameraEntity = this.minecraft.cameraEntity;
-					
-					camera.setPosition(Mth.lerp(partialTicks, cameraEntity.xo, cameraEntity.getX()),
-									   Mth.lerp(partialTicks, cameraEntity.yo, cameraEntity.getY()) + Mth.lerp(partialTicks, camera.eyeHeightOld, camera.eyeHeight),
-									   Mth.lerp(partialTicks, cameraEntity.zo, cameraEntity.getZ()));
+					camera.setPosition(
+						  Mth.lerp(partialTicks, cameraEntity.xo, cameraEntity.getX())
+						, Mth.lerp(partialTicks, cameraEntity.yo, cameraEntity.getY()) + Mth.lerp(partialTicks, camera.eyeHeightOld, camera.eyeHeight)
+						, Mth.lerp(partialTicks, cameraEntity.zo, cameraEntity.getZ())
+					);
 					
 					camera.move(-camera.getMaxZoom(4.0D), 0.0D, 0.0D);
 				}
 			}
 			
 			// First person camera correction
-			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.getPovSettings() != null && localPlayerPatch.getPovSettings().cameraTransform() != null) {
+			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isBattleMode() && localPlayerPatch.getPovSettings() != null && localPlayerPatch.getPovSettings().cameraTransform() != null) {
 				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
 				JointTransform cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
-				
 				float xRot = localPlayerPatch.getOriginal().getXRot();
 				float yRot = localPlayerPatch.getOriginal().getYRot();
 				
@@ -549,6 +552,25 @@ public class RenderEngine {
 	
 	public boolean shouldRenderVanillaModel() {
 		return ClientEngine.getInstance().isVanillaModelDebuggingMode() || this.modelInitTimer > 0;
+	}
+	
+	public void addBossEventOwner(UUID uuid, BossPatch bosspatch) {
+		this.bossEventOwners.put(uuid, bosspatch);
+	}
+	
+	public void removeBossEventOwner(UUID uuid, BossPatch bosspatch) {
+		this.bossEventOwners.remove(uuid);
+	}
+	
+	public void init() {
+		this.battleModeUI.init();
+		this.versionNotifier.init();
+	}
+	
+	public void clear() {
+		this.zoomOut(0);
+		this.resetRenderers();
+		this.bossEventOwners.clear();
 	}
 	
 	@Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT)
@@ -701,10 +723,6 @@ public class RenderEngine {
 		}
 		
 		@SubscribeEvent
-		public static void fogEvent(ViewportEvent.RenderFog event) {
-		}
-		
-		@SubscribeEvent
 		public static void renderGui(RenderGuiEvent.Pre event) {
 			Window window = Minecraft.getInstance().getWindow();
 			LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
@@ -730,19 +748,18 @@ public class RenderEngine {
 		@SubscribeEvent
 		public static void renderGameOverlayPost(CustomizeGuiOverlayEvent.BossEventProgress event) {
 			if (event.getBossEvent().getName().getString().equals("Ender Dragon")) {
-				if (EnderDragonPatch.INSTANCE_CLIENT != null) {
-					EnderDragonPatch dragonpatch = EnderDragonPatch.INSTANCE_CLIENT;
-					float stunShield = dragonpatch.getStunShield();
-					GuiGraphics guiGraphics = event.getGuiGraphics();
+				if (renderEngine.bossEventOwners.containsKey(event.getBossEvent().getId())) {
+					LivingEntityPatch<?> entitypatch = renderEngine.bossEventOwners.get(event.getBossEvent().getId()).cast();
+					float stunShield = entitypatch.getStunShield();
 					
 					if (stunShield > 0) {
-						float progression = stunShield / dragonpatch.getMaxStunShield();
+						float progression = stunShield / entitypatch.getMaxStunShield();
 						int x = event.getX();
 						int y = event.getY();
 						
 						RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-						guiGraphics.blit(BossHealthOverlay.GUI_BARS_LOCATION, x, y + 6, 183, 2, 0, 45.0F, 182, 6, 255, 255);
-						guiGraphics.blit(BossHealthOverlay.GUI_BARS_LOCATION, x + (int)(183 * progression), y + 6, (int)(183 * (1.0F - progression)), 2, 0, 39.0F, 182, 6, 255, 255);
+						event.getGuiGraphics().blit(BossHealthOverlay.GUI_BARS_LOCATION, x, y + 6, 183, 2, 0, 45.0F, 182, 6, 255, 255);
+						event.getGuiGraphics().blit(BossHealthOverlay.GUI_BARS_LOCATION, x + (int)(183 * progression), y + 6, (int)(183 * (1.0F - progression)), 2, 0, 39.0F, 182, 6, 255, 255);
 					}
 				}
 			}
@@ -796,6 +813,16 @@ public class RenderEngine {
 				EpicFightCapabilities.getUnparameterizedEntityPatch(livingentity, EnderDragonPatch.class).ifPresent(enderdragonpatch -> {
 					event.setCanceled(true);
 					renderEngine.getEntityRenderer(livingentity).render(livingentity, enderdragonpatch, event.getRenderer(), event.getBuffers(), event.getPoseStack(), event.getLight(), event.getPartialRenderTick());
+				});
+			}
+		}
+		
+		@SubscribeEvent
+		public static void clientTickEvent(TickEvent.ClientTickEvent event) {
+			if (event.phase == TickEvent.Phase.START) {
+				renderEngine.bossEventOwners.entrySet().removeIf((entry) -> {
+					Entity entity = entry.getValue().cast().getOriginal();
+					return !entity.isAlive() || entity.isRemoved();
 				});
 			}
 		}

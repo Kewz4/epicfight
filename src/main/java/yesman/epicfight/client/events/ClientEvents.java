@@ -36,8 +36,6 @@ public class ClientEvents {
 	private static final Pair<ResourceLocation, ResourceLocation> OFFHAND_TEXTURE = Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
 	private static final Minecraft MINECRAFT = Minecraft.getInstance();
 	
-	private ClientEvents() {}
-	
 	@SubscribeEvent
 	public static void mouseClickEvent(ScreenEvent.MouseButtonPressed.Pre event) {
 		if (event.getScreen() instanceof AbstractContainerScreen) {
@@ -123,8 +121,7 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void clientLoggingInEvent(ClientPlayerNetworkEvent.LoggingIn event) {
 		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getPlayer(), LocalPlayerPatch.class).ifPresent(ClientEngine.getInstance().controllEngine::setPlayerPatch);
-		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
+		ClientEngine.getInstance().renderEngine.init();
 	}
 	
 	/**
@@ -152,8 +149,7 @@ public class ClientEvents {
 		}
 		
 		ClientEngine.getInstance().controllEngine.setPlayerPatch(newCap);
-		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
+		ClientEngine.getInstance().renderEngine.init();
 	}
 	
 	@SubscribeEvent
@@ -163,13 +159,9 @@ public class ClientEvents {
 			ItemCapabilityProvider.clear();
 			EntityPatchProvider.clear();
 			WeaponTypeReloadListener.clear();
-			
-			ClientEngine.getInstance().renderEngine.zoomOut(0);
-			ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-			// Reset renderers
-			ClientEngine.getInstance().renderEngine.resetRenderers();
 		}
 		
+		ClientEngine.getInstance().renderEngine.clear();
 		FractureBlockState.reset();
 	}
 }

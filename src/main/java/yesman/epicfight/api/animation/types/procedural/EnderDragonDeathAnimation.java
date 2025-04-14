@@ -17,7 +17,7 @@ public class EnderDragonDeathAnimation extends LongHitAnimation {
 	
 	@Override
 	public void loadAnimation() {
-		AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
+		this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
 	}
 	
 	@Override

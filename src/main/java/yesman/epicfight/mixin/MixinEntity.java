@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.Entity;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @Mixin(value = Entity.class)
 public abstract class MixinEntity {
@@ -29,5 +30,17 @@ public abstract class MixinEntity {
 		if (entitypatch != null) {
 			entitypatch.onAddedToWorld();
 		}
+	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "lerpMotion(DDD)V", cancellable = true)
+	public void lerpMotion(double pX, double pY, double pZ, CallbackInfo callback) {
+		Entity e = (Entity)(Object)this;
+		
+		// Cancel reflecting server delta movement while playing action animation
+		EpicFightCapabilities.getUnparameterizedEntityPatch(e, LivingEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.getAnimator().getPlayerFor(null).getRealAnimation().get().isMainFrameAnimation()) {
+				callback.cancel();
+			}
+		});
 	}
 }

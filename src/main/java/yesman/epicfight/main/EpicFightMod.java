@@ -113,8 +113,6 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  7. Fixed player model jitters when flying with elytra
  *  
- *  8. 
- *  
  *  --- TO DO ---
  *  
  *  Update language files (always)

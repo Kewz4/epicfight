@@ -208,6 +208,8 @@ public class ClientAnimator extends Animator {
 				this.playAnimation(this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion), 0.0F);
 			}
 			
+			//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println("play when ends " + this.entitypatch.currentLivingMotion);
+			
 			this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
 		} else {
 			if (!this.compareCompositeMotion(this.entitypatch.currentCompositeMotion)) {
@@ -231,8 +233,11 @@ public class ClientAnimator extends Animator {
 				}
 			}
 			
+			//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println(this.currentMotion +" "+ this.entitypatch.currentLivingMotion);
+			
 			if (!this.compareMotion(this.entitypatch.currentLivingMotion) && this.entitypatch.currentLivingMotion != LivingMotions.DEATH) {
 				if (this.livingAnimations.containsKey(this.entitypatch.currentLivingMotion)) {
+					//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println("play when living changed " + this.entitypatch.currentLivingMotion);
 					this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
 				}
 			}
@@ -444,7 +449,7 @@ public class ClientAnimator extends Animator {
 	}
 	
 	public void resetMotion() {
-		this.currentMotion = LivingMotions.IDLE;
+		//this.currentMotion = LivingMotions.IDLE;
 		this.entitypatch.currentLivingMotion = LivingMotions.IDLE;
 	}
 	
@@ -508,14 +513,14 @@ public class ClientAnimator extends Animator {
 		
 		if (animation instanceof StaticAnimation staticAnimation) {
 			Layer layer = staticAnimation.getLayerType() == Layer.LayerType.BASE_LAYER ? this.baseLayer : this.baseLayer.compositeLayers.get(staticAnimation.getPriority());
-			return Optional.ofNullable(layer.animationPlayer.getRealAnimation() == playingAnimation ? layer.animationPlayer : null);
+			return Optional.ofNullable(layer.animationPlayer.getRealAnimation().equals(playingAnimation) ? layer.animationPlayer : null);
 		} else {
-			if (this.baseLayer.animationPlayer.getRealAnimation().equals(playingAnimation)) {
+			if (this.baseLayer.animationPlayer.getRealAnimation().equals(playingAnimation.get().getRealAnimation())) {
 				return Optional.of(this.baseLayer.animationPlayer);
 			}
 			
 			for (Layer layer : this.baseLayer.compositeLayers.values()) {
-				if (layer.animationPlayer.getRealAnimation().equals(playingAnimation)) {
+				if (layer.animationPlayer.getRealAnimation().equals(playingAnimation.get().getRealAnimation())) {
 					return Optional.of(layer.animationPlayer);
 				}
 			}

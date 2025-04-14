@@ -123,7 +123,7 @@ public class ServerAnimator extends Animator {
 	
 	@Override
 	public Optional<AnimationPlayer> getPlayer(AssetAccessor<? extends DynamicAnimation> playingAnimation) {
-		if (this.animationPlayer.getRealAnimation() == playingAnimation) {
+		if (this.animationPlayer.getRealAnimation() == playingAnimation.get().getRealAnimation()) {
 			return Optional.of(this.animationPlayer);
 		} else {
 			return Optional.empty();

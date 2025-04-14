@@ -12,7 +12,6 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent.StartTracking;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -30,9 +29,16 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules;
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class PlayerEvents {
 	@SubscribeEvent
-	public static void startTrackingEvent(StartTracking event) {
+	public static void startTrackingEvent(PlayerEvent.StartTracking event) {
 		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getTarget(), EntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onStartTracking((ServerPlayer)event.getEntity());
+		});
+	}
+	
+	@SubscribeEvent
+	public static void stopTrackingEvent(PlayerEvent.StopTracking event) {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getTarget(), EntityPatch.class).ifPresent(entitypatch -> {
+			entitypatch.onStopTracking((ServerPlayer)event.getEntity());
 		});
 	}
 	

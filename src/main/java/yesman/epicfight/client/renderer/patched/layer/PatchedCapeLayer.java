@@ -25,7 +25,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.client.model.Mesh;
 import yesman.epicfight.api.client.online.EpicSkins;
 import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
-import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -47,62 +46,60 @@ public class PatchedCapeLayer extends PatchedLayer<AbstractClientPlayer, Abstrac
 			return;
 		}
 		
-		entitypatch.getSimulator(SimulationTypes.CLOTH).ifPresent((simulator) -> {
-			simulator.getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent((clothObj) -> {
-	            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
-					Vec3 pos = entitypatch.getOriginal().getPosition(partialFrame);
-					float yRotLerp = Mth.rotLerp(partialFrame, entitypatch.getYRotO(), entitypatch.getYRot());
-					
-					return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
-	            };
-	            
-				ResourceLocation capeTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
+		entitypatch.getClothSimulator().getRunningObject(ClothSimulator.PLAYER_CLOAK).ifPresent((clothObj) -> {
+            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
+				Vec3 pos = entitypatch.getOriginal().getPosition(partialFrame);
+				float yRotLerp = Mth.rotLerp(partialFrame, entitypatch.getYRotO(), entitypatch.getYRot());
 				
-				if (capeTexture != null) {
-					clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
-					
-					double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
-					double entityY = Mth.lerp((double)partialTick, entityliving.yOld, entityliving.getY());
-					double entityZ = Mth.lerp((double)partialTick, entityliving.zOld, entityliving.getZ());
-					var renderer = ClientEngine.getInstance().renderEngine.getEntityRenderer(EntityType.PLAYER);
-					
-					PoseStack posestack$2 = new PoseStack();
-					renderer.mulPoseStack(posestack$2, entitypatch.getArmature(), entityliving, entitypatch, partialTick);
-					Matrix4f lastposeInv = posestack$2.last().pose().invert();
-					
-					poseStack.pushPose();
-					float scaler = entitypatch.getScale();
-					poseStack.scale(scaler, scaler, scaler);
-					
-					if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
-						OpenMatrix4f poseMat = poses[Armatures.BIPED.get().chest.getId()];
-						poseStack.translate(poseMat.m30, poseMat.m31, poseMat.m32);
-						poseStack.scale(1.17F, 1.17F, 1.17F);
-						poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
-					}
-					
-					clothObj.scaleFromPose(poseStack, poses);
-					
-					poseStack.pushPose();
-					poseStack.mulPoseMatrix(lastposeInv);
-					poseStack.translate(-lastposeInv.m30() - entityX, -lastposeInv.m31() - entityY, -lastposeInv.m32() - entityZ);
-					
-					float bodyYRot = Mth.rotLerp(partialTick, entitypatch.getYRotO(), entitypatch.getYRot());
-					poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(bodyYRot));
-					
-					VertexConsumer bufferBuilder = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(capeTexture)));
-					
-					if (entitypatch.isEpicSkinsLoaded()) {
-						EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();
-						clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
-					} else {
-						clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
-					}
-					
-					poseStack.popPose();
-					poseStack.popPose();
+				return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
+            };
+            
+			ResourceLocation capeTexture = entitypatch.isEpicSkinsLoaded() ? entitypatch.getEpicSkinsInformation().cloakTexture().get() : entityliving.getCloakTextureLocation();
+			
+			if (capeTexture != null) {
+				clothObj.tick(entitypatch, partialColliderTransformProvider, partialTick, entitypatch.getArmature(), poses);
+				
+				double entityX = Mth.lerp((double)partialTick, entityliving.xOld, entityliving.getX());
+				double entityY = Mth.lerp((double)partialTick, entityliving.yOld, entityliving.getY());
+				double entityZ = Mth.lerp((double)partialTick, entityliving.zOld, entityliving.getZ());
+				var renderer = ClientEngine.getInstance().renderEngine.getEntityRenderer(EntityType.PLAYER);
+				
+				PoseStack posestack$2 = new PoseStack();
+				renderer.mulPoseStack(posestack$2, entitypatch.getArmature(), entityliving, entitypatch, partialTick);
+				Matrix4f lastposeInv = posestack$2.last().pose().invert();
+				
+				poseStack.pushPose();
+				float scaler = entitypatch.getScale();
+				poseStack.scale(scaler, scaler, scaler);
+				
+				if (entitypatch.getOriginal().hasItemInSlot(EquipmentSlot.CHEST)) {
+					OpenMatrix4f poseMat = poses[Armatures.BIPED.get().chest.getId()];
+					poseStack.translate(poseMat.m30, poseMat.m31, poseMat.m32);
+					poseStack.scale(1.17F, 1.17F, 1.17F);
+					poseStack.translate(-poseMat.m30, -poseMat.m31, -poseMat.m32);
 				}
-			});
+				
+				clothObj.scaleFromPose(poseStack, poses);
+				
+				poseStack.pushPose();
+				poseStack.mulPoseMatrix(lastposeInv);
+				poseStack.translate(-lastposeInv.m30() - entityX, -lastposeInv.m31() - entityY, -lastposeInv.m32() - entityZ);
+				
+				float bodyYRot = Mth.rotLerp(partialTick, entitypatch.getYRotO(), entitypatch.getYRot());
+				poseStack.last().normal().rotate(QuaternionUtils.YP.rotationDegrees(bodyYRot));
+				
+				VertexConsumer bufferBuilder = buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(capeTexture)));
+				
+				if (entitypatch.isEpicSkinsLoaded()) {
+					EpicSkins epicskinsInfo = entitypatch.getEpicSkinsInformation();
+					clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, epicskinsInfo.r(), epicskinsInfo.g(), epicskinsInfo.b(), 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+				} else {
+					clothObj.drawPosed(poseStack, bufferBuilder, Mesh.DrawingFunction.NEW_ENTITY, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+				}
+				
+				poseStack.popPose();
+				poseStack.popPose();
+			}
 		});
 	}
 }

@@ -450,12 +450,17 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <SIM extends PhysicsSimulator<?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, SIM> simulationType) {
+	public <SIM extends PhysicsSimulator<?, ?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, ?, SIM> simulationType) {
 		if (simulationType == SimulationTypes.CLOTH) {
 			return Optional.of((SIM)this.clothSimulator);
 		}
 		
 		return Optional.empty();
+	}
+	
+	@Override
+	public ClothSimulator getClothSimulator() {
+		return this.clothSimulator;
 	}
 	
 	@Override
