@@ -1552,7 +1552,7 @@ public class Animations {
 		SPIDER_DEATH = builder.nextAccessor("spider/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.SPIDER));
 		
 		GOLEM_ATTACK1 = builder.nextAccessor("iron_golem/attack1", (accessor) ->
-			new AttackAnimation(0.2F, 0.1F, 0.15F, 0.25F, 0.9F, ColliderPreset.HEAD, Armatures.IRON_GOLEM.get().head, accessor, Armatures.IRON_GOLEM)
+			new AttackAnimation(0.2F, 0.1F, 0.2F, 0.35F, 0.9F, ColliderPreset.HEAD, Armatures.IRON_GOLEM.get().head, accessor, Armatures.IRON_GOLEM)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN));
 		GOLEM_ATTACK2 = builder.nextAccessor("iron_golem/attack2", (accessor) ->
 			new AttackAnimation(0.34F, 0.1F, 0.4F, 0.6F, 1.3F, ColliderPreset.GOLEM_SMASHDOWN, Armatures.IRON_GOLEM.get().LA4, accessor, Armatures.IRON_GOLEM)
