@@ -14,12 +14,11 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.network.server.SPPlayAnimationInstant;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.mob.WitherSkeletonPatch;
 import yesman.epicfight.world.entity.EpicFightEntities;
 import yesman.epicfight.world.entity.WitherSkeletonMinion;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 	@Override
@@ -44,7 +43,7 @@ public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 				EntityType<?> entityType = EpicFightEntities.WITHER_SKELETON_MINION.get();
 				
 				if (NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(entityType), level, blockpos, entityType) && SpawnPlacements.checkSpawnRules(entityType, level, MobSpawnType.REINFORCEMENT, blockpos, level.random)
-						&& !level.getGameRules().getBoolean(EpicFightGamerules.NO_MOBS_IN_BOSSFIGHT)
+					&& !EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(level)
 				) {
 					WitherBoss summoner = (projectile.getOwner() instanceof WitherBoss) ? ((WitherBoss)projectile.getOwner()) : null;
 					WitherSkeletonMinion witherskeletonminion = new WitherSkeletonMinion(level, summoner, projectile.getX(), projectile.getY() + 0.1D, projectile.getZ());
@@ -52,8 +51,8 @@ public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 					witherskeletonminion.setYRot(projectile.getYRot() - 180.0F);
 					level.addFreshEntity(witherskeletonminion);
 					
-					WitherSkeletonPatch<?> witherskeletonpatch = EpicFightCapabilities.getEntityPatch(witherskeletonminion, WitherSkeletonPatch.class);
-					witherskeletonpatch.playAnimationSynchronized(Animations.WITHER_SKELETON_SPECIAL_SPAWN, 0, SPPlayAnimationInstant::new);
+					EpicFightCapabilities.<WitherSkeletonMinion, WitherSkeletonPatch<WitherSkeletonMinion>>getParameterizedEntityPatch(witherskeletonminion, WitherSkeletonMinion.class, WitherSkeletonPatch.class)
+						.ifPresent(witherskeletonpatch -> witherskeletonpatch.playAnimationInstantly(Animations.WITHER_SKELETON_SPECIAL_SPAWN));
 				}
 			}
 		} else {

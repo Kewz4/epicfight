@@ -1,6 +1,7 @@
 package yesman.epicfight.world.capabilities.entitypatch.player;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.ActionAnimation;
@@ -54,7 +56,7 @@ import yesman.epicfight.world.entity.eventlistener.ModifyBaseDamageEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.SkillConsumeEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T> {
 	public static EntityDataAccessor<Float> STAMINA;
@@ -112,6 +114,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
 		/* Living Animations */
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.BIPED_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_WALK);
@@ -130,7 +134,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		animator.addLivingAnimation(LivingMotions.SLEEP, Animations.BIPED_SLEEPING);
 		animator.addLivingAnimation(LivingMotions.CREATIVE_FLY, Animations.BIPED_CREATIVE_FLYING);
 		animator.addLivingAnimation(LivingMotions.CREATIVE_IDLE, Animations.BIPED_CREATIVE_IDLE);
-
+		
 		/* Mix Animations */
 		animator.addLivingAnimation(LivingMotions.DIGGING, Animations.BIPED_DIG);
 		animator.addLivingAnimation(LivingMotions.AIM, Animations.BIPED_BOW_AIM);
@@ -146,7 +150,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		int i = 0;
 		
 		for (SkillContainer container : newSkill.skillContainers) {
-			container.setExecuter(this);
+			container.setExecutor(this);
 			Skill oldone = oldSkill.skillContainers[i].getSkill();
 			
 			if (oldone != null && oldone.getCategory().learnable()) {
@@ -212,10 +216,6 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		if (maxStamina < stamina) {
 			this.setStamina(maxStamina);
 		}
-		
-		this.xo = this.original.getX();
-		this.yo = this.original.getY();
-		this.zo = this.original.getZ();
 	}
 	
 	@Override
@@ -245,9 +245,9 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			}
 		}
 		
-		super.tick(event);
-		
 		this.modelYRotO = this.modelYRot;
+		
+		super.tick(event);
 		
 		if (this.getEntityState().turningLocked()) {
 			if (!this.useModelYRot) {
@@ -268,14 +268,29 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			float originalYRot = this.isLogicalClient() ? this.original.yBodyRot : this.original.getYRot();
 			this.modelYRot += Mth.clamp(Mth.wrapDegrees(originalYRot - this.modelYRot), -45.0F, 45.0F);
 		}
+		
+		this.xo = this.original.getX();
+		this.yo = this.original.getY();
+		this.zo = this.original.getZ();
 	}
 	
+	/**
+	 * Use {@link getSkillContainerFor} instead to cherck null
+	 **/
 	public SkillContainer getSkill(Skill skill) {
 		if (skill == null) {
 			return null;
 		}
 		
 		return this.getSkillCapability().getSkillContainer(skill);
+	}
+	
+	public Optional<SkillContainer> getSkillContainerFor(Skill skill) {
+		if (skill == null) {
+			return Optional.empty();
+		}
+		
+		return Optional.ofNullable(this.getSkillCapability().getSkillContainer(skill));
 	}
 	
 	public SkillContainer getSkill(SkillSlot slot) {
@@ -321,7 +336,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		float weight = this.getWeight();
 		
 		if (weight > 40.0F) {
-			float attenuation = Mth.clamp(this.getOriginal().level().getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY), 0, 100) / 100.0F;
+			float attenuation = Mth.clamp(EpicFightGameRules.WEIGHT_PENALTY.getRuleValue(this.getOriginal().level()), 0, 100) / 100.0F;
 			return event.getAttackSpeed() + (-0.1F * (weight / 40.0F) * Math.max(event.getAttackSpeed() - 0.8F, 0.0F) * attenuation);
 		} else {
 			return event.getAttackSpeed();
@@ -389,7 +404,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public EpicFightDamageSource getDamageSource(StaticAnimation animation, InteractionHand hand) {
+	public EpicFightDamageSource getDamageSource(AnimationAccessor<? extends StaticAnimation> animation, InteractionHand hand) {
 		EpicFightDamageSources damageSources = EpicFightDamageSources.of(this.original.level());
 		EpicFightDamageSource damagesource = damageSources.playerAttack(this.original).setAnimation(animation);
 		damagesource.setImpact(this.getImpact(hand));
@@ -401,8 +416,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public void cancelAnyAction() {
-		super.cancelAnyAction();
+	public void cancelItemUse() {
+		super.cancelItemUse();
 		this.resetSkillCharging();
 	}
 	
@@ -416,7 +431,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	public float getModifiedStaminaConsume(float amount) {
-		float attenuation = Mth.clamp(this.original.level().getGameRules().getInt(EpicFightGamerules.WEIGHT_PENALTY), 0, 100) / 100.0F;
+		float attenuation = Mth.clamp(EpicFightGameRules.WEIGHT_PENALTY.getRuleValue(this.getOriginal().level()), 0, 100) / 100.0F;
 		float weight = this.getWeight();
 
 		return ((weight / 40.0F - 1.0F) * attenuation + 1.0F) * amount;
@@ -449,6 +464,13 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	 * Use this 
 	 */
 	public boolean consumeForSkill(Skill skill, Skill.Resource consumeResource, float amount, boolean activateConsumeForce) {
+		Optional<SkillContainer> oContainer = this.getSkillContainerFor(skill);
+		
+		if (oContainer.isEmpty()) {
+			return false;
+		}
+		
+		SkillContainer skillContainer = oContainer.get();
 		SkillConsumeEvent skillConsumeEvent = new SkillConsumeEvent(this, skill, consumeResource, amount);
 		this.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, skillConsumeEvent);
 		
@@ -456,15 +478,15 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			return false;
 		}
 		
-		if (skillConsumeEvent.getResourceType().predicate.canExecute(skill, this, amount)) {
+		if (skillConsumeEvent.getResourceType().predicate.canExecute(skillContainer, this, amount)) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skill, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
 			}
 			
 			return true;
 		} else if (activateConsumeForce) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skill, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
 			}
 		}
 		
@@ -479,10 +501,17 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.tickSinceLastAction;
 	}
 	
-	public void startSkillCharging(ChargeableSkill chargingSkill) {
-		chargingSkill.startCharging(this);
-		this.lastChargingTick = this.original.tickCount;
-		this.chargingSkill = chargingSkill;
+	public boolean startSkillCharging(ChargeableSkill chargingSkill) {
+		Optional<SkillContainer> containerOptional = this.getSkillContainerFor(chargingSkill.asSkill());
+		
+		if (containerOptional.isEmpty()) {
+			return false;
+		} else {
+			chargingSkill.startCharging(this);
+			this.lastChargingTick = this.original.tickCount;
+			this.chargingSkill = chargingSkill;
+			return true;
+		}
 	}
 
 	public void resetSkillCharging() {
@@ -556,23 +585,23 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	public void toggleMode() {
 		switch (this.playerMode) {
-		case MINING:
+		case MINING -> {
 			this.toBattleMode(true);
-			break;
-		case BATTLE:
+		}
+		case BATTLE -> {
 			this.toMiningMode(true);
-			break;
+		}
 		}
 	}
 	
 	public void toMode(PlayerMode playerMode, boolean synchronize) {
 		switch (playerMode) {
-		case MINING:
+		case MINING -> {
 			this.toMiningMode(synchronize);
-			break;
-		case BATTLE:
+		}
+		case BATTLE -> {
 			this.toBattleMode(synchronize);
-			break;
+		}
 		}
 	}
 	
@@ -612,6 +641,10 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.playerMode == PlayerMode.BATTLE;
 	}
 	
+	public boolean isMiningMode() {
+		return this.playerMode == PlayerMode.MINING;
+	}
+	
 	@Override
 	public double getXOld() {
 		return this.xo;
@@ -633,12 +666,13 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
+	public float getYRotO() {
+		return this.modelYRotO;
+	}
+	
+	@Override
 	public void setYRot(float yRot) {
-		if (this.useModelYRot) {
-			this.setModelYRot(yRot, true);
-		} else {
-			this.original.setYRot(yRot);
-		}
+		this.setModelYRot(yRot, true);
 	}
 	
 	@Override
@@ -647,7 +681,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		if (this.original.getVehicle() != null) {
 			return Animations.BIPED_HIT_ON_MOUNT;
 		} else {

@@ -2,7 +2,7 @@ package yesman.epicfight.world.capabilities.entitypatch.mob;
 
 import java.util.Set;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
@@ -18,7 +18,7 @@ import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPSpawnData;
+import yesman.epicfight.network.server.SPEntityPacket;
 import yesman.epicfight.world.capabilities.entitypatch.Faction;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
@@ -38,10 +38,11 @@ public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.PIGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.FALL, Animations.BIPED_FALL);
 		animator.addLivingAnimation(LivingMotions.MOUNT, Animations.BIPED_MOUNT);
-		animator.addLivingAnimation(LivingMotions.CELEBRATE, AnimationManager.getInstance().byId(Animations.PIGLIN_CELEBRATE1.getId() + this.original.getRandom().nextInt(3)));
+		animator.addLivingAnimation(LivingMotions.CELEBRATE, AnimationManager.byId(Animations.PIGLIN_CELEBRATE1.id() + this.original.getRandom().nextInt(3)));
 		animator.addLivingAnimation(LivingMotions.ADMIRE, Animations.PIGLIN_ADMIRE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.PIGLIN_WALK);
 		animator.addLivingAnimation(LivingMotions.CHASE, Animations.PIGLIN_WALK);
@@ -54,7 +55,7 @@ public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 		if (this.original.isBaby()) {
-			SPSpawnData packet = new SPSpawnData(this.original.getId());
+			SPEntityPacket packet = new SPEntityPacket(this.original.getId());
 			EpicFightNetworkManager.sendToPlayer(packet, trackingPlayer);
 		}
 		
@@ -62,7 +63,7 @@ public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 	}
 	
 	@Override
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 		ClientAnimator animator = this.getClientAnimator();
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_RUN);
 		animator.setCurrentMotionsAsDefault();

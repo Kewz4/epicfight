@@ -5,12 +5,13 @@ import java.util.Map;
 import com.google.common.collect.Maps;
 
 import net.minecraft.world.InteractionHand;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class RangedWeaponCapability extends CapabilityItem {
-	protected Map<LivingMotion, AnimationProvider<?>> rangeAnimationModifiers;
+	protected Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> rangeAnimationModifiers;
 	protected ZoomInType zoomInType;
 	
 	protected RangedWeaponCapability(CapabilityItem.Builder builder) {
@@ -22,12 +23,7 @@ public class RangedWeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public void setConfigFileAttribute(double armorNegation1, double impact1, int maxStrikes1, double armorNegation2, double impact2, int maxStrikes2) {
-		this.addStyleAttributes(Styles.RANGED, armorNegation1, impact1, maxStrikes1);
-	}
-	
-	@Override
-	public Map<LivingMotion, AnimationProvider<?>> getLivingMotionModifier(LivingEntityPatch<?> playerdata, InteractionHand hand) {
+	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingMotionModifier(LivingEntityPatch<?> playerdata, InteractionHand hand) {
 		if (hand == InteractionHand.MAIN_HAND) {
 			return this.rangeAnimationModifiers;
 		}
@@ -55,7 +51,7 @@ public class RangedWeaponCapability extends CapabilityItem {
 	}
 	
 	public static class Builder extends CapabilityItem.Builder {
-		private Map<LivingMotion, AnimationProvider<?>> rangeAnimationModifiers;
+		private Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> rangeAnimationModifiers;
 		private ZoomInType zoomInType = ZoomInType.USE_TICK;
 		
 		protected Builder() {
@@ -64,7 +60,7 @@ public class RangedWeaponCapability extends CapabilityItem {
 			this.rangeAnimationModifiers = Maps.newHashMap();
 		}
 		
-		public Builder addAnimationsModifier(LivingMotion livingMotion, AnimationProvider<?> animations) {
+		public Builder addAnimationsModifier(LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animations) {
 			this.rangeAnimationModifiers.put(livingMotion, animations);
 			return this;
 		}

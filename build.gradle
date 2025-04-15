@@ -29,50 +29,34 @@ minecraft {
             property 'mixin.env.remapRefMap', 'true'
 			property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
 			args '-mixin.config=mixins.epicfight.json'
+			
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
     	}
     	
         client {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
+            
+            args '--username', 'Maybeman'
         }
 
         server {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
 		
         gameTestServer {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
 
         data {
             workingDirectory project.file('run')
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-			
-            mods {
-                epicfight {
-                    source sourceSets.main
-                }
-            }
         }
     }
 }
@@ -106,37 +90,48 @@ mixin {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    
-    //implementation fg.deobf("local:epcfight:20.x.x")
-    compileOnly fg.deobf("curse.maven:geckolib-388172:5675221")
-    compileOnly fg.deobf("curse.maven:azurelib-817423:5500355")
-    compileOnly fg.deobf("curse.maven:azurelib-armor-912767:5500370")
-    
-    // compile against the JEI API but do not include it at runtime
+	// Required dependencies to build project
+	// compile against the JEI API but do not include it at runtime
   	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
  	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
   	// at runtime, use the full JEI jar for Forge
   	runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
+	
+	// The mods we had worked on for compatibility in our side
+    compileOnly fg.deobf("curse.maven:azurelib-817423:5500355")
+    compileOnly fg.deobf("curse.maven:azurelib-armor-912767:5500370")
+    compileOnly fg.deobf("curse.maven:geckolib-388172:5675221")
     
-    compileOnly fg.deobf("curse.maven:curios-309927:5367944")
+    compileOnly fg.deobf("curse.maven:embeddium-908741:5556138")
+    compileOnly fg.deobf("curse.maven:oculus-581495:5299671")
     
-    implementation fg.deobf("curse.maven:octo-lib-916747:5115332")
-    implementation fg.deobf("curse.maven:relics-mod-445274:5435202")
+    compileOnly fg.deobf("curse.maven:werewolves-become-a-beast-417851:5406832")
+    compileOnly fg.deobf("curse.maven:vampirism-become-a-vampire-233029:5743414")
     
-    implementation fg.deobf("curse.maven:embeddium-908741:5556138")
-    implementation fg.deobf("curse.maven:oculus-581495:5299671")
+    compileOnly fg.deobf("curse.maven:curios-309927:6216710")
     
-    implementation fg.deobf("curse.maven:werewolves-become-a-beast-417851:5406832")
-    implementation fg.deobf("curse.maven:vampirism-become-a-vampire-233029:5743414")
+    compileOnly fg.deobf("curse.maven:citadel-331936:5559513") // ice-and-fire dependency
+    compileOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5633453")
     
-    implementation fg.deobf("curse.maven:ice-and-fire-dragons-264231:5633453")
-    implementation fg.deobf("curse.maven:citadel-331936:5559513")
-
-    implementation fg.deobf("curse.maven:playeranimator-658587:4587214")
-    
-    // These mods don't allow 3rd party distribution
+    // The mods had to use local repository
     compileOnly fg.deobf("local:skinlayers3d:1.6.6")
     compileOnly fg.deobf("local:firstperson:2.4.3")
+    /**
+     * The mods we had worked on for resourcepack or datapack.
+     **/
+    /**
+	compileOnly fg.deobf("curse.maven:curios-309927:6216710") // samurai-dynasty dependency
+	compileOnly fg.deobf("curse.maven:samurai-dynasty-848381:5672395")
+    **/
+    
+    /**
+     * Curios compatibility planned.
+     **/
+    /**
+    compileOnly fg.deobf("curse.maven:curios-309927:6216710")
+    compileOnly fg.deobf("curse.maven:octo-lib-916747:5115332")
+    compileOnly fg.deobf("curse.maven:relics-mod-445274:5435202")
+    **/
     
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

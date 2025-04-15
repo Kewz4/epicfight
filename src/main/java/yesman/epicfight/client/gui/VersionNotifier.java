@@ -18,7 +18,7 @@ public class VersionNotifier {
 		this.minecraft = minecraft;
 	}
 	
-	public void reset() {
+	public void init() {
 		this.count = 0;
 	}
 	

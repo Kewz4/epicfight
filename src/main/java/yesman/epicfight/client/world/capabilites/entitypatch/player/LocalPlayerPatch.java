@@ -1,5 +1,6 @@
 package yesman.epicfight.client.world.capabilites.entitypatch.player;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import net.minecraft.client.CameraType;
@@ -22,19 +23,29 @@ import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
+import yesman.epicfight.api.animation.types.DirectStaticAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader.PovSettings;
+import yesman.epicfight.api.client.animation.Layer;
+import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
+import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPChangePlayerMode;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
-import yesman.epicfight.network.client.CPPlayAnimation;
 import yesman.epicfight.network.client.CPSetPlayerTarget;
+import yesman.epicfight.network.client.CPSetStamina;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
@@ -52,6 +63,9 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	private float lockOnYRot;
 	private float lockOnYRotO;
 	
+	private Layer firstPersonLayer = new FirstPersonLayer();
+	private AnimationSubFileReader.PovSettings povSettings;
+	
 	@Override
 	public void onConstructed(LocalPlayer entity) {
 		super.onConstructed(entity);
@@ -59,8 +73,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	@Override
-	public void onJoinWorld(LocalPlayer entityIn, EntityJoinLevelEvent event) {
-		super.onJoinWorld(entityIn, event);
+	public void onJoinWorld(LocalPlayer player, EntityJoinLevelEvent event) {
+		super.onJoinWorld(player, event);
 		
 		this.eventListeners.addEventListener(EventType.ACTION_EVENT_CLIENT, ACTION_EVENT_UUID, (playerEvent) -> {
 			ClientEngine.getInstance().controllEngine.unlockHotkeys();
@@ -74,13 +88,44 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
 		this.prevStamina = this.getStamina();
-
+		
 		if (this.isChargingSkill()) {
 			this.prevChargingAmount = this.getChargingSkill().getChargingAmount(this);
 		} else {
 			this.prevChargingAmount = 0;
 		}
-
+		
+		final AssetAccessor<? extends StaticAnimation> currentPlaying = this.firstPersonLayer.animationPlayer.getRealAnimation();
+		
+		boolean noPovAnimation = this.getClientAnimator().iterVisibleLayersUntilFalse(layer -> {
+			if (layer.isOff()) {
+				return true;
+			}
+			
+			Optional<DirectStaticAnimation> optPovAnimation = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_ANIMATION);
+			Optional<PovSettings> optPovSettings = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_SETTINGS);
+			
+			optPovAnimation.ifPresent(povAnimation -> {
+				if (!povAnimation.equals(currentPlaying.get())) {
+					this.firstPersonLayer.playAnimation(povAnimation, this, 0.0F);
+					this.povSettings = optPovSettings.get();
+				}
+			});
+			
+			return !optPovAnimation.isPresent();
+		});
+		
+		if (noPovAnimation && !currentPlaying.equals(Animations.EMPTY_ANIMATION)) {
+			this.firstPersonLayer.playAnimation(Animations.EMPTY_ANIMATION, this, 0.0F);
+			this.povSettings = null;
+		}
+		
+		this.firstPersonLayer.update(this);
+		
+		if (this.firstPersonLayer.animationPlayer.getRealAnimation().equals(Animations.EMPTY_ANIMATION)) {
+			this.povSettings = null;
+		}
+		
 		super.tick(event);
 	}
 
@@ -153,7 +198,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 				this.lockOnYRotO = this.lockOnYRot;
 			}
 			
-			if (!this.rayTarget.isAlive() || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
+			if (this.rayTarget.isRemoved() || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
 				this.rayTarget = null;
 				EpicFightNetworkManager.sendToServer(new CPSetPlayerTarget(-1));
 			}
@@ -193,21 +238,11 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		}
 	}
 	
-	public void playAnimationClientPreemptive(StaticAnimation animation, float convertTimeModifier) {
-		this.animator.playAnimation(animation, convertTimeModifier);
-		EpicFightNetworkManager.sendToServer(new CPPlayAnimation(animation.getId(), convertTimeModifier, false, false));
-	}
-	
-	@Override
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
-		EpicFightNetworkManager.sendToServer(new CPPlayAnimation(animation.getId(), convertTimeModifier, false, true));
-	}
-	
 	@Override
 	public boolean overrideRender() {
 		// Disable rendering the player when animated first person model disabled
 		if (this.original.is(this.minecraft.player)) {
-			if (this.minecraft.options.getCameraType().isFirstPerson() && !EpicFightMod.CLIENT_CONFIGS.firstPersonModel.getValue()) {
+			if (this.minecraft.options.getCameraType().isFirstPerson() && !ClientConfig.enableAnimatedFirstPersonModel) {
 				return false;
 			}
 		}
@@ -219,9 +254,9 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
 		super.updateHeldItem(mainHandCap, offHandCap);
 		
-		if (EpicFightMod.CLIENT_CONFIGS.battleAutoSwitchItems.contains(this.original.getMainHandItem().getItem())) {
+		if (ClientConfig.battleModeSwitchingItems.contains(this.original.getMainHandItem().getItem())) {
 			this.toBattleMode(true);
-		} else if (EpicFightMod.CLIENT_CONFIGS.miningAutoSwitchItems.contains(this.original.getMainHandItem().getItem())) {
+		} else if (ClientConfig.miningModeSwitchingItems.contains(this.original.getMainHandItem().getItem())) {
 			this.toMiningMode(true);
 		}
 	}
@@ -230,7 +265,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public AttackResult tryHurt(DamageSource damageSource, float amount) {
 		AttackResult result = super.tryHurt(damageSource, amount);
 		
-		if (EpicFightMod.CLIENT_CONFIGS.autoPreparation.getValue() && result.resultType == AttackResult.ResultType.SUCCESS && !this.isBattleMode()) {
+		if (ClientConfig.autoPreparation && result.resultType == AttackResult.ResultType.SUCCESS && !this.isBattleMode()) {
 			this.toBattleMode(true);
 		}
 		
@@ -246,7 +281,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public void toMiningMode(boolean synchronize) {
 		if (this.playerMode != PlayerMode.MINING) {
 			ClientEngine.getInstance().renderEngine.downSlideSkillUI();
-			if (EpicFightMod.CLIENT_CONFIGS.cameraAutoSwitch.getValue()) {
+			
+			if (ClientConfig.authSwitchCamera) {
 				this.minecraft.options.setCameraType(CameraType.FIRST_PERSON);
 			}
 			
@@ -263,7 +299,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		if (this.playerMode != PlayerMode.BATTLE) {
 			ClientEngine.getInstance().renderEngine.upSlideSkillUI();
 			
-			if (EpicFightMod.CLIENT_CONFIGS.cameraAutoSwitch.getValue()) {
+			if (ClientConfig.authSwitchCamera) {
 				this.minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
 			}
 			
@@ -322,6 +358,19 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		this.targetLockedOn = !this.targetLockedOn;
 	}
 	
+	public Layer getFirstPersonLayer() {
+		return this.firstPersonLayer;
+	}
+	
+	public AnimationSubFileReader.PovSettings getPovSettings() {
+		return this.povSettings;
+	}
+	
+	@Override
+	public void setStamina(float value) {
+		EpicFightNetworkManager.sendToServer(new CPSetStamina(value, true));
+	}
+	
 	@Override
 	public void onDeath(LivingDeathEvent event) {
 		super.onDeath(event);
@@ -363,8 +412,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	@Override
-	public void correctRotation() {
-		if (!this.useModelYRot) {
+	public void beginAction(ActionAnimation animation) {
+		if (!this.useModelYRot || animation.getProperty(ActionAnimationProperty.SYNC_CAMERA).orElse(false)) {
 			this.modelYRot = this.getOriginal().getYRot();
 		}
 		
@@ -388,6 +437,18 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	public void openSkillBook(ItemStack itemstack, InteractionHand hand) {
 		if (itemstack.hasTag() && itemstack.getTag().contains("skill")) {
 			Minecraft.getInstance().setScreen(new SkillBookScreen(this.original, itemstack, hand));
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	private class FirstPersonLayer extends Layer {
+		public FirstPersonLayer() {
+			super(null);
+		}
+		
+		@Override
+		protected Pose getCurrentPose(LivingEntityPatch<?> entitypatch) {
+			return this.animationPlayer.isEmpty() ? super.getCurrentPose(entitypatch) : this.animationPlayer.getCurrentPose(entitypatch, 0.0F);
 		}
 	}
 }

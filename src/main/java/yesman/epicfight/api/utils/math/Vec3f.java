@@ -1,14 +1,22 @@
 package yesman.epicfight.api.utils.math;
 
-import net.minecraft.world.phys.Vec3;
+import java.util.Collection;
+import java.util.List;
+
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import net.minecraft.world.phys.Vec3;
 import yesman.epicfight.main.EpicFightMod;
 
 public class Vec3f extends Vec2f {
 	public static final Vec3f X_AXIS = new Vec3f(1.0F, 0.0F, 0.0F);
 	public static final Vec3f Y_AXIS = new Vec3f(0.0F, 1.0F, 0.0F);
 	public static final Vec3f Z_AXIS = new Vec3f(0.0F, 0.0F, 1.0F);
+	public static final Vec3f M_X_AXIS = new Vec3f(-1.0F, 0.0F, 0.0F);
+	public static final Vec3f M_Y_AXIS = new Vec3f(0.0F, -1.0F, 0.0F);
+	public static final Vec3f M_Z_AXIS = new Vec3f(0.0F, 0.0F, -1.0F);
+	public static final Vec3f ZERO = new Vec3f(0.0F, 0.0F, 0.0F);
 	
 	public float z;
 	
@@ -22,24 +30,59 @@ public class Vec3f extends Vec2f {
 		this.z = z;
 	}
 	
-	public void set(float x, float y, float z) {
+	public Vec3f(double x, double y, double z) {
+		this((float)x, (float)y, (float)z);
+	}
+	
+	public Vec3f(Vec3 mojangVec) {
+		this((float)mojangVec.x, (float)mojangVec.y, (float)mojangVec.z);
+	}
+	
+	public Vec3f set(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		return this;
 	}
 	
-	public void set(Vec3f vec3f) {
+	public Vec3f set(Vec3 vec3f) {
+		this.x = (float)vec3f.x;
+		this.y = (float)vec3f.y;
+		this.z = (float)vec3f.z;
+		return this;
+	}
+	
+	public Vec3f set(Vec3f vec3f) {
 		this.x = vec3f.x;
 		this.y = vec3f.y;
 		this.z = vec3f.z;
+		return this;
 	}
 	
 	public Vec3f add(float x, float y, float z) {
-		return add(new Vec3f(x, y, z));
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		return this;
 	}
 	
 	public Vec3f add(Vec3f vec) {
-		return Vec3f.add(vec, this, this);
+		return this.add(vec.x, vec.y, vec.z);
+	}
+	
+	public Vec3f add(Vec3 vec) {
+		return this.add((float)vec.x, (float)vec.y, (float)vec.z);
+	}
+	
+	public Vec3f sub(float x, float y, float z) {
+		this.x -= x;
+		this.y -= y;
+		this.z -= z;
+		return this;
+	}
+	
+	public Vec3f sub(Vec3f vec) {
+		return this.sub(vec.x, vec.y, vec.z);
 	}
 	
 	public static Vec3f add(Vec3f left, Vec3f right, Vec3f dest) {
@@ -49,10 +92,6 @@ public class Vec3f extends Vec2f {
 			dest.set(left.x + right.x, left.y + right.y, left.z + right.z);
 			return dest;
 		}
-	}
-	
-	public Vec3f sub(Vec3f vec) {
-		return sub(this, vec, this);
 	}
 	
 	public static Vec3f sub(Vec3f left, Vec3f right, Vec3f dest) {
@@ -113,12 +152,34 @@ public class Vec3f extends Vec2f {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
 	
-	public float distanceSqr(Vec3f opponent) {
-		return new Vec3f(this.x - opponent.x, this.y - opponent.y, this.z - opponent.z).lengthSqr();
+	public float distance(Vec3f opponent) {
+		return (float)Math.sqrt(this.distanceSqr(opponent));
 	}
 	
+	public float distanceSqr(Vec3f opponent) {
+		return (float)(Math.pow(this.x - opponent.x, 2) + Math.pow(this.y - opponent.y, 2) + Math.pow(this.z - opponent.z, 2));
+	}
+	
+	public float horizontalDistance() {
+		return (float)Math.sqrt(this.x * this.x + this.z * this.z);
+	}
+
+	public float horizontalDistanceSqr() {
+		return this.x * this.x + this.z * this.z;
+	}
+
 	public void rotate(float degree, Vec3f axis) {
 		rotate(degree, axis, this, this);
+	}
+	
+	public void invalidate() {
+		this.x = Float.NaN;
+		this.y = Float.NaN;
+		this.z = Float.NaN;
+	}
+	
+	public boolean validateValues() {
+		return Float.isFinite(this.x) && Float.isFinite(this.y) && Float.isFinite(this.z);
 	}
 	
 	public static Vec3f rotate(float degree, Vec3f axis, Vec3f src, Vec3f dest) {
@@ -127,6 +188,21 @@ public class Vec3f extends Vec2f {
 		}
 		
 		return OpenMatrix4f.transform3v(OpenMatrix4f.createRotatorDeg(degree, axis), src, dest);
+	}
+	
+	private static final Vector3f SRC = new Vector3f();
+	private static final Vector3f TRANSFORM_RESULT = new Vector3f();
+	
+	public static Vec3f rotate(Quaternionf rot, Vec3f src, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		SRC.set(src.x, src.y, src.z);
+		rot.transform(SRC, TRANSFORM_RESULT);
+		dest.set(TRANSFORM_RESULT.x, TRANSFORM_RESULT.y, TRANSFORM_RESULT.z);
+		
+		return dest;
 	}
 	
 	public static float dot(Vec3f left, Vec3f right) {
@@ -147,8 +223,12 @@ public class Vec3f extends Vec2f {
 		return (float) Math.acos(Math.min(1.0F, Vec3f.dot(a, b) / (a.length() * b.length())));
 	}
 	
-	public static Quaternionf getRotatorBetween(Vec3f a, Vec3f b) {
-		Vec3f axis = Vec3f.cross(a, b, null).normalise();
+	public static Quaternionf getRotatorBetween(Vec3f a, Vec3f b, Quaternionf dest) {
+		if (dest == null) {
+			dest = new Quaternionf();
+		}
+		
+		Vec3f axis = Vec3f.cross(a, b, null).normalize();
 		float dotDivLength = Vec3f.dot(a, b) / (a.length() * b.length());
 		
 		if (!Float.isFinite(dotDivLength)) {
@@ -158,27 +238,207 @@ public class Vec3f extends Vec2f {
 		}
 		
 		float radian = (float)Math.acos(Math.min(1.0F, dotDivLength));
-		return QuaternionUtils.rotation(axis.toMojangVector(), radian);
+		dest.setAngleAxis(radian, axis.x, axis.y, axis.z);
+		
+		return dest;
 	}
 	
-	public Vec3f normalise() {
-		float norm = (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-		if (norm != 0) {
-			this.x /= norm;
-			this.y /= norm;
-			this.z /= norm;
-		} else {
-			this.x = 0;
-			this.y = 0;
-			this.z = 0;
+	public static Vec3f interpolate(Vec3f from, Vec3f to, float interpolation, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
 		}
 		
-		return this;
+		dest.x = from.x + (to.x - from.x) * interpolation;
+		dest.y = from.y + (to.y - from.y) * interpolation;
+		dest.z = from.z + (to.z - from.z) * interpolation;
+		
+		return dest;
+	}
+	
+	public Vec3f normalize() {
+		return normalize(this, this);
+	}
+	
+	public static Vec3f normalize(Vec3f src, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		float norm = (float) Math.sqrt(src.x * src.x + src.y * src.y + src.z * src.z);
+		
+		if (norm > 1E-5F) {
+			dest.x = src.x / norm;
+			dest.y = src.y / norm;
+			dest.z = src.z / norm;
+		} else {
+			dest.x = 0;
+			dest.y = 0;
+			dest.z = 0;
+		}
+		
+		return dest;
 	}
 	
 	@Override
 	public String toString() {
 		return "[" + this.x + ", " + this.y + ", " + this.z + "]";
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		} else if (o instanceof Vec3f vec3f) {
+			return Float.compare(this.x, vec3f.x) == 0 && Float.compare(this.y, vec3f.y) == 0 && Float.compare(this.z, vec3f.z) == 0;
+		}
+		
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		int j = Float.floatToIntBits(this.x);
+		int i = (int) (j ^ j >>> 32);
+		j = Float.floatToIntBits(this.y);
+		i = 31 * i + (int) (j ^ j >>> 32);
+		j = Float.floatToIntBits(this.z);
+		
+		return 31 * i + (int) (j ^ j >>> 32);
+	}
+	
+	public static Vec3f average(Collection<Vec3f> vectors, Vec3f dest) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.set(0.0F, 0.0F, 0.0F);
+		
+		for (Vec3f v : vectors) {
+			dest.add(v);
+		}
+		
+		dest.scale(1.0F / vectors.size());
+		
+		return dest;
+	}
+	
+	public static Vec3f average(Vec3f dest, Vec3f... vectors) {
+		if (dest == null) {
+			dest = new Vec3f();
+		}
+		
+		dest.set(0.0F, 0.0F, 0.0F);
+		
+		for (Vec3f v : vectors) {
+			dest.add(v);
+		}
+		
+		dest.scale(vectors.length);
+		
+		return dest;
+	}
+	
+	public static int getNearest(Vec3f from, List<Vec3f> vectors) {
+		float minLength = Float.MAX_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.size(); i++) {
+			if (vectors.get(i) == null) {
+				continue;
+			}
+			
+			if (!vectors.get(i).validateValues()) {
+				continue;
+			}
+			
+			float distSqr = from.distanceSqr(vectors.get(i));
+			
+			if (distSqr < minLength) {
+				minLength = distSqr;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	public static int getNearest(Vec3f from, Vec3f... vectors) {
+		float minLength = Float.MAX_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.length; i++) {
+			if (vectors[i] == null) {
+				continue;
+			}
+			
+			if (!vectors[i].validateValues()) {
+				continue;
+			}
+			
+			float distSqr = from.distanceSqr(vectors[i]);
+			
+			if (distSqr < minLength) {
+				minLength = distSqr;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	public static int getMostSimilar(Vec3f start, Vec3f end, Vec3f... vectors) {
+		Vec3f.sub(end, start, BASIS_DIRECTION);
+		float maxDot = Float.MIN_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.length; i++) {
+			if (vectors[i] == null) {
+				continue;
+			}
+			
+			if (!vectors[i].validateValues()) {
+				continue;
+			}
+			
+			Vec3f.sub(vectors[i], start, COMPARISION);
+			float dot = Vec3f.dot(BASIS_DIRECTION, COMPARISION) / BASIS_DIRECTION.length() * COMPARISION.length();
+			
+			if (dot > maxDot) {
+				maxDot = dot;
+				index = i;
+			}
+		}
+		
+		return index;
+	}
+	
+	private static final Vec3f BASIS_DIRECTION = new Vec3f();
+	private static final Vec3f COMPARISION = new Vec3f();
+	
+	public static int getMostSimilar(Vec3f start, Vec3f end, List<Vec3f> vectors) {
+		Vec3f.sub(end, start, BASIS_DIRECTION);
+		float maxDot = Float.MIN_VALUE;
+		int index = -1;
+		
+		for (int i = 0; i < vectors.size(); i++) {
+			if (vectors.get(i) == null) {
+				continue;
+			}
+			
+			if (!vectors.get(i).validateValues()) {
+				continue;
+			}
+			
+			Vec3f.sub(vectors.get(i), start, COMPARISION);
+			float dot = Vec3f.dot(BASIS_DIRECTION, COMPARISION) / BASIS_DIRECTION.length() * COMPARISION.length();
+			
+			if (dot > maxDot) {
+				maxDot = dot;
+				index = i;
+			}
+		}
+		
+		return index;
 	}
 	
 	public Vector3f toMojangVector() {

@@ -13,6 +13,7 @@ import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -23,14 +24,14 @@ public class JointMask {
 	@OnlyIn(Dist.CLIENT)
 	@FunctionalInterface
 	public interface BindModifier {
-		public void modify(LivingEntityPatch<?> entitypatch, Pose baseLayerPose, Pose resultPose, LivingMotion livingMotion, JointMaskEntry wholeEntry, Layer.Priority priority, Joint joint, Map<Layer.Priority, Pair<DynamicAnimation, Pose>> poses);
+		public void modify(LivingEntityPatch<?> entitypatch, Pose baseLayerPose, Pose resultPose, LivingMotion livingMotion, JointMaskEntry wholeEntry, Layer.Priority priority, Joint joint, Map<Layer.Priority, Pair<AssetAccessor<? extends DynamicAnimation>, Pose>> poses);
 	}
 	
 	public static final BindModifier KEEP_CHILD_LOCROT = (entitypatch, baseLayerPose, result, livingMotion, wholeEntry, priority, joint, poses) -> {
 		Pose currentPose = poses.get(priority).getSecond();
-		JointTransform lowestTransform = baseLayerPose.getOrDefaultTransform(joint.getName());
-		JointTransform currentTransform = currentPose.getOrDefaultTransform(joint.getName());
-		result.getJointTransformData().getOrDefault(joint.getName(), JointTransform.empty()).translation().y = lowestTransform.translation().y;
+		JointTransform lowestTransform = baseLayerPose.orElseEmpty(joint.getName());
+		JointTransform currentTransform = currentPose.orElseEmpty(joint.getName());
+		result.orElseEmpty(joint.getName()).translation().y = lowestTransform.translation().y;
 		
 		OpenMatrix4f lowestMatrix = lowestTransform.toMatrix();
 		OpenMatrix4f currentMatrix = currentTransform.toMatrix();
@@ -38,15 +39,15 @@ public class JointMask {
 		
 		for (Joint subJoint : joint.getSubJoints()) {
 			if (wholeEntry.isMasked(livingMotion, subJoint.getName())) {
-				OpenMatrix4f lowestLocalTransform = OpenMatrix4f.mul(joint.getLocalTrasnform(), lowestMatrix, null);
-				OpenMatrix4f currentLocalTransform = OpenMatrix4f.mul(joint.getLocalTrasnform(), currentMatrix, null);
-				OpenMatrix4f childTransform = OpenMatrix4f.mul(subJoint.getLocalTrasnform(), result.getOrDefaultTransform(subJoint.getName()).toMatrix(), null);
+				OpenMatrix4f lowestLocalTransform = OpenMatrix4f.mul(joint.getLocalTransform(), lowestMatrix, null);
+				OpenMatrix4f currentLocalTransform = OpenMatrix4f.mul(joint.getLocalTransform(), currentMatrix, null);
+				OpenMatrix4f childTransform = OpenMatrix4f.mul(subJoint.getLocalTransform(), result.orElseEmpty(subJoint.getName()).toMatrix(), null);
 				OpenMatrix4f lowestFinal = OpenMatrix4f.mul(lowestLocalTransform, childTransform, null);
 				OpenMatrix4f currentFinal = OpenMatrix4f.mul(currentLocalTransform, childTransform, null);
 				Vec3f vec = new Vec3f((currentFinal.m30 - lowestFinal.m30) * 0.5F, currentFinal.m31 - lowestFinal.m31, currentFinal.m32 - lowestFinal.m32);
-				JointTransform jt = result.getJointTransformData().getOrDefault(subJoint.getName(), JointTransform.empty());
-				jt.parent(JointTransform.getTranslation(vec), OpenMatrix4f::mul);
-				jt.jointLocal(JointTransform.fromMatrixNoScale(currentToLowest), OpenMatrix4f::mul);
+				JointTransform jt = result.orElseEmpty(subJoint.getName());
+				jt.parent(JointTransform.translation(vec), OpenMatrix4f::mul);
+				jt.jointLocal(JointTransform.fromMatrixWithoutScale(currentToLowest), OpenMatrix4f::mul);
 			}
 		}
 	};

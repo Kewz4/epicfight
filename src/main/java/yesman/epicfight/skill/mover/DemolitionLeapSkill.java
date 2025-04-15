@@ -9,7 +9,8 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import yesman.epicfight.api.animation.StaticAnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.LevelUtil;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.events.engine.ControllEngine;
@@ -18,12 +19,11 @@ import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
-import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPPlayAnimation;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.ChargeableSkill;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.skill.SkillSlots;
@@ -34,19 +34,19 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 
 public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("3d142bf4-0dcd-11ee-be56-0242ac120002");
-	private StaticAnimationProvider chargingAnimation;
-	private StaticAnimationProvider shootAnimation;
+	private AnimationAccessor<? extends StaticAnimation> chargingAnimation;
+	private AnimationAccessor<? extends StaticAnimation> shootAnimation;
 	
-	public DemolitionLeapSkill(Builder<? extends Skill> builder) {
+	public DemolitionLeapSkill(SkillBuilder<? extends Skill> builder) {
 		super(builder);
 		
-		this.chargingAnimation = () -> Animations.BIPED_DEMOLITION_LEAP_CHARGING;
-		this.shootAnimation = () -> Animations.BIPED_DEMOLITION_LEAP;
+		this.chargingAnimation = Animations.BIPED_DEMOLITION_LEAP_CHARGING;
+		this.shootAnimation = Animations.BIPED_DEMOLITION_LEAP;
 	}
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
-		PlayerEventListener listener = container.getExecuter().getEventListener();
+		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
 			if (event.getPlayerPatch().isChargingSkill(this)) {
@@ -75,9 +75,9 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
-		container.getExecuter().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID, 1);
-		container.getExecuter().getEventListener().removeListener(EventType.FALL_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.HURT_EVENT_PRE, EVENT_UUID, 1);
+		container.getExecutor().getEventListener().removeListener(EventType.FALL_EVENT, EVENT_UUID);
 	}
 	
 	@Override
@@ -86,25 +86,25 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 	}
 	
 	@Override
-	public void cancelOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		super.cancelOnClient(executer, args);
-		executer.resetSkillCharging();
-		executer.playAnimationSynchronized(Animations.BIPED_IDLE, 0.0F);
+	public void cancelOnClient(SkillContainer container, FriendlyByteBuf args) {
+		super.cancelOnClient(container, args);
+		container.getExecutor().resetSkillCharging();
+		container.getExecutor().playAnimationSynchronized(Animations.BIPED_IDLE, 0.0F);
 	}
 	
 	@Override
-	public void executeOnClient(LocalPlayerPatch executer, FriendlyByteBuf args) {
+	public void executeOnClient(SkillContainer container, FriendlyByteBuf args) {
 		args.readInt(); // discard raw charging ticks
 		int ticks = args.readInt();
 		int modifiedTicks = (int)(7.4668F * Math.log10(ticks + 1.0F) / Math.log10(2));
 		Vec3f jumpDirection = new Vec3f(0, modifiedTicks * 0.05F, 0);
-		float xRot = Mth.clamp(70.0F + Mth.clamp(executer.getCameraXRot(), -90.0F, 0.0F), 0.0F, 70.0F);
+		float xRot = Mth.clamp(70.0F + Mth.clamp(container.getExecutor().getCameraXRot(), -90.0F, 0.0F), 0.0F, 70.0F);
 
 		jumpDirection.add(0.0F, (xRot / 70.0F) * 0.05F, 0.0F);
 		jumpDirection.rotate(xRot, Vec3f.X_AXIS);
-		jumpDirection.rotate(-executer.getCameraYRot(), Vec3f.Y_AXIS);
-		executer.getOriginal().setDeltaMovement(jumpDirection.toDoubleVector());
-		executer.resetSkillCharging();
+		jumpDirection.rotate(-container.getExecutor().getCameraYRot(), Vec3f.Y_AXIS);
+		container.getExecutor().getOriginal().setDeltaMovement(jumpDirection.toDoubleVector());
+		container.getExecutor().resetSkillCharging();
 	}
 	
 	@Override
@@ -116,10 +116,8 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 
 	@Override
 	public void startCharging(PlayerPatch<?> caster) {
-		caster.getAnimator().playAnimation(this.chargingAnimation.get(), 0.0F);
-		
 		if (!caster.isLogicalClient()) {
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPPlayAnimation(this.chargingAnimation.get(), 0.0F, caster), caster.getOriginal());
+			caster.playAnimationSynchronized(this.chargingAnimation, 0.0F);
 		}
 	}
 
@@ -141,7 +139,7 @@ public class DemolitionLeapSkill extends Skill implements ChargeableSkill {
 			Vec3 entityEyepos = caster.getOriginal().getEyePosition();
 			EpicFightParticles.AIR_BURST.get().spawnParticleWithArgument(caster.getOriginal().serverLevel(), entityEyepos.x, entityEyepos.y, entityEyepos.z, 0.0D, 0.0D, 2 + 0.05D * chargingTicks);
 
-			caster.playAnimationSynchronized(this.shootAnimation.get(), 0.0F);
+			caster.playAnimationSynchronized(this.shootAnimation, 0.0F);
 			feedbackPacket.getBuffer().writeInt(accumulatedTicks);
 			skillContainer.getDataManager().setData(SkillDataKeys.PROTECT_NEXT_FALL.get(), true);
 		}

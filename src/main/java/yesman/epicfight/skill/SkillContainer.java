@@ -39,13 +39,21 @@ public class SkillContainer {
 	}
 	
 	/* Fix the mistype in the future */
-	public void setExecuter(PlayerPatch<?> executor) {
+	public void setExecutor(PlayerPatch<?> executor) {
 		this.executor = executor;
 	}
 	
 	/* Fix the mistype in the future */
-	public PlayerPatch<?> getExecuter() {
+	public PlayerPatch<?> getExecutor() {
 		return this.executor;
+	}
+	
+	public LocalPlayerPatch getClientExecutor() {
+		return (LocalPlayerPatch)this.executor;
+	}
+	
+	public ServerPlayerPatch getServerExecutor() {
+		return (ServerPlayerPatch)this.executor;
 	}
 	
 	public boolean setSkill(Skill skill) {
@@ -67,18 +75,21 @@ public class SkillContainer {
 		
 		this.containingSkill = skill;
 		this.resetValues();
+		
+		// Remove all data keys
 		this.skillDataManager.clearData();
 		
 		if (skill != null) {
-			skill.onInitiate(this);
-			this.setMaxResource(skill.consumption);
-			this.setMaxDuration(skill.maxDuration);
-			
 			Set<SkillDataKey<?>> datakeys = SkillDataKey.getSkillDataKeyMap().get(skill.getClass());
 			
 			if (datakeys != null) {
 				datakeys.forEach(this.skillDataManager::registerData);
 			}
+			
+			skill.onInitiate(this);
+			
+			this.setMaxResource(skill.consumption);
+			this.setMaxDuration(skill.maxDuration);
 		}
 		
 		this.stack = 0;
@@ -164,13 +175,11 @@ public class SkillContainer {
 		
 		if (this.containingSkill instanceof ChargeableSkill chargeableSkill && this.containingSkill.getActivateType() == Skill.ActivateType.CHARGING) {
 			if (executor.isChargingSkill(this.containingSkill)) {
-				executor.disableModelYRot(true);
-				
-				packet = this.containingSkill.getExecutionPacket(executor, this.containingSkill.gatherArguments(executor, controllEngine));
+				packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 				executor.resetSkillCharging();
 			} else {
 				if (!this.canExecute(executor, event)) {
-					this.containingSkill.validationFeedback(executor);
+					this.containingSkill.validationFeedback(this);
 					return event;
 				}
 				
@@ -180,12 +189,11 @@ public class SkillContainer {
 			}
 		} else {
 			if (!this.canExecute(executor, event)) {
-				this.containingSkill.validationFeedback(executor);
+				this.containingSkill.validationFeedback(this);
 				return event;
 			}
 			
-			executor.disableModelYRot(true);
-			packet = this.containingSkill.getExecutionPacket(executor, this.containingSkill.gatherArguments(executor, controllEngine));
+			packet = this.containingSkill.getExecutionPacket(this, this.containingSkill.gatherArguments(this, controllEngine));
 		}
 		
 		if (packet != null) {
@@ -199,7 +207,7 @@ public class SkillContainer {
 		SkillExecuteEvent event = new SkillExecuteEvent(executor, this);
 		
 		if (this.canExecute(executor, event)) {
-			this.containingSkill.executeOnServer(executor, buf);
+			this.containingSkill.executeOnServer(this, buf);
 			return true;
 		}
 		
@@ -208,7 +216,7 @@ public class SkillContainer {
 	
 	public boolean requestCancel(ServerPlayerPatch executor, FriendlyByteBuf buf) {
 		if (this.containingSkill != null) {
-			this.containingSkill.cancelOnServer(executor, buf);
+			this.containingSkill.cancelOnServer(this, buf);
 			return true;
 		}
 		
@@ -224,7 +232,7 @@ public class SkillContainer {
 				executor.getEventListener().triggerEvents(EventType.SKILL_CONSUME_EVENT, consumeEvent);
 				
 				if (!consumeEvent.isCanceled()) {
-					consumeEvent.getResourceType().consumer.consume(this.containingSkill, executor, consumeEvent.getAmount());
+					consumeEvent.getResourceType().consumer.consume(this, executor, consumeEvent.getAmount());
 				}
 				
 				executor.startSkillCharging(chargeableSkill);
@@ -260,12 +268,15 @@ public class SkillContainer {
 				}
 			}
 			
-			event.setResourcePredicate(this.containingSkill.resourcePredicate(executor) || (this.isActivated() && this.containingSkill.activateType == ActivateType.DURATION));
-			event.setSkillExecutable(this.containingSkill.canExecute(executor));
+			event.setSkillExecutable(this.containingSkill.canExecute(this));
 			event.setStateExecutable(this.containingSkill.isExecutableState(executor));
 			executor.getEventListener().triggerEvents(EventType.SKILL_EXECUTE_EVENT, event);
 			
-			return !event.isCanceled() && event.isExecutable();
+			if (!event.isCanceled() && event.isExecutable()) {
+				return (executor.getOriginal().isCreative() || this.containingSkill.resourcePredicate(executor)) || (this.isActivated() && this.containingSkill.activateType == ActivateType.DURATION);
+			} else {
+				return false;
+			}
 		}
 	}
 	

@@ -1,7 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
@@ -27,7 +26,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.utils.AttackResult;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPSetAttackTarget;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -129,14 +128,14 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 			else
 				currentCompositeMotion = LivingMotions.AIM;
 		} else {
-			if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 		}
 		
 		if (CrossbowItem.isCharged(this.original.getMainHandItem()))
 			currentCompositeMotion = LivingMotions.AIM;
-		else if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM)
-			this.playReboundAnimation();
+		else if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM)
+			this.playShootingAnimation();
 	}
 	
 	@Override
@@ -153,17 +152,18 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 	}
 	
 	@Override
-	public boolean isTeammate(Entity entity) {
-		EntityPatch<?> cap = EpicFightCapabilities.getEntityPatch(entity, EntityPatch.class);
+	public boolean isTargetInvulnerable(Entity entity) {
+		MobPatch<?> mobpatch = EpicFightCapabilities.getEntityPatch(entity, MobPatch.class);
 		
-		if (cap != null && cap instanceof MobPatch mobpatch) {
-			if (mobpatch.mobFaction.equals(this.mobFaction)) {
-				Optional<LivingEntity> opt = Optional.ofNullable(this.getTarget());
-				return opt.map((attackTarget) -> !attackTarget.is(entity)).orElse(true);
+		if (mobpatch != null && mobpatch.mobFaction.equals(this.mobFaction)) {
+			if (this.getTarget() == null) {
+				return true;
+			} else {
+				return this.getTarget().is(entity);
 			}
 		}
 		
-		return super.isTeammate(entity);
+		return super.isTargetInvulnerable(entity);
 	}
 	
 	@Override
@@ -200,7 +200,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		Entity attackTarget = this.getTarget();
 		
 		if (attackTarget != null) {
-			float partialTicks = EpicFightMod.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
+			float partialTicks = EpicFightSharedConstants.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
 			Vec3 target = attackTarget.getEyePosition(partialTicks);
 			Vec3 vector3d = this.original.getEyePosition(partialTicks);
 			double d0 = target.x - vector3d.x;

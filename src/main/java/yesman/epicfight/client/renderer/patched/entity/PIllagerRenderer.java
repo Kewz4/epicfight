@@ -9,7 +9,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.AbstractIllager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.client.mesh.HumanoidMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedHeadLayer;
@@ -25,7 +25,7 @@ public class PIllagerRenderer<E extends AbstractIllager, T extends MobPatch<E>> 
 	}
 	
 	@Override
-	public MeshProvider<HumanoidMesh> getDefaultMesh() {
-		return () -> Meshes.ILLAGER;
+	public AssetAccessor<HumanoidMesh> getDefaultMesh() {
+		return Meshes.ILLAGER;
 	}
 }

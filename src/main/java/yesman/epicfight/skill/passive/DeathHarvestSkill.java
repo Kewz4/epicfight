@@ -6,7 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageType;
@@ -16,7 +16,7 @@ import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType
 public class DeathHarvestSkill extends PassiveSkill {
 	private static final UUID EVENT_UUID = UUID.fromString("816118e6-b902-11ed-afa1-0242ac120002");
 	
-	public DeathHarvestSkill(Builder<? extends Skill> builder) {
+	public DeathHarvestSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	
@@ -24,8 +24,8 @@ public class DeathHarvestSkill extends PassiveSkill {
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
-			PlayerPatch<?> playerpatch = container.getExecuter();
+		container.getExecutor().getEventListener().addEventListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID, (event) -> {
+			PlayerPatch<?> playerpatch = container.getExecutor();
 			Player original = playerpatch.getOriginal();
 			LivingEntity target = event.getTarget();
 			
@@ -43,6 +43,6 @@ public class DeathHarvestSkill extends PassiveSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.DEALT_DAMAGE_EVENT_DAMAGE, EVENT_UUID);
 	}
 }

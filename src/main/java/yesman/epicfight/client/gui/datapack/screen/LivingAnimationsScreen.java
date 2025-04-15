@@ -18,14 +18,13 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.MainFrameAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.datastruct.ModifiablePair;
@@ -59,7 +58,7 @@ public class LivingAnimationsScreen extends Screen {
 		this.rootTag = rootTag;
 		this.font = parentScreen.getMinecraft().font;
 		
-		this.modelPreviewer = new ModelPreviewer(106, 200, 60, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, () -> Meshes.BIPED);
+		this.modelPreviewer = new ModelPreviewer(106, 200, 60, 49, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, Armatures.BIPED, Meshes.BIPED);
 		
 		this.stylesGrid = Grid.builder(this, parentScreen.getMinecraft())
 								.xy1(12, 60)
@@ -118,7 +117,7 @@ public class LivingAnimationsScreen extends Screen {
 															this.modelPreviewer.addAnimationToPlay(LIVING_ANIMTIONS.get(event.postValue));
 														}
 														
-														StaticAnimation livingAnimation = this.animationsGrid.getValue(event.rowposition, "living_animation");
+														AssetAccessor<? extends StaticAnimation> livingAnimation = this.animationsGrid.getValue(event.rowposition, "living_animation");
 														
 														if (livingAnimation != null) {
 															this.modelPreviewer.getAnimator().playAnimation(livingAnimation, 0.0F);
@@ -126,13 +125,13 @@ public class LivingAnimationsScreen extends Screen {
 													}).defaultVal(LivingMotions.IDLE))
 									.addColumn(Grid.popup("living_animation", PopupBox.AnimationPopupBox::new)
 													.filter((animation) -> !(animation instanceof MainFrameAnimation))
-													.editWidgetCreated((popupBox) -> popupBox.setModel(() -> Armatures.BIPED, () -> Meshes.BIPED))
+													.editWidgetCreated((popupBox) -> popupBox.setModel(Armatures.BIPED, Meshes.BIPED))
 													.valueChanged((event) -> {
 														this.modelPreviewer.clearAnimations();
 														
 														LivingMotion livingMotion = event.grid.getValue(event.rowposition, "living_motion");
 														List<ModifiablePair<String, String>> styleAnimations = this.styles.get(this.stylesGrid.getRowposition()).getValue();
-														styleAnimations.get(event.rowposition).setSecond(ParseUtil.nullOrToString(event.postValue, (animation) -> animation.getRegistryName().toString()));
+														styleAnimations.get(event.rowposition).setSecond(ParseUtil.nullOrToString(event.postValue, (animation) -> animation.registryName().toString()));
 														
 														if (LIVING_ANIMTIONS.containsKey(livingMotion)) {
 															this.modelPreviewer.addAnimationToPlay(LIVING_ANIMTIONS.get(livingMotion));
@@ -142,7 +141,7 @@ public class LivingAnimationsScreen extends Screen {
 															this.modelPreviewer.addAnimationToPlay(event.postValue);
 														}
 													})
-													.toDisplayText((animation) -> animation == null ? "" : animation.getRegistryName().toString())
+													.toDisplayText((animation) -> animation == null ? "" : animation.registryName().toString())
 													.width(150))
 									.pressAdd((grid, button) -> {
 										this.styles.get(this.stylesGrid.getRowposition()).getValue().add(ModifiablePair.of("", ""));
@@ -163,7 +162,8 @@ public class LivingAnimationsScreen extends Screen {
 											this.modelPreviewer.addAnimationToPlay(LIVING_ANIMTIONS.get(livingMotion));
 										}
 										
-										StaticAnimation animation = (StaticAnimation)values.get("living_animation");
+										@SuppressWarnings("unchecked")
+										AssetAccessor<? extends StaticAnimation> animation = (AssetAccessor<? extends StaticAnimation>)values.get("living_animation");
 										
 										if (animation != null) {
 											this.modelPreviewer.getAnimator().playAnimation(animation, 0.0F);
@@ -219,7 +219,7 @@ public class LivingAnimationsScreen extends Screen {
 			exit:
 			for (PackEntry<String, List<ModifiablePair<String, String>>> entry : this.styles) {
 				for (ModifiablePair<String, String> pair : entry.getValue()) {
-					if (AnimationManager.getInstance().byKey(new ResourceLocation(pair.getSecond())) == null) {
+					if (DatapackEditScreen.animationByKey(pair.getSecond()) == null) {
 						animation = pair.getSecond();
 						style = entry.getKey();
 						allTagsNormal = false;
@@ -298,7 +298,7 @@ public class LivingAnimationsScreen extends Screen {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	
-	private static final Map<LivingMotion, StaticAnimation> LIVING_ANIMTIONS = Maps.newHashMap();
+	private static final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> LIVING_ANIMTIONS = Maps.newHashMap();
 	
 	static {
 		LIVING_ANIMTIONS.put(LivingMotions.IDLE, Animations.BIPED_IDLE);

@@ -10,7 +10,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -23,8 +22,7 @@ public abstract class HurtableEntityPatch<T extends LivingEntity> extends Entity
 	protected float stunTimeReduction;
 	protected boolean cancelKnockback;
 	
-	@Override
-	protected void serverTick(LivingEvent.LivingTickEvent event) {
+	protected void updateStunTime() {
 		this.cancelKnockback = false;
 		
 		if (this.stunReductionDecreases) {
@@ -129,6 +127,7 @@ public abstract class HurtableEntityPatch<T extends LivingEntity> extends Entity
 		power *= 1.0D - this.original.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
 		
 		if (power > 0.0D) {
+			this.original.hurtMarked = true;
 			this.original.hasImpulse = true;
 			Vec3 vec3 = this.original.getDeltaMovement();
 			Vec3 vec31 = (new Vec3(d1, 0.0D, d0)).normalize().scale(power);

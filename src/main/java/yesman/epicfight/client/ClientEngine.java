@@ -12,7 +12,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientEngine {
-	private static ClientEngine instance;
+	private static ClientEngine instance = new ClientEngine();
 	
 	public static ClientEngine getInstance() {
 		return instance;

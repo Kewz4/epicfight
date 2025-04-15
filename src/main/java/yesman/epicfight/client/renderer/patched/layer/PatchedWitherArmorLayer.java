@@ -21,10 +21,10 @@ import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PatchedWitherArmorLayer extends ModelRenderLayer<WitherBoss, WitherPatch, WitherBossModel<WitherBoss>, WitherArmorLayer, WitherMesh> {
-	private static final ResourceLocation WITHER_ARMOR_LOCATION = new ResourceLocation("textures/entity/wither/wither_armor.png");
+	private static final ResourceLocation WITHER_ARMOR_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/wither/wither_armor.png");
 	
 	public PatchedWitherArmorLayer() {
-		super(() -> Meshes.WITHER);
+		super(Meshes.WITHER);
 	}
 	
 	@Override
@@ -44,7 +44,7 @@ public class PatchedWitherArmorLayer extends ModelRenderLayer<WitherBoss, Wither
 				AnimationPlayer animationPlayer = entitypatch.getAnimator().getPlayerFor(null);
 				
 				if (animationPlayer.getAnimation() == Animations.WITHER_SPELL_ARMOR) {
-					transparency = (animationPlayer.getPrevElapsedTime() + (animationPlayer.getElapsedTime() - animationPlayer.getPrevElapsedTime()) * partialTicks) / (Animations.WITHER_SPELL_ARMOR.getTotalTime() - 0.5F);
+					transparency = (animationPlayer.getPrevElapsedTime() + (animationPlayer.getElapsedTime() - animationPlayer.getPrevElapsedTime()) * partialTicks) / (Animations.WITHER_SPELL_ARMOR.get().getTotalTime() - 0.5F);
 				}
 			} else {
 				if (transparencyCount < 0) {

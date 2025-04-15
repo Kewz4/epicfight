@@ -2,7 +2,7 @@ package yesman.epicfight.world.capabilities.projectile;
 
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -16,7 +16,7 @@ import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPSpawnData;
+import yesman.epicfight.network.server.SPEntityPacket;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillSlots;
@@ -44,7 +44,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 		if (this.innateActivated) {
-			SPSpawnData packet = new SPSpawnData(this.original.getId());
+			SPEntityPacket packet = new SPEntityPacket(this.original.getId());
 			packet.getBuffer().writeInt(this.returnTick);
 			packet.getBuffer().writeInt(this.original.tickCount);
 			
@@ -53,7 +53,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	}
 	
 	@Override
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 		this.innateActivated = true;
 		this.returnTick = buf.readInt();
 		this.original.tickCount = buf.readInt();
@@ -69,15 +69,13 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 		super.onJoinWorld(projectileEntity, event);
 		
 		if (!this.isLogicalClient()) {
-			ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(projectileEntity.getOwner(), ServerPlayerPatch.class);
-			
-			if (playerpatch != null) {
+			EpicFightCapabilities.getUnparameterizedEntityPatch(projectileEntity.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 				SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 				
 				if (container.getSkill() instanceof EverlastingAllegiance) {
 					EverlastingAllegiance.setThrownTridentEntityId(playerpatch.getOriginal(), container, projectileEntity.getId());
 				}
-			}
+			});
 			
 			this.armorNegation = 20.0F;
 		}
@@ -86,9 +84,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	public void tickEnd() {
 		if (!this.isLogicalClient()) {
 			if (this.original.dealtDamage) {
-				ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(this.original.getOwner(), ServerPlayerPatch.class);
-				
-				if (playerpatch != null) {
+				EpicFightCapabilities.getUnparameterizedEntityPatch(this.original.getOwner(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 					SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 					
 					if (container.getSkill() instanceof EverlastingAllegiance) {
@@ -96,7 +92,7 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 							EverlastingAllegiance.setThrownTridentEntityId(playerpatch.getOriginal(), container, -1);
 						}
 					}
-				}
+				});
 			}
 			
 			if (this.innateActivated) {

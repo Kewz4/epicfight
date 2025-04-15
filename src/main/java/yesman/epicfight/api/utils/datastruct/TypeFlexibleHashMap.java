@@ -2,8 +2,6 @@ package yesman.epicfight.api.utils.datastruct;
 
 import java.util.HashMap;
 
-import com.google.common.collect.ImmutableMap;
-
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
 
 @SuppressWarnings("serial")
@@ -20,19 +18,16 @@ public class TypeFlexibleHashMap<A extends TypeKey<?>> extends HashMap<A, Object
 			throw new UnsupportedOperationException();
 		}
 		
-		return (T)super.put((A) typeKey, val);
+		return (T)super.put((A)typeKey, val);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T get(TypeKey<T> typeKey) {
-		
-		ImmutableMap.of();
-		
+	public <T> T get(A typeKey) {
 		return (T)super.get(typeKey);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T getOrDefault(TypeKey<T> typeKey) {
+	public <T> T getOrDefault(A typeKey) {
 		return (T)super.getOrDefault(typeKey, typeKey.defaultValue());
 	}
 	

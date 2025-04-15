@@ -333,6 +333,7 @@ public class WeaponCapabilityPresets {
 			.addAnimationsModifier(LivingMotions.AIM, Animations.BIPED_JAVELIN_AIM)
 			.addAnimationsModifier(LivingMotions.SHOT, Animations.BIPED_JAVELIN_THROW)
 			.constructor(TridentCapability::new)
+			.collider(ColliderPreset.SPEAR)
 			.category(WeaponCategories.TRIDENT);
 	
 	public static final Function<Item, CapabilityItem.Builder> SHIELD = (item) -> CapabilityItem.builder()

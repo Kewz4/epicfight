@@ -15,6 +15,7 @@ import yesman.epicfight.particle.EpicFightParticles;
 public class EviscerateParticle extends NoRenderParticle {
 	protected EviscerateParticle(ClientLevel world, double x, double y, double z, double motionX, double motionY, double motionZ) {
 		super(world, x, y, z, motionX, motionY, motionZ);
+		
 		for(int i = 0; i < 50; i++) {
 			Vec3 rot = MathUtils.getVectorForRotation(0, (float)motionY);
 			double particleMotionX = rot.x * this.random.nextFloat() * -0.5F;

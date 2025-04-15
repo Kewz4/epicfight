@@ -1,6 +1,7 @@
 package yesman.epicfight.data.loot;
 
 import com.mojang.serialization.Codec;
+
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +18,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import yesman.epicfight.config.ConfigManager;
+import yesman.epicfight.config.CommonConfig;
 import yesman.epicfight.data.loot.function.SetSkillFunction;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.item.EpicFightItems;
@@ -29,12 +30,12 @@ public class EpicFightLootTables {
 	public static final LootItemFunctionType SET_SKILLBOOK_SKILL = new LootItemFunctionType(new SetSkillFunction.Serializer());
 	
 	public static void registerLootItemFunctionType() {
-		Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, new ResourceLocation(EpicFightMod.MODID, "set_skill"), SET_SKILLBOOK_SKILL);
+		Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "set_skill"), SET_SKILLBOOK_SKILL);
 	}
 	
 	@SubscribeEvent
 	public static void modifyVanillaLootPools(final LootTableLoadEvent event) {
-		int modifier = ConfigManager.SKILL_BOOK_CHEST_LOOT_MODIFYER.get();
+		int modifier = CommonConfig.skillBookChestLootModifier;
 		int dropChance = 100 + modifier;
 		int antiDropChance = 100 - modifier;
 		float dropChanceModifier = dropChance / (float)(antiDropChance + dropChance);

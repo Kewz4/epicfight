@@ -7,6 +7,7 @@ import org.joml.Quaternionf;
 import com.google.common.collect.Maps;
 
 import net.minecraft.util.Mth;
+import yesman.epicfight.api.utils.math.AnimationTransformEntry;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.MatrixOperation;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -52,6 +53,12 @@ public class JointTransform {
 		return this.scale;
 	}
 	
+	public void clearTransform() {
+		this.translation.set(0.0F, 0.0F, 0.0F);
+		this.rotation.set(0.0F, 0.0F, 0.0F, 1.0F);
+		this.scale.set(1.0F, 1.0F, 1.0F);
+	}
+	
 	public JointTransform copy() {
 		return JointTransform.empty().copyFrom(this);
 	}
@@ -63,7 +70,6 @@ public class JointTransform {
 		this.translation.set(newV);
 		this.rotation.set(newQ);
 		this.scale.set(newS);
-
 		this.entries.putAll(jt.entries);
 		
 		return this;
@@ -98,71 +104,86 @@ public class JointTransform {
 		return transform;
 	}
 	
-	public OpenMatrix4f getAnimationBindedMatrix(Joint joint, OpenMatrix4f parentTransform) {
-		OpenMatrix4f.AnimationTransformEntry animationTransformEntry = new OpenMatrix4f.AnimationTransformEntry();
+	public OpenMatrix4f getAnimationBoundMatrix(Joint joint, OpenMatrix4f parentTransform) {
+		AnimationTransformEntry animationTransformEntry = new AnimationTransformEntry();
 		
 		for (Map.Entry<String, TransformEntry> entry : this.entries.entrySet()) {
 			animationTransformEntry.put(entry.getKey(), entry.getValue().transform.toMatrix(), entry.getValue().multiplyFunction);
 		}
 		
 		animationTransformEntry.put(ANIMATION_TRANSFORM, this.toMatrix(), OpenMatrix4f::mul);
-		animationTransformEntry.put(JOINT_LOCAL_TRANSFORM, joint.getLocalTrasnform());
+		animationTransformEntry.put(JOINT_LOCAL_TRANSFORM, joint.getLocalTransform());
 		animationTransformEntry.put(PARENT, parentTransform);
 		
 		return animationTransformEntry.getResult();
 	}
 	
 	public OpenMatrix4f toMatrix() {
-		OpenMatrix4f matrix = new OpenMatrix4f().translate(this.translation).mulBack(OpenMatrix4f.fromQuaternion(this.rotation)).scale(this.scale);
-		return matrix;
+		return new OpenMatrix4f().translate(this.translation).mulBack(OpenMatrix4f.fromQuaternion(this.rotation)).scale(this.scale);
 	}
 	
 	@Override
 	public String toString() {
-		return String.format("translation:%s, rotation:%s, %d entries ", this.translation, this.rotation, this.entries.size());
+		return String.format("translation:%s, rotation:%s, scale:%s %d entries ", this.translation, this.rotation, this.scale, this.entries.size());
 	}
 	
-	private static JointTransform interpolateSimple(JointTransform prev, JointTransform next, float progression) {
-		return new JointTransform(MathUtils.lerpVector(prev.translation, next.translation, progression),
-				MathUtils.lerpQuaternion(prev.rotation, next.rotation, progression),
-				MathUtils.lerpVector(prev.scale, next.scale, progression));
+	public static JointTransform interpolateTransform(JointTransform prev, JointTransform next, float progression, JointTransform dest) {
+		if (dest == null) {
+			dest = JointTransform.empty();
+		}
+		
+		MathUtils.lerpVector(prev.translation, next.translation, progression, dest.translation);
+		MathUtils.lerpQuaternion(prev.rotation, next.rotation, progression, dest.rotation);
+		MathUtils.lerpVector(prev.scale, next.scale, progression, dest.scale);
+		
+		return dest;
 	}
 	
 	public static JointTransform interpolate(JointTransform prev, JointTransform next, float progression) {
+		return interpolate(prev, next, progression, null);
+	}
+	
+	public static JointTransform interpolate(JointTransform prev, JointTransform next, float progression, JointTransform dest) {
+		if (dest == null) {
+			dest = JointTransform.empty();
+		}
+		
 		if (prev == null || next == null) {
-			return JointTransform.empty();
+			dest.clearTransform();
+			return dest;
 		}
 		
 		progression = Mth.clamp(progression, 0.0F, 1.0F);
-		JointTransform interpolated = interpolateSimple(prev, next, progression);
+		interpolateTransform(prev, next, progression, dest);
+		dest.entries.clear();
 		
 		for (Map.Entry<String, TransformEntry> entry : prev.entries.entrySet()) {
 			JointTransform transform = next.entries.containsKey(entry.getKey()) ? next.entries.get(entry.getKey()).transform : JointTransform.empty();
-			interpolated.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateSimple(entry.getValue().transform, transform, progression)));
+			dest.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateTransform(entry.getValue().transform, transform, progression, null)));
 		}
 		
 		for (Map.Entry<String, TransformEntry> entry : next.entries.entrySet()) {
-			if (!interpolated.entries.containsKey(entry.getKey())) {
-				interpolated.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateSimple(JointTransform.empty(), entry.getValue().transform, progression)));
+			if (!dest.entries.containsKey(entry.getKey())) {
+				dest.entries.put(entry.getKey(), new TransformEntry(entry.getValue().multiplyFunction, interpolateTransform(JointTransform.empty(), entry.getValue().transform, progression, null)));
 			}
 		}
 		
-		return interpolated;
+		return dest;
 	}
 	
-	public static JointTransform fromMatrixNoScale(OpenMatrix4f matrix) {
+	public static JointTransform fromMatrixWithoutScale(OpenMatrix4f matrix) {
 		return new JointTransform(matrix.toTranslationVector(), matrix.toQuaternion(), new Vec3f(1.0F, 1.0F, 1.0F));
 	}
 	
-	public static JointTransform getTranslation(Vec3f vec) {
+	public static JointTransform translation(Vec3f vec) {
 		return JointTransform.translationRotation(vec, new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F));
 	}
 	
-	public static JointTransform getRotation(Quaternionf quat) {
+	public static JointTransform rotation(Quaternionf quat) {
 		return JointTransform.translationRotation(new Vec3f(0.0F, 0.0F, 0.0F), quat);
 	}
 	
-	public static JointTransform getScale(Vec3f vec) {
+	public static JointTransform scale(Vec3f vec) {
 		return new JointTransform(new Vec3f(0.0F, 0.0F, 0.0F), new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F), vec);
 	}
 	
@@ -176,6 +197,10 @@ public class JointTransform {
 	
 	public static JointTransform mul(JointTransform left, JointTransform right, MatrixOperation operation) {
 		return JointTransform.fromMatrix(operation.mul(left.toMatrix(), right.toMatrix(), null));
+	}
+	
+	public static JointTransform fromPrimitives(float locX, float locY, float locZ, float quatX, float quatY, float quatZ, float quatW, float scaX, float scaY, float scaZ) {
+		return new JointTransform(new Vec3f(locX, locY, locZ), new Quaternionf(quatX, quatY, quatZ, quatW), new Vec3f(scaX, scaY, scaZ));
 	}
 	
 	public static JointTransform empty() {

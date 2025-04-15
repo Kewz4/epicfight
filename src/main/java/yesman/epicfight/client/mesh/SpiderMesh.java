@@ -5,26 +5,25 @@ import java.util.Map;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.AnimatedVertexBuilder;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.VertexBuilder;
 
 @OnlyIn(Dist.CLIENT)
-public class SpiderMesh extends AnimatedMesh implements MeshProvider<SpiderMesh> {
-	public final AnimatedModelPart head;
-	public final AnimatedModelPart middleStomach;
-	public final AnimatedModelPart bottomStomach;
-	public final AnimatedModelPart leftLeg1;
-	public final AnimatedModelPart leftLeg2;
-	public final AnimatedModelPart leftLeg3;
-	public final AnimatedModelPart leftLeg4;
-	public final AnimatedModelPart rightLeg1;
-	public final AnimatedModelPart rightLeg2;
-	public final AnimatedModelPart rightLeg3;
-	public final AnimatedModelPart rightLeg4;
+public class SpiderMesh extends SkinnedMesh {
+	public final SkinnedMeshPart head;
+	public final SkinnedMeshPart middleStomach;
+	public final SkinnedMeshPart bottomStomach;
+	public final SkinnedMeshPart leftLeg1;
+	public final SkinnedMeshPart leftLeg2;
+	public final SkinnedMeshPart leftLeg3;
+	public final SkinnedMeshPart leftLeg4;
+	public final SkinnedMeshPart rightLeg1;
+	public final SkinnedMeshPart rightLeg2;
+	public final SkinnedMeshPart rightLeg3;
+	public final SkinnedMeshPart rightLeg4;
 	
-	public SpiderMesh(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<AnimatedVertexBuilder>> parts, AnimatedMesh parent, RenderProperties properties) {
+	public SpiderMesh(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<VertexBuilder>> parts, SkinnedMesh parent, RenderProperties properties) {
 		super(arrayMap, parts, parent, properties);
 		
 		this.head = this.getOrLogException(this.parts, "head");
@@ -38,10 +37,5 @@ public class SpiderMesh extends AnimatedMesh implements MeshProvider<SpiderMesh>
 		this.rightLeg2 = this.getOrLogException(this.parts, "rightLeg2");
 		this.rightLeg3 = this.getOrLogException(this.parts, "rightLeg3");
 		this.rightLeg4 = this.getOrLogException(this.parts, "rightLeg4");
-	}
-	
-	@Override
-	public SpiderMesh get() {
-		return this;
 	}
 }

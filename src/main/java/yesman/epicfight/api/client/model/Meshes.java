@@ -5,11 +5,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.mojang.datafixers.util.Pair;
+import javax.annotation.Nullable;
+
+import com.google.common.collect.Maps;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -17,12 +18,12 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.ModLoader;
-import yesman.epicfight.api.client.model.AnimatedMesh.AnimatedModelPart;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.model.Mesh.RenderProperties;
-import yesman.epicfight.api.client.model.RawMesh.RawModelPart;
-import yesman.epicfight.api.forgeevent.ModelBuildEvent;
-import yesman.epicfight.api.model.JsonModelLoader;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObject;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator.ClothObjectBuilder;
 import yesman.epicfight.client.mesh.CreeperMesh;
 import yesman.epicfight.client.mesh.DragonMesh;
 import yesman.epicfight.client.mesh.EndermanMesh;
@@ -35,134 +36,193 @@ import yesman.epicfight.client.mesh.SpiderMesh;
 import yesman.epicfight.client.mesh.VexMesh;
 import yesman.epicfight.client.mesh.VillagerMesh;
 import yesman.epicfight.client.mesh.WitherMesh;
-import yesman.epicfight.client.renderer.patched.layer.WearableItemLayer;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class Meshes implements PreparableReloadListener {
+	private static final Map<ResourceLocation, MeshAccessor<? extends Mesh>> ACCESSORS = Maps.newHashMap();
+	private static final Map<MeshAccessor<? extends Mesh>, Mesh> MESHES = Maps.newHashMap();
+	private static ResourceManager resourceManager = null;
+	
+	//For resource reloader
 	public static final Meshes INSTANCE = new Meshes();
 	
-	@FunctionalInterface
-	public interface MeshContructor<P extends ModelPart<V>, V extends VertexBuilder, M extends Mesh<P, V>> {
-		M invoke(Map<String, float[]> arrayMap, Map<MeshPartDefinition, List<V>> parts, M parent, RenderProperties properties);
-	}
+	// Entities
+	public static final MeshAccessor<HumanoidMesh> ALEX = MeshAccessor.create(EpicFightMod.MODID, "entity/biped_slim_arm", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
+	public static final MeshAccessor<HumanoidMesh> BIPED = MeshAccessor.create(EpicFightMod.MODID, "entity/biped", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
+	public static final MeshAccessor<HumanoidMesh> BIPED_OLD_TEX = MeshAccessor.create(EpicFightMod.MODID, "entity/biped_old_texture", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
+	public static final MeshAccessor<HumanoidMesh> BIPED_OUTLAYER = MeshAccessor.create(EpicFightMod.MODID, "entity/biped_outlayer", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
+	public static final MeshAccessor<VillagerMesh> VILLAGER_ZOMBIE = MeshAccessor.create(EpicFightMod.MODID, "entity/zombie_villager", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(VillagerMesh::new));
+	public static final MeshAccessor<CreeperMesh> CREEPER = MeshAccessor.create(EpicFightMod.MODID, "entity/creeper", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(CreeperMesh::new));
+	public static final MeshAccessor<EndermanMesh> ENDERMAN = MeshAccessor.create(EpicFightMod.MODID, "entity/enderman", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(EndermanMesh::new));
+	public static final MeshAccessor<HumanoidMesh> SKELETON = MeshAccessor.create(EpicFightMod.MODID, "entity/skeleton", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HumanoidMesh::new));
+	public static final MeshAccessor<SpiderMesh> SPIDER = MeshAccessor.create(EpicFightMod.MODID, "entity/spider", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SpiderMesh::new));
+	public static final MeshAccessor<IronGolemMesh> IRON_GOLEM = MeshAccessor.create(EpicFightMod.MODID, "entity/iron_golem", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(IronGolemMesh::new));
+	public static final MeshAccessor<HumanoidMesh> ILLAGER = MeshAccessor.create(EpicFightMod.MODID, "entity/illager", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(VillagerMesh::new));
+	public static final MeshAccessor<VillagerMesh> WITCH = MeshAccessor.create(EpicFightMod.MODID, "entity/witch", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(VillagerMesh::new));
+	public static final MeshAccessor<RavagerMesh> RAVAGER = MeshAccessor.create(EpicFightMod.MODID, "entity/ravager",(jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(RavagerMesh::new));
+	public static final MeshAccessor<VexMesh> VEX = MeshAccessor.create(EpicFightMod.MODID, "entity/vex", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(VexMesh::new));
+	public static final MeshAccessor<PiglinMesh> PIGLIN = MeshAccessor.create(EpicFightMod.MODID, "entity/piglin", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(PiglinMesh::new));
+	public static final MeshAccessor<HoglinMesh> HOGLIN = MeshAccessor.create(EpicFightMod.MODID, "entity/hoglin", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(HoglinMesh::new));
+	public static final MeshAccessor<DragonMesh> DRAGON = MeshAccessor.create(EpicFightMod.MODID, "entity/dragon", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(DragonMesh::new));
+	public static final MeshAccessor<WitherMesh> WITHER = MeshAccessor.create(EpicFightMod.MODID, "entity/wither", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(WitherMesh::new));
 	
-	private static final BiMap<ResourceLocation, Mesh<?, ?>> MESHES = HashBiMap.create();
+	// Armors
+	public static final MeshAccessor<SkinnedMesh> HELMET = MeshAccessor.create(EpicFightMod.MODID, "armor/helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	public static final MeshAccessor<SkinnedMesh> HELMET_PIGLIN = MeshAccessor.create(EpicFightMod.MODID, "armor/piglin_helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	public static final MeshAccessor<SkinnedMesh> HELMET_VILLAGER = MeshAccessor.create(EpicFightMod.MODID, "armor/villager_helmet", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	public static final MeshAccessor<SkinnedMesh> CHESTPLATE = MeshAccessor.create(EpicFightMod.MODID, "armor/chestplate", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	public static final MeshAccessor<SkinnedMesh> LEGGINS = MeshAccessor.create(EpicFightMod.MODID, "armor/leggins", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
+	public static final MeshAccessor<SkinnedMesh> BOOTS = MeshAccessor.create(EpicFightMod.MODID, "armor/boots", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	
-	public static HumanoidMesh ALEX;
-	public static HumanoidMesh BIPED;
-	public static HumanoidMesh BIPED_OLD_TEX;
-	public static HumanoidMesh BIPED_OUTLAYER;
-	public static HumanoidMesh VILLAGER_ZOMBIE;
-	public static CreeperMesh CREEPER;
-	public static EndermanMesh ENDERMAN;
-	public static HumanoidMesh SKELETON;
-	public static SpiderMesh SPIDER;
-	public static IronGolemMesh IRON_GOLEM;
-	public static HumanoidMesh ILLAGER;
-	public static VillagerMesh WITCH;
-	public static RavagerMesh RAVAGER;
-	public static VexMesh VEX;
-	public static PiglinMesh PIGLIN;
-	public static HoglinMesh HOGLIN;
-	public static DragonMesh DRAGON;
-	public static WitherMesh WITHER;
+	// Particles
+	public static final MeshAccessor<ClassicMesh> AIR_BURST = MeshAccessor.create(EpicFightMod.MODID, "particle/air_burst", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
+	public static final MeshAccessor<ClassicMesh> FORCE_FIELD = MeshAccessor.create(EpicFightMod.MODID, "particle/force_field", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
+	public static final MeshAccessor<ClassicMesh> LASER = MeshAccessor.create(EpicFightMod.MODID, "particle/laser", (jsonModelLoader) -> jsonModelLoader.loadClassicMesh(ClassicMesh::new));
 	
-	public static AnimatedMesh HELMET;
-	public static AnimatedMesh HELMET_PIGLIN;
-	public static AnimatedMesh HELMET_VILLAGER;
-	public static AnimatedMesh CHESTPLATE;
-	public static AnimatedMesh LEGGINS;
-	public static AnimatedMesh BOOTS;
+	// Layers
+	public static final MeshAccessor<SkinnedMesh> CAPE_DEFAULT = MeshAccessor.create(EpicFightMod.MODID, "layer/default_cape", (jsonModelLoader) -> jsonModelLoader.loadSkinnedMesh(SkinnedMesh::new));
 	
-	public static RawMesh AIR_BURST;
-	public static RawMesh FORCE_FIELD;
-	public static RawMesh LASER;
-	
-	public static void build(ResourceManager resourceManager) {
-		MESHES.values().stream().filter((mesh) -> mesh instanceof AnimatedMesh).map((mesh) -> (AnimatedMesh)mesh).forEach(AnimatedMesh::destroy);
+	public static void reload(ResourceManager resourceManager) {
+		Meshes.resourceManager = resourceManager;
+		
+		ACCESSORS.entrySet().removeIf(entry -> !entry.getValue().inRegistry);
+		
+		MESHES.values().forEach((mesh) -> {
+			if (mesh instanceof SkinnedMesh skinnedMesh) {
+				skinnedMesh.destroy();
+			}
+		});
+		
 		MESHES.clear();
-		WearableItemLayer.clearModels();
-		
-		ModelBuildEvent.MeshBuild event = new ModelBuildEvent.MeshBuild(resourceManager, MESHES);
-		
-		//Entities
-		ALEX = event.getAnimated(EpicFightMod.MODID, "entity/biped_slim_arm", HumanoidMesh::new);
-		BIPED = event.getAnimated(EpicFightMod.MODID, "entity/biped", HumanoidMesh::new);
-		BIPED_OLD_TEX = event.getAnimated(EpicFightMod.MODID, "entity/biped_old_texture", HumanoidMesh::new);
-		BIPED_OUTLAYER = event.getAnimated(EpicFightMod.MODID, "entity/biped_outlayer", HumanoidMesh::new);
-		VILLAGER_ZOMBIE = event.getAnimated(EpicFightMod.MODID, "entity/zombie_villager", VillagerMesh::new);
-		CREEPER = event.getAnimated(EpicFightMod.MODID, "entity/creeper", CreeperMesh::new);
-		ENDERMAN = event.getAnimated(EpicFightMod.MODID, "entity/enderman", EndermanMesh::new);
-		SKELETON = event.getAnimated(EpicFightMod.MODID, "entity/skeleton", HumanoidMesh::new);
-		SPIDER = event.getAnimated(EpicFightMod.MODID, "entity/spider", SpiderMesh::new);
-		IRON_GOLEM = event.getAnimated(EpicFightMod.MODID, "entity/iron_golem", IronGolemMesh::new);
-		ILLAGER = event.getAnimated(EpicFightMod.MODID, "entity/illager", VillagerMesh::new);
-		WITCH = event.getAnimated(EpicFightMod.MODID, "entity/witch", VillagerMesh::new);
-		RAVAGER = event.getAnimated(EpicFightMod.MODID, "entity/ravager", RavagerMesh::new);
-		VEX = event.getAnimated(EpicFightMod.MODID, "entity/vex", VexMesh::new);
-		PIGLIN = event.getAnimated(EpicFightMod.MODID, "entity/piglin", PiglinMesh::new);
-		HOGLIN = event.getAnimated(EpicFightMod.MODID, "entity/hoglin", HoglinMesh::new);
-		DRAGON = event.getAnimated(EpicFightMod.MODID, "entity/dragon", DragonMesh::new);
-		WITHER = event.getAnimated(EpicFightMod.MODID, "entity/wither", WitherMesh::new);
-		
-		//Particles
-		AIR_BURST = event.getRaw(EpicFightMod.MODID, "particle/air_burst", RawMesh::new);
-		FORCE_FIELD = event.getRaw(EpicFightMod.MODID, "particle/force_field", RawMesh::new);
-		LASER = event.getRaw(EpicFightMod.MODID, "particle/laser", RawMesh::new);
-		
-		//Armors
-		HELMET = event.getAnimated(EpicFightMod.MODID, "armor/helmet", AnimatedMesh::new);
-		HELMET_PIGLIN = event.getAnimated(EpicFightMod.MODID, "armor/piglin_helmet", AnimatedMesh::new);
-		HELMET_VILLAGER = event.getAnimated(EpicFightMod.MODID, "armor/villager_helmet", AnimatedMesh::new);
-		CHESTPLATE = event.getAnimated(EpicFightMod.MODID, "armor/chestplate", AnimatedMesh::new);
-		LEGGINS = event.getAnimated(EpicFightMod.MODID, "armor/leggins", AnimatedMesh::new);
-		BOOTS = event.getAnimated(EpicFightMod.MODID, "armor/boots", AnimatedMesh::new);
-		
-		ModLoader.get().postEvent(event);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends RawMesh> M getOrCreateRawMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<RawModelPart, VertexBuilder, M> constructor) {
-		return (M) MESHES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
-			return jsonModelLoader.loadMesh(constructor);
-		});
+	@Nullable
+	public static <M extends Mesh> AssetAccessor<M> get(ResourceLocation id) {
+		return (AssetAccessor<M>) ACCESSORS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <M extends AnimatedMesh> M getOrCreateAnimatedMesh(ResourceManager rm, ResourceLocation rl, MeshContructor<AnimatedModelPart, AnimatedVertexBuilder, M> constructor) {
-		return (M) MESHES.computeIfAbsent(rl, (key) -> {
-			JsonModelLoader jsonModelLoader = new JsonModelLoader(rm, wrapLocation(rl));
-			return jsonModelLoader.loadAnimatedMesh(constructor);
-		});
-	}
-	
-	public static ResourceLocation getKey(Mesh<?, ?> mesh) {
-		return MESHES.inverse().get(mesh);
-	}
-	
-	public static Mesh<?, ?> getMeshOrNull(ResourceLocation rl) {
-		return MESHES.get(rl);
-	}
-	
-	public static void addMesh(ResourceLocation rl, Mesh<?, ?> mesh) {
-		MESHES.put(rl, mesh);
+	public static <M extends Mesh> AssetAccessor<M> getOrCreate(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader) {
+		return ACCESSORS.containsKey(id) ? (AssetAccessor<M>)ACCESSORS.get(id) : MeshAccessor.create(id, jsonLoader, false);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <T extends Mesh<?, ?>> Set<Pair<ResourceLocation, MeshProvider<T>>> entries(Class<T> filterInstance) {
-		return MESHES.entrySet().stream().filter((entry) -> filterInstance.isAssignableFrom(entry.getValue().getClass())).map((entry) -> Pair.of(entry.getKey(), (MeshProvider<T>)() -> (T)MESHES.get(entry.getKey()))).collect(Collectors.toSet());
+	public static <M extends Mesh> Set<AssetAccessor<M>> entry(Class<? extends Mesh> filter) {
+		return ACCESSORS.values().stream().filter((accessor) -> filter.isAssignableFrom(accessor.get().getClass())).map((accessor) -> (AssetAccessor<M>)accessor).collect(Collectors.toSet());
 	}
 	
 	public static ResourceLocation wrapLocation(ResourceLocation rl) {
-		return rl.getPath().matches("animmodels/.*\\.json") ? rl : new ResourceLocation(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
+		return rl.getPath().matches("animmodels/.*\\.json") ? rl : ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), "animmodels/" + rl.getPath() + ".json");
 	}
 	
 	@Override
 	public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier stage, ResourceManager resourceManager, ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler, Executor backgroundExecutor, Executor gameExecutor) {
 		return CompletableFuture.runAsync(() -> {
-			Meshes.build(resourceManager);
+			Meshes.reload(resourceManager);
 		}, gameExecutor).thenCompose(stage::wait);
+	}
+	
+	@FunctionalInterface
+	@OnlyIn(Dist.CLIENT)
+	public interface MeshContructor<P extends MeshPart, V extends VertexBuilder, M extends StaticMesh<P>> {
+		M invoke(Map<String, Number[]> arrayMap, Map<MeshPartDefinition, List<V>> parts, M parent, RenderProperties properties);
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public static record MeshAccessor<M extends Mesh> (ResourceLocation registryName, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) implements AssetAccessor<M>, SoftBodyTranslatable {
+		public static <M extends Mesh> MeshAccessor<M> create(String namespaceId, String path, Function<JsonAssetLoader, M> jsonLoader) {
+			return create(ResourceLocation.fromNamespaceAndPath(namespaceId, path), jsonLoader, true);
+		}
+		
+		private static <M extends Mesh> MeshAccessor<M> create(ResourceLocation id, Function<JsonAssetLoader, M> jsonLoader, boolean inRegistry) {
+			MeshAccessor<M> accessor = new MeshAccessor<M> (id, jsonLoader, inRegistry);
+			ACCESSORS.put(id, accessor);
+			return accessor;
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public M get() {
+			if (MESHES.get(this) == null) {
+				JsonAssetLoader jsonModelLoader = new JsonAssetLoader(resourceManager, wrapLocation(this.registryName));
+				MESHES.put(this, this.jsonLoader.apply(jsonModelLoader));
+			}
+			
+			return (M)MESHES.get(this);
+		}
+		
+		public boolean isPresent() {
+			return true;
+		}
+		
+		public String toString() {
+			return this.registryName.toString();
+		}
+		
+		public int hashCode() {
+			return this.registryName.hashCode();
+		}
+		
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			} else if (obj instanceof MeshAccessor armatureAccessor) {
+				return this.registryName.equals(armatureAccessor.registryName());
+			} else if (obj instanceof ResourceLocation rl) {
+				return this.registryName.equals(rl);
+			} else if (obj instanceof String name) {
+				return this.registryName.toString().equals(name);
+			} else {
+				return false;
+			}
+		}
+		
+		@Override
+		public boolean canStartSoftBodySimulation() {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof StaticMesh<?> staticMesh) {
+				return staticMesh.canStartSoftBodySimulation();
+			} else if (mesh instanceof CompositeMesh compositeMesh) {
+				return compositeMesh.canStartSoftBodySimulation();
+			}
+			
+			return false;
+		}
+		
+		@Override
+		public ClothObject createSimulationData(SoftBodyTranslatable provider, ClothSimulatable simOwner, ClothObjectBuilder simBuilder) {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof StaticMesh<?> staticMesh) {
+				return staticMesh.createSimulationData(provider, simOwner, simBuilder);
+			} else if (mesh instanceof CompositeMesh compositeMesh) {
+				return compositeMesh.createSimulationData(provider, simOwner, simBuilder);
+			}
+			
+			return null;
+		}
+
+		@Override
+		public void putSoftBodySimulationInfo(Map<String, ClothSimulationInfo> sofyBodySimulationInfo) {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof SoftBodyTranslatable softBodyTranslatable) {
+				softBodyTranslatable.putSoftBodySimulationInfo(sofyBodySimulationInfo);
+			}
+		}
+
+		@Override
+		public Map<String, ClothSimulationInfo> getSoftBodySimulationInfo() {
+			Mesh mesh = this.get();
+			
+			if (mesh instanceof SoftBodyTranslatable softBodyTranslatable) {
+				return softBodyTranslatable.getSoftBodySimulationInfo();
+			} else {
+				return null;
+			}
+		}
 	}
 }

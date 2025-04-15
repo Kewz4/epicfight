@@ -35,8 +35,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class ShaderParser {
-	public static final int MAX_JOINTS = 40;
-	public static final int MAX_WEIGHTS = 3;
+	public static final int SHADER_ARRAY_LIMIT = 50;
 	
 	private static final Double[] IDENTY_MATRIX3F = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
 	private static final Double[] IDENTY_MATRIX4F = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
@@ -51,17 +50,17 @@ public class ShaderParser {
 	
 	public ShaderParser(ResourceProvider resourceProvider, String shaderName) throws FileNotFoundException, IOException {
 		this.shaderName = shaderName;
-		ResourceLocation shaderLocation = new ResourceLocation(shaderName);
-		ResourceLocation rlProperties = new ResourceLocation(shaderLocation.getNamespace(), "shaders/core/" + shaderLocation.getPath() + ".json");
+		ResourceLocation shaderLocation = ResourceLocation.parse(shaderName);
+		ResourceLocation rlProperties = ResourceLocation.fromNamespaceAndPath(shaderLocation.getNamespace(), "shaders/core/" + shaderLocation.getPath() + ".json");
 		Resource rProperties = resourceProvider.getResourceOrThrow(rlProperties);
 		String properties = new String(rProperties.open().readAllBytes(), StandardCharsets.UTF_8);
 		this.propertiesJson = JsonParser.parseString(properties).getAsJsonObject();
 		
-		ResourceLocation vShaderLocation = new ResourceLocation(GsonHelper.getAsString(this.propertiesJson, "vertex"));
-		ResourceLocation fShaderLocation = new ResourceLocation(GsonHelper.getAsString(this.propertiesJson, "fragment"));
+		ResourceLocation vShaderLocation = ResourceLocation.parse(GsonHelper.getAsString(this.propertiesJson, "vertex"));
+		ResourceLocation fShaderLocation = ResourceLocation.parse(GsonHelper.getAsString(this.propertiesJson, "fragment"));
 		
-		ResourceLocation rlVsh = new ResourceLocation(vShaderLocation.getNamespace(), "shaders/core/" + vShaderLocation.getPath() + ".vsh");
-		ResourceLocation rlFsh = new ResourceLocation(fShaderLocation.getNamespace(), "shaders/core/" + fShaderLocation.getPath() + ".fsh");
+		ResourceLocation rlVsh = ResourceLocation.fromNamespaceAndPath(vShaderLocation.getNamespace(), "shaders/core/" + vShaderLocation.getPath() + ".vsh");
+		ResourceLocation rlFsh = ResourceLocation.fromNamespaceAndPath(fShaderLocation.getNamespace(), "shaders/core/" + fShaderLocation.getPath() + ".fsh");
 		
 		this.propertiesJson.addProperty("vertex", EpicFightMod.MODID + ":" + vShaderLocation.getPath());
 		this.propertiesJson.addProperty("fragment", EpicFightMod.MODID + ":" + fShaderLocation.getPath());
@@ -129,12 +128,12 @@ public class ShaderParser {
 	}
 	
 	public void addToResourceCache(Map<ResourceLocation, Resource> cache) throws ShaderParsingException {
-		ResourceLocation shaderLocation = new ResourceLocation(this.shaderName);
-		ResourceLocation rlProperties = new ResourceLocation(shaderLocation.getNamespace(), "shaders/core/" + shaderLocation.getPath() + ".json");
-		ResourceLocation vShaderLocation = new ResourceLocation(GsonHelper.getAsString(this.propertiesJson, "vertex"));
-		ResourceLocation fShaderLocation = new ResourceLocation(GsonHelper.getAsString(this.propertiesJson, "fragment"));
-		ResourceLocation rlVsh = new ResourceLocation(vShaderLocation.getNamespace(), "shaders/core/" + vShaderLocation.getPath() + ".vsh");
-		ResourceLocation rlFsh = new ResourceLocation(fShaderLocation.getNamespace(), "shaders/core/" + fShaderLocation.getPath() + ".fsh");
+		ResourceLocation shaderLocation = ResourceLocation.parse(this.shaderName);
+		ResourceLocation rlProperties = ResourceLocation.fromNamespaceAndPath(shaderLocation.getNamespace(), "shaders/core/" + shaderLocation.getPath() + ".json");
+		ResourceLocation vShaderLocation = ResourceLocation.parse(GsonHelper.getAsString(this.propertiesJson, "vertex"));
+		ResourceLocation fShaderLocation = ResourceLocation.parse(GsonHelper.getAsString(this.propertiesJson, "fragment"));
+		ResourceLocation rlVsh = ResourceLocation.fromNamespaceAndPath(vShaderLocation.getNamespace(), "shaders/core/" + vShaderLocation.getPath() + ".vsh");
+		ResourceLocation rlFsh = ResourceLocation.fromNamespaceAndPath(fShaderLocation.getNamespace(), "shaders/core/" + fShaderLocation.getPath() + ".fsh");
 		
 		this.propertiesJson.addProperty("vertex", EpicFightMod.MODID + ":" + vShaderLocation.getPath());
 		this.propertiesJson.addProperty("fragment", EpicFightMod.MODID + ":" + fShaderLocation.getPath());
@@ -142,9 +141,9 @@ public class ShaderParser {
 		Resource rAnimProperties = new Resource(this.rProperties.source(), this.getPropertiesJson(), this.rProperties::metadata);
 		Resource rAnimVsh = new Resource(this.rVsh.source(), this.getVertexShaderScript(), this.rVsh::metadata);
 		
-		cache.put(new ResourceLocation(EpicFightMod.MODID, rlProperties.getPath()), rAnimProperties);
-		cache.put(new ResourceLocation(EpicFightMod.MODID, rlVsh.getPath()), rAnimVsh);
-		cache.put(new ResourceLocation(EpicFightMod.MODID, rlFsh.getPath()), this.rFsh);
+		cache.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, rlProperties.getPath()), rAnimProperties);
+		cache.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, rlVsh.getPath()), rAnimVsh);
+		cache.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, rlFsh.getPath()), this.rFsh);
 	}
 	
 	private IoSupplier<InputStream> getPropertiesJson() {

@@ -6,13 +6,13 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.Event;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.client.renderer.patched.entity.PatchedEntityRenderer;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PrepareModelEvent extends Event {
-	private final AnimatedMesh mesh;
+	private final SkinnedMesh mesh;
 	private final LivingEntityPatch<?> entitypatch;
 	private final MultiBufferSource buffer;
 	private final PoseStack poseStack;
@@ -21,7 +21,7 @@ public class PrepareModelEvent extends Event {
 	
 	private final PatchedEntityRenderer<?, ?, ?, ?> renderer;
 	
-	public PrepareModelEvent(PatchedEntityRenderer<?, ?, ?, ?> renderer, AnimatedMesh mesh, LivingEntityPatch<?> entitypatch, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
+	public PrepareModelEvent(PatchedEntityRenderer<?, ?, ?, ?> renderer, SkinnedMesh mesh, LivingEntityPatch<?> entitypatch, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
 		this.renderer = renderer;
 		this.mesh = mesh;
 		this.entitypatch = entitypatch;
@@ -31,7 +31,7 @@ public class PrepareModelEvent extends Event {
 		this.partialTicks = partialTicks;
 	}
 
-	public AnimatedMesh getMesh() {
+	public SkinnedMesh getMesh() {
 		return this.mesh;
 	}
 	

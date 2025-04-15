@@ -6,7 +6,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.client.ClientEngine;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class FirstPersonCompat implements ICompatModule {
@@ -17,7 +17,7 @@ public class FirstPersonCompat implements ICompatModule {
 			public boolean preventFirstperson() {
 				PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
 				
-				if (playerpatch != null && playerpatch.getPlayerMode() == PlayerPatch.PlayerMode.BATTLE && EpicFightMod.CLIENT_CONFIGS.firstPersonModel.getValue()) {
+				if (playerpatch != null && playerpatch.getPlayerMode() == PlayerPatch.PlayerMode.BATTLE && ClientConfig.enableAnimatedFirstPersonModel) {
 					return true;
 				}
 				

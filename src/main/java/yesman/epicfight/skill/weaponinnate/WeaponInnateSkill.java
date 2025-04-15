@@ -16,7 +16,9 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -24,28 +26,27 @@ import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public abstract class WeaponInnateSkill extends Skill {
-	public static Skill.Builder<WeaponInnateSkill> createWeaponInnateBuilder() {
-		return (new Skill.Builder<WeaponInnateSkill>()).setCategory(SkillCategories.WEAPON_INNATE).setResource(Resource.WEAPON_CHARGE);
+	public static SkillBuilder<WeaponInnateSkill> createWeaponInnateBuilder() {
+		return new SkillBuilder<WeaponInnateSkill>().setCategory(SkillCategories.WEAPON_INNATE).setResource(Resource.WEAPON_CHARGE);
 	}
 	
 	protected List<Map<AttackPhaseProperty<?>, Object>> properties;
 	
-	public WeaponInnateSkill(Builder<? extends Skill> builder) {
+	public WeaponInnateSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
 		
 		this.properties = Lists.newArrayList();
 	}
 	
 	@Override
-	public boolean canExecute(PlayerPatch<?> executer) {
-		if (executer.isLogicalClient()) {
-			return super.canExecute(executer);
-		} else {
-			ItemStack itemstack = executer.getOriginal().getMainHandItem();
-			
-			return super.canExecute(executer) && EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(executer, itemstack) == this
-					&& executer.getOriginal().getVehicle() == null && (!executer.getSkill(this).isActivated() || this.activateType == ActivateType.TOGGLE);
-		}
+	public boolean canExecute(SkillContainer container) {
+		ItemStack itemstack = container.getExecutor().getOriginal().getMainHandItem();
+		
+		return super.canExecute(container)
+				&& EpicFightCapabilities.getItemStackCapability(itemstack).getInnateSkill(container.getExecutor(), itemstack) == this
+				&& container.getExecutor().getOriginal().getVehicle() == null
+				&& (!this.isActivated(container)
+						|| this.activateType == ActivateType.TOGGLE);
 	}
 	
 	@Override

@@ -9,12 +9,15 @@ import com.google.common.collect.ImmutableList;
 
 import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -35,6 +38,7 @@ import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -42,6 +46,7 @@ import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
@@ -58,9 +63,9 @@ import yesman.epicfight.world.entity.DroppedNetherStar;
 import yesman.epicfight.world.entity.WitherGhostClone;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
-public class WitherPatch extends MobPatch<WitherBoss> {
+public class WitherPatch extends MobPatch<WitherBoss> implements BossPatch<WitherBoss> {
 	private static final EntityDataAccessor<Boolean> DATA_ARMOR_ACTIVED = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Boolean> DATA_GHOST = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Integer> DATA_TRANSPARENCY = SynchedEntityData.defineId(WitherBoss.class, EntityDataSerializers.INT);
@@ -96,6 +101,21 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	}
 	
 	@Override
+	public void onStartTracking(ServerPlayer trackingPlayer) {
+		this.recordBossEventOwner(trackingPlayer);
+	}
+	
+	@Override
+	public void onStopTracking(ServerPlayer trackingPlayer) {
+		this.removeBossEventOwner(trackingPlayer);
+	}
+	
+	@Override
+	public void processEntityPacket(FriendlyByteBuf buf) {
+		this.processOwnerRecordPacket(buf);
+	}
+	
+	@Override
 	public void initAI() {
 		super.initAI();
 		this.original.goalSelector.addGoal(1, new WitherChasingGoal());
@@ -109,6 +129,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.WITHER_IDLE);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.WITHER_DEATH);
 	}
@@ -147,26 +168,26 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public void poseTick(DynamicAnimation animation, Pose pose, float time, float partialTicks) {
-		if (pose.getJointTransformData().containsKey("Head_M")) {
+		if (pose.hasTransform("Head_M")) {
 			float headRotO = this.original.yBodyRotO - this.original.yHeadRotO;
 			float headRot = this.original.yBodyRot - this.original.yHeadRot;
 			float partialHeadRot = MathUtils.lerpBetween(headRotO, headRot, partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), Vec3f.X_AXIS).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, Vec3f.Y_AXIS)).toQuaternion();
-			pose.getOrDefaultTransform("Head_M").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.orElseEmpty("Head_M").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 		
-		if (pose.getJointTransformData().containsKey("Head_R")) {
+		if (pose.hasTransform("Head_R")) {
 			float rightHeadYRot = MathUtils.lerpBetween(this.original.yBodyRotO, this.original.yBodyRot, partialTicks) - MathUtils.lerpBetween(this.original.yRotOHeads[1], this.original.yRotHeads[1], partialTicks);
 			float rightHeadXRot = MathUtils.lerpBetween(this.original.xRotOHeads[1], this.original.xRotHeads[1], partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(rightHeadYRot, Vec3f.Y_AXIS).rotateDeg(-rightHeadXRot, Vec3f.X_AXIS).toQuaternion();
-			pose.getOrDefaultTransform("Head_R").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.orElseEmpty("Head_R").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 		
-		if (pose.getJointTransformData().containsKey("Head_L")) {
+		if (pose.hasTransform("Head_L")) {
 			float leftHeadYRot = MathUtils.lerpBetween(this.original.yBodyRotO, this.original.yBodyRot, partialTicks) - MathUtils.lerpBetween(this.original.yRotOHeads[0], this.original.yRotHeads[0], partialTicks);
 			float leftHeadXRot = MathUtils.lerpBetween(this.original.xRotOHeads[0], this.original.xRotHeads[0], partialTicks);
 			Quaternionf headRotation = OpenMatrix4f.createRotatorDeg(leftHeadYRot, Vec3f.Y_AXIS).rotateDeg(-leftHeadXRot, Vec3f.X_AXIS).toQuaternion();
-			pose.getOrDefaultTransform("Head_L").frontResult(JointTransform.getRotation(headRotation), OpenMatrix4f::mul);
+			pose.orElseEmpty("Head_L").frontResult(JointTransform.rotation(headRotation), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -276,7 +297,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public AttackResult tryHurt(DamageSource damageSource, float amount) {
-		DynamicAnimation animation = this.getAnimator().getPlayerFor(null).getAnimation();
+		AssetAccessor<? extends DynamicAnimation> animation = this.getAnimator().getPlayerFor(null).getAnimation();
 		
 		if (animation.equals(Animations.WITHER_CHARGE) || animation.equals(Animations.WITHER_BLOCKED)) {
 			Entity entity = damageSource.getDirectEntity();
@@ -293,7 +314,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	public void onDeath(LivingDeathEvent event) {
 		super.onDeath(event);
 		
-		if (!this.isLogicalClient() && this.original.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT) && this.original.level().getGameRules().getBoolean(EpicFightGamerules.EPIC_DROP)) {
+		if (!this.isLogicalClient() && this.original.level().getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT) && EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
 			Vec3 startMovement = this.original.getLookAngle().scale(0.4D).add(0.0D, 0.63D, 0.0D);
 			ItemEntity itemEntity = new DroppedNetherStar(this.original.level(), this.original.position().add(0.0D, this.original.getBbHeight() * 0.5D, 0.0D), startMovement);
 			this.original.level().addFreshEntity(itemEntity);
@@ -302,7 +323,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	
 	@Override
 	public boolean onDrop(LivingDropsEvent event) {
-		if (this.original.level().getGameRules().getBoolean(EpicFightGamerules.EPIC_DROP)) {
+		if (EpicFightGameRules.EPIC_DROP.getRuleValue(this.original.level())) {
 			event.getDrops().removeIf((itemEntity) -> itemEntity.getItem().is(Items.NETHER_STAR));
 		}
 		
@@ -326,7 +347,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 	
@@ -407,6 +428,11 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 			float f1 = Mth.sin(f);
 			return this.original.getZ() + (double) f1 * 1.3D;
 		}
+	}
+	
+	@Override
+	public BossEvent getBossEvent() {
+		return this.original.bossEvent;
 	}
 	
 	public class WitherGhostAttackGoal extends Goal {
@@ -511,7 +537,7 @@ public class WitherPatch extends MobPatch<WitherBoss> {
 					Vec3 vec31 = new Vec3(entity.getX() - witherBoss.getX(), 0.0D, entity.getZ() - witherBoss.getZ());
 					double d0 = vec3.y;
 					
-					if (witherBoss.getY() < entity.getY() || !witherBoss.isPowered() && witherBoss.getY() < entity.getY() + 5.0D && !WitherPatch.this.getAnimator().getPlayerFor(null).getAnimation().getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false)) {
+					if (witherBoss.getY() < entity.getY() || !witherBoss.isPowered() && witherBoss.getY() < entity.getY() + 5.0D && !WitherPatch.this.getAnimator().getPlayerFor(null).getAnimation().get().getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false)) {
 						d0 = Math.max(0.0D, d0);
 						d0 = d0 + (0.3D - d0 * (double) 0.6F);
 					}

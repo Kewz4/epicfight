@@ -24,7 +24,23 @@ import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.particle.EpicFightParticles;
 
 @OnlyIn(Dist.CLIENT)
-public class TrailInfo {
+public record TrailInfo(
+	  Vec3 start
+	, Vec3 end
+	, String joint
+	, SimpleParticleType particle
+	, float startTime
+	, float endTime
+	, float fadeTime
+	, float rCol
+	, float gCol
+	, float bCol
+	, int interpolateCount
+	, int trailLifetime
+	, int updateInterval
+	, ResourceLocation texturePath
+	, InteractionHand hand
+) {
 	public static final TrailInfo PREVIEWER_DEFAULT_TRAIL = TrailInfo.builder()
 			.startPos(new Vec3(0.0D, 0.0D, 0.0D))
 			.endPos(new Vec3(0.0D, 0.0D, -1.0D))
@@ -33,7 +49,7 @@ public class TrailInfo {
 			.r(0.75F)
 			.g(0.75F)
 			.b(0.75F)
-			.texture(new ResourceLocation(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
+			.texture(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/particle/swing_trail.png"))
 			.type(EpicFightParticles.SWING_TRAIL.get())
 			.create();
 	
@@ -43,36 +59,24 @@ public class TrailInfo {
 			.itemSkinHand(InteractionHand.MAIN_HAND)
 			.create();
 	
-	public final Vec3 start;
-	public final Vec3 end;
-	public final SimpleParticleType particle;
-	public final String joint;
-	public final float startTime;
-	public final float endTime;
-	public final float fadeTime;
-	public final float rCol;
-	public final float gCol;
-	public final float bCol;
-	public final int interpolateCount;
-	public final int trailLifetime;
-	public final ResourceLocation texturePath;
-	public final InteractionHand hand;
-	
 	private TrailInfo(TrailInfo.Builder builder) {
-		this.start = builder.start;
-		this.end = builder.end;
-		this.joint = builder.joint;
-		this.particle = builder.particle;
-		this.startTime = builder.startTime;
-		this.endTime = builder.endTime;
-		this.fadeTime = builder.fadeTime;
-		this.rCol = builder.rCol;
-		this.gCol = builder.gCol;
-		this.bCol = builder.bCol;
-		this.interpolateCount = builder.interpolateCount;
-		this.trailLifetime = builder.trailLifetime;
-		this.texturePath = builder.texturePath;
-		this.hand = builder.hand;
+		this(
+			  builder.start
+			, builder.end
+			, builder.joint
+			, builder.particle
+			, builder.startTime
+			, builder.endTime
+			, builder.fadeTime
+			, builder.rCol
+			, builder.gCol
+			, builder.bCol
+			, builder.interpolateCount
+			, builder.trailLifetime
+			, builder.updateInterval
+			, builder.texturePath
+			, builder.hand
+		);
 	}
 	
 	public TrailInfo overwrite(TrailInfo trailInfo) {
@@ -84,11 +88,11 @@ public class TrailInfo {
 		builder.endPos((trailInfo.end == null) ? this.end : trailInfo.end);
 		builder.joint((trailInfo.joint == null) ? this.joint : trailInfo.joint);
 		builder.type((trailInfo.particle == null) ? this.particle : trailInfo.particle);
-		builder.time((!validTime) ? this.startTime : trailInfo.startTime, (!validTime) ? this.endTime : trailInfo.endTime);
+		builder.time(!validTime ? this.startTime : trailInfo.startTime, !validTime ? this.endTime : trailInfo.endTime);
 		builder.fadeTime((!isValidTime(trailInfo.fadeTime)) ? this.fadeTime : trailInfo.fadeTime);
-		builder.r(!(validColor) ? this.rCol : trailInfo.rCol);
-		builder.g(!(validColor) ? this.gCol : trailInfo.gCol);
-		builder.b(!(validColor) ? this.bCol : trailInfo.bCol);
+		builder.r(!validColor ? this.rCol : trailInfo.rCol);
+		builder.g(!validColor ? this.gCol : trailInfo.gCol);
+		builder.b(!validColor ? this.bCol : trailInfo.bCol);
 		builder.interpolations((trailInfo.interpolateCount < 0) ? this.interpolateCount : trailInfo.interpolateCount);
 		builder.lifetime((trailInfo.trailLifetime < 0) ? this.trailLifetime : trailInfo.trailLifetime);
 		builder.texture((trailInfo.texturePath == null) ? this.texturePath : trailInfo.texturePath);
@@ -102,7 +106,26 @@ public class TrailInfo {
 	}
 	
 	public boolean playable() {
-		return this.start != null && this.end != null && this.particle != null && !StringUtil.isNullOrEmpty(this.joint) && isValidTime(this.startTime) && isValidTime(this.endTime) && this.interpolateCount > 0 && this.trailLifetime > 0 && this.texturePath != null;
+		if (this.particle() == EpicFightParticles.SWING_TRAIL.get()) {
+			return this.start != null
+					&& this.end != null
+					&& this.particle != null
+					&& this.updateInterval > 0
+					&& !StringUtil.isNullOrEmpty(this.joint)
+					&& isValidTime(this.startTime)
+					&& isValidTime(this.endTime)
+					&& this.interpolateCount > 0
+					&& this.trailLifetime > 0
+					&& this.texturePath != null;
+		} else {
+			return this.start != null
+					&& this.end != null
+					&& this.particle != null
+					&& this.updateInterval > 0
+					&& this.interpolateCount > 0
+					&& this.trailLifetime > 0
+					&& this.texturePath != null;
+		}
 	}
 	
 	public static TrailInfo.Builder builder() {
@@ -142,7 +165,7 @@ public class TrailInfo {
 		
 		if (trailObj.has("particle_type")) {
 			String particleTypeName = GsonHelper.getAsString(trailObj, "particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -197,6 +220,10 @@ public class TrailInfo {
 			trailBuilder.interpolations(compoundTag.getInt("interpolations"));
 		}
 		
+		if (compoundTag.contains("update_interval")) {
+			trailBuilder.updateInterval(compoundTag.getInt("update_interval"));
+		}
+		
 		if (compoundTag.contains("joint")) {
 			trailBuilder.joint(compoundTag.getString("joint"));
 		}
@@ -207,7 +234,7 @@ public class TrailInfo {
 		
 		if (compoundTag.contains("particle_type")) {
 			String particleTypeName = compoundTag.getString("particle_type");
-			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(particleTypeName));
+			SimpleParticleType particleType = (SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(particleTypeName));
 			trailBuilder.type(particleType);
 		}
 		
@@ -251,6 +278,7 @@ public class TrailInfo {
 		private float bCol = -1.0F;
 		private int interpolateCount = -1;
 		private int trailLifetime = -1;
+		private int updateInterval = 1;
 		private ResourceLocation texturePath;
 		private InteractionHand hand = InteractionHand.MAIN_HAND;
 		
@@ -310,8 +338,13 @@ public class TrailInfo {
 			return this;
 		}
 		
+		public TrailInfo.Builder updateInterval(int updateInterval) {
+			this.updateInterval = updateInterval;
+			return this;
+		}
+		
 		public TrailInfo.Builder texture(String texturePath) {
-			this.texturePath = new ResourceLocation(texturePath);
+			this.texturePath = ResourceLocation.parse(texturePath);
 			return this;
 		}
 		

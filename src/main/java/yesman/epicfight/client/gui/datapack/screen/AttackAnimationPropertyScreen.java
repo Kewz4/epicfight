@@ -19,7 +19,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.Joint;
-import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
+import yesman.epicfight.api.animation.types.datapack.EditorAnimation;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -35,7 +35,7 @@ import yesman.epicfight.client.gui.datapack.widgets.Static;
 @OnlyIn(Dist.CLIENT)
 public class AttackAnimationPropertyScreen extends Screen {
 	private final Screen parentScreen;
-	private final FakeAnimation animation;
+	private final EditorAnimation animation;
 	private final Grid trailGrid;
 	private final InputComponentList<JsonObject> inputComponentsList;
 	private final ResizableEditBox startTime;
@@ -48,7 +48,7 @@ public class AttackAnimationPropertyScreen extends Screen {
 	
 	private JsonArray trailList = new JsonArray();
 	
-	protected AttackAnimationPropertyScreen(Screen parentScreen, FakeAnimation animation, List<Joint> joints, ModelPreviewer modelPlayer) {
+	protected AttackAnimationPropertyScreen(Screen parentScreen, EditorAnimation animation, List<Joint> joints, ModelPreviewer modelPlayer) {
 		super(Component.translatable("datapack_edit.import_animation.client_data"));
 		
 		this.minecraft = parentScreen.getMinecraft();
@@ -65,7 +65,7 @@ public class AttackAnimationPropertyScreen extends Screen {
 				this.setDataBindingComponenets(new Object[] {
 					ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag.get("start_time"), JsonElement::getAsString)),
 					ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag.get("end_time"), JsonElement::getAsString)),
-					ParseUtil.nullOrApply(tag.get("joint"), (jsonElement) -> AttackAnimationPropertyScreen.this.modelPlayer.getArmature().searchJointByName(jsonElement.getAsString())),
+					ParseUtil.nullOrApply(tag.get("joint"), (jsonElement) -> AttackAnimationPropertyScreen.this.modelPlayer.getArmature().get().searchJointByName(jsonElement.getAsString())),
 					ParseUtil.nullOrApply(tag.get("item_skin_hand"), (jsonElement) -> InteractionHand.valueOf(jsonElement.getAsString().toUpperCase(Locale.ROOT))),
 					ParseUtil.nullParam(ParseUtil.nullOrToString(tag.get("interpolations"), JsonElement::getAsString)),
 					ParseUtil.nullParam(ParseUtil.nullOrToString(tag.get("lifetime"), JsonElement::getAsString)),
@@ -262,7 +262,7 @@ public class AttackAnimationPropertyScreen extends Screen {
 				throw new IllegalStateException(String.format("Row %d: Joint undefined!", i+1));
 			}
 			
-			if (this.modelPlayer.getArmature().searchJointByName(trailObj.get("joint").getAsString()) == null) {
+			if (this.modelPlayer.getArmature().get().searchJointByName(trailObj.get("joint").getAsString()) == null) {
 				throw new IllegalStateException(String.format("Row %d: No joint named %s in %s!", i+1, trailObj.get("joint").getAsString(), this.modelPlayer.getArmature()));
 			}
 			

@@ -1,5 +1,7 @@
 package yesman.epicfight.client.world.capabilites.entitypatch.player;
 
+import java.util.Optional;
+
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -26,35 +28,45 @@ import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
-import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
 import yesman.epicfight.api.client.forgeevent.UpdatePlayerMotionEvent;
+import yesman.epicfight.api.client.online.EpicSkins;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
+import yesman.epicfight.api.physics.PhysicsSimulator;
+import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 
 @OnlyIn(Dist.CLIENT)
-public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> {
+public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements ClothSimulatable {
 	private Item prevHeldItem;
 	private Item prevHeldItemOffHand;
+	protected EpicSkins epicSkinsInformation;
 	
 	@Override
-	public void onJoinWorld(T entityIn, EntityJoinLevelEvent event) {
-		super.onJoinWorld(entityIn, event);
+	public void onJoinWorld(T entity, EntityJoinLevelEvent event) {
+		super.onJoinWorld(entity, event);
+		
 		this.prevHeldItem = Items.AIR;
 		this.prevHeldItemOffHand = Items.AIR;
+		
+		EpicSkins.initEpicSkins(this);
 	}
 	
 	@Override
@@ -79,19 +91,10 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 				currentLivingMotion = LivingMotions.SLEEP;
 			} else if (!original.onGround() && original.onClimbable()) {
 				currentLivingMotion = LivingMotions.CLIMB;
-				double y = original.yCloak - original.yCloakO;
-				
-				if (Math.abs(y) < 0.04D) {
-					animator.baseLayer.pause();
-				} else {
-					animator.baseLayer.resume();
-
-					animator.baseLayer.animationPlayer.setReversed(y < 0);
-				}
 			} else if (!original.getAbilities().flying) {
-				if (original.isUnderWater() && (original.yCloak - original.yCloakO) < -0.005)
+				if (original.isUnderWater() && (original.getY() - this.yo) < -0.005)
 					currentLivingMotion = LivingMotions.FLOAT;
-				else if (original.yCloak - original.yCloakO < -0.4F || this.isAirborneState())
+				else if (original.getY() - this.yo < -0.4F || this.isAirborneState())
 					currentLivingMotion = LivingMotions.FALL;
 				else if (this.isMoving()) {
 					if (original.isCrouching())
@@ -119,15 +122,18 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 		}
 		
-		MinecraftForge.EVENT_BUS.post(new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion));
-		CapabilityItem activeItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
+		UpdatePlayerMotionEvent.BaseLayer baseLayerEvent = new UpdatePlayerMotionEvent.BaseLayer(this, this.currentLivingMotion, !this.state.updateLivingMotion() && considerInaction);
+		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
+		
+		this.currentLivingMotion = baseLayerEvent.getMotion();
+		CapabilityItem holdingItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
 		
 		if (this.original.isUsingItem()) {
 			UseAnim useAnim = this.original.getUseItem().getUseAnimation();
-			UseAnim capUseAnim = activeItemCap.getUseAnimation(this);
+			UseAnim capUseAnim = holdingItemCap.getUseAnimation(this);
 			
 			if (useAnim == UseAnim.BLOCK || capUseAnim == UseAnim.BLOCK)
-				if (activeItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
+				if (holdingItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
 					currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
 				else
 					currentCompositeMotion = LivingMotions.BLOCK;
@@ -144,25 +150,40 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			else
 				currentCompositeMotion = currentLivingMotion;
 		} else {
-			if (this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
+			if (!this.getEntityState().inaction() && this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 			else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
 				currentCompositeMotion = LivingMotions.DIGGING;
 			else
 				currentCompositeMotion = currentLivingMotion;
 			
-			if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && activeItemCap instanceof RangedWeaponCapability) {
-				this.playReboundAnimation();
+			if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && holdingItemCap instanceof RangedWeaponCapability) {
+				this.playShootingAnimation();
 			}
 		}
 		
-		MinecraftForge.EVENT_BUS.post(new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion));
+		UpdatePlayerMotionEvent.CompositeLayer compositeLayerEvent = new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion);
+		MinecraftForge.EVENT_BUS.post(compositeLayerEvent);
+		
+		this.currentCompositeMotion = compositeLayerEvent.getMotion();
+	}
+	
+	@Override
+	public void onOldPosUpdate() {
+		this.modelYRotO2 = this.modelYRotO;
+		this.xPosO2 = (float)this.original.xOld;
+		this.yPosO2 = (float)this.original.yOld;
+		this.zPosO2 = (float)this.original.zOld;
 	}
 	
 	@Override
 	protected void clientTick(LivingEvent.LivingTickEvent event) {
+		this.xCloakO2 = this.original.xCloakO;
+		this.yCloakO2 = this.original.yCloakO;
+		this.zCloakO2 = this.original.zCloakO;
+		
 		super.clientTick(event);
 		
 		if (!this.getEntityState().updateLivingMotion()) {
@@ -188,6 +209,8 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		if (this.original.deathTime == 1) {
 			this.getClientAnimator().playDeathAnimation();
 		}
+		
+		this.clothSimulator.tick(this);
 	}
 	
 	protected boolean isMoving() {
@@ -195,22 +218,23 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	}
 	
 	public void updateHeldItem(CapabilityItem mainHandCap, CapabilityItem offHandCap) {
-		this.cancelAnyAction();
-	}
-	
-	@Override
-	public void reserveAnimation(StaticAnimation animation) {
-		this.animator.reserveAnimation(animation);
-	}
-	
-	@Override
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
+		this.cancelItemUse();
+		
+		this.getClientAnimator().iterAllLayers((layer) -> {
+			if (layer.isOff()) {
+				return;
+			}
+			
+			layer.animationPlayer.getRealAnimation().get().getProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT).ifPresent((event) -> {
+				event.params(mainHandCap, offHandCap);
+				event.execute(this, layer.animationPlayer.getRealAnimation(), layer.animationPlayer.getPrevElapsedTime(), layer.animationPlayer.getElapsedTime());
+			});
+		});
 	}
 	
 	@Override
 	public boolean overrideRender() {
-		boolean originalShouldRender = this.isBattleMode() || !EpicFightMod.CLIENT_CONFIGS.filterAnimation.getValue();
-		
+		boolean originalShouldRender = this.isBattleMode() || !ClientConfig.filterAnimation;
 		RenderEpicFightPlayerEvent renderepicfightplayerevent = new RenderEpicFightPlayerEvent(this, originalShouldRender);
 		MinecraftForge.EVENT_BUS.post(renderepicfightplayerevent);
 		
@@ -224,16 +248,20 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@Override
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-		if (pose.getJointTransformData().containsKey("Head")) {
+		if (pose.hasTransform("Head") && this.armature.hasJoint("Head")) {
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.modelYRotO - this.original.yHeadRotO;
 				float headRot = this.modelYRot - this.original.yHeadRot;
-				float partialHeadRot = MathUtils.lerpBetween(headRotO, headRot, partialTicks);
+				float partialHeadRot = Mth.wrapDegrees(MathUtils.lerpBetween(headRotO, headRot, partialTicks));
+				float xRot = -this.original.getXRot();
+				partialHeadRot = Mth.clamp(partialHeadRot, -90.0F, 90.0F);
+				
 				OpenMatrix4f toOriginalRotation = this.armature.getBindedTransformFor(pose, this.armature.searchJointByName("Head")).removeScale().removeTranslation().invert();
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
-				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
-				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
+				
+				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis).rotateDeg(xRot, xAxis);
+				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}
 	}
@@ -261,7 +289,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             mat.rotateDeg(-Mth.rotLerp(partialTick, this.original.yBodyRotO, this.original.yBodyRot), Vec3f.Y_AXIS).rotateDeg(f2 * (-this.original.getXRot()), Vec3f.X_AXIS);
             
             Vec3 vec3d = this.original.getViewVector(partialTick);
-            Vec3 vec3d1 = this.original.getDeltaMovement();
+            Vec3 vec3d1 = this.original.getDeltaMovementLerped(partialTick);
             double d0 = vec3d1.horizontalDistanceSqr();
             double d1 = vec3d.horizontalDistanceSqr();
             
@@ -272,6 +300,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
             }
 			
 			return mat;
+			
 		} else if (this.original.isSleeping()) {
 			BlockState blockstate = this.original.getFeetBlockState();
 			float yRot = 0.0F;
@@ -396,5 +425,126 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
         }
 		
 		return Direction.UP;
+	}
+	
+	public void setEpicSkinsInformation(EpicSkins epicSkinsInformation) {
+		this.epicSkinsInformation = epicSkinsInformation;
+	}
+	
+	public EpicSkins getEpicSkinsInformation() {
+		return this.epicSkinsInformation;
+	}
+	
+	public boolean isEpicSkinsLoaded() {
+		return this.epicSkinsInformation != null;
+	}
+	
+	private final ClothSimulator clothSimulator = new ClothSimulator();
+	public float modelYRotO2;
+	public double xPosO2;
+	public double yPosO2;
+	public double zPosO2;
+	public double xCloakO2;
+	public double yCloakO2;
+	public double zCloakO2;
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <SIM extends PhysicsSimulator<?, ?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, ?, SIM> simulationType) {
+		if (simulationType == SimulationTypes.CLOTH) {
+			return Optional.of((SIM)this.clothSimulator);
+		}
+		
+		return Optional.empty();
+	}
+	
+	@Override
+	public ClothSimulator getClothSimulator() {
+		return this.clothSimulator;
+	}
+	
+	@Override
+	public Vec3 getAccurateCloakLocation(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F - partialFrame;
+			
+			double x = Mth.lerp((double)partialFrame, this.xCloakO2, this.original.xCloakO) - Mth.lerp((double)partialFrame, this.xPosO2, this.original.xo);
+            double y = Mth.lerp((double)partialFrame, this.yCloakO2, this.original.yCloakO) - Mth.lerp((double)partialFrame, this.yPosO2, this.original.yo);
+            double z = Mth.lerp((double)partialFrame, this.zCloakO2, this.original.zCloakO) - Mth.lerp((double)partialFrame, this.zPosO2, this.original.zo);
+			
+            return new Vec3(x, y, z);
+		} else {
+			double x = Mth.lerp((double)partialFrame, this.original.xCloakO, this.original.xCloak) - Mth.lerp((double)partialFrame, this.original.xo, this.original.getX());
+            double y = Mth.lerp((double)partialFrame, this.original.yCloakO, this.original.yCloak) - Mth.lerp((double)partialFrame, this.original.yo, this.original.getY());
+            double z = Mth.lerp((double)partialFrame, this.original.zCloakO, this.original.zCloak) - Mth.lerp((double)partialFrame, this.original.zo, this.original.getZ());
+			
+			return new Vec3(x, y, z);
+		}
+	}
+	
+	@Override
+	public Vec3 getAccuratePartialLocation(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+			double x = Mth.lerp((double)partialFrame, this.xPosO2, this.original.xOld);
+			double y = Mth.lerp((double)partialFrame, this.yPosO2, this.original.yOld);
+			double z = Mth.lerp((double)partialFrame, this.zPosO2, this.original.zOld);
+			
+            return new Vec3(x, y, z);
+		} else {
+			double x = Mth.lerp((double)partialFrame, this.original.xOld, this.original.getX());
+			double y = Mth.lerp((double)partialFrame, this.original.yOld, this.original.getY());
+			double z = Mth.lerp((double)partialFrame, this.original.zOld, this.original.getZ());
+			
+			return new Vec3(x, y, z);
+		}
+	}
+	
+	@Override
+	public Vec3 getObjectVelocity() {
+		return new Vec3(this.original.getX() - this.original.xOld, this.original.getY() - this.original.yOld, this.original.getZ() - this.original.zOld);
+	}
+	
+	@Override
+	public float getAccurateYRot(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+            return Mth.rotLerp(partialFrame, this.modelYRotO2, this.getYRotO());
+		} else {
+			return Mth.rotLerp(partialFrame, this.getYRotO(), this.getYRot());
+		}
+	}
+	
+	@Override
+	public float getYRotDelta(float partialFrame) {
+		if (partialFrame < 0.0F) {
+			partialFrame = 1.0F + partialFrame;
+			
+            return Mth.rotLerp(partialFrame, this.modelYRotO2, this.getYRotO()) - this.modelYRotO2;
+		} else {
+			return Mth.rotLerp(partialFrame, this.getYRotO(), this.getYRot()) - this.getYRotO();
+		}
+	}
+
+	@Override
+	public boolean invalid() {
+		return this.original.isRemoved();
+	}
+
+	@Override
+	public float getScale() {
+		return PLAYER_SCALE;
+	}
+
+	@Override
+	public Animator getSimulatableAnimator() {
+		return this.animator;
+	}
+
+	@Override
+	public float getGravity() {
+		return this.getOriginal().isUnderWater() ? 0.98F : 9.8F;
 	}
 }

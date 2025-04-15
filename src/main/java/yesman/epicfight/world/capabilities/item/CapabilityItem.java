@@ -28,8 +28,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.enchantment.Enchantments;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.gameasset.Animations;
@@ -51,19 +52,19 @@ import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public class CapabilityItem {
 	public static CapabilityItem EMPTY = CapabilityItem.builder().build();
-	protected static List<AnimationProvider<?>> commonAutoAttackMotion;
+	protected static List<AnimationAccessor<? extends AttackAnimation>> commonAutoAttackMotion;
 	protected final WeaponCategory weaponCategory;
 	
 	static {
 		commonAutoAttackMotion = Lists.newArrayList();
-		commonAutoAttackMotion.add(() -> Animations.FIST_AUTO1);
-		commonAutoAttackMotion.add(() -> Animations.FIST_AUTO2);
-		commonAutoAttackMotion.add(() -> Animations.FIST_AUTO3);
-		commonAutoAttackMotion.add(() -> Animations.FIST_DASH);
-		commonAutoAttackMotion.add(() -> Animations.FIST_AIR_SLASH);
+		commonAutoAttackMotion.add(Animations.FIST_AUTO1);
+		commonAutoAttackMotion.add(Animations.FIST_AUTO2);
+		commonAutoAttackMotion.add(Animations.FIST_AUTO3);
+		commonAutoAttackMotion.add(Animations.FIST_DASH);
+		commonAutoAttackMotion.add(Animations.FIST_AIR_SLASH);
 	}
 	
-	public static List<AnimationProvider<?>> getBasicAutoAttackMotion() {
+	public static List<AnimationAccessor<? extends AttackAnimation>> getBasicAutoAttackMotion() {
 		return commonAutoAttackMotion;
 	}
 	
@@ -90,9 +91,11 @@ public class CapabilityItem {
 	}
 	
 	protected Map<Style, Map<Attribute, AttributeModifier>> attributeMap;
+	protected Collider collider;
 	
 	protected CapabilityItem(CapabilityItem.Builder builder) {
 		this.weaponCategory = builder.category;
+		this.collider = builder.collider;
 		
 		ImmutableMap.Builder<Style, Map<Attribute, AttributeModifier>> attributeMapbuilder = ImmutableMap.builder();
 		
@@ -173,8 +176,9 @@ public class CapabilityItem {
 			if (contents.getKey().equals(key)) {
 				return component;
 			}
-			// check all arguments.
+			
 			if (contents.getArgs() != null) {
+				// check all arguments.
 				for (Object arg : contents.getArgs()) {
 					if (arg instanceof Component argComponent) {
 						Object ret = this.findComponentArgument(argComponent, key);
@@ -196,12 +200,11 @@ public class CapabilityItem {
 		return null;
 	}
 	
-	@Deprecated /*Fix the mistype in the future */
-	public List<AnimationProvider<?>> getAutoAttckMotion(PlayerPatch<?> playerpatch) {
+	public List<AnimationAccessor<? extends AttackAnimation>> getAutoAttackMotion(PlayerPatch<?> playerpatch) {
 		return getBasicAutoAttackMotion();
 	}
 
-	public List<AnimationProvider<?>> getMountAttackMotion() {
+	public List<AnimationAccessor<? extends AttackAnimation>> getMountAttackMotion() {
 		return null;
 	}
 	
@@ -262,28 +265,11 @@ public class CapabilityItem {
 	}
 
 	public Collider getWeaponCollider() {
-		return ColliderPreset.FIST;
+		return this.collider != null ? this.collider : ColliderPreset.FIST;
 	}
 
 	public HitParticleType getHitParticle() {
 		return EpicFightParticles.HIT_BLUNT.get();
-	}
-	
-	public void addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) {
-		Map<Attribute, AttributeModifier> map = this.attributeMap.computeIfAbsent(style, (key) -> Maps.newHashMap());
-		map.put(attributePair.getFirst(), attributePair.getSecond());
-	}
-	
-	public void addStyleAttributes(Style style, double armorNegation, double impact, int maxStrikes) {
-		if (Double.compare(armorNegation, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.ARMOR_NEGATION.get(), EpicFightAttributes.getArmorNegationModifier(armorNegation)));
-		}
-		if (Double.compare(impact, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.IMPACT.get(), EpicFightAttributes.getImpactModifier(impact)));
-		}
-		if (Double.compare(maxStrikes, 0.0D) != 0) {
-			this.addStyleAttibutes(style, Pair.of(EpicFightAttributes.MAX_STRIKES.get(), EpicFightAttributes.getMaxStrikesModifier(maxStrikes)));
-		}
 	}
 	
 	public final Map<Attribute, AttributeModifier> getDamageAttributesInCondition(Style style) {
@@ -325,7 +311,7 @@ public class CapabilityItem {
 		return map;
     }
 	
-	public Map<LivingMotion, AnimationProvider<?>> getLivingMotionModifier(LivingEntityPatch<?> playerpatch, InteractionHand hand) {
+	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingMotionModifier(LivingEntityPatch<?> playerpatch, InteractionHand hand) {
 		return Maps.newHashMap();
 	}
 	
@@ -333,7 +319,7 @@ public class CapabilityItem {
 		return this.canBePlacedOffhand() ? Styles.ONE_HAND : Styles.TWO_HAND;
 	}
 	
-	public StaticAnimation getGuardMotion(GuardSkill skill, GuardSkill.BlockType blockType, PlayerPatch<?> playerpatch) {
+	public AnimationAccessor<? extends StaticAnimation> getGuardMotion(GuardSkill skill, GuardSkill.BlockType blockType, PlayerPatch<?> playerpatch) {
 		return null;
 	}
 	
@@ -355,11 +341,6 @@ public class CapabilityItem {
 	
 	public boolean availableOnHorse() {
 		return true;
-	}
-	
-	public void setConfigFileAttribute(double armorNegation1, double impact1, int maxStrikes1, double armorNegation2, double impact2, int maxStrikes2) {
-		this.addStyleAttributes(Styles.ONE_HAND, armorNegation1, impact1, maxStrikes1);
-		this.addStyleAttributes(Styles.TWO_HAND, armorNegation2, impact2, maxStrikes2);
 	}
 	
 	public boolean checkOffhandValid(LivingEntityPatch<?> entitypatch) {
@@ -424,13 +405,15 @@ public class CapabilityItem {
 	
 	public static class Builder {
 		Function<Builder, CapabilityItem> constructor;
-		WeaponCategory category;
 		Map<Style, Map<Attribute, AttributeModifier>> attributeMap;
+		WeaponCategory category;
+		Collider collider;
 		
 		protected Builder() {
 			this.constructor = CapabilityItem::new;
-			this.category = WeaponCategories.FIST;
 			this.attributeMap = Maps.newHashMap();
+			this.category = WeaponCategories.FIST;
+			this.collider = ColliderPreset.FIST;
 		}
 		
 		public Builder constructor(Function<Builder, CapabilityItem> constructor) {
@@ -443,6 +426,11 @@ public class CapabilityItem {
 			return this;
 		}
 		
+		public Builder collider(Collider collider) {
+			this.collider = collider;
+			return this;
+		}
+		
 		public Builder addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) {
 			Map<Attribute, AttributeModifier> map = this.attributeMap.computeIfAbsent(style, (key) -> Maps.newHashMap());
 			map.put(attributePair.getFirst(), attributePair.getSecond());
@@ -452,6 +440,10 @@ public class CapabilityItem {
 		
 		public final CapabilityItem build() {
 			return this.constructor.apply(this);
+		}
+		
+		public Collider getCollider() {
+			return this.collider;
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package yesman.epicfight.api.animation.property;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -12,18 +13,24 @@ import com.ibm.icu.impl.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.RegistryObject;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
-import yesman.epicfight.api.animation.property.AnimationEvent.TimePeriodEvent;
-import yesman.epicfight.api.animation.property.AnimationEvent.TimeStampedEvent;
+import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordGetter;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions.MoveCoordSetter;
+import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.animation.types.LinkAnimation;
+import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.BakedInverseKinematicsDefinition;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.InverseKinematicsDefinition;
 import yesman.epicfight.api.utils.HitEntityList.Priority;
 import yesman.epicfight.api.utils.TimePairList;
 import yesman.epicfight.api.utils.math.ValueModifier;
@@ -31,6 +38,7 @@ import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.particle.HitParticleType;
 import yesman.epicfight.skill.BasicAttack;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.damagesource.ExtraDamageInstance;
 import yesman.epicfight.world.damagesource.StunType;
 
@@ -86,27 +94,22 @@ public abstract class AnimationProperty<T> {
 		/**
 		 * Events that are fired in every tick.
 		 */
-		public static final StaticAnimationProperty<AnimationEvent[]> EVENTS = new StaticAnimationProperty<AnimationEvent[]> ();
-		
-		/**
-		 * Events that are fired in specific time.
-		 */
-		public static final StaticAnimationProperty<TimeStampedEvent[]> TIME_STAMPED_EVENTS = new StaticAnimationProperty<TimeStampedEvent[]> ();
-		
-		/**
-		 * Events that are fired in specific time.
-		 */
-		public static final StaticAnimationProperty<TimePeriodEvent[]> TIME_PERIOD_EVENTS = new StaticAnimationProperty<TimePeriodEvent[]> ();
+		public static final StaticAnimationProperty<List<AnimationEvent<?, ?>>> TICK_EVENTS = new StaticAnimationProperty<List<AnimationEvent<?, ?>>> ();
 		
 		/**
 		 * Events that are fired when the animation starts.
 		 */
-		public static final StaticAnimationProperty<AnimationEvent[]> ON_BEGIN_EVENTS = new StaticAnimationProperty<AnimationEvent[]> ();
+		public static final StaticAnimationProperty<List<SimpleEvent<?>>> ON_BEGIN_EVENTS = new StaticAnimationProperty<List<SimpleEvent<?>>> ();
 		
 		/**
 		 * Events that are fired when the animation ends.
 		 */
-		public static final StaticAnimationProperty<AnimationEvent[]> ON_END_EVENTS = new StaticAnimationProperty<AnimationEvent[]> ();
+		public static final StaticAnimationProperty<List<SimpleEvent<?>>> ON_END_EVENTS = new StaticAnimationProperty<List<SimpleEvent<?>>> ();
+		
+		/**
+		 * An event triggered when entity changes an item in hand.
+		 */
+		public static final StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ON_ITEM_CHANGE_EVENT = new StaticAnimationProperty<SimpleEvent<AnimationEvent.E2<CapabilityItem, CapabilityItem>>> ();
 		
 		/**
 		 * You can modify the playback speed of the animation.
@@ -127,9 +130,34 @@ public abstract class AnimationProperty<T> {
 		 * Fix the head rotation to the player's body rotation
 		 */
 		public static final StaticAnimationProperty<Boolean> FIXED_HEAD_ROTATION = new StaticAnimationProperty<Boolean> ();
+		
+		/**
+		 * Defines static animations as link animation when the animation is followed by a specific animation
+		 */
+		public static final StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_FROM = new StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> ();
+		
+		/**
+		 * Defines static animations as link animation when the animation is following a specific animation
+		 */
+		public static final StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> TRANSITION_ANIMATIONS_TO = new StaticAnimationProperty<Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>> ();
+		
+		/**
+		 * Disable physics while playing animation
+		 */
+		public static final StaticAnimationProperty<Boolean> NO_PHYSICS = new StaticAnimationProperty<Boolean> ("no_physics", Codec.BOOL);
+		
+		/**
+		 * Inverse kinematics information
+		 */
+		public static final StaticAnimationProperty<List<InverseKinematicsDefinition>> IK_DEFINITION = new StaticAnimationProperty<List<InverseKinematicsDefinition>> ();
+		
+		/**
+		 * This property automatically baked when animation is loaded
+		 */
+		public static final StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> BAKED_IK_DEFINITION = new StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> ();
 	}
 	
-	public static class ActionAnimationProperty<T> extends AnimationProperty<T> {
+	public static class ActionAnimationProperty<T> extends StaticAnimationProperty<T> {
 		public ActionAnimationProperty(String rl, @Nullable Codec<T> codecs) {
 			super(rl, codecs);
 		}
@@ -142,6 +170,11 @@ public abstract class AnimationProperty<T> {
 		 * This property will set the entity's delta movement to (0, 0, 0) at the beginning of an animation if true.
 		 */
 		public static final ActionAnimationProperty<Boolean> STOP_MOVEMENT = new ActionAnimationProperty<Boolean> ("stop_movements", Codec.BOOL);
+		
+		/**
+		 * This property will set the entity's delta movement to (0, 0, 0) at the beginning of an animation if true.
+		 */
+		public static final ActionAnimationProperty<Boolean> REMOVE_DELTA_MOVEMENT = new ActionAnimationProperty<Boolean> ("revmoe_delta_move", Codec.BOOL);
 		
 		/**
 		 * This property will move entity's coord also as y axis if true.
@@ -170,12 +203,12 @@ public abstract class AnimationProperty<T> {
 		public static final ActionAnimationProperty<TimePairList> MOVE_TIME = new ActionAnimationProperty<TimePairList> ();
 		
 		/**
-		 * Set the dynamic coordinates of action animation.
+		 * Set the dynamic coordinates of {@link ActionAnimation}. Called before creation of {@link LinkAnimation}.
 		 */
 		public static final ActionAnimationProperty<MoveCoordSetter> COORD_SET_BEGIN = new ActionAnimationProperty<MoveCoordSetter> ();
 		
 		/**
-		 * Set the dynamic coordinates of action animation.
+		 * Set the dynamic coordinates of {@link ActionAnimation}.
 		 */
 		public static final ActionAnimationProperty<MoveCoordSetter> COORD_SET_TICK = new ActionAnimationProperty<MoveCoordSetter> ();
 		
@@ -200,7 +233,7 @@ public abstract class AnimationProperty<T> {
 		public static final ActionAnimationProperty<Boolean> IS_DEATH_ANIMATION = new ActionAnimationProperty<Boolean> ("is_death", Codec.BOOL);
 		
 		/**
-		 * This property determines the update time of {@link ActionAnimationProperty#COORD_SET_TICK}
+		 * This property determines the update time of {@link ActionAnimationProperty#COORD_SET_TICK}. If the current time out of the bound it uses {@link MoveCoordFunctions#RAW_COORD and MoveCoordFunctions#DIFF_FROM_PREV_COORD}}
 		 */
 		public static final ActionAnimationProperty<TimePairList> COORD_UPDATE_TIME = new ActionAnimationProperty<TimePairList> ();
 		
@@ -208,9 +241,39 @@ public abstract class AnimationProperty<T> {
 		 * This property determines if it reset the player basic attack combo counter or not {@link BasicAttack}
 		 */
 		public static final ActionAnimationProperty<Boolean> RESET_PLAYER_COMBO_COUNTER = new ActionAnimationProperty<Boolean> ("reset_combo_attack_counter", Codec.BOOL);
+		
+		/**
+		 * Provide destination of action animation {@link MoveCoordFunctions}
+		 */
+		public static final ActionAnimationProperty<DestLocationProvider> DEST_LOCATION_PROVIDER = new ActionAnimationProperty<DestLocationProvider> ();
+		
+		/**
+		 * Provide y rotation of entity {@link MoveCoordFunctions}
+		 */
+		public static final ActionAnimationProperty<YRotProvider> ENTITY_YROT_PROVIDER = new ActionAnimationProperty<YRotProvider> ();
+		
+		/**
+		 * Provide y rotation of tracing coord {@link MoveCoordFunctions}
+		 */
+		public static final ActionAnimationProperty<YRotProvider> DEST_COORD_YROT_PROVIDER = new ActionAnimationProperty<YRotProvider> ();
+		
+		/**
+		 * Decides the index of start key frame for coord transform, See also with {@link MoveCoordFunctions#TRACE_ORIGIN_AS_DESTINATION}
+		 */
+		public static final ActionAnimationProperty<Integer> COORD_START_KEYFRAME_INDEX = new ActionAnimationProperty<Integer> ();
+		
+		/**
+		 * Decides the index of destination key frame for coord transform, See also with {@link MoveCoordFunctions#TRACE_ORIGIN_AS_DESTINATION}
+		 */
+		public static final ActionAnimationProperty<Integer> COORD_DEST_KEYFRAME_INDEX = new ActionAnimationProperty<Integer> ();
+		
+		/**
+		 * Determines if an entity should look where a camera is looking at the beginning of an animation (player only)
+		 */
+		public static final ActionAnimationProperty<Boolean> SYNC_CAMERA = new ActionAnimationProperty<Boolean> ("sync_camera", Codec.BOOL);
 	}
 	
-	public static class AttackAnimationProperty<T> extends AnimationProperty<T> {
+	public static class AttackAnimationProperty<T> extends ActionAnimationProperty<T> {
 		public AttackAnimationProperty(String rl, @Nullable Codec<T> codecs) {
 			super(rl, codecs);
 		}
@@ -245,13 +308,13 @@ public abstract class AnimationProperty<T> {
 		public static final AttackAnimationProperty<Double> REACH = new AttackAnimationProperty<Double> ("reach", Codec.DOUBLE);
 	}
 	
-	public static class AttackPhaseProperty<T> extends AnimationProperty<T> {
+	public static class AttackPhaseProperty<T> {
 		public AttackPhaseProperty(String rl, @Nullable Codec<T> codecs) {
-			super(rl, codecs);
+			//super(rl, codecs);
 		}
 		
 		public AttackPhaseProperty() {
-			this(null, null);
+			//this(null, null);
 		}
 		
 		public static final AttackPhaseProperty<ValueModifier> MAX_STRIKES_MODIFIER = new AttackPhaseProperty<ValueModifier> ("max_strikes", ValueModifier.CODECS);
@@ -273,6 +336,9 @@ public abstract class AnimationProperty<T> {
 		void register(Map<AnimationProperty<T>, Object> properties, AnimationProperty<T> key, T object);
 	}
 	
+	/**
+	 * Static Animation Property
+	 */
 	@FunctionalInterface
 	public interface PoseModifier {
 		void modify(DynamicAnimation self, Pose pose, LivingEntityPatch<?> entitypatch, float elapsedTime, float partialTicks);
@@ -286,5 +352,15 @@ public abstract class AnimationProperty<T> {
 	@FunctionalInterface
 	public interface PlaybackTimeModifier {
 		Pair<Float, Float> modify(DynamicAnimation self, LivingEntityPatch<?> entitypatch, float speed, float prevElapsedTime, float elapsedTime);
+	}
+	
+	@FunctionalInterface
+	public interface DestLocationProvider {
+		Vec3 get(DynamicAnimation self, LivingEntityPatch<?> entitypatch);
+	}
+	
+	@FunctionalInterface
+	public interface YRotProvider {
+		float get(DynamicAnimation self, LivingEntityPatch<?> entitypatch);
 	}
 }

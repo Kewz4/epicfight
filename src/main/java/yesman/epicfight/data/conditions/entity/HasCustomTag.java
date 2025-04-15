@@ -26,6 +26,7 @@ public class HasCustomTag extends EntityCondition {
 	
 	@Override
 	public Condition<Entity> read(CompoundTag tag) {
+		// This condition doesn't support json conversion
 		return null;
 	}
 	

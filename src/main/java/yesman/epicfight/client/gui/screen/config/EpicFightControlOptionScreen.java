@@ -11,16 +11,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.widgets.EpicFightOptionList;
 import yesman.epicfight.client.gui.widgets.RewindableButton;
-import yesman.epicfight.config.EpicFightOptions;
-import yesman.epicfight.config.OptionHandler;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightControlOptionScreen extends EpicFightOptionSubScreen {
 	private EpicFightOptionList optionsList;
 	
-	public EpicFightControlOptionScreen(Screen parentScreen, EpicFightOptions config) {
-		super(parentScreen, config, Component.translatable("gui." + EpicFightMod.MODID + ".control_options"));
+	public EpicFightControlOptionScreen(Screen parentScreen) {
+		super(parentScreen, Component.translatable("gui." + EpicFightMod.MODID + ".control_options"));
 		
 	}
 	
@@ -28,55 +27,50 @@ public class EpicFightControlOptionScreen extends EpicFightOptionSubScreen {
 	protected void init() {
 		super.init();
 		
+		String modid = EpicFightMod.MODID;
 		this.optionsList = new EpicFightOptionList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
-		
-		OptionHandler<Integer> longPressCounter = this.config.longPressCount;
-		OptionHandler<Boolean> cameraAutoSwitch = this.config.cameraAutoSwitch;
-		OptionHandler<Boolean> autoPreparation = this.config.autoPreparation;
-		OptionHandler<Boolean> noMiningInCombat = this.config.noMiningInCombat;
-		
 		int buttonHeight = -32;
 		
 		Button longPressCounterButton = new RewindableButton(this.width / 2 - 165, this.height / 4 + buttonHeight, 160, 20,
-			Component.translatable("gui."+EpicFightMod.MODID+".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(longPressCounter.getValue()))),
+			Component.translatable("gui." + modid + ".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(ClientConfig.longPressCounter))),
 			(button) -> {
-				longPressCounter.setValue(longPressCounter.getValue() + 1);
-				button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(longPressCounter.getValue()))));
+				ClientConfig.longPressCounter++;
+				button.setMessage(Component.translatable("gui." + modid + ".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(ClientConfig.longPressCounter))));
 			},
 			(button) -> {
-				longPressCounter.setValue(longPressCounter.getValue() - 1);
-				button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(longPressCounter.getValue()))));
+				ClientConfig.longPressCounter--;
+				button.setMessage(Component.translatable("gui." + modid + ".long_press_counter", (ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(ClientConfig.longPressCounter))));
 			}
 		);
 		
-		longPressCounterButton.setTooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".long_press_counter.tooltip")));
+		longPressCounterButton.setTooltip(Tooltip.create(Component.translatable("gui." + modid + ".long_press_counter.tooltip")));
 		
-		Button cameraAutoSwitchButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".camera_auto_switch." + (cameraAutoSwitch.getValue() ? "on" : "off")), (button) -> {
-			cameraAutoSwitch.setValue(!cameraAutoSwitch.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".camera_auto_switch." + (cameraAutoSwitch.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".camera_auto_switch.tooltip"))).build();
+		Button cameraAutoSwitchButton = Button.builder(Component.translatable("gui." + modid + ".camera_auto_switch." + (ClientConfig.authSwitchCamera ? "on" : "off")), (button) -> {
+			ClientConfig.authSwitchCamera = !ClientConfig.authSwitchCamera;
+			button.setMessage(Component.translatable("gui." + modid + ".camera_auto_switch." + (ClientConfig.authSwitchCamera ? "on" : "off")));
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".camera_auto_switch.tooltip"))).build();
 		
 		this.optionsList.addSmall(longPressCounterButton, cameraAutoSwitchButton);
 		
 		buttonHeight += 24;
 		
-		Button autoPreparationButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".auto_preparation." + (autoPreparation.getValue() ? "on" : "off")), (button) -> {
-			autoPreparation.setValue(!autoPreparation.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".auto_preparation." + (autoPreparation.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".auto_preparation.tooltip"))).build();
+		Button autoPreparationButton = Button.builder(Component.translatable("gui." + modid + ".auto_preparation." + (ClientConfig.autoPreparation ? "on" : "off")), (button) -> {
+			ClientConfig.autoPreparation = !ClientConfig.autoPreparation;
+			button.setMessage(Component.translatable("gui." + modid + ".auto_preparation." + (ClientConfig.autoPreparation ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".auto_preparation.tooltip"))).build();
 		
-		Button autoSwitchingItems = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".auto_switching_items"), (button) -> {
+		Button autoSwitchingItems = Button.builder(Component.translatable("gui." + modid + ".auto_switching_items"), (button) -> {
 			this.minecraft.setScreen(new EditSwitchingItemScreen(this));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".auto_switching_items.tooltip"))).build();
+		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".auto_switching_items.tooltip"))).build();
 		
 		this.optionsList.addSmall(autoPreparationButton, autoSwitchingItems);
 		
 		buttonHeight += 24;
 		
-		Button noMiningInCombatButton = Button.builder(Component.translatable("gui."+EpicFightMod.MODID+".no_mining_in_combat." + (noMiningInCombat.getValue() ? "on" : "off")), (button) -> {
-			noMiningInCombat.setValue(!noMiningInCombat.getValue());
-			button.setMessage(Component.translatable("gui."+EpicFightMod.MODID+".no_mining_in_combat." + (noMiningInCombat.getValue() ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui."+EpicFightMod.MODID+".no_mining_in_combat.tooltip"))) .build();
+		Button noMiningInCombatButton = Button.builder(Component.translatable("gui." + modid + ".no_mining_in_combat." + (ClientConfig.preventMiningInCombatMode ? "on" : "off")), (button) -> {
+			ClientConfig.preventMiningInCombatMode = !ClientConfig.preventMiningInCombatMode;
+			button.setMessage(Component.translatable("gui." + modid + ".no_mining_in_combat." + (ClientConfig.preventMiningInCombatMode ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".no_mining_in_combat.tooltip"))) .build();
 		
 		this.optionsList.addSmall(noMiningInCombatButton, null);
 		this.addWidget(this.optionsList);

@@ -25,10 +25,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec2i;
+import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
+import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
+import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.config.EpicFightOptions;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.Skill.ActivateType;
 import yesman.epicfight.skill.SkillContainer;
@@ -46,21 +47,19 @@ public class BattleModeGui extends ModIngameGui {
 		new Vec2f(1.0F, 0.0F)
 	};
 	
-	public Font font;
+	private Minecraft minecraft;
 	private int sliding;
 	private boolean slidingToggle;
 	private final List<SkillContainer> skillIcons = Lists.newLinkedList();
-	private final EpicFightOptions config;
 
 	public BattleModeGui(Minecraft minecraft) {
 		this.sliding = 29;
 		this.slidingToggle = false;
-		this.font = minecraft.font;
-		this.config = EpicFightMod.CLIENT_CONFIGS;
+		this.minecraft = minecraft;
 	}
 	
 	public void renderGui(LocalPlayerPatch playerpatch, GuiGraphics guiGraphics, float partialTicks) {
-		if (!playerpatch.getOriginal().isAlive() || playerpatch.getOriginal().getVehicle() != null) {
+		if (!playerpatch.getOriginal().isAlive() || playerpatch.getOriginal().isSpectator() || playerpatch.getOriginal().getVehicle() != null) {
 			return;
 		}
 		
@@ -99,7 +98,7 @@ public class BattleModeGui extends ModIngameGui {
 		float stamina = playerpatch.getStamina();
 		
 		if (maxStamina > 0.0F && stamina < maxStamina) {
-			Vec2i pos = this.config.getStaminaPosition(width, height);
+			Vec2i pos = ClientConfig.getStaminaPosition(width, height);
 			float prevStamina = playerpatch.getPrevStamina();
 			float ratio = (prevStamina + (stamina - prevStamina) * partialTicks) / maxStamina;
 
@@ -116,7 +115,7 @@ public class BattleModeGui extends ModIngameGui {
 			int chargeAmount = playerpatch.getChargingSkill().getChargingAmount(playerpatch);
 			int prevChargingAmount = playerpatch.getPrevChargingAmount();
 			float ratio = Math.min((prevChargingAmount + (chargeAmount - prevChargingAmount) * partialTicks) / playerpatch.getChargingSkill().getMaxChargingTicks(), 1.0F);
-			Vec2i pos = this.config.getChargingBarPosition(width, height);
+			Vec2i pos = ClientConfig.getChargingBarPosition(width, height);
 
 			poseStack.pushPose();
 			poseStack.translate(0, this.sliding, 0);
@@ -124,11 +123,11 @@ public class BattleModeGui extends ModIngameGui {
 			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
 			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
 
-			ResourceLocation rl = new ResourceLocation(playerpatch.getChargingSkill().toString());
+			ResourceLocation rl = ResourceLocation.parse(playerpatch.getChargingSkill().toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();
 			
-			int stringWidth = this.font.width(skillName);
-			guiGraphics.drawString(this.font, skillName, (pos.x + 120 - stringWidth * 0.5F), pos.y - 12, 16777215, true);
+			int stringWidth = this.minecraft.font.width(skillName);
+			guiGraphics.drawString(this.minecraft.font, skillName, (pos.x + 120 - stringWidth * 0.5F), pos.y - 12, 16777215, true);
 
 			poseStack.popPose();
 		}
@@ -150,11 +149,11 @@ public class BattleModeGui extends ModIngameGui {
 			this.drawWeaponInnateIcon(playerpatch, playerpatch.getSkill(SkillSlots.WEAPON_INNATE), guiGraphics, partialTicks);
 		}
 
-		ClientConfig.AlignDirection alignDirection = this.config.passivesAlignDirection.getValue();
-		ClientConfig.HorizontalBasis horBasis = this.config.passivesXBase.getValue();
-		ClientConfig.VerticalBasis verBasis = this.config.passivesYBase.getValue();
-		int passiveX = horBasis.positionGetter.apply(width, this.config.passivesX.getValue());
-		int passiveY = verBasis.positionGetter.apply(height, this.config.passivesY.getValue());
+		AlignDirection alignDirection = ClientConfig.passiveAlignDirection;
+		HorizontalBasis horBasis = ClientConfig.passiveBaseX;
+		VerticalBasis verBasis = ClientConfig.passiveBaseY;
+		int passiveX = horBasis.positionGetter.apply(width, ClientConfig.passiveX);
+		int passiveY = verBasis.positionGetter.apply(height, ClientConfig.passiveY);
 		int icons = this.skillIcons.size();
 		Vec2i slotCoord = alignDirection.startCoordGetter.get(passiveX, passiveY, 24, 24, icons, horBasis, verBasis);
 
@@ -189,14 +188,14 @@ public class BattleModeGui extends ModIngameGui {
 		Window sr = Minecraft.getInstance().getWindow();
 		int width = sr.getGuiScaledWidth();
 		int height = sr.getGuiScaledHeight();
-		Vec2i pos = this.config.getWeaponInnatePosition(width, height);
+		Vec2i pos = ClientConfig.getWeaponInnatePosition(width, height);
 
 		poseStack.pushPose();
 		poseStack.translate(0, (float)this.sliding, 0);
 		
 		boolean creative = playerpatch.getOriginal().isCreative();
 		boolean fullstack = creative || container.isFull();
-		boolean canUse = !container.isDisabled() && container.getSkill().checkExecuteCondition(playerpatch);
+		boolean canUse = !container.isDisabled() && container.getSkill().checkExecuteCondition(container);
 		float cooldownRatio = (fullstack || container.isActivated()) ? 1.0F : container.getResource(partialTicks);
 		int vertexNum = 0;
 		float iconSize = 32.0F;
@@ -296,18 +295,18 @@ public class BattleModeGui extends ModIngameGui {
         
         if (container.isActivated() && (container.getSkill().getActivateType() == ActivateType.DURATION || container.getSkill().getActivateType() == ActivateType.DURATION_INFINITE)) {
 			String s = String.format("%.0f", container.getRemainDuration() / 20.0F);
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(this.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
 		} else if (!fullstack) {
 			String s = String.valueOf((int)(cooldownRatio * 100.0F));
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(this.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 13 - stringWidth, pos.y + 13, 16777215, true);
 		}
 		
 		if (container.getSkill().getMaxStack() > 1) {
 			String s = String.valueOf(container.getStack());
-			int stringWidth = (this.font.width(s) - 6) / 3;
-			guiGraphics.drawString(font, s, pos.x + 25 - stringWidth, pos.y + 22, 16777215, true);
+			int stringWidth = (this.minecraft.font.width(s) - 6) / 3;
+			guiGraphics.drawString(this.minecraft.font, s, pos.x + 25 - stringWidth, pos.y + 22, 16777215, true);
 		}
 		
 		poseStack.popPose();
@@ -323,11 +322,15 @@ public class BattleModeGui extends ModIngameGui {
 		this.slidingToggle = false;
 	}
 	
-	public void reset() {
+	public void init() {
 		this.skillIcons.clear();
 	}
 
 	public int getSlidingProgression() {
 		return this.sliding;
+	}
+	
+	public Font getFont() {
+		return this.minecraft.font;
 	}
 }

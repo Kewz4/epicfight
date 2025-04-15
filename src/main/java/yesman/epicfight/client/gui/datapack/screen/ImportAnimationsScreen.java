@@ -30,18 +30,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.Joint;
-import yesman.epicfight.api.animation.types.datapack.ClipHoldingAnimation;
-import yesman.epicfight.api.animation.types.datapack.FakeAnimation;
+import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.animation.types.datapack.DatapackAnimation;
+import yesman.epicfight.api.animation.types.datapack.EditorAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.collider.MultiOBBCollider;
 import yesman.epicfight.api.collider.OBBCollider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.gui.datapack.widgets.CheckBox;
 import yesman.epicfight.client.gui.datapack.widgets.ComboBox;
@@ -62,17 +62,17 @@ public class ImportAnimationsScreen extends Screen {
 	private final SelectAnimationScreen caller;
 	private final Grid animationGrid;
 	private final ModelPreviewer modelPreviewer;
-	private final List<FakeAnimation> fakeAnimations = Lists.newArrayList();
-	private InputComponentList<FakeAnimation> inputComponentsList;
-	private ComboBox<FakeAnimation.AnimationType> animationType;
-	private Consumer<FakeAnimation.AnimationType> responder;
-	private Map<ResourceLocation, PackEntry<FakeAnimation, ClipHoldingAnimation>> userAnimations;
+	private final List<EditorAnimation> fakeAnimations = Lists.newArrayList();
+	private InputComponentList<EditorAnimation> inputComponentsList;
+	private ComboBox<EditorAnimation.AnimationType> animationType;
+	private Consumer<EditorAnimation.AnimationType> responder;
+	private Map<ResourceLocation, PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>>> userAnimations;
 	
-	public ImportAnimationsScreen(SelectAnimationScreen caller, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	public ImportAnimationsScreen(SelectAnimationScreen caller, AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 		super(Component.literal("register_animation_screen"));
 		
 		this.userAnimations = DatapackEditScreen.getCurrentScreen().getUserAniamtions();
-		this.fakeAnimations.addAll(this.userAnimations.values().stream().map(PackEntry::getKey).map(FakeAnimation::deepCopy).toList());
+		this.fakeAnimations.addAll(this.userAnimations.values().stream().map(PackEntry::getKey).map(EditorAnimation::deepCopy).toList());
 		this.caller = caller;
 		this.modelPreviewer = new ModelPreviewer(10, 15, 0, 140, HorizontalSizing.LEFT_RIGHT, null, armature, mesh);
 		this.modelPreviewer.setCollider(ColliderPreset.FIST);
@@ -92,9 +92,9 @@ public class ImportAnimationsScreen extends Screen {
 										this.inputComponentsList.importTag(this.fakeAnimations.get(rowposition));
 										this.modelPreviewer.setTrailInfo();
 										
-										FakeAnimation.AnimationType animationType = this.fakeAnimations.get(rowposition).getAnimationClass();
+										EditorAnimation.AnimationType animationType = this.fakeAnimations.get(rowposition).getAnimationClass();
 										
-										if (animationType == FakeAnimation.AnimationType.ATTACK || animationType == FakeAnimation.AnimationType.BASIC_ATTACK || animationType == FakeAnimation.AnimationType.DASH_ATTACK || animationType == FakeAnimation.AnimationType.AIR_SLASH) {
+										if (animationType == EditorAnimation.AnimationType.ATTACK || animationType == EditorAnimation.AnimationType.BASIC_ATTACK || animationType == EditorAnimation.AnimationType.DASH_ATTACK || animationType == EditorAnimation.AnimationType.AIR_SLASH) {
 											this.inputComponentsList.getComponent(7, 1)._setActive(false);
 											this.inputComponentsList.getComponent(8, 1)._setActive(false);
 											this.inputComponentsList.getComponent(9, 1)._setActive(false);
@@ -148,7 +148,7 @@ public class ImportAnimationsScreen extends Screen {
 		
 		this.inputComponentsList = new InputComponentList<>(this, 0, 0, 0, 0, 30) {
 			@Override
-			public void importTag(FakeAnimation fakeAnim) {
+			public void importTag(EditorAnimation fakeAnim) {
 				ImportAnimationsScreen.this.rearrangeComponents(fakeAnim.getAnimationClass());
 				this.setComponentsActive(true);
 				
@@ -263,21 +263,21 @@ public class ImportAnimationsScreen extends Screen {
 		
 		this.responder = (clz) -> {
 			if (clz != null) {
-				FakeAnimation fakeAnim = this.fakeAnimations.get(this.animationGrid.getRowposition());
+				EditorAnimation fakeAnim = this.fakeAnimations.get(this.animationGrid.getRowposition());
 				fakeAnim.setAnimationClass(clz);
 				this.rearrangeComponents(clz);
 			}
 		};
 		
 		this.animationType = new ComboBox<>(this, this.font, 0, 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8, Component.translatable("datapack_edit.import_animation.type"),
-											List.of(FakeAnimation.AnimationType.values()), (type) -> type.toString(), this.responder);
+											List.of(EditorAnimation.AnimationType.values()), (type) -> type.toString(), this.responder);
 		
-		for (PackEntry<FakeAnimation, ClipHoldingAnimation> entry : this.userAnimations.values()) {
+		for (PackEntry<EditorAnimation, DatapackAnimation<? extends StaticAnimation>> entry : this.userAnimations.values()) {
 			this.animationGrid.addRowWithDefaultValues("animation_name", entry.getKey().getParameter("path"));
 		}
 	}
 	
-	public void rearrangeComponents(FakeAnimation.AnimationType animationClass) {
+	public void rearrangeComponents(EditorAnimation.AnimationType animationClass) {
 		ScreenRectangle screenRect = this.getRectangle();
 		
 		this.modelPreviewer.setCollider(null);
@@ -366,7 +366,7 @@ public class ImportAnimationsScreen extends Screen {
 			final ResizableEditBox colliderSizeZ = new ResizableEditBox(this.font, 0, 35, 0, 15, Component.translatable("datapack_edit.collider.size.z"), HorizontalSizing.LEFT_WIDTH, null);
 			
 			final ComboBox<Joint> colliderJoint = new ComboBox<>(this, this.font, 0, 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8, Component.translatable("datapack_edit.import_animation.joint"),
-																	this.modelPreviewer.getArmature().getRootJoint().getAllJoints(), Joint::getName, null);
+																	this.modelPreviewer.getArmature().get().rootJoint.getAllJoints(), Joint::getName, null);
 			final ComboBox<InteractionHand> interactionHand = new ComboBox<>(this, this.font, 0, 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8, Component.translatable("datapack_edit.import_animation.hand"),
 																				List.of(InteractionHand.MAIN_HAND, InteractionHand.OFF_HAND), ParseUtil::snakeToSpacedCamel, null);
 			final PopupBox.ColliderPopupBox colliderPopup = new PopupBox.ColliderPopupBox(this, font, 0, 30, 130, 15, HorizontalSizing.LEFT_RIGHT, null, Component.translatable("datapack_edit.collider"), null);
@@ -394,7 +394,7 @@ public class ImportAnimationsScreen extends Screen {
 										.rowEditable(RowEditButton.ADD_REMOVE)
 										.transparentBackground(false)
 										.rowpositionChanged((rowposition, values) -> {
-											FakeAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
+											EditorAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
 											ListTag phases = fakeAnimation.getParameter("phases");
 											CompoundTag tag = phases.getCompound(rowposition);
 											
@@ -406,7 +406,7 @@ public class ImportAnimationsScreen extends Screen {
 											if (tag.contains("joint")) {
 												String armature$joint = tag.getString("joint");
 												String joinName = armature$joint.substring(armature$joint.lastIndexOf('.') + 1);
-												colliderJoint._setValue(this.modelPreviewer.getArmature().searchJointByName(joinName));
+												colliderJoint._setValue(this.modelPreviewer.getArmature().get().searchJointByName(joinName));
 											} else {
 												colliderJoint._setValue(null);
 											}
@@ -454,7 +454,7 @@ public class ImportAnimationsScreen extends Screen {
 														.editable(false)
 														.width(200))
 										.pressAdd((grid, button) -> {
-											FakeAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
+											EditorAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
 											ListTag phases = fakeAnimation.getParameter("phases");
 											
 											if (phases.isEmpty()) {
@@ -587,7 +587,7 @@ public class ImportAnimationsScreen extends Screen {
 				}
 				
 				tag.put("size", size);
-				FakeAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
+				EditorAnimation fakeAnimation = this.fakeAnimations.get(this.animationGrid.getRowposition());
 				ListTag phases = fakeAnimation.getParameter("phases");
 				CompoundTag phaseTag = phases.getCompound(phasesGrid.getRowposition());
 				
@@ -761,7 +761,7 @@ public class ImportAnimationsScreen extends Screen {
 			this.inputComponentsList.newRow();
 			this.inputComponentsList.addComponentCurrentRow(new Static(this, this.inputComponentsList.nextStart(4), 85, 60, 15, HorizontalSizing.LEFT_WIDTH, null, "datapack_edit.import_animation.client_data"));
 			this.inputComponentsList.addComponentCurrentRow(SubScreenOpenButton.builder().subScreen(() -> {
-				return new AttackAnimationPropertyScreen(this, this.fakeAnimations.get(this.animationGrid.getRowposition()), this.modelPreviewer.getArmature().rootJoint.getAllJoints(), this.modelPreviewer);
+				return new AttackAnimationPropertyScreen(this, this.fakeAnimations.get(this.animationGrid.getRowposition()), this.modelPreviewer.getArmature().get().rootJoint.getAllJoints(), this.modelPreviewer);
 			}).bounds(this.inputComponentsList.nextStart(4), 0, 15, 15).build());
 		}
 		break;
@@ -843,12 +843,12 @@ public class ImportAnimationsScreen extends Screen {
 					try {
 						File file = path.toFile();
 						stream = new FileInputStream(file);
-						JsonModelLoader jsonLoader = new JsonModelLoader(stream, new ResourceLocation(modid, file.getName()));
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, ResourceLocation.fromNamespaceAndPath(modid, file.getName()));
 						String armatureName = this.modelPreviewer.getArmature().toString();
 						armatureName = armatureName.substring(armatureName.indexOf(":") + 1);
 						
 						String animationPath = modid + ":" + armatureName.substring(armatureName.lastIndexOf("/") + 1) + "/" + file.getName().replace(".json", "");
-						FakeAnimation animation = new FakeAnimation(animationPath, this.modelPreviewer.getArmature(), jsonLoader.loadAnimationClip(this.modelPreviewer.getArmature()), jsonLoader.getRootJson().getAsJsonArray("animation"));
+						EditorAnimation animation = new EditorAnimation(animationPath, this.modelPreviewer.getArmature(), jsonLoader.loadAnimationClip(this.modelPreviewer.getArmature().get()), jsonLoader.getRootJson().getAsJsonArray("animation"));
 						
 						this.fakeAnimations.add(animation);
 						this.animationGrid.addRowWithDefaultValues("animation_name", animationPath);
@@ -888,8 +888,7 @@ public class ImportAnimationsScreen extends Screen {
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	
-	private String createRealAnimations(List<FakeAnimation> fakeAnimations) {
-		this.userAnimations.forEach((name, animation) -> AnimationManager.getInstance().removeUserAnimation(animation.getValue()));
+	private String createRealAnimations(List<EditorAnimation> fakeAnimations) {
 		this.userAnimations.clear();
 		
 		StringBuilder sb = new StringBuilder();
@@ -900,11 +899,10 @@ public class ImportAnimationsScreen extends Screen {
 			hasException = true;
 			sb.append("Duplicated animation path.");
 		} else {
-			for (FakeAnimation fakeAnimation : fakeAnimations) {
+			for (EditorAnimation fakeAnimation : fakeAnimations) {
 				try {
-					ClipHoldingAnimation result = fakeAnimation.createAnimation();
+					DatapackAnimation<? extends StaticAnimation> result = fakeAnimation.createAnimation();
 					this.userAnimations.put(fakeAnimation.getRegistryName(), PackEntry.ofValue(fakeAnimation, result));
-					AnimationManager.getInstance().registerUserAnimation(result);
 				} catch (Throwable e) {
 					hasException = true;
 					sb.append(String.format("%s : %s\n", fakeAnimation.getParameter("path"), e.getMessage()));

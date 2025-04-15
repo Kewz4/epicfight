@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.BattleModeGui;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -22,7 +22,7 @@ public class BerserkerSkill extends PassiveSkill {
 	private float speedBonus;
 	private float damageBonus;
 	
-	public BerserkerSkill(Builder<? extends Skill> builder) {
+	public BerserkerSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	
@@ -37,7 +37,7 @@ public class BerserkerSkill extends PassiveSkill {
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		PlayerEventListener listener = container.getExecuter().getEventListener();
+		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID, (event) -> {
 			Player player = event.getPlayerPatch().getOriginal();
@@ -64,14 +64,14 @@ public class BerserkerSkill extends PassiveSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID);
-		container.getExecuter().getEventListener().removeListener(EventType.MODIFY_DAMAGE_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MODIFY_DAMAGE_EVENT, EVENT_UUID);
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public boolean shouldDraw(SkillContainer container) {
-		Player player = container.getExecuter().getOriginal();
+		Player player = container.getExecutor().getOriginal();
 		float health = player.getHealth();
 		float maxHealth = player.getMaxHealth();
 		return (maxHealth - health) > 0.0F;
@@ -84,12 +84,12 @@ public class BerserkerSkill extends PassiveSkill {
 		poseStack.pushPose();
 		poseStack.translate(0, (float)gui.getSlidingProgression(), 0);
 		guiGraphics.blit(this.getSkillTexture(), (int)x, (int)y, 24, 24, 0, 0, 1, 1, 1, 1);
-		Player player = container.getExecuter().getOriginal();
+		Player player = container.getExecutor().getOriginal();
 		float health = player.getHealth();
 		float maxHealth = player.getMaxHealth();
 		float lostHealthPercentage = (maxHealth - health) / maxHealth;
 		lostHealthPercentage = (float)Math.floor(lostHealthPercentage * 100.0F);
-		guiGraphics.drawString(gui.font, String.format("%.0f%%", lostHealthPercentage), x + 4, y + 6, 16777215, true);
+		guiGraphics.drawString(gui.getFont(), String.format("%.0f%%", lostHealthPercentage), x + 4, y + 6, 16777215, true);
 		poseStack.popPose();
 	}
 	

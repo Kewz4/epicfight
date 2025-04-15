@@ -16,13 +16,17 @@ import yesman.epicfight.world.capabilities.provider.SkillCapabilityProvider;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class CapabilityEvent {
+	private static final ResourceLocation ENTITY_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "entity_cap");
+	private static final ResourceLocation ITEM_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "item_cap");
+	private static final ResourceLocation SKILL_CAPABILITY_KEY = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill_cap");
+	
 	@SubscribeEvent
 	public static void attachItemCapability(AttachCapabilitiesEvent<ItemStack> event) {
 		if (event.getObject() != null) {
 			ItemCapabilityProvider prov = new ItemCapabilityProvider(event.getObject());
 			
 			if (prov.hasCapability()) {
-				event.addCapability(new ResourceLocation(EpicFightMod.MODID, "item_cap"), prov);
+				event.addCapability(ITEM_CAPABILITY_KEY, prov);
 			}
 		}
 	}
@@ -39,14 +43,14 @@ public class CapabilityEvent {
 				EntityPatch entitypatch = prov.getCapability(EpicFightCapabilities.CAPABILITY_ENTITY).orElse(null);
 				
 				entitypatch.onConstructed(event.getObject());
-				event.addCapability(new ResourceLocation(EpicFightMod.MODID, "entity_cap"), prov);
+				event.addCapability(ENTITY_CAPABILITY_KEY, prov);
 				
 				if (entitypatch instanceof PlayerPatch<?> playerpatch) {
 					if (event.getObject().getCapability(EpicFightCapabilities.CAPABILITY_SKILL).orElse(null) == null) {
 						
 						if (playerpatch != null) {
 							SkillCapabilityProvider skillProvider = new SkillCapabilityProvider(playerpatch);
-							event.addCapability(new ResourceLocation(EpicFightMod.MODID, "skill_cap"), skillProvider);
+							event.addCapability(SKILL_CAPABILITY_KEY, skillProvider);
 						}
 					}
 				}

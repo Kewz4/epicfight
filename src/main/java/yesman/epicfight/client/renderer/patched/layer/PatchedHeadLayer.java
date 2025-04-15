@@ -27,18 +27,16 @@ public class PatchedHeadLayer<E extends LivingEntity, T extends LivingEntityPatc
 			ModelPart model = vanillaLayer.getParentModel().getHead();
 			E entity = entitypatch.getOriginal();
 			OpenMatrix4f modelMatrix = new OpenMatrix4f();
-			modelMatrix.scale(new Vec3f(-1.0F, -1.0F, 1.0F)).mulFront(poses[9]);
+			modelMatrix.scale(new Vec3f(-1.0F, -1.0F, 1.0F)).mulFront(poses[9]).translate(0, 0.02F, 0);
 			model.x = 0;
 			model.y = 0;
 			model.z = 0;
 			model.xRot = 0;
 			model.yRot = 0;
 			model.zRot = 0;
-			OpenMatrix4f transpose = OpenMatrix4f.transpose(modelMatrix, null);
 			postStack.pushPose();
 			
-			MathUtils.translateStack(postStack, modelMatrix);
-			MathUtils.rotateStack(postStack, transpose);
+			MathUtils.mulStack(postStack, modelMatrix);
 			
 			if (entitypatch.getOriginal().isBaby()) {
 				postStack.translate(0.0F, -1.2F, 0.0F);

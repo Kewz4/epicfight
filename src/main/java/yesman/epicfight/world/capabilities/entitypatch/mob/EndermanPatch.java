@@ -3,8 +3,8 @@ package yesman.epicfight.world.capabilities.entitypatch.mob;
 import java.util.EnumSet;
 import java.util.UUID;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
@@ -23,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -38,7 +39,7 @@ import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPChangeLivingMotion;
-import yesman.epicfight.network.server.SPSpawnData;
+import yesman.epicfight.network.server.SPEntityPacket;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.capabilities.entitypatch.Faction;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
@@ -49,7 +50,7 @@ import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
 import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
 import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class EndermanPatch extends MobPatch<EnderMan> {
 	private static final UUID SPEED_MODIFIER_RAGE_UUID = UUID.fromString("dc362d1a-8424-11ec-a8a3-0242ac120002");
@@ -68,7 +69,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	@Override
 	public void onJoinWorld(EnderMan enderman, EntityJoinLevelEvent event) {
 		if (enderman.level().dimension() == Level.END) {
-			if (enderman.level().getGameRules().getBoolean(EpicFightGamerules.NO_MOBS_IN_BOSSFIGHT) && enderman.position().horizontalDistanceSqr() < 40000) {
+			if (EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(enderman.level()) && enderman.position().horizontalDistanceSqr() < 40000) {
 				event.setCanceled(true);
 			}
 		}
@@ -79,13 +80,13 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 		if (this.isRaging()) {
-			SPSpawnData packet = new SPSpawnData(this.original.getId());
+			SPEntityPacket packet = new SPEntityPacket(this.original.getId());
 			EpicFightNetworkManager.sendToPlayer(packet, trackingPlayer);
 		}
 	}
 	
 	@Override
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 		ClientAnimator animator = this.getClientAnimator();
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.ENDERMAN_RAGE_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.ENDERMAN_RAGE_WALK);
@@ -117,6 +118,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.ENDERMAN_DEATH);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.ENDERMAN_WALK);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.ENDERMAN_IDLE);
@@ -151,8 +153,8 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
 		super.poseTick(animation, pose, elapsedTime, partialTicks);
 		
-		if (this.isRaging() && pose.getJointTransformData().containsKey("Head_Top")) {
-			pose.getOrDefaultTransform("Head_Top").frontResult(JointTransform.getTranslation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
+		if (this.isRaging() && pose.hasTransform("Head_Top")) {
+			pose.orElseEmpty("Head_Top").frontResult(JointTransform.translation(new Vec3f(0.0F, 0.25F, 0.0F)), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -245,7 +247,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 			for (int i = 0; i < 100; i++) {
 				RandomSource rand = original.getRandom();
 				Vec3f vec = new Vec3f(rand.nextInt(), rand.nextInt(), rand.nextInt());
-				vec.normalise().scale(0.5F);
+				vec.normalize().scale(0.5F);
 				Minecraft minecraft = Minecraft.getInstance();
 				minecraft.particleEngine.createParticle(EpicFightParticles.ENDERMAN_DEATH_EMIT.get(), this.original.getX(), this.original.getY() + this.original.getDimensions(net.minecraft.world.entity.Pose.STANDING).height / 2, this.original.getZ(), vec.x, vec.y, vec.z);
 			}
@@ -255,7 +257,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		switch(stunType) {
 		case SHORT:
 			return Animations.ENDERMAN_HIT_SHORT;
@@ -324,7 +326,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	        
 			if (this.delayCounter-- < 0 && !this.mobpatch.getEntityState().inaction()) {
 				Vec3f vec = new Vec3f((float)(mob.getX() - target.getX()), 0, (float)(mob.getZ() - target.getZ()));
-	        	vec.normalise().scale(1.414F);
+	        	vec.normalize().scale(1.414F);
 	        	boolean flag = mob.randomTeleport(target.getX() + vec.x, target.getY(), target.getZ() + vec.z, true);
 	        	
 				if (flag) {

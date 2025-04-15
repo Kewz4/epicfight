@@ -5,7 +5,6 @@ import java.util.UUID;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.client.CPExecuteSkill;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.entity.eventlistener.ComboCounterHandleEvent;
@@ -20,8 +19,8 @@ public class StepSkill extends DodgeSkill {
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
-		container.getExecuter().getEventListener().addEventListener(EventType.COMBO_COUNTER_HANDLE_EVENT, EVENT_UUID, (event) -> {
-			if (event.getCausal() == ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION && event.getAnimation().in(this.animations)) {
+		container.getExecutor().getEventListener().addEventListener(EventType.COMBO_COUNTER_HANDLE_EVENT, EVENT_UUID, (event) -> {
+			if (event.getCausal() == ComboCounterHandleEvent.Causal.ANOTHER_ACTION_ANIMATION && event.getAnimation().get().in(this.animations)) {
 				event.setNextValue(event.getPrevValue());
 			}
 		});
@@ -29,12 +28,12 @@ public class StepSkill extends DodgeSkill {
 	
 	@Override
 	public void onRemoved(SkillContainer container) {
-		container.getExecuter().getEventListener().removeListener(EventType.COMBO_COUNTER_HANDLE_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.COMBO_COUNTER_HANDLE_EVENT, EVENT_UUID);
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public Object getExecutionPacket(LocalPlayerPatch executer, FriendlyByteBuf args) {
+	public Object getExecutionPacket(SkillContainer container, FriendlyByteBuf args) {
 		int forward = args.readInt();
 		int backward = args.readInt();
 		int left = args.readInt();
@@ -54,7 +53,7 @@ public class StepSkill extends DodgeSkill {
 			animation = vertic >= 0 ? 0 : 1;
 		}
 		
-		CPExecuteSkill packet = new CPExecuteSkill(executer.getSkill(this).getSlotId());
+		CPExecuteSkill packet = new CPExecuteSkill(container.getSlotId());
 		packet.getBuffer().writeInt(animation);
 		packet.getBuffer().writeFloat(degree);
 		

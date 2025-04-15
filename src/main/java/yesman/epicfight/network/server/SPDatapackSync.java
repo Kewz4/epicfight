@@ -69,7 +69,7 @@ public class SPDatapackSync {
 				case WEAPON -> ItemCapabilityReloadListener.processServerPacket(msg);
 				case ARMOR -> ItemCapabilityReloadListener.processServerPacket(msg);
 				case WEAPON_TYPE -> WeaponTypeReloadListener.processServerPacket(msg);
-				case ANIMATION_IN_MANDATORY_RESOURCE_PACK, ANIMATION_IN_RESOURCE_PACK -> AnimationManager.getInstance().processServerPacket(msg, msg.getType() == Type.ANIMATION_IN_MANDATORY_RESOURCE_PACK);
+				case MANDATORY_RESOURCE_PACK_ANIMATION, RESOURCE_PACK_ANIMATION -> AnimationManager.getInstance().processServerPacket(msg, msg.getType() == Type.MANDATORY_RESOURCE_PACK_ANIMATION);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -81,6 +81,6 @@ public class SPDatapackSync {
 	}
 	
 	public enum Type {
-		ARMOR, WEAPON, MOB, SKILL_PARAMS, WEAPON_TYPE, ANIMATION_IN_MANDATORY_RESOURCE_PACK, ANIMATION_IN_RESOURCE_PACK
+		ARMOR, WEAPON, MOB, SKILL_PARAMS, WEAPON_TYPE, MANDATORY_RESOURCE_PACK_ANIMATION, RESOURCE_PACK_ANIMATION
 	}
 }

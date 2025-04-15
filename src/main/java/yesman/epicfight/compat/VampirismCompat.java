@@ -54,7 +54,7 @@ public class VampirismCompat implements ICompatModule {
 	@OnlyIn(Dist.CLIENT)
 	public static class EpicFightVampirePlayerHeadLayer extends ModelRenderLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, VampirePlayerHeadLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>, HumanoidMesh> {
 		public EpicFightVampirePlayerHeadLayer() {
-			super(() -> Meshes.BIPED);
+			super(Meshes.BIPED);
 		}
 		
 		@Override

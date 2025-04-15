@@ -7,7 +7,6 @@ import de.teamlapen.werewolves.client.model.WerewolfEarsModel;
 import de.teamlapen.werewolves.client.render.layer.HumanWerewolfLayer;
 import de.teamlapen.werewolves.entities.player.werewolf.WerewolfPlayer;
 import de.teamlapen.werewolves.util.Helper;
-import de.teamlapen.werewolves.util.REFERENCE;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -21,8 +20,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEpicFightPlayerEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.transformer.CustomModelBakery;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
 import yesman.epicfight.api.forgeevent.BattleModeSustainableEvent;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -72,8 +71,8 @@ public class WerewolvesCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class EpicFightHumanWerewolfLayer<A extends HumanoidModel<AbstractClientPlayer>> extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, HumanWerewolfLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>, A>> {
-		private AnimatedMesh mesh;
-		private AnimatedMesh slimMesh;
+		private SkinnedMesh mesh;
+		private SkinnedMesh slimMesh;
 		
 		@Override
 		protected void renderLayer( AbstractClientPlayerPatch<AbstractClientPlayer> entitypatch
@@ -104,17 +103,17 @@ public class WerewolvesCompat implements ICompatModule {
 				werewolfEars.rightLeg.loadPose(werewolfEars.rightLeg.getInitialPose());
 			}
 			
-			AnimatedMesh mesh;
+			SkinnedMesh mesh;
 			
 			if ("default".equals(modelType)) {
 				if (this.mesh == null) {
-					this.mesh = CustomModelBakery.VANILLA_TRANSFORMER.transformArmorModel(new ResourceLocation(REFERENCE.MODID, "werewolf_model"), vanillaModel);
+					this.mesh = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(vanillaModel);
 				}
 				
 				mesh = this.mesh;
 			} else {
 				if (this.slimMesh == null) {
-					this.slimMesh = CustomModelBakery.VANILLA_TRANSFORMER.transformArmorModel(new ResourceLocation(REFERENCE.MODID, "werewolf_model_slim"), vanillaModel);
+					this.slimMesh = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(vanillaModel);
 				}
 				
 				mesh = this.slimMesh;

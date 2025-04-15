@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
@@ -15,18 +16,19 @@ import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 
 public class GrapplingAttackAnimation extends AttackAnimation {
-	public GrapplingAttackAnimation(float contact, float recovery, String path, Armature armature) {
-		this(contact, recovery, InteractionHand.MAIN_HAND, path, armature);
+	public GrapplingAttackAnimation(float contact, float recovery, AnimationAccessor<? extends GrapplingAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(contact, recovery, InteractionHand.MAIN_HAND, accessor, armature);
 	}
 	
-	public GrapplingAttackAnimation(float contact, float recovery, InteractionHand hand, String path, Armature armature) {
-		super(0.0F, 0.0F, contact, contact, recovery, hand, null, armature.rootJoint, path, armature);
+	public GrapplingAttackAnimation(float contact, float recovery, InteractionHand hand, AnimationAccessor<? extends GrapplingAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(0.0F, 0.0F, contact, contact, recovery, hand, null, armature.get().rootJoint, accessor, armature);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.0F);
 		this.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false);
@@ -38,7 +40,7 @@ public class GrapplingAttackAnimation extends AttackAnimation {
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		if (entitypatch.shouldMoveOnCurrentSide(this)) {
-			Keyframe[] grapplingAnimCoord = entitypatch.getArmature().getActionAnimationCoord().getKeyframes();
+			Keyframe[] grapplingAnimCoord = entitypatch.getAnimator().getVariables().getSharedVariable(ACTION_ANIMATION_COORD).getKeyframes();
 			Vec3f translation = grapplingAnimCoord[grapplingAnimCoord.length - 1].transform().translation();
 			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
 			entitypatch.getOriginal().setPos(translation.toDoubleVector());
@@ -48,18 +50,18 @@ public class GrapplingAttackAnimation extends AttackAnimation {
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, DynamicAnimation nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		super.end(entitypatch, nextAnimation, isEnd);
 		entitypatch.setGrapplingTarget(null);
 	}
 	
 	@Override
-	protected void attackTick(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
-		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this);
+	protected void attackTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
+		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 		float elapsedTime = player.getElapsedTime();
 		float prevElapsedTime = player.getPrevElapsedTime();
-		EntityState state = animation.getState(entitypatch, elapsedTime);
-		EntityState prevState = animation.getState(entitypatch, prevElapsedTime);
+		EntityState state = animation.get().getState(entitypatch, elapsedTime);
+		EntityState prevState = animation.get().getState(entitypatch, prevElapsedTime);
 		Phase phase = this.getPhaseByTime(elapsedTime);
 		
 		if (prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2)) {

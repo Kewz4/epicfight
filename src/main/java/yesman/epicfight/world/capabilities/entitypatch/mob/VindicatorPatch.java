@@ -24,11 +24,11 @@ public class VindicatorPatch<T extends PathfinderMob> extends AbstractIllagerPat
 	}
 	
 	@Override
-	public void initAnimator(Animator clientAnimator) {
-		super.initAnimator(clientAnimator);
+	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		
-		clientAnimator.addLivingAnimation(LivingMotions.ANGRY, Animations.VINDICATOR_IDLE_AGGRESSIVE);
-		clientAnimator.addLivingAnimation(LivingMotions.CHASE, Animations.VINDICATOR_CHASE);
+		animator.addLivingAnimation(LivingMotions.ANGRY, Animations.VINDICATOR_IDLE_AGGRESSIVE);
+		animator.addLivingAnimation(LivingMotions.CHASE, Animations.VINDICATOR_CHASE);
 	}
 	
 	public static void initAttributes(EntityAttributeModificationEvent event) {

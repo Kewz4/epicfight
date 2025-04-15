@@ -34,7 +34,7 @@ import yesman.epicfight.world.level.block.FractureBlockState;
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT)
 public class ClientEvents {
 	private static final Pair<ResourceLocation, ResourceLocation> OFFHAND_TEXTURE = Pair.of(InventoryMenu.BLOCK_ATLAS, InventoryMenu.EMPTY_ARMOR_SLOT_SHIELD);
-	private static final Minecraft minecraft = Minecraft.getInstance();
+	private static final Minecraft MINECRAFT = Minecraft.getInstance();
 	
 	@SubscribeEvent
 	public static void mouseClickEvent(ScreenEvent.MouseButtonPressed.Pre event) {
@@ -42,7 +42,7 @@ public class ClientEvents {
 			Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 			
 			if (slot != null) {
-				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(minecraft.player.containerMenu.getCarried());
+				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.containerMenu.getCarried());
 				
 				if (!cap.canBePlacedOffhand()) {
 					if (slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
@@ -59,7 +59,7 @@ public class ClientEvents {
 			Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 			
 			if (slot != null) {
-				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(minecraft.player.containerMenu.getCarried());
+				CapabilityItem cap = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.containerMenu.getCarried());
 				
 				if (!cap.canBePlacedOffhand()) {
 					if (slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
@@ -74,7 +74,7 @@ public class ClientEvents {
 	public static void presssKeyInGui(ScreenEvent.KeyPressed.Pre event) {
 		CapabilityItem itemCapability = CapabilityItem.EMPTY;
 		
-		if (event.getKeyCode() == minecraft.options.keySwapOffhand.getKey().getValue()) {
+		if (event.getKeyCode() == MINECRAFT.options.keySwapOffhand.getKey().getValue()) {
 			if (event.getScreen() instanceof AbstractContainerScreen) {
 				Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 				
@@ -91,7 +91,7 @@ public class ClientEvents {
 				Slot slot = ((AbstractContainerScreen<?>)event.getScreen()).getSlotUnderMouse();
 				
 				if (slot != null && slot.getNoItemIcon() != null && slot.getNoItemIcon().equals(OFFHAND_TEXTURE)) {
-					itemCapability = EpicFightCapabilities.getItemStackCapability(minecraft.player.getInventory().getItem(event.getKeyCode() - 49));
+					itemCapability = EpicFightCapabilities.getItemStackCapability(MINECRAFT.player.getInventory().getItem(event.getKeyCode() - 49));
 					
 					if (!itemCapability.canBePlacedOffhand()) {
 						event.setCanceled(true);
@@ -104,30 +104,24 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void rightClickItemClient(PlayerInteractEvent.RightClickItem event) {
 		if (event.getSide() == LogicalSide.CLIENT) {
-			LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), LocalPlayerPatch.class);
-			
-			if (playerpatch != null && playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
-				boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.CLIENT_ITEM_USE_EVENT, new RightClickItemEvent<>(playerpatch));
-				
-				if (playerpatch.getEntityState().movementLocked()) {
-					canceled = true;
+			EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LocalPlayerPatch.class).ifPresent(playerpatch -> {
+				if (playerpatch.getOriginal().getOffhandItem().getUseAnimation() == UseAnim.NONE) {
+					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.CLIENT_ITEM_USE_EVENT, new RightClickItemEvent<>(playerpatch));
+					
+					if (playerpatch.getEntityState().movementLocked()) {
+						canceled = true;
+					}
+					
+					event.setCanceled(canceled);
 				}
-				
-				event.setCanceled(canceled);
-			}
+			});
 		}
 	}
 	
 	@SubscribeEvent
 	public static void clientLoggingInEvent(ClientPlayerNetworkEvent.LoggingIn event) {
-		LocalPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(event.getPlayer(), LocalPlayerPatch.class);
-		
-		if (playerpatch != null) {
-			ClientEngine.getInstance().controllEngine.setPlayerPatch(playerpatch);
-		}
-		
-		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getPlayer(), LocalPlayerPatch.class).ifPresent(ClientEngine.getInstance().controllEngine::setPlayerPatch);
+		ClientEngine.getInstance().renderEngine.init();
 	}
 	
 	/**
@@ -144,21 +138,18 @@ public class ClientEvents {
 		/**
 		 * oldCap == null when a player revives after it disappears
 		 */
-		if (oldCap != null) {
-			if (newCap != null) {
-				if (packet != null && packet.shouldKeep((byte)3)) {
-					newCap.copySkillsFrom(oldCap);
-				}
-				
-				packet = null;
-				newCap.onRespawnLocalPlayer(event);
-				newCap.toMode(oldCap.getPlayerMode(), false);
+		if (oldCap != null && newCap != null) {
+			if (packet != null && packet.shouldKeep((byte)3)) {
+				newCap.copySkillsFrom(oldCap);
 			}
+			
+			packet = null;
+			newCap.onRespawnLocalPlayer(event);
+			newCap.toMode(oldCap.getPlayerMode(), false);
 		}
 		
 		ClientEngine.getInstance().controllEngine.setPlayerPatch(newCap);
-		ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-		ClientEngine.getInstance().renderEngine.versionNotifier.reset();
+		ClientEngine.getInstance().renderEngine.init();
 	}
 	
 	@SubscribeEvent
@@ -168,13 +159,9 @@ public class ClientEvents {
 			ItemCapabilityProvider.clear();
 			EntityPatchProvider.clear();
 			WeaponTypeReloadListener.clear();
-			
-			ClientEngine.getInstance().renderEngine.zoomOut(0);
-			ClientEngine.getInstance().renderEngine.battleModeUI.reset();
-			// Reset renderers
-			ClientEngine.getInstance().renderEngine.resetRenderers();
 		}
 		
+		ClientEngine.getInstance().renderEngine.clear();
 		FractureBlockState.reset();
 	}
 }

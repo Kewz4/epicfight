@@ -2,6 +2,8 @@ package yesman.epicfight.client.gui.datapack.widgets;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -37,10 +39,12 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -63,58 +67,81 @@ import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LayerOffAnimation;
 import yesman.epicfight.api.animation.types.LinkAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
-import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.Mesh;
-import yesman.epicfight.api.client.model.MeshProvider;
-import yesman.epicfight.api.client.model.RawMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
+import yesman.epicfight.api.client.model.SoftBodyTranslatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulator;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.CubicBezierCurve;
+import yesman.epicfight.api.physics.PhysicsSimulator;
+import yesman.epicfight.api.physics.SimulatableObject;
+import yesman.epicfight.api.physics.SimulationTypes;
+import yesman.epicfight.api.physics.bezier.CubicBezierCurve;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.client.particle.TrailParticle;
+import yesman.epicfight.api.utils.math.Vec4f;
+import yesman.epicfight.client.particle.AnimationTrailParticle;
 import yesman.epicfight.client.renderer.EpicFightShaders;
-import yesman.epicfight.config.EpicFightOptions;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.StunType;
 
 @OnlyIn(Dist.CLIENT)
 public class ModelPreviewer extends AbstractWidget implements ResizableComponent {
-	private NoEntityAnimator animator;
 	private final ModelRenderTarget modelRenderTarget;
-	private final List<StaticAnimation> animationsToPlay = Lists.newArrayList();
+	private final List<AssetAccessor<? extends StaticAnimation>> animationsToPlay = Lists.newArrayList();
 	private final List<CustomTrailParticle> trailParticles = Lists.newArrayList();
 	private final CheckBox showColliderCheckbox = new CheckBox(Minecraft.getInstance().font, 0, 60, 0, 10, null, null, true, Component.translatable("datapack_edit.model_player.collider"), null);
 	private final CheckBox showItemCheckbox = new CheckBox(Minecraft.getInstance().font, 0, 40, 0, 10, null, null, true, Component.translatable("datapack_edit.model_player.item"), null);
 	private final CheckBox showTrailCheckbox = new CheckBox(Minecraft.getInstance().font, 0, 40, 0, 10, null, null, true, Component.translatable("datapack_edit.model_player.trail"), null);
+	
 	private double zoom = -3.0D;
 	private float xRot = 0.0F;
+	private float yRotO = 180.0F;
 	private float yRot = 180.0F;
 	private float xMove = 0.0F;
 	private float yMove = 0.0F;
 	private int index;
 	private float attackTimeBegin;
 	private float attackTimeEnd;
-	private MeshProvider<AnimatedMesh> mesh;
+	
+	private FakeEntityPatch entitypatch;
+	private NoEntityAnimator animator;
+	private AssetAccessor<? extends SkinnedMesh> mesh;
+	private AssetAccessor<? extends Armature> armature;
+	private ResourceLocation figureTexture;
+	
 	private Joint colliderJoint;
 	private Collider collider;
 	private List<TrailInfo> trailInfoList = Lists.newArrayList();
 	private Item item;
 	
-	public ModelPreviewer(int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	private Vec4f backgroundClearColor;
+	private boolean cameraMoveEnabled = true;
+	private boolean cameraRotationEnabled = true;
+	private boolean zoomingCameraEnabled = true;
+	
+	private ClothSimulator clothSimulator;
+	private SoftBodyTranslatable cloakMesh;
+	private ResourceLocation cloakTexture;
+	private Vec3f cloakColor = new Vec3f(1.0F, 1.0F, 1.0F);
+	
+	public ModelPreviewer(int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 		super(x1, y1, x2, y2, Component.literal(""));
 		
 		if (armature != null) {
-			FakeEntityPatch patch = new FakeEntityPatch(armature);
-			this.animator = new NoEntityAnimator(patch);
-			patch.setAnimator();
+			this.entitypatch = new FakeEntityPatch(armature.get());
+			this.animator = new NoEntityAnimator(this.entitypatch);
+			this.entitypatch.initAnimator(this.animator);
 		}
 		
 		this.x1 = x1;
@@ -124,34 +151,91 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.horizontalSizingOption = horizontal;
 		this.verticalSizingOption = vertical;
 		this.mesh = mesh;
+		this.armature = armature;
 		
 		this.modelRenderTarget = new ModelRenderTarget();
 		this.resize(Minecraft.getInstance().screen.getRectangle());
 		
+		// default clear color
 		this.modelRenderTarget.setClearColor(0.1552F, 0.1552F, 0.1552F, 1.0F);
 		this.modelRenderTarget.clear(Minecraft.ON_OSX);
 	}
 	
-	public void setArmature(Armature armature) {
-		FakeEntityPatch patch = new FakeEntityPatch(armature);
-		this.animator = new NoEntityAnimator(patch);
-		patch.setAnimator();
-	}
-	
-	public void setMesh(MeshProvider<AnimatedMesh> mesh) {
+	public void setMesh(AssetAccessor<? extends SkinnedMesh> mesh) {
 		this.mesh = mesh;
 	}
 	
-	public Armature getArmature() {
-		return this.animator.getEntityPatch().getArmature();
+	public void setFigureTexture(ResourceLocation texture) {
+		this.figureTexture = texture;
 	}
 	
-	public MeshProvider<AnimatedMesh> getMesh() {
+	public void initCloakInfo(SoftBodyTranslatable cloakMesh, ResourceLocation cloakTexture, ClothSimulator.ClothObjectBuilder builder) {
+		this.cloakMesh = cloakMesh;
+		this.cloakTexture = cloakTexture;
+		
+		if (builder != null) {
+			this.clothSimulator = new ClothSimulator();
+			this.clothSimulator.runWhen(ClothSimulator.MODELPREVIEWER_CLOAK, cloakMesh, builder, () -> true);
+		}
+	}
+	
+	public void removeCloak() {
+		if (this.clothSimulator != null) {
+			this.clothSimulator.stop(ClothSimulator.MODELPREVIEWER_CLOAK);
+			this.clothSimulator = null;
+		}
+		
+		this.cloakMesh = null;
+		this.cloakTexture = null;
+	}
+	
+	public void setCloakColor(int colorCode) {
+		float b = (colorCode & 255) / 255.0F;
+		float g = ((colorCode & 65280) >> 8) / 255.0F;
+		float r = ((colorCode & 16711680) >> 16) / 255.0F;
+		
+		this.cloakColor = new Vec3f(r, g, b);
+	}
+	
+	public void setCloakColor(float r, float g, float b) {
+		this.cloakColor = new Vec3f(r, g, b);
+	}
+	
+	public Vec3f getCloakColor() {
+		return this.cloakColor;
+	}
+	
+	public SoftBodyTranslatable getCloakMesh() {
+		return this.cloakMesh;
+	}
+	
+	public void setCloakTexture(ResourceLocation cloakTexture) {
+		this.cloakTexture = cloakTexture;
+	}
+	
+	public ResourceLocation getCloakTexture() {
+		return this.cloakTexture;
+	}
+	
+	public AssetAccessor<? extends Armature> getArmature() {
+		return this.armature;
+	}
+	
+	public AssetAccessor<? extends SkinnedMesh> getMesh() {
 		return this.mesh;
 	}
 	
-	public NoEntityAnimator getAnimator() {
+	public Animator getAnimator() {
 		return this.animator;
+	}
+	
+	public void setCameraTransform(double zoom, float xRot, float yRot, float xMove, float yMove) {
+		this.zoom = zoom;
+		this.xRot = xRot;
+		this.yRotO = yRot;
+		this.yRot = yRot;
+		this.xMove = xMove;
+		this.yMove = yMove;
 	}
 	
 	public void setCollider(Collider collider) {
@@ -187,7 +271,29 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.attackTimeEnd = attackTimeEnd;
 	}
 	
-	public void addAnimationToPlay(StaticAnimation animation) {
+	public void setBackgroundClearColor(Vec4f clearColor) {
+		this.backgroundClearColor = clearColor;
+	}
+	
+	public void enableCameraControll(boolean enable) {
+		this.cameraMoveEnabled = enable;
+		this.cameraRotationEnabled = enable;
+		this.zoomingCameraEnabled = enable;
+	}
+	
+	public void enableCameraMove(boolean enable) {
+		this.cameraMoveEnabled = enable;
+	}
+	
+	public void enableCameraRotation(boolean enable) {
+		this.cameraRotationEnabled = enable;
+	}
+	
+	public void enableZoomingCamera(boolean enable) {
+		this.zoomingCameraEnabled = enable;
+	}
+	
+	public void addAnimationToPlay(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.index == -1) {
 			this.index = 0;
 		}
@@ -196,16 +302,16 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.animator.playAnimation(animation, 0.0F);
 	}
 	
-	public void removeAnimationPlayingAnimation(StaticAnimation animation) {
+	public void removeAnimationPlayingAnimation(AssetAccessor<? extends StaticAnimation> animation) {
 		this.animationsToPlay.remove(animation);
 	}
 	
 	public void clearAnimations() {
 		this.index = -1;
 		this.animationsToPlay.clear();
-		this.animator.playAnimation(Animations.DUMMY_ANIMATION, 0.0F);
+		this.animator.playAnimation(Animations.EMPTY_ANIMATION, 0.0F);
 		
-		this.animator.getAllLayers().forEach((layer) -> {
+		((ClientAnimator)this.animator).iterAllLayers((layer) -> {
 			layer.off(this.animator.getEntityPatch());
 		});
 		
@@ -231,8 +337,13 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			this.animator.tick();
 		}
 		
+		this.yRotO = this.yRot;
 		this.trailParticles.forEach((trail) -> trail.tick());
 		this.trailParticles.removeIf((trail) -> !trail.isAlive());
+		
+		if (this.entitypatch != null && this.clothSimulator != null) {
+			this.clothSimulator.tick(this.entitypatch);
+		}
 	}
 	
 	@Override
@@ -274,11 +385,15 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
 		if (this.isMouseOver(mouseX, mouseY)) {
 			if (button == 0) {
-				this.xRot = (float)Mth.clamp(this.xRot + dy * 2.5D, -180.0D, 180.0D);
-				this.yRot += dx * 2.5D;
+				if (this.cameraRotationEnabled) {
+					this.xRot = (float)Mth.clamp(this.xRot + dy * 2.5D, -30.0D, 45.0D);
+					this.yRot += dx * 2.5D;
+				}
 			} else if (button == 2) {
-				this.xMove += (float)dx * 0.015F * -this.zoom;
-				this.yMove += -(float)dy * 0.015F * -this.zoom;
+				if (this.cameraMoveEnabled) {
+					this.xMove += (float)dx * 0.015F * -this.zoom;
+					this.yMove += -(float)dy * 0.015F * -this.zoom;
+				}
 			}
 			
 			return true;
@@ -289,14 +404,170 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	
 	@Override
 	public boolean mouseScrolled(double x, double y, double amount) {
-		this.zoom = Mth.clamp(this.zoom + amount * 0.5D, -20.0D, -0.5D);
-		return true;
+		if (this.zoomingCameraEnabled) {
+			this.zoom = Mth.clamp(this.zoom + amount * 0.5D, -20.0D, -0.5D);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	protected void renderFigure(GuiGraphics guiGraphics, Tesselator tesselator, BufferBuilder bufferbuilder, float partialTicks) {
+		if (this.mesh != null && this.mesh.get() != null) {
+			if (this.animator != null) {
+				Pose pose = this.animator.getPose(partialTicks);
+				this.mesh.get().initialize();
+				OpenMatrix4f[] poseMatrices = this.entitypatch.getArmature().getPoseAsTransformMatrix(pose, false);
+				
+				if (this.figureTexture != null) {
+					RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
+					RenderSystem.setShaderTexture(0, this.figureTexture);
+					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
+					this.mesh.get().drawPosed(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, -1, this.entitypatch.getArmature(), poseMatrices);
+				} else {
+					RenderSystem.setShader(EpicFightShaders::getPositionColorNormalShader);
+					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
+					this.mesh.get().drawPosed(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_COLOR_NORMAL, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, -1, this.entitypatch.getArmature(), poseMatrices);
+				}
+				
+				BufferUploader.drawWithShader(bufferbuilder.end());
+				
+				if (this.item != null && this.showItemCheckbox._getValue()) {
+					BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+					ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
+					ItemStack itemstack = new ItemStack(this.item);
+					OpenMatrix4f correction = new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS);
+					OpenMatrix4f handTransform = correction.mulFront(this.entitypatch.getArmature().getBindedTransformFor(pose, this.getArmature().get().searchJointByName("Tool_R")));
+					
+					guiGraphics.pose().pushPose();
+					MathUtils.mulStack(guiGraphics.pose(), handTransform);
+					
+					BakedModel model = itemRenderer.getItemModelShaper().getItemModel(this.item);
+					BakedModel overridedModel = model.getOverrides().resolve(model, itemstack, null, null, 0);
+					DynamicTexture light = Minecraft.getInstance().gameRenderer.lightTexture().lightTexture;
+					
+					// Update light color
+					light.getPixels().setPixelRGBA(0, 0, 0xFFFFFFFF);
+					light.upload();
+					
+					itemRenderer.render(itemstack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, guiGraphics.pose(), bufferSource, 0, OverlayTexture.NO_OVERLAY, overridedModel);
+					bufferSource.endBatch();
+					
+					guiGraphics.pose().popPose();
+				}
+				
+				if (!this.trailParticles.isEmpty() && this.showTrailCheckbox._getValue()) {
+					RenderSystem.setShader(GameRenderer::getParticleShader);
+					DynamicTexture light = Minecraft.getInstance().gameRenderer.lightTexture().lightTexture;
+					
+					// Update light color
+					light.getPixels().setPixelRGBA(0, 0, 0xFFFFFFFF);
+					light.upload();
+					
+					for (CustomTrailParticle trail : this.trailParticles) {
+						ParticleRenderType particleRendertype = trail.getRenderType();
+						particleRendertype.begin(bufferbuilder, Minecraft.getInstance().textureManager);
+						trail.render(bufferbuilder, null, partialTicks);
+						particleRendertype.end(tesselator);
+					}
+				}
+				
+				if (this.collider != null && this.showColliderCheckbox._getValue()) {
+					RenderType renderType = this.collider.getRenderType();
+					bufferbuilder.begin(renderType.mode(), renderType.format);
+					RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
+					
+					AnimationPlayer player = this.animator.getPlayerFor(null);
+					float elapsedTime = player.getPrevElapsedTime() + (player.getElapsedTime() - player.getPrevElapsedTime()) * partialTicks;
+					boolean red = elapsedTime >= this.attackTimeBegin && elapsedTime <= this.attackTimeEnd;
+					
+					if (this.colliderJoint != null) {
+						Pose prevPose = this.animator.getPose(0.0F);
+						Pose currentPose = this.animator.getPose(1.0F);
+						this.collider.drawInternal(guiGraphics.pose(), bufferbuilder, this.entitypatch.getArmature(), this.colliderJoint, prevPose, currentPose, partialTicks, red ? 0xFFFF0000 : -1);
+					} else {
+						DynamicAnimation animation = player.getAnimation().get();
+						
+						if (animation instanceof AttackAnimation attackanimation) {
+							Phase phase = attackanimation.getPhaseByTime(elapsedTime);
+							
+							for (AttackAnimation.JointColliderPair pair : phase.getColliders()) {
+								Pose prevPose = animation.getRawPose(player.getPrevElapsedTime());
+								Pose currentPose = animation.getRawPose(player.getElapsedTime());
+								this.collider.drawInternal(guiGraphics.pose(), bufferbuilder, this.entitypatch.getArmature(), pair.getFirst(), prevPose, currentPose, partialTicks, -1);
+							}
+						}
+					}
+					
+					RenderSystem.lineWidth(3.0F);
+					RenderSystem.disableCull();
+					BufferUploader.drawWithShader(bufferbuilder.end());
+					RenderSystem.lineWidth(1.0F);
+					RenderSystem.enableCull();
+				}
+			} else {
+				RenderSystem.setShader(EpicFightShaders::getPositionColorNormalShader);
+				this.mesh.get().initialize();
+				
+				if (this.figureTexture != null) {
+					RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
+					RenderSystem.setShaderTexture(0, this.figureTexture);
+					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
+					this.mesh.get().draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, OverlayTexture.NO_OVERLAY);
+				} else {
+					RenderSystem.setShader(EpicFightShaders::getPositionColorNormalShader);
+					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
+					this.mesh.get().draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_COLOR_NORMAL, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, OverlayTexture.NO_OVERLAY);
+				}
+				
+				BufferUploader.drawWithShader(bufferbuilder.end());
+			}
+		}
+		
+		if (this.cloakMesh != null && this.cloakTexture != null) {
+			TextureManager textureManager = Minecraft.getInstance().textureManager;
+			AbstractTexture texture = textureManager.getTexture(this.cloakTexture);
+			
+			if (texture != MissingTextureAtlasSprite.getTexture()) {
+				this.cloakMesh.getOriginalMesh().initialize();
+				
+				if (this.animator != null && this.entitypatch != null && this.clothSimulator != null) {
+					this.clothSimulator.getRunningObject(ClothSimulator.MODELPREVIEWER_CLOAK).ifPresent((clothObj) -> {
+			            Function<Float, OpenMatrix4f> partialColliderTransformProvider = (partialFrame) -> {
+							Vec3 pos = this.entitypatch.getAccuratePartialLocation(partialFrame);
+							float yRotLerp = this.entitypatch.getAccurateYRot(partialFrame);
+							return OpenMatrix4f.createTranslation((float)pos.x, (float)pos.y, (float)pos.z).rotateDeg(180.0F - yRotLerp, Vec3f.Y_AXIS);
+			            };
+			            
+			            Pose pose = this.animator.getPose(partialTicks);
+			            this.entitypatch.getArmature().setPose(pose);
+			            
+						clothObj.tick(this.entitypatch, partialColliderTransformProvider, partialTicks, this.entitypatch.getArmature(), this.entitypatch.getArmature().getPoseMatrices());
+						RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
+						RenderSystem.setShaderTexture(0, this.cloakTexture);
+						bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
+						
+						guiGraphics.pose().pushPose();
+						guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.entitypatch.getYRot() - 180.0F));
+						clothObj.drawPosed(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY, this.entitypatch.getArmature(), this.entitypatch.getArmature().getPoseMatrices());
+						guiGraphics.pose().popPose();
+						
+						BufferUploader.drawWithShader(bufferbuilder.end());
+					});
+				} else {
+					RenderSystem.setShader(GameRenderer::getPositionTexColorNormalShader);
+					bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_TEX_COLOR_NORMAL);
+					RenderSystem.setShaderTexture(0, this.cloakTexture);
+					((Mesh)this.cloakMesh).draw(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.POSITION_TEX_COLOR_NORMAL, -1, this.cloakColor.x, this.cloakColor.y, this.cloakColor.z, 1.0F, OverlayTexture.NO_OVERLAY);
+					BufferUploader.drawWithShader(bufferbuilder.end());
+				}
+			}
+		}
 	}
 	
 	@Override
 	public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		Minecraft minecraft = Minecraft.getInstance();
-		partialTicks = minecraft.getFrameTime();
 		minecraft.getMainRenderTarget().unbindWrite();
 		
 		ScreenRectangle screenrectangle = null;
@@ -311,149 +582,35 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		this.modelRenderTarget.clear(true);
 		this.modelRenderTarget.bindWrite(true);
 		
-		if (this.animator != null) {
-			Pose pose = this.animator.getPose(partialTicks);
-			OpenMatrix4f[] poseMatrices = this.getArmature().getPoseAsTransformMatrix(pose, false);
-			guiGraphics.pose().pushPose();
-			
-			ShaderInstance prevShader = RenderSystem.getShader();
-			Matrix4f oldProjection = RenderSystem.getProjectionMatrix();
-			Matrix4f perspective = (new Matrix4f()).setPerspective(70.0F, (float)this.width / (float)this.height, 0.05F, 100.0F);
-			
-			RenderSystem.setProjectionMatrix(perspective, VertexSorting.DISTANCE_TO_ORIGIN);
-			RenderSystem.getModelViewStack().pushPose();
-			RenderSystem.getModelViewStack().setIdentity();
-			RenderSystem.applyModelViewMatrix();
-			
-			guiGraphics.pose().translate(this.xMove, this.yMove - 1.0D, this.zoom);
-			guiGraphics.pose().mulPose(Axis.XP.rotationDegrees(this.xRot));
-			guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.yRot));
-			
-			this.mesh.get().initialize();
-			RenderSystem.setShader(EpicFightShaders::getPositionColorNormalShader);
-			Tesselator tesselator = RenderSystem.renderThreadTesselator();
-			BufferBuilder bufferbuilder = tesselator.getBuilder();
-			bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-			this.mesh.get().drawToBuffer(guiGraphics.pose(), bufferbuilder, Mesh.DrawingFunction.ENTITY_SOLID, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, -1, this.getArmature(), poseMatrices);
-			BufferUploader.drawWithShader(bufferbuilder.end());
-			
-			if (this.item != null && this.showItemCheckbox._getValue()) {
-				BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-				ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-				ItemStack itemstack = new ItemStack(this.item);
-				
-				OpenMatrix4f correction = new OpenMatrix4f().translate(0F, 0F, -0.13F).rotateDeg(-90.0F, Vec3f.X_AXIS);
-				OpenMatrix4f handTransform = correction.mulFront(this.getArmature().getBindedTransformFor(pose, this.getArmature().searchJointByName("Tool_R")));
-				OpenMatrix4f transposed = handTransform.transpose(null);
-				
-				guiGraphics.pose().pushPose();
-				
-				MathUtils.translateStack(guiGraphics.pose(), handTransform);
-				MathUtils.rotateStack(guiGraphics.pose(), transposed);
-				MathUtils.scaleStack(guiGraphics.pose(), transposed);
-				
-				BakedModel model = itemRenderer.getItemModelShaper().getItemModel(this.item);
-				BakedModel overridedModel = model.getOverrides().resolve(model, itemstack, null, null, 0);
-				DynamicTexture light = Minecraft.getInstance().gameRenderer.lightTexture().lightTexture;
-				
-				// Update light color
-				light.getPixels().setPixelRGBA(0, 0, 0xFFFFFFFF);
-				light.upload();
-				
-				itemRenderer.render(itemstack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, guiGraphics.pose(), bufferSource, 0, OverlayTexture.NO_OVERLAY, overridedModel);
-				bufferSource.endBatch();
-				
-				guiGraphics.pose().popPose();
-			}
-			
-			if (!this.trailParticles.isEmpty() && this.showTrailCheckbox._getValue()) {
-				RenderSystem.setShader(GameRenderer::getParticleShader);
-				DynamicTexture light = Minecraft.getInstance().gameRenderer.lightTexture().lightTexture;
-				
-				// Update light color
-				light.getPixels().setPixelRGBA(0, 0, 0xFFFFFFFF);
-				light.upload();
-				
-				for (CustomTrailParticle trail : this.trailParticles) {
-					ParticleRenderType particleRendertype = trail.getRenderType();
-					particleRendertype.begin(bufferbuilder, Minecraft.getInstance().textureManager);
-					trail.render(bufferbuilder, null, partialTicks);
-					particleRendertype.end(tesselator);
-				}
-			}
-			
-			if (this.collider != null && this.showColliderCheckbox._getValue()) {
-				RenderType renderType = this.collider.getRenderType();
-				bufferbuilder.begin(renderType.mode(), renderType.format);
-				RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-				
-				AnimationPlayer player = this.animator.getPlayerFor(null);
-				float elapsedTime = player.getPrevElapsedTime() + (player.getElapsedTime() - player.getPrevElapsedTime()) * partialTicks;
-				boolean red = elapsedTime >= this.attackTimeBegin && elapsedTime <= this.attackTimeEnd;
-				
-				if (this.colliderJoint != null) {
-					Pose prevPose = this.animator.getPose(0.0F);
-					Pose currentPose = this.animator.getPose(1.0F);
-					this.collider.drawInternal(guiGraphics.pose(), bufferbuilder, this.getArmature(), this.colliderJoint, prevPose, currentPose, partialTicks, red ? 0xFFFF0000 : -1);
-				} else {
-					DynamicAnimation animation = player.getAnimation();
-					
-					if (animation instanceof AttackAnimation attackanimation) {
-						Phase phase = attackanimation.getPhaseByTime(elapsedTime);
-						
-						for (AttackAnimation.JointColliderPair pair : phase.getColliders()) {
-							Pose prevPose = animation.getRawPose(player.getPrevElapsedTime());
-							Pose currentPose = animation.getRawPose(player.getElapsedTime());
-							this.collider.drawInternal(guiGraphics.pose(), bufferbuilder, this.getArmature(), pair.getFirst(), prevPose, currentPose, partialTicks, -1);
-						}
-					}
-				}
-				
-				RenderSystem.lineWidth(3.0F);
-				RenderSystem.disableCull();
-				BufferUploader.drawWithShader(bufferbuilder.end());
-				RenderSystem.lineWidth(1.0F);
-				RenderSystem.enableCull();
-			}
-			
-			guiGraphics.pose().popPose();
-			
-			RenderSystem.setProjectionMatrix(oldProjection, VertexSorting.ORTHOGRAPHIC_Z);
-			RenderSystem.getModelViewStack().popPose();
-			RenderSystem.applyModelViewMatrix();
-			RenderSystem.setShader(() -> prevShader);
-		} else if (this.getMesh() != null) {
-			guiGraphics.pose().pushPose();
-			
-			ShaderInstance prevShader = RenderSystem.getShader();
-			Matrix4f oldProjection = RenderSystem.getProjectionMatrix();
-			RenderSystem.setShader(EpicFightShaders::getPositionColorNormalShader);
-			
-			Matrix4f perspective = (new Matrix4f()).setPerspective(70.0F, (float)this.width / (float)this.height, 0.05F, 100.0F);
-			
-			RenderSystem.setProjectionMatrix(perspective, VertexSorting.DISTANCE_TO_ORIGIN);
-			RenderSystem.getModelViewStack().pushPose();
-			RenderSystem.getModelViewStack().setIdentity();
-			RenderSystem.applyModelViewMatrix();
-			
-			guiGraphics.pose().translate(this.xMove, this.yMove - 1.0D, this.zoom);
-			guiGraphics.pose().mulPose(Axis.XP.rotationDegrees(this.xRot));
-			guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.yRot));
-			
-			this.mesh.get().initialize();
-			Tesselator tesselator = RenderSystem.renderThreadTesselator();
-			BufferBuilder bufferbuilder = tesselator.getBuilder();
-			bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-			
-			this.mesh.get().draw(guiGraphics.pose(), bufferbuilder, RawMesh.DrawingFunction.ENTITY_SOLID, -1, 0.9411F, 0.9411F, 0.9411F, 1.0F, OverlayTexture.NO_OVERLAY);
-			BufferUploader.drawWithShader(bufferbuilder.end());
-			guiGraphics.pose().popPose();
-			
-			RenderSystem.setProjectionMatrix(oldProjection, VertexSorting.ORTHOGRAPHIC_Z);
-			RenderSystem.getModelViewStack().popPose();
-			RenderSystem.applyModelViewMatrix();
-			RenderSystem.setShader(() -> prevShader);
+		if (this.backgroundClearColor != null) {
+			this.modelRenderTarget.setClearColor(this.backgroundClearColor.x, this.backgroundClearColor.y, this.backgroundClearColor.z, this.backgroundClearColor.w);
 		}
+		
+		Tesselator tesselator = RenderSystem.renderThreadTesselator();
+		BufferBuilder bufferbuilder = tesselator.getBuilder();
+		
+		Matrix4f oldProjection = RenderSystem.getProjectionMatrix();
+		Matrix4f perspective = new Matrix4f().setPerspective((float)Math.toRadians(50.0F), (float)this.width / (float)this.height, 0.05F, 100.0F);
+		
+		ShaderInstance prevShader = RenderSystem.getShader();
+		RenderSystem.setProjectionMatrix(perspective, VertexSorting.DISTANCE_TO_ORIGIN);
+		RenderSystem.getModelViewStack().pushPose();
+		RenderSystem.getModelViewStack().setIdentity();
+		RenderSystem.applyModelViewMatrix();
+		
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().translate(this.xMove, this.yMove - 1.0D, this.zoom);
+		guiGraphics.pose().mulPose(Axis.XP.rotationDegrees(this.xRot));
+		guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.yRot));
+		
+		this.renderFigure(guiGraphics, tesselator, bufferbuilder, minecraft.getFrameTime());
+		
+		guiGraphics.pose().popPose();
+		
+		RenderSystem.setProjectionMatrix(oldProjection, VertexSorting.ORTHOGRAPHIC_Z);
+		RenderSystem.getModelViewStack().popPose();
+		RenderSystem.applyModelViewMatrix();
+		RenderSystem.setShader(() -> prevShader);
 		
 		this.modelRenderTarget.unbindWrite();
 		
@@ -521,7 +678,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public class FakeEntityPatch extends LivingEntityPatch<LivingEntity> {
+	public class FakeEntityPatch extends LivingEntityPatch<LivingEntity> implements SimulatableObject, ClothSimulatable {
 		public FakeEntityPatch(Armature armature) {
 			this.armature = armature.deepCopy();
 		}
@@ -531,8 +688,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public void initAnimator(Animator clientAnimator) {
-			
+		public void initAnimator(Animator animator) {
+			this.animator = animator;
 		}
 		
 		@Override
@@ -541,7 +698,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public StaticAnimation getHitAnimation(StunType stunType) {
+		public AssetAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 			return null;
 		}
 		
@@ -551,7 +708,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		}
 		
 		@Override
-		public void cancelAnyAction() {
+		public void cancelItemUse() {
 		}
 		
 		@Override
@@ -571,11 +728,76 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		@Override
 		public void updateEntityState() {
 		}
+		
+		@Override
+		public boolean invalid() {
+			return false;
+		}
+		
+		@Override
+		public Vec3 getObjectVelocity() {
+			return Vec3.ZERO;
+		}
+		
+		@Override
+		public Vec3 getAccurateCloakLocation(float partialFrame) {
+			return Vec3.ZERO;
+		}
+		
+		@Override
+		public Vec3 getAccuratePartialLocation(float partialFrame) {
+			return Vec3.ZERO;
+		}
+		
+		@Override
+		public float getAccurateYRot(float partialFrame) {
+			return ModelPreviewer.this.yRot;
+		}
+		
+		@Override
+		public float getYRotDelta(float partialFrame) {
+			return ModelPreviewer.this.yRot - ModelPreviewer.this.yRotO;
+		}
+		
+		@Override
+		public float getYRot() {
+			return ModelPreviewer.this.yRot;
+		}
+		
+		@Override
+		public float getYRotO() {
+			return ModelPreviewer.this.yRotO;
+		}
+		
+		@Override
+		public <SIM extends PhysicsSimulator<?, ?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, ?, SIM> simulationType) {
+			return Optional.empty();
+		}
+
+		@Override
+		public float getScale() {
+			return 1.0F;
+		}
+
+		@Override
+		public Animator getSimulatableAnimator() {
+			return this.animator;
+		}
+
+		@Override
+		public float getGravity() {
+			return 9.8F;
+		}
+
+		@Override
+		public ClothSimulator getClothSimulator() {
+			return null;
+		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public class NoEntityAnimator extends ClientAnimator {
-		public NoEntityAnimator(FakeEntityPatch entitypatch) {
+		public NoEntityAnimator(LivingEntityPatch<?> entitypatch) {
 			super(entitypatch, NoEntityBaseLayer::new);
 		}
 		
@@ -584,25 +806,25 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			this.baseLayer.update(this.entitypatch);
 			
 			if (this.baseLayer.animationPlayer.isEnd() && this.baseLayer.getNextAnimation() == null) {
-				StaticAnimation toPlay = ModelPreviewer.this.index > -1 && ModelPreviewer.this.index < ModelPreviewer.this.animationsToPlay.size() ? ModelPreviewer.this.animationsToPlay.get(ModelPreviewer.this.index) : Animations.DUMMY_ANIMATION;
+				AssetAccessor<? extends StaticAnimation> toPlay = ModelPreviewer.this.index > -1 && ModelPreviewer.this.index < ModelPreviewer.this.animationsToPlay.size() ? ModelPreviewer.this.animationsToPlay.get(ModelPreviewer.this.index) : Animations.EMPTY_ANIMATION;
 				this.baseLayer.playAnimation(toPlay, this.entitypatch, 0.0F);
 				
 				if (!ModelPreviewer.this.trailInfoList.isEmpty()) {
 					for (TrailInfo trailInfo : ModelPreviewer.this.trailInfoList) {
 						if (trailInfo.playable()) {
-							CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.getArmature().searchJointByName(trailInfo.joint), toPlay, trailInfo);
+							CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(trailInfo.joint()), toPlay, trailInfo);
 							ModelPreviewer.this.trailParticles.add(trail);
 						} else {
-							toPlay.getProperty(ClientAnimationProperties.TRAIL_EFFECT).ifPresent(trailInfos -> {
+							toPlay.get().getProperty(ClientAnimationProperties.TRAIL_EFFECT).ifPresent(trailInfos -> {
 								for (TrailInfo info : trailInfos) {
-									if (info.hand != InteractionHand.MAIN_HAND) {
+									if (info.hand() != InteractionHand.MAIN_HAND) {
 										continue;
 									}
 									
 									TrailInfo combinedTrailInfo = trailInfo.overwrite(info);
 									
 									if (combinedTrailInfo.playable()) {
-										CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.getArmature().searchJointByName(combinedTrailInfo.joint), toPlay, combinedTrailInfo);
+										CustomTrailParticle trail = new CustomTrailParticle(ModelPreviewer.this.entitypatch.getArmature().searchJointByName(combinedTrailInfo.joint()), toPlay, combinedTrailInfo);
 										ModelPreviewer.this.trailParticles.add(trail);
 									}
 								}
@@ -623,21 +845,23 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		static class NoEntityAnimationPlayer extends AnimationPlayer {
 			@Override
 			public void tick(LivingEntityPatch<?> entitypatch) {
-				this.prevElapsedTime = this.elapsedTime;
-				this.elapsedTime += EpicFightOptions.A_TICK * (this.isReversed() && this.getAnimation().canBePlayedReverse() ? -1.0F : 1.0F);
+				DynamicAnimation nowPlay = this.getAnimation().get();
 				
-				if (this.elapsedTime >= this.play.getTotalTime()) {
-					if (this.play.isRepeat()) {
+				this.prevElapsedTime = this.elapsedTime;
+				this.elapsedTime += EpicFightSharedConstants.A_TICK * (this.isReversed() && nowPlay.canBePlayedReverse() ? -1.0F : 1.0F);
+				
+				if (this.elapsedTime >= nowPlay.getTotalTime()) {
+					if (nowPlay.isRepeat()) {
 						this.prevElapsedTime = 0;
-						this.elapsedTime %= this.play.getTotalTime();
+						this.elapsedTime %= nowPlay.getTotalTime();
 					} else {
-						this.elapsedTime = this.play.getTotalTime();
+						this.elapsedTime = nowPlay.getTotalTime();
 						this.isEnd = true;
 					}
 				} else if (this.elapsedTime < 0) {
-					if (this.play.isRepeat()) {
-						this.prevElapsedTime = this.play.getTotalTime();
-						this.elapsedTime = this.play.getTotalTime() + this.elapsedTime;
+					if (nowPlay.isRepeat()) {
+						this.prevElapsedTime = nowPlay.getTotalTime();
+						this.elapsedTime = nowPlay.getTotalTime() + this.elapsedTime;
 					} else {
 						this.elapsedTime = 0.0F;
 						this.isEnd = true;
@@ -646,12 +870,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			@Override
-			public void begin(DynamicAnimation animation, LivingEntityPatch<?> entitypatch) {
+			public void begin(AssetAccessor<? extends DynamicAnimation> animation, LivingEntityPatch<?> entitypatch) {
 			}
 			
 			@Override
 			public Pose getCurrentPose(LivingEntityPatch<?> entitypatch, float partialTicks) {
-				return this.play.getRawPose(this.prevElapsedTime + (this.elapsedTime - this.prevElapsedTime) * partialTicks);
+				return this.play.get().getRawPose(this.prevElapsedTime + (this.elapsedTime - this.prevElapsedTime) * partialTicks);
 			}
 		}
 		
@@ -661,30 +885,31 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				super(priority, NoEntityAnimationPlayer::new);
 			}
 			
-			public void playAnimation(StaticAnimation nextAnimation, LivingEntityPatch<?> entitypatch, float convertTimeModifier) {
+			public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float convertTimeModifier) {
 				Pose lastPose = entitypatch.getAnimator().getPose(1.0F);
 				this.resume();
 				
-				if (!nextAnimation.isMetaAnimation()) {
+				if (!nextAnimation.get().isMetaAnimation()) {
 					this.setLinkAnimation(nextAnimation, entitypatch, lastPose, convertTimeModifier);
 					this.linkAnimation.putOnPlayer(this.animationPlayer, entitypatch);
 					this.nextAnimation = nextAnimation;
 				}
 			}
 			
-			public void playAnimationInstant(DynamicAnimation nextAnimation, LivingEntityPatch<?> entitypatch) {
+			@Override
+			public void playAnimationInstantly(AssetAccessor<? extends DynamicAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 				this.resume();
-				nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+				nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 				this.nextAnimation = null;
 			}
 			
 			@Override
-			protected void setLinkAnimation(StaticAnimation nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float convertTimeModifier) {
-				Pose currentPose = this.animationPlayer.getAnimation().getRawPose(this.animationPlayer.getElapsedTime());
-				Pose nextAnimationPose = nextAnimation.getRawPose(0.0F);
-				float totalTime = nextAnimation.getConvertTime();
+			protected void setLinkAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float convertTimeModifier) {
+				Pose currentPose = this.animationPlayer.getAnimation().get().getRawPose(this.animationPlayer.getElapsedTime());
+				Pose nextAnimationPose = nextAnimation.get().getRawPose(0.0F);
+				float totalTime = nextAnimation.get().getTransitionTime();
 				
-				DynamicAnimation fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
+				AssetAccessor<? extends DynamicAnimation> fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
 				
 				if (fromAnimation instanceof LinkAnimation linkAnimation) {
 					fromAnimation = linkAnimation.getFromAnimation();
@@ -719,11 +944,11 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				
 				if (!this.paused && this.animationPlayer.isEnd()) {
 					if (this.nextAnimation != null) {
-						this.nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+						this.nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 						this.nextAnimation = null;
 					} else {
 						if (this.animationPlayer.getAnimation() instanceof LayerOffAnimation) {
-							this.animationPlayer.getAnimation().end(entitypatch, Animations.DUMMY_ANIMATION, true);
+							this.animationPlayer.getAnimation().get().end(entitypatch, Animations.EMPTY_ANIMATION, true);
 						} else {
 							this.off(entitypatch);
 						}
@@ -732,18 +957,18 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			public Pose getEnabledPose(LivingEntityPatch<?> entitypatch, float partialTick) {
-				DynamicAnimation animation = this.animationPlayer.getAnimation();
+				DynamicAnimation animation = this.animationPlayer.getAnimation().get();
 				Pose pose = animation.getRawPose(this.animationPlayer.getPrevElapsedTime() + (this.animationPlayer.getElapsedTime() - this.animationPlayer.getPrevElapsedTime()) * partialTick);
-				pose.removeJointIf((entry) -> !animation.hasTransformFor(entry.getKey()));
+				pose.disableJoint((entry) -> !animation.hasTransformFor(entry.getKey()));
 				
 				return pose;
 			}
 			
 			public void off(LivingEntityPatch<?> entitypatch) {
 				if (!this.isDisabled() && !(this.animationPlayer.getAnimation() instanceof LayerOffAnimation)) {
-					float convertTime = entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation().getConvertTime();
+					float convertTime = entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation().get().getTransitionTime();
 					setLayerOffAnimation(this.animationPlayer.getAnimation(), this.getEnabledPose(entitypatch, 1.0F), this.layerOffAnimation, convertTime);
-					this.playAnimationInstant(this.layerOffAnimation, entitypatch);
+					this.playAnimationInstantly(this.layerOffAnimation, entitypatch);
 				}
 			}
 		}
@@ -754,21 +979,24 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				super(NoEntityAnimationPlayer::new);
 				
 				this.compositeLayers.clear();
-				this.compositeLayers.computeIfAbsent(Priority.LOWEST, NoEntityLayer::new);
-				this.compositeLayers.computeIfAbsent(Priority.MIDDLE, NoEntityLayer::new);
-				this.compositeLayers.computeIfAbsent(Priority.HIGHEST, NoEntityLayer::new);
+				
+				for (Priority priority : Priority.values()) {
+					this.compositeLayers.computeIfAbsent(priority, NoEntityLayer::new);
+				}
+				
+				this.baseLayerPriority = Priority.LOWEST;
 			}
 			
 			@Override
-			public void playAnimation(StaticAnimation nextAnimation, LivingEntityPatch<?> entitypatch, float convertTimeModifier) {
-				Priority priority = nextAnimation.getPriority();
+			public void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, float convertTimeModifier) {
+				Priority priority = nextAnimation.get().getPriority();
 				this.baseLayerPriority = priority;
-				this.offCompositeLayerLowerThan(entitypatch, nextAnimation);
+				this.offCompositeLayersLowerThan(entitypatch, nextAnimation);
 				
 				Pose lastPose = entitypatch.getAnimator().getPose(1.0F);
 				this.resume();
 				
-				if (!nextAnimation.isMetaAnimation()) {
+				if (!nextAnimation.get().isMetaAnimation()) {
 					this.setLinkAnimation(nextAnimation, entitypatch, lastPose, convertTimeModifier);
 					this.linkAnimation.putOnPlayer(this.animationPlayer, entitypatch);
 					entitypatch.updateEntityState();
@@ -777,18 +1005,18 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			@Override
-			public void playAnimationInstant(DynamicAnimation nextAnimation, LivingEntityPatch<?> entitypatch) {
+			public void playAnimationInstantly(AssetAccessor<? extends DynamicAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 				this.resume();
-				nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+				nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 				this.nextAnimation = null;
 			}
 			
 			@Override
-			protected void playLivingAnimation(StaticAnimation nextAnimation, LivingEntityPatch<?> entitypatch) {
+			protected void playLivingAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch) {
 				this.resume();
 				
-				if (!nextAnimation.isMetaAnimation()) {
-					this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getAnimation().getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
+				if (!nextAnimation.get().isMetaAnimation()) {
+					this.concurrentLinkAnimation.acceptFrom(this.animationPlayer.getAnimation().get().getRealAnimation(), nextAnimation, this.animationPlayer.getElapsedTime());
 					this.concurrentLinkAnimation.putOnPlayer(this.animationPlayer, entitypatch);
 					this.nextAnimation = nextAnimation;
 				}
@@ -804,11 +1032,11 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				
 				if (!this.paused && this.animationPlayer.isEnd()) {
 					if (this.nextAnimation != null) {
-						this.nextAnimation.putOnPlayer(this.animationPlayer, entitypatch);
+						this.nextAnimation.get().putOnPlayer(this.animationPlayer, entitypatch);
 						this.nextAnimation = null;
 					} else {
 						if (this.animationPlayer.getAnimation() instanceof LayerOffAnimation) {
-							this.animationPlayer.getAnimation().end(entitypatch, Animations.DUMMY_ANIMATION, true);
+							this.animationPlayer.getAnimation().get().end(entitypatch, Animations.EMPTY_ANIMATION, true);
 						} else {
 							this.off(entitypatch);
 						}
@@ -821,12 +1049,12 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			@Override
-			protected void setLinkAnimation(StaticAnimation nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float convertTimeModifier) {
-				Pose currentPose = this.animationPlayer.getAnimation().getRawPose(this.animationPlayer.getElapsedTime());
-				Pose nextAnimationPose = nextAnimation.getRawPose(0.0F);
-				float totalTime = nextAnimation.getConvertTime();
+			protected void setLinkAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, LivingEntityPatch<?> entitypatch, Pose lastPose, float convertTimeModifier) {
+				Pose currentPose = this.animationPlayer.getAnimation().get().getRawPose(this.animationPlayer.getElapsedTime());
+				Pose nextAnimationPose = nextAnimation.get().getRawPose(0.0F);
+				float totalTime = nextAnimation.get().getTransitionTime();
 				
-				DynamicAnimation fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
+				AssetAccessor<? extends DynamicAnimation> fromAnimation = this.animationPlayer.isEmpty() ? entitypatch.getClientAnimator().baseLayer.animationPlayer.getAnimation() : this.animationPlayer.getAnimation();
 				
 				if (fromAnimation instanceof LinkAnimation linkAnimation) {
 					fromAnimation = linkAnimation.getFromAnimation();
@@ -853,7 +1081,7 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			}
 			
 			public void offCompositeLayerLowerThan(LivingEntityPatch<?> entitypatch, StaticAnimation nextAnimation) {
-				for (Priority p : nextAnimation.getPriority().lowerEquals()) {
+				for (Priority p : nextAnimation.getPriority().lowersAndEqual()) {
 					if (p == Priority.LOWEST && !nextAnimation.isMainFrameAnimation()) {
 						continue;
 					}
@@ -923,54 +1151,54 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	class CustomTrailParticle extends TrailParticle {
+	class CustomTrailParticle extends AnimationTrailParticle {
 		@SuppressWarnings("deprecation")
-		protected CustomTrailParticle(Joint joint, StaticAnimation animation, TrailInfo trailInfo) {
-			super(ModelPreviewer.this.getArmature(), ModelPreviewer.this.animator.getEntityPatch(), joint, animation, trailInfo);
+		protected CustomTrailParticle(Joint joint, AssetAccessor<? extends StaticAnimation> animation, TrailInfo trailInfo) {
+			super(ModelPreviewer.this.entitypatch.getArmature(), ModelPreviewer.this.entitypatch, joint, animation, trailInfo);
 		}
 		
 		@Override
 		public void tick() {
 			AnimationPlayer animPlayer = ModelPreviewer.this.animator.getPlayerFor(null);
-			this.visibleTrailEdges.removeIf(v -> !v.isAlive());
+			this.trailEdges.removeIf(v -> !v.isAlive());
 			
-			if (this.animationEnd) {
+			if (this.shouldRemove) {
 				if (this.lifetime-- == 0) {
 					this.remove();
 				}
 			} else {
-				if (this.animation != animPlayer.getAnimation().getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime) {
-					this.animationEnd = true;
-					this.lifetime = this.trailInfo.trailLifetime;
+				if (this.animation != animPlayer.getRealAnimation() || animPlayer.getElapsedTime() > this.trailInfo.endTime()) {
+					this.shouldRemove = true;
+					this.lifetime = this.trailInfo.trailLifetime();
 				}
 			}
 			
-			if (this.trailInfo.fadeTime > 0.0F && this.trailInfo.endTime < animPlayer.getElapsedTime()) {
+			if (this.trailInfo.fadeTime() > 0.0F && this.trailInfo.endTime() < animPlayer.getElapsedTime()) {
 				return;
 			}
 			
-			boolean isTrailInvisible = animPlayer.getAnimation().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime;
-			boolean isFirstTrail = this.visibleTrailEdges.isEmpty();
+			boolean isTrailInvisible = animPlayer.getAnimation().get().isLinkAnimation() || animPlayer.getElapsedTime() <= this.trailInfo.startTime();
+			boolean isFirstTrail = this.trailEdges.isEmpty();
 			boolean needCorrection = (!isTrailInvisible && isFirstTrail);
 			
 			if (needCorrection) {
-				float startCorrection = Math.max((this.trailInfo.startTime - animPlayer.getPrevElapsedTime()) / (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()), 0.0F);
-				this.startEdgeCorrection = this.trailInfo.interpolateCount * 2 * startCorrection;
+				float startCorrection = Math.max((this.trailInfo.startTime() - animPlayer.getPrevElapsedTime()) / (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()), 0.0F);
+				this.startEdgeCorrection = this.trailInfo.interpolateCount() * 2 * startCorrection;
 			}
 			
 			TrailInfo trailInfo = this.trailInfo;
-			Pose prevPose = this.entitypatch.getAnimator().getPose(0.0F);
-			Pose middlePose = this.entitypatch.getAnimator().getPose(0.5F);
-			Pose currentPose = this.entitypatch.getAnimator().getPose(1.0F);
-			OpenMatrix4f prevJointTf = ModelPreviewer.this.getArmature().getBindedTransformFor(prevPose, this.joint);
-			OpenMatrix4f middleJointTf = ModelPreviewer.this.getArmature().getBindedTransformFor(middlePose, this.joint);
-			OpenMatrix4f currentJointTf = ModelPreviewer.this.getArmature().getBindedTransformFor(currentPose, this.joint);
-			Vec3 prevStartPos = OpenMatrix4f.transform(prevJointTf, trailInfo.start);
-			Vec3 prevEndPos = OpenMatrix4f.transform(prevJointTf, trailInfo.end);
-			Vec3 middleStartPos = OpenMatrix4f.transform(middleJointTf, trailInfo.start);
-			Vec3 middleEndPos = OpenMatrix4f.transform(middleJointTf, trailInfo.end);
-			Vec3 currentStartPos = OpenMatrix4f.transform(currentJointTf, trailInfo.start);
-			Vec3 currentEndPos = OpenMatrix4f.transform(currentJointTf, trailInfo.end);
+			Pose prevPose = this.owner.getAnimator().getPose(0.0F);
+			Pose middlePose = this.owner.getAnimator().getPose(0.5F);
+			Pose currentPose = this.owner.getAnimator().getPose(1.0F);
+			OpenMatrix4f prevJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(prevPose, this.joint);
+			OpenMatrix4f middleJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(middlePose, this.joint);
+			OpenMatrix4f currentJointTf = ModelPreviewer.this.entitypatch.getArmature().getBindedTransformFor(currentPose, this.joint);
+			Vec3 prevStartPos = OpenMatrix4f.transform(prevJointTf, trailInfo.start());
+			Vec3 prevEndPos = OpenMatrix4f.transform(prevJointTf, trailInfo.end());
+			Vec3 middleStartPos = OpenMatrix4f.transform(middleJointTf, trailInfo.start());
+			Vec3 middleEndPos = OpenMatrix4f.transform(middleJointTf, trailInfo.end());
+			Vec3 currentStartPos = OpenMatrix4f.transform(currentJointTf, trailInfo.start());
+			Vec3 currentEndPos = OpenMatrix4f.transform(currentJointTf, trailInfo.end());
 			
 			List<Vec3> finalStartPositions;
 			List<Vec3> finalEndPositions;
@@ -997,8 +1225,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 					edge1 = this.invisibleTrailEdges.get(lastIdx);
 					edge2 = new TrailEdge(prevStartPos, prevEndPos, -1);
 				} else {
-					edge1 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - (this.trailInfo.interpolateCount / 2 + 1));
-					edge2 = this.visibleTrailEdges.get(this.visibleTrailEdges.size() - 1);
+					edge1 = this.trailEdges.get(this.trailEdges.size() - (this.trailInfo.interpolateCount() / 2 + 1));
+					edge2 = this.trailEdges.get(this.trailEdges.size() - 1);
 					edge2.lifetime++;
 				}
 				
@@ -1011,8 +1239,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				startPosList.add(currentStartPos);
 				endPosList.add(currentEndPos);
 				
-				finalStartPositions = CubicBezierCurve.getBezierInterpolatedPoints(startPosList, 1, 3, this.trailInfo.interpolateCount);
-				finalEndPositions = CubicBezierCurve.getBezierInterpolatedPoints(endPosList, 1, 3, this.trailInfo.interpolateCount);
+				finalStartPositions = CubicBezierCurve.getBezierInterpolatedPoints(startPosList, 1, 3, this.trailInfo.interpolateCount());
+				finalEndPositions = CubicBezierCurve.getBezierInterpolatedPoints(endPosList, 1, 3, this.trailInfo.interpolateCount());
 				
 				if (!isFirstTrail) {
 					finalStartPositions.remove(0);
@@ -1022,17 +1250,17 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				visibleTrail = true;
 			}
 			
-			this.makeTrailEdges(finalStartPositions, finalEndPositions, visibleTrail ? this.visibleTrailEdges : this.invisibleTrailEdges);
+			this.makeTrailEdges(finalStartPositions, finalEndPositions, visibleTrail ? this.trailEdges : this.invisibleTrailEdges);
 		}
 		
 		@Override
 		public void render(VertexConsumer vertexConsumer, Camera camera, float partialTick) {
-			if (this.visibleTrailEdges.isEmpty()) {
+			if (this.trailEdges.isEmpty()) {
 				return;
 			}
 			
 			TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-	        AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath);
+	        AbstractTexture abstracttexture = texturemanager.getTexture(this.trailInfo.texturePath());
 	        RenderSystem.bindTexture(abstracttexture.getId());
 	        RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
 		    RenderSystem.texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
@@ -1041,19 +1269,19 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			PoseStack poseStack = new PoseStack();
 			this.setupPoseStack(poseStack, camera, partialTick);
 			Matrix4f matrix4f = poseStack.last().pose();
-			int edges = this.visibleTrailEdges.size() - 1;
-			boolean startFade = this.visibleTrailEdges.get(0).lifetime == 1;
-			boolean endFade = this.visibleTrailEdges.get(edges).lifetime == this.trailInfo.trailLifetime;
-			float startEdge = (startFade ? this.trailInfo.interpolateCount * 2 * partialTick : 0.0F) + this.startEdgeCorrection;
-			float endEdge = endFade ? Math.min(edges - (this.trailInfo.interpolateCount * 2) * (1.0F - partialTick), edges - 1) : edges - 1;
+			int edges = this.trailEdges.size() - 1;
+			boolean startFade = this.trailEdges.get(0).lifetime == 1;
+			boolean endFade = this.trailEdges.get(edges).lifetime == this.trailInfo.trailLifetime();
+			float startEdge = (startFade ? this.trailInfo.interpolateCount() * 2 * partialTick : 0.0F) + this.startEdgeCorrection;
+			float endEdge = endFade ? Math.min(edges - (this.trailInfo.interpolateCount() * 2) * (1.0F - partialTick), edges - 1) : edges - 1;
 			float interval = 1.0F / (endEdge - startEdge);
 			float fading = 1.0F;
 			
-			if (this.animationEnd) {
-				if (TrailInfo.isValidTime(this.trailInfo.fadeTime)) {
-					fading = ((float)this.lifetime / (float)this.trailInfo.trailLifetime);
+			if (this.shouldRemove) {
+				if (TrailInfo.isValidTime(this.trailInfo.fadeTime())) {
+					fading = ((float)this.lifetime / (float)this.trailInfo.trailLifetime());
 				} else {
-					fading = Mth.clamp((this.lifetime + (1.0F - partialTick)) / this.trailInfo.trailLifetime, 0.0F, 1.0F);
+					fading = Mth.clamp((this.lifetime + (1.0F - partialTick)) / this.trailInfo.trailLifetime(), 0.0F, 1.0F);
 				}
 			}
 			
@@ -1062,8 +1290,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 			float to = -partialStartEdge + interval;
 			
 			for (int i = (int)(startEdge); i < (int)endEdge + 1; i++) {
-				TrailEdge e1 = this.visibleTrailEdges.get(i);
-				TrailEdge e2 = this.visibleTrailEdges.get(i + 1);
+				TrailEdge e1 = this.trailEdges.get(i);
+				TrailEdge e2 = this.trailEdges.get(i + 1);
 				Vector4f pos1 = new Vector4f((float)e1.start.x, (float)e1.start.y, (float)e1.start.z, 1.0F);
 				Vector4f pos2 = new Vector4f((float)e1.end.x, (float)e1.end.y, (float)e1.end.z, 1.0F);
 				Vector4f pos3 = new Vector4f((float)e2.end.x, (float)e2.end.y, (float)e2.end.z, 1.0F);
@@ -1213,5 +1441,9 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 	@Override
 	public void _renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
 		this.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+	}
+	
+	public void sysoutTranslationInfo() {
+		System.out.println("x move: " + this.xMove +" y move: "+ this.yMove +" x rot: "+ this.xRot +" y rot: "+ this.yRot +" zoom: "+ this.zoom);
 	}
 }

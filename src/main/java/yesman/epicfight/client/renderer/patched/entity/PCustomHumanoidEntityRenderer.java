@@ -13,7 +13,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
@@ -26,10 +26,11 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class PCustomHumanoidEntityRenderer<AM extends HumanoidMesh> extends PatchedLivingEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, HumanoidModel<LivingEntity>, LivingEntityRenderer<LivingEntity, HumanoidModel<LivingEntity>>, AM> {
-	private final MeshProvider<AM> mesh;
+	private final AssetAccessor<AM> mesh;
 	
-	public PCustomHumanoidEntityRenderer(MeshProvider<AM> mesh, EntityRendererProvider.Context context, EntityType<?> entityType) {
+	public PCustomHumanoidEntityRenderer(AssetAccessor<AM> mesh, EntityRendererProvider.Context context, EntityType<?> entityType) {
 		super(context, entityType);
+		
 		this.mesh = mesh;
 		this.addPatchedLayer(ElytraLayer.class, new PatchedElytraLayer<>());
 		this.addPatchedLayer(ItemInHandLayer.class, new PatchedItemInHandLayer<>());
@@ -38,9 +39,9 @@ public class PCustomHumanoidEntityRenderer<AM extends HumanoidMesh> extends Patc
 	}
 	
 	@Override
-	protected void setJointTransforms(LivingEntityPatch<LivingEntity> entitypatch, Armature armature, Pose pose, float partialTicks) {
+	public void setJointTransforms(LivingEntityPatch<LivingEntity> entitypatch, Armature armature, Pose pose, float partialTicks) {
 		if (entitypatch.getOriginal().isBaby()) {
-			pose.getOrDefaultTransform("Head").frontResult(JointTransform.getScale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
+			pose.orElseEmpty("Head").frontResult(JointTransform.scale(new Vec3f(1.25F, 1.25F, 1.25F)), OpenMatrix4f::mul);
 		}
 	}
 	
@@ -50,7 +51,7 @@ public class PCustomHumanoidEntityRenderer<AM extends HumanoidMesh> extends Patc
 	}
 	
 	@Override
-	public MeshProvider<AM> getDefaultMesh() {
+	public AssetAccessor<AM> getDefaultMesh() {
 		return this.mesh;
 	}
 }

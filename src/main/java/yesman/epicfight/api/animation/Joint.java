@@ -1,7 +1,9 @@
 package yesman.epicfight.api.animation;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
+
+import javax.annotation.Nullable;
 
 import com.google.common.collect.Lists;
 
@@ -19,25 +21,43 @@ public class Joint {
 	public Joint(String name, int jointId, OpenMatrix4f localTransform) {
 		this.jointId = jointId;
 		this.jointName = name;
-		this.localTransform = localTransform;
+		this.localTransform = localTransform.unmodifiable();
 	}
 
-	public void addSubJoint(Joint... joints) {
-        Collections.addAll(this.subJoints, joints);
+	public void addSubJoints(Joint... joints) {
+		for (Joint joint : joints) {
+			if (!this.subJoints.contains(joint)) {
+				this.subJoints.add(joint);
+			}
+		}
+	}
+	
+	public void removeSubJoints(Joint... joints) {
+		for (Joint joint : joints) {
+			this.subJoints.remove(joint);
+		}
 	}
 	
 	public List<Joint> getAllJoints() {
 		List<Joint> list = Lists.newArrayList();
-		this.getAllJoints(list);
+		this.getSubJoints(list);
 		
 		return list;
 	}
 	
-	private void getAllJoints(List<Joint> list) {
+	public void iterSubJoints(Consumer<Joint> iterTask) {
+		iterTask.accept(this);
+		
+		for (Joint joint : this.subJoints) {
+			joint.iterSubJoints(iterTask);
+		}
+	}
+	
+	private void getSubJoints(List<Joint> list) {
 		list.add(this);
 		
 		for (Joint joint : this.subJoints) {
-			joint.getAllJoints(list);
+			joint.getSubJoints(list);
 		}
 	}
 	
@@ -50,7 +70,7 @@ public class Joint {
 		}
 	}
 	
-	public OpenMatrix4f getLocalTrasnform() {
+	public OpenMatrix4f getLocalTransform() {
 		return this.localTransform;
 	}
 	
@@ -61,14 +81,23 @@ public class Joint {
 	public List<Joint> getSubJoints() {
 		return this.subJoints;
 	}
-
+	
+	// Null if index out of range
+	@Nullable
+	public Joint getSubJoint(int index) {
+		if (index < 0 || this.subJoints.size() <= index) {
+			return null;
+		}
+		
+		return this.subJoints.get(index);
+	}
+	
 	public String getName() {
 		return this.jointName;
 	}
 	
-	@Override
-	public String toString() {
-		return this.jointName;
+	public int getId() {
+		return this.jointId;
 	}
 	
 	@Override
@@ -82,11 +111,7 @@ public class Joint {
 	
 	@Override
 	public int hashCode() {
-		return this.jointName.hashCode() + this.jointId;
-	}
-	
-	public int getId() {
-		return this.jointId;
+		return this.jointName.hashCode() ^ this.jointId;
 	}
 	
 	public String searchPath(String path, String joint) {
@@ -94,6 +119,7 @@ public class Joint {
 			return path;
 		} else {
 			int i = 1;
+			
 			for (Joint subJoint : this.subJoints) {
 				String str = subJoint.searchPath(i + path, joint);
 				i++;
@@ -101,23 +127,38 @@ public class Joint {
 					return str;
 				}
 			}
+			
 			return null;
 		}
 	}
 	
-	/**
-	public void showInfo() {
-		System.out.println("id = " + this.jointId);
-		System.out.println("name = " + this.jointName);
-		System.out.println("local = " + this.localTransform);
-		System.out.print("children = ");
-		for (Joint joint : subJoints) {
-			System.out.print(joint.jointName + " ");
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("\nid: " + this.jointId);
+		sb.append("\nname: " + this.jointName);
+		sb.append("\nlocal transform: " + this.localTransform);
+		sb.append("\nto origin: " + this.toOrigin);
+		sb.append("\nchildren: [");
+		
+		int idx = 0;
+		
+		for (Joint joint : this.subJoints) {
+			idx++;
+			sb.append(joint.jointName);
+			
+			if (idx != this.subJoints.size()) {
+				sb.append(", ");
+			}
 		}
-		System.out.println();
-		for (Joint joint : subJoints) {
-			joint.showInfo();
+		
+		sb.append("]\n");
+		
+		for (Joint joint : this.subJoints) {
+			sb.append(joint.toString());
 		}
+		
+		return sb.toString();
 	}
-	**/
 }

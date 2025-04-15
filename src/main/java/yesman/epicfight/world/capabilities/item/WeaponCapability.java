@@ -15,12 +15,12 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.collider.Collider;
-import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.particle.HitParticleType;
@@ -34,11 +34,10 @@ public class WeaponCapability extends CapabilityItem {
 	protected final Skill passiveSkill;
 	protected final SoundEvent smashingSound;
 	protected final SoundEvent hitSound;
-	protected final Collider weaponCollider;
 	protected final HitParticleType hitParticle;
-	protected final Map<Style, List<AnimationProvider<?>>> autoAttackMotions;
+	protected final Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> autoAttackMotions;
 	protected final Map<Style, Function<ItemStack, Skill>> innateSkill;
-	protected final Map<Style, Map<LivingMotion, AnimationProvider<?>>> livingMotionModifiers;
+	protected final Map<Style, Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> livingMotionModifiers;
 	protected final boolean canBePlacedOffhand;
 	protected final Function<Style, Boolean> comboCancel;
 	protected final ZoomInType zoomInType;
@@ -57,14 +56,13 @@ public class WeaponCapability extends CapabilityItem {
 		this.smashingSound = weaponBuilder.swingSound;
 		this.hitParticle = weaponBuilder.hitParticle;
 		this.hitSound = weaponBuilder.hitSound;
-		this.weaponCollider = weaponBuilder.collider;
 		this.canBePlacedOffhand = weaponBuilder.canBePlacedOffhand;
 		this.comboCancel = weaponBuilder.comboCancel;
 		this.zoomInType = weaponBuilder.zoomInType;
 	}
 	
 	@Override
-	public final List<AnimationProvider<?>> getAutoAttckMotion(PlayerPatch<?> playerpatch) {
+	public final List<AnimationAccessor<? extends AttackAnimation>> getAutoAttackMotion(PlayerPatch<?> playerpatch) {
 		return this.autoAttackMotions.getOrDefault(this.getStyle(playerpatch), this.autoAttackMotions.get(Styles.COMMON));
 	}
 	
@@ -80,7 +78,7 @@ public class WeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public final List<AnimationProvider<?>> getMountAttackMotion() {
+	public final List<AnimationAccessor<? extends AttackAnimation>> getMountAttackMotion() {
 		return this.autoAttackMotions.get(Styles.MOUNT);
 	}
 	
@@ -105,11 +103,6 @@ public class WeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public Collider getWeaponCollider() {
-		return this.weaponCollider != null ? this.weaponCollider : super.getWeaponCollider();
-	}
-	
-	@Override
 	public boolean canBePlacedOffhand() {
 		return this.canBePlacedOffhand;
 	}
@@ -125,12 +118,12 @@ public class WeaponCapability extends CapabilityItem {
 	}
 	
 	@Override
-	public Map<LivingMotion, AnimationProvider<?>> getLivingMotionModifier(LivingEntityPatch<?> player, InteractionHand hand) {
+	public Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> getLivingMotionModifier(LivingEntityPatch<?> player, InteractionHand hand) {
 		if (this.livingMotionModifiers == null || hand == InteractionHand.OFF_HAND) {
 			return super.getLivingMotionModifier(player, hand);
 		}
 		
-		Map<LivingMotion, AnimationProvider<?>> motions = this.livingMotionModifiers.getOrDefault(this.getStyle(player), Maps.newHashMap());
+		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> motions = this.livingMotionModifiers.getOrDefault(this.getStyle(player), Maps.newHashMap());
 		this.livingMotionModifiers.getOrDefault(Styles.COMMON, Maps.newHashMap()).forEach(motions::putIfAbsent);
 		
 		return motions;
@@ -163,7 +156,7 @@ public class WeaponCapability extends CapabilityItem {
 	
 	@Override
 	public boolean availableOnHorse() {
-		return this.getMountAttackMotion() != null;
+		return this.autoAttackMotions.containsKey(Styles.MOUNT);
 	}
 	
 	public static WeaponCapability.Builder builder() {
@@ -177,10 +170,9 @@ public class WeaponCapability extends CapabilityItem {
 		SoundEvent swingSound;
 		SoundEvent hitSound;
 		HitParticleType hitParticle;
-		Collider collider;
-		Map<Style, List<AnimationProvider<?>>> autoAttackMotionMap;
+		Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> autoAttackMotionMap;
 		Map<Style, Function<ItemStack, Skill>> innateSkillByStyle;
-		Map<Style, Map<LivingMotion, AnimationProvider<?>>> livingMotionModifiers;
+		Map<Style, Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> livingMotionModifiers;
 		Function<Style, Boolean> comboCancel;
 		boolean canBePlacedOffhand;
 		ZoomInType zoomInType;
@@ -193,7 +185,6 @@ public class WeaponCapability extends CapabilityItem {
 			this.swingSound = EpicFightSounds.WHOOSH.get();
 			this.hitSound = EpicFightSounds.BLUNT_HIT.get();
 			this.hitParticle = EpicFightParticles.HIT_BLADE.get();
-			this.collider = ColliderPreset.FIST;
 			this.autoAttackMotionMap = Maps.newHashMap();
 			this.innateSkillByStyle = Maps.newHashMap();
 			this.livingMotionModifiers = null;
@@ -243,7 +234,7 @@ public class WeaponCapability extends CapabilityItem {
 			return this;
 		}
 		
-		public Builder livingMotionModifier(Style wieldStyle, LivingMotion livingMotion, StaticAnimation animation) {
+		public Builder livingMotionModifier(Style wieldStyle, LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) {
 			if (this.livingMotionModifiers == null) {
 				this.livingMotionModifiers = Maps.newHashMap();
 			}
@@ -262,7 +253,8 @@ public class WeaponCapability extends CapabilityItem {
 			return this;
 		}
 		
-		public Builder newStyleCombo(Style style, StaticAnimation... animation) {
+		@SafeVarargs
+		public final Builder newStyleCombo(Style style, AnimationAccessor<? extends AttackAnimation>... animation) {
 			this.autoAttackMotionMap.put(style, Lists.newArrayList(animation));
 			return this;
 		}
@@ -287,12 +279,8 @@ public class WeaponCapability extends CapabilityItem {
 			return this;
 		}
 		
-		public Map<Style, List<AnimationProvider<?>>> getComboAnimations() {
+		public Map<Style, List<AnimationAccessor<? extends AttackAnimation>>> getComboAnimations() {
 			return ImmutableMap.copyOf(this.autoAttackMotionMap);
-		}
-		
-		public Collider getCollider() {
-			return this.collider;
 		}
 	}
 }

@@ -29,13 +29,6 @@ public class PatchedItemInHandLayer<E extends LivingEntity, T extends LivingEnti
 		RenderEngine renderEngine = ClientEngine.getInstance().renderEngine;
 		
 		if (mainHandStack.getItem() != Items.AIR) {
-			if (entitypatch.getOriginal().getVehicle() != null) {
-				if (!entitypatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).availableOnHorse()) {
-					renderEngine.getItemRenderer(mainHandStack).renderUnusableItemMount(mainHandStack, entitypatch, poses, buffer, postStack, packedLight, partialTicks);
-					return;
-				}
-			}
-			
 			renderEngine.getItemRenderer(mainHandStack).renderItemInHand(mainHandStack, entitypatch, InteractionHand.MAIN_HAND, humanoidArmature, poses, buffer, postStack, packedLight, partialTicks);
 		}
 		

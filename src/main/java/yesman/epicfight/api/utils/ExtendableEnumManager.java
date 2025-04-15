@@ -28,7 +28,7 @@ public class ExtendableEnumManager<T extends ExtendableEnum> {
 		this.enumName = enumName;
 	}
 	
-	public void registerEnumCls(String modid, Class<?> cls) {
+	public void registerEnumCls(String modid, Class<? extends ExtendableEnum> cls) {
 		if (this.enums.containsKey(modid)) {
 			EpicFightMod.LOGGER.error(modid + " is already registered in " + this.enumName);
 		}
@@ -81,7 +81,7 @@ public class ExtendableEnumManager<T extends ExtendableEnum> {
 		return lastOrdinal;
 	}
 	
-	public T getOrThrow(int id) {
+	public T getOrThrow(int id) throws NoSuchElementException {
 		if (!this.enumMapByOrdinal.containsKey(id)) {
 			throw new NoSuchElementException("Enum id " + id + " does not exist in " + this.enumName);
 		}
@@ -89,7 +89,7 @@ public class ExtendableEnumManager<T extends ExtendableEnum> {
 		return this.enumMapByOrdinal.get(id);
 	}
 	
-	public T getOrThrow(String name) {
+	public T getOrThrow(String name) throws NoSuchElementException {
 		String key = name.toLowerCase(Locale.ROOT);
 		
 		if (!this.enumMapByName.containsKey(key)) {

@@ -1,5 +1,5 @@
 {
-	"required": true,
+	"required": false,
 	"minVersion": "0.8",
 	"compatibilityLevel": "JAVA_17",
 	"package": "yesman.epicfight.mixin",
@@ -15,6 +15,8 @@
 		"MixinMinecraft",
 		"MixinEntityRenderer",
 		"MixinLivingEntityRenderer",
+		"MixinCompositeRenderType",
+		"MixinAgeableListModel",
 		"IrisMixinExtendedShader",
 		"IrisMixinPipelineManager",
 		"SkinLayer3DMixinSkinUtil",
@@ -24,8 +26,8 @@
 		"WerewolvesMixinHumanWerewolfLayer"
 	],
 	"mixins": [
-		"MixinEndCrystal",
 		"MixinWitherBoss",
+		"MixinEntity",
 		"MixinLivingEntity",
 		"MixinMob",
 		"MixinPlayer",

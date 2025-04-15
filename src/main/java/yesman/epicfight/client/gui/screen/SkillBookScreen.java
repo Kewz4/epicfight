@@ -3,6 +3,7 @@ package yesman.epicfight.client.gui.screen;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -63,7 +64,7 @@ import yesman.epicfight.world.item.SkillBookItem;
 public class SkillBookScreen extends Screen {
 	private static final Map<WeaponCategory, ItemStack> WEAPON_CATEGORY_ICONS = Maps.newHashMap();
 	private static final Map<Attribute, TextureInfo> ATTRIBUTE_ICONS = Maps.newHashMap();
-	private static final ResourceLocation SKILLBOOK_BACKGROUND = new ResourceLocation(EpicFightMod.MODID, "textures/gui/screen/skillbook.png");
+	private static final ResourceLocation SKILLBOOK_BACKGROUND = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/screen/skillbook.png");
 	
 	public static final TextureInfo HEALTH_TEXTURE_INFO = new TextureInfo(SKILLBOOK_BACKGROUND, 22, 205, 10, 10);
 	public static final TextureInfo STAMINA_TEXTURE_INFO = new TextureInfo(SKILLBOOK_BACKGROUND, 32, 205, 10, 10);
@@ -166,16 +167,16 @@ public class SkillBookScreen extends Screen {
 	
 	@Override
 	protected void init() {
-		SkillContainer thisSkill = this.playerpatch.getSkill(this.skill);
-		SkillContainer priorSkill = this.skill == null ? null : this.playerpatch.getSkill(this.skill.getPriorSkill());
+		Optional<SkillContainer> thisSkill = this.playerpatch.getSkillContainerFor(this.skill);
+		Optional<SkillContainer> priorSkill = this.skill == null ? null : this.playerpatch.getSkillContainerFor(this.skill.getPriorSkill());
 		
-		boolean isUsing = thisSkill != null;
-		boolean condition = this.skill == null ? false : this.skill.getPriorSkill() == null || priorSkill != null;
+		boolean isUsing = thisSkill.isPresent();
+		boolean condition = this.skill == null ? false : this.skill.getPriorSkill() == null || priorSkill.isPresent();
 		Component tooltip = CommonComponents.EMPTY;
 		
 		if (!isUsing) {
 			if (condition) {
-				if (thisSkill != null) {
+				if (thisSkill.isPresent()) {
 					tooltip = Component.translatable("gui." + EpicFightMod.MODID + ".replace", Component.translatable(this.skill.getTranslationKey()).getString());
 				}
 			} else {

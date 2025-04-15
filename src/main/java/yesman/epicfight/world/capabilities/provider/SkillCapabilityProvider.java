@@ -31,11 +31,11 @@ public class SkillCapabilityProvider implements ICapabilityProvider, NonNullSupp
 
 	@Override
 	public CompoundTag serializeNBT() {
-		return this.capability.toNBT();
+		return this.capability.serialize();
 	}
 
 	@Override
 	public void deserializeNBT(CompoundTag nbt) {
-		this.capability.fromNBT(nbt);
+		this.capability.deserialize(nbt);
 	}
 }

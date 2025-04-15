@@ -28,7 +28,7 @@ public class EpicFightShaders {
 	
 	@SubscribeEvent
 	public static void registerShadersEvent(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(EpicFightMod.MODID, "solid_model"), DefaultVertexFormat.POSITION_COLOR_NORMAL), (reloadedShader) -> {
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "solid_model"), DefaultVertexFormat.POSITION_COLOR_NORMAL), (reloadedShader) -> {
 			EpicFightShaders.positionColorNormalShader = reloadedShader;
 		});
 	}

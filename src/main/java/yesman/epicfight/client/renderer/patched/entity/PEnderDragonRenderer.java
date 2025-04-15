@@ -15,9 +15,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.enderdragon.phases.DragonPhaseInstance;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.animation.AnimationPlayer;
-import yesman.epicfight.api.client.animation.Layer;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -31,8 +29,8 @@ import yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon.PatchedP
 
 @OnlyIn(Dist.CLIENT)
 public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, EnderDragonPatch, EnderDragonRenderer, DragonMesh> {
-	private static final ResourceLocation DRAGON_LOCATION = new ResourceLocation("textures/entity/enderdragon/dragon.png");
-	private static final ResourceLocation DRAGON_EXPLODING_LOCATION = new ResourceLocation("textures/entity/enderdragon/dragon_exploding.png");
+	private static final ResourceLocation DRAGON_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/dragon.png");
+	private static final ResourceLocation DRAGON_EXPLODING_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/dragon_exploding.png");
 	
 	@Override
 	public void render(EnderDragon entityIn, EnderDragonPatch entitypatch, EnderDragonRenderer renderer, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
@@ -40,25 +38,20 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
         this.mulPoseStack(poseStack, armature, entityIn, entitypatch, partialTicks);
-		OpenMatrix4f[] poses = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
-		poses[0] = OpenMatrix4f.rotate(-90.0F, Vec3f.X_AXIS, poses[0], null);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
+		armature.getPoseMatrices()[0] = OpenMatrix4f.rotate(-90.0F, Vec3f.X_AXIS, armature.getPoseMatrices()[0], null);
 		
 		if (entityIn.dragonDeathTime > 0) {
 			poseStack.translate(entityIn.getRandom().nextGaussian() * 0.08D, 0.0D, entityIn.getRandom().nextGaussian() * 0.08D);
 			float deathTimeProgression = ((float) entityIn.dragonDeathTime + partialTicks) / 200.0F;
-			mesh.draw(poseStack, buffer, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, deathTimeProgression, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
-			mesh.draw(poseStack, buffer, RenderType.entityDecal(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), poses);
+			mesh.draw(poseStack, buffer, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, deathTimeProgression, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), armature.getPoseMatrices());
+			mesh.draw(poseStack, buffer, RenderType.entityDecal(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), armature.getPoseMatrices());
 		} else {
-			mesh.draw(poseStack, buffer, RenderType.entityCutoutNoCull(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), poses);
+			mesh.draw(poseStack, buffer, RenderType.entityCutoutNoCull(DRAGON_LOCATION), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, this.getOverlayCoord(entityIn, entitypatch, partialTicks), entitypatch.getArmature(), armature.getPoseMatrices());
 		}
 		
 		if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-			for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
-				AnimationPlayer animPlayer = layer.animationPlayer;
-				float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-				
-				animPlayer.getAnimation().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
-			}
+			entitypatch.getClientAnimator().renderDebuggingInfoForAllLayers(poseStack, buffer, partialTicks);
 		}
 		
 		poseStack.popPose();
@@ -97,10 +90,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 			modelMatrix = entitypatch.getModelMatrix(partialTicks).scale(-1.0F, 1.0F, -1.0F);
 		}
 		
-        OpenMatrix4f transpose = new OpenMatrix4f(modelMatrix).transpose();
-        MathUtils.translateStack(matStack, modelMatrix);
-        MathUtils.rotateStack(matStack, transpose);
-        MathUtils.scaleStack(matStack, transpose);
+		MathUtils.mulStack(matStack, modelMatrix);
 	}
 	
 	protected int getOverlayCoord(EnderDragon entity, EnderDragonPatch entitypatch, float partialTicks) {
@@ -112,7 +102,7 @@ public class PEnderDragonRenderer extends PatchedEntityRenderer<EnderDragon, End
 	}
 	
 	@Override
-	public MeshProvider<DragonMesh> getDefaultMesh() {
+	public AssetAccessor<DragonMesh> getDefaultMesh() {
 		return Meshes.DRAGON;
 	}
 }

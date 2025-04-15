@@ -68,7 +68,7 @@ import yesman.epicfight.world.capabilities.projectile.ProjectilePatch;
 import yesman.epicfight.world.capabilities.projectile.ThrownTridentPatch;
 import yesman.epicfight.world.capabilities.projectile.WitherSkullPatch;
 import yesman.epicfight.world.entity.EpicFightEntities;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier<EntityPatch<?>> {
 	private static final Map<EntityType<?>, Function<Entity, Supplier<EntityPatch<?>>>> CAPABILITIES = Maps.newHashMap();
@@ -112,6 +112,7 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 		registry.put(EpicFightEntities.WITHER_SKELETON_MINION.get(), (entityIn) -> WitherSkeletonPatch::new);
 		registry.put(EpicFightEntities.WITHER_GHOST_CLONE.get(), (entityIn) -> WitherGhostPatch::new);
 		registry.put(EntityType.ARROW, (entityIn) -> ArrowPatch::new);
+		registry.put(EntityType.SPECTRAL_ARROW, (entityIn) -> ArrowPatch::new);
 		registry.put(EntityType.WITHER_SKULL, (entityIn) -> WitherSkullPatch::new);
 		registry.put(EntityType.DRAGON_FIREBALL, (entityIn) -> DragonFireballPatch::new);
 		registry.put(EntityType.TRIDENT, (entityIn) -> ThrownTridentPatch::new);
@@ -147,7 +148,7 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 	}
 	
 	public static Function<Entity, Supplier<EntityPatch<?>>> get(String registryName) {
-		ResourceLocation rl = new ResourceLocation(registryName);
+		ResourceLocation rl = ResourceLocation.parse(registryName);
 		EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(rl);
 		
 		return CAPABILITIES.get(entityType);
@@ -168,8 +169,12 @@ public class EntityPatchProvider implements ICapabilityProvider, NonNullSupplier
 		Function<Entity, Supplier<EntityPatch<?>>> provider = CUSTOM_CAPABILITIES.getOrDefault(entity.getType(), CAPABILITIES.get(entity.getType()));
 		
 		if (provider != null) {
-			this.capability = provider.apply(entity).get();
-		} else if (entity instanceof Mob && entity.level().getGameRules().getRule(EpicFightGamerules.GLOBAL_STUN).get()) {
+			try {
+				this.capability = provider.apply(entity).get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else if (entity instanceof Mob && EpicFightGameRules.GLOBAL_STUN.getRuleValue(entity.level())) {
 			this.capability = new GlobalMobPatch();
 		}
 	}

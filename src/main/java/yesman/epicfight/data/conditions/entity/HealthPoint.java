@@ -34,23 +34,8 @@ public class HealthPoint extends EntityPatchCondition {
 	
 	@Override
 	public HealthPoint read(CompoundTag tag) {
-		if (!tag.contains("comparator")) {
-			throw new IllegalArgumentException("HealthPoint condition error: comparator not specified!");
-		}
-		
-		if (!tag.contains("health")) {
-			throw new IllegalArgumentException("HealthPoint condition error: health not specified!");
-		}
-		
-		String sComparator = tag.getString("comparator").toUpperCase(Locale.ROOT);
-		
-		try {
-			this.comparator = Comparator.valueOf(sComparator);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("HealthPoint condition error: invalid comparator " + sComparator);
-		}
-		
-		this.health = tag.getFloat("health");
+		this.health = this.assertTag("health", "decimal", tag, Tag.TAG_FLOAT, CompoundTag::getFloat);
+		this.comparator = this.assertEnumTag("comparator", Comparator.class, tag);
 		
 		return this;
 	}
@@ -89,7 +74,7 @@ public class HealthPoint extends EntityPatchCondition {
 		editbox.setFilter((context) -> StringUtil.isNullOrEmpty(context) || ParseUtil.isParsable(context, Float::parseFloat));
 		
 		return List.of(
-					ParameterEditor.of((value) -> FloatTag.valueOf(Float.parseFloat(value.toString())), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox),
+					ParameterEditor.of((value) -> ParseUtil.parseOrGet(value.toString(), (v) -> FloatTag.valueOf(Float.parseFloat(value.toString())), StringTag.valueOf("")), (tag) -> ParseUtil.valueOfOmittingType(ParseUtil.nullOrToString(tag, Tag::getAsString)), editbox),
 					ParameterEditor.of((value) -> StringTag.valueOf(value.toString().toLowerCase(Locale.ROOT)), (tag) -> ParseUtil.enumValueOfOrNull(Comparator.class, ParseUtil.nullOrToString(tag, Tag::getAsString)), comboBox)
 				);
 	}

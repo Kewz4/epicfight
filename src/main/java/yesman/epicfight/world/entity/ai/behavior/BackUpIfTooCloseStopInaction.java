@@ -13,7 +13,7 @@ public class BackUpIfTooCloseStopInaction {
 		
 		return BehaviorBuilder.triggerIf((mob) -> {
 			MobPatch<?> mobpatch = EpicFightCapabilities.getEntityPatch(mob, MobPatch.class);
-			boolean inaction = mobpatch.getEntityState().inaction();
+			boolean inaction = mobpatch != null ? mobpatch.getEntityState().inaction() : false;
 			
 			if (inaction) {
 				mob.getMoveControl().strafe(0.0F, 0.0F);

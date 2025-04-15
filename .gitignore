@@ -20,6 +20,8 @@ build
 # other
 eclipse
 run
+epicskins
+ServerCommunicationHelper
 
 # Files from Forge MDK
 forge*changelog.txt

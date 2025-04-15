@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -19,18 +19,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.asset.JsonAssetLoader;
+import yesman.epicfight.api.asset.SelfAccessor;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.model.JsonModelLoader;
 import yesman.epicfight.client.gui.datapack.widgets.Grid;
+import yesman.epicfight.client.gui.datapack.widgets.Grid.GridBuilder.RowEditButton;
 import yesman.epicfight.client.gui.datapack.widgets.ModelPreviewer;
 import yesman.epicfight.client.gui.datapack.widgets.ResizableComponent.HorizontalSizing;
 import yesman.epicfight.client.gui.datapack.widgets.ResizableComponent.VerticalSizing;
-import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.client.gui.datapack.widgets.ResizableEditBox;
 import yesman.epicfight.client.gui.datapack.widgets.Static;
-import yesman.epicfight.client.gui.datapack.widgets.Grid.GridBuilder.RowEditButton;
 
 @OnlyIn(Dist.CLIENT)
 public class ImportModelScreen extends Screen {
@@ -38,14 +38,18 @@ public class ImportModelScreen extends Screen {
 	private final Grid meshGrid;
 	private final Grid armatureGrid;
 	private final ModelPreviewer modelPreviewer;
-	private List<PackEntry<String, AnimatedMesh>> userMeshes;
-	private List<PackEntry<String, Armature>> userArmatures;
+	private List<PackEntry<String, AssetAccessor<? extends SkinnedMesh>>> userMeshes;
+	private List<PackEntry<String, AssetAccessor<? extends Armature>>> userArmatures;
 	
 	public ImportModelScreen(SelectModelScreen caller) {
 		super(Component.literal("register_model_screen"));
 		
-		this.userMeshes = new ArrayList<>(DatapackEditScreen.getCurrentScreen().getUserMeshes().entrySet().stream().map((entry) -> PackEntry.ofValue(entry.getKey().toString(), entry.getValue())).toList());
-		this.userArmatures = new ArrayList<>(DatapackEditScreen.getCurrentScreen().getUserArmatures().entrySet().stream().map((entry) -> PackEntry.ofValue(entry.getKey().toString(), entry.getValue())).toList());
+		Stream<PackEntry<String, AssetAccessor<? extends SkinnedMesh>>> meshesStream = DatapackEditScreen.getCurrentScreen().getUserMeshes().entrySet().stream().map((entry) -> PackEntry.ofValue(entry.getKey().toString(), entry.getValue()));
+		this.userMeshes = new ArrayList<>(meshesStream.toList());
+		
+		Stream<PackEntry<String, AssetAccessor<? extends Armature>>> armaturesStream = DatapackEditScreen.getCurrentScreen().getUserArmatures().entrySet().stream().map((entry) -> PackEntry.ofValue(entry.getKey().toString(), entry.getValue()));
+		this.userArmatures = new ArrayList<>(armaturesStream.toList());
+		
 		this.caller = caller;
 		this.modelPreviewer = new ModelPreviewer(0, 10, 30, 30, HorizontalSizing.LEFT_RIGHT, VerticalSizing.TOP_BOTTOM, null, null);
 		this.minecraft = caller.getMinecraft();
@@ -61,7 +65,7 @@ public class ImportModelScreen extends Screen {
 								.rowEditable(RowEditButton.REMOVE)
 								.transparentBackground(true)
 								.rowpositionChanged((rowposition, values) -> {
-									this.modelPreviewer.setMesh(() -> this.userMeshes.get(rowposition).getValue());
+									this.modelPreviewer.setMesh(this.userMeshes.get(rowposition).getValue());
 								})
 								.addColumn(Grid.editbox("mesh_name")
 												.editWidgetCreated((editbox) -> editbox.setFilter(ResourceLocation::isValidResourceLocation))
@@ -89,11 +93,11 @@ public class ImportModelScreen extends Screen {
 								})
 								.build();
 		
-		for (PackEntry<String, AnimatedMesh> entry : this.userMeshes) {
+		for (PackEntry<String, AssetAccessor<? extends SkinnedMesh>> entry : this.userMeshes) {
 			this.meshGrid.addRowWithDefaultValues("mesh_name", entry.getKey());
 		}
 		
-		for (PackEntry<String, Armature> entry : this.userArmatures) {
+		for (PackEntry<String, AssetAccessor<? extends Armature>> entry : this.userArmatures) {
 			this.armatureGrid.addRowWithDefaultValues("armature_name", entry.getKey());
 		}
 	}
@@ -123,20 +127,14 @@ public class ImportModelScreen extends Screen {
 		this.addRenderableWidget(this.modelPreviewer);
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_OK, (button) -> {
-			Map<ResourceLocation, AnimatedMesh> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
-			Map<ResourceLocation, Armature> userArmatures = DatapackEditScreen.getCurrentScreen().getUserArmatures();
+			Map<ResourceLocation, AssetAccessor<? extends SkinnedMesh>> userMeshes = DatapackEditScreen.getCurrentScreen().getUserMeshes();
+			Map<ResourceLocation, AssetAccessor<? extends Armature>> userArmatures = DatapackEditScreen.getCurrentScreen().getUserArmatures();
 			
 			userMeshes.clear();
 			userArmatures.clear();
 			
-			this.userMeshes.forEach((packEntry) -> userMeshes.put(new ResourceLocation(packEntry.getKey()), packEntry.getValue()));
-			this.userArmatures.forEach((packEntry) -> userArmatures.put(new ResourceLocation(packEntry.getKey()), packEntry.getValue()));
-			
-			Meshes.build(Minecraft.getInstance().getResourceManager());
-			Armatures.build(Minecraft.getInstance().getResourceManager());
-			
-			userMeshes.forEach(Meshes::addMesh);
-			userArmatures.forEach(Armatures::addArmature);
+			this.userMeshes.forEach((packEntry) -> userMeshes.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
+			this.userArmatures.forEach((packEntry) -> userArmatures.put(ResourceLocation.parse(packEntry.getKey()), packEntry.getValue()));
 			
 			this.onClose();
 		}).pos(this.width / 2 - 162, this.height - 26).size(160, 21).build());
@@ -179,12 +177,13 @@ public class ImportModelScreen extends Screen {
 						stream = new FileInputStream(file);
 						
 						String modelPath = modid + ":" + file.getName().replace(".json", "");
-						JsonModelLoader jsonLoader = new JsonModelLoader(stream, new ResourceLocation(modelPath));
-						AnimatedMesh mesh = jsonLoader.loadAnimatedMesh(AnimatedMesh::new);
+						ResourceLocation modelId = ResourceLocation.parse(modelPath);
+						JsonAssetLoader jsonLoader = new JsonAssetLoader(stream, modelId);
+						SkinnedMesh mesh = jsonLoader.loadSkinnedMesh(SkinnedMesh::new);
 						Armature armature = jsonLoader.loadArmature(Armature::new);
 						
-						this.userMeshes.add(PackEntry.ofValue(modelPath, mesh));
-						this.userArmatures.add(PackEntry.ofValue(modelPath, armature));
+						this.userMeshes.add(PackEntry.ofValue(modelPath, SelfAccessor.create(modelId, mesh)));
+						this.userArmatures.add(PackEntry.ofValue(modelPath, SelfAccessor.create(modelId, armature)));
 						this.meshGrid.addRowWithDefaultValues("mesh_name", modelPath);
 						this.armatureGrid.addRowWithDefaultValues("armature_name", modelPath);
 					} catch (Exception e) {

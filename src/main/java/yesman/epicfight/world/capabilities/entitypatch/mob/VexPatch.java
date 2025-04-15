@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.monster.Vex;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.gameasset.Animations;
@@ -54,6 +55,7 @@ public class VexPatch extends MobPatch<Vex> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.VEX_IDLE);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.VEX_DEATH);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.VEX_FLIPPING);
@@ -78,7 +80,7 @@ public class VexPatch extends MobPatch<Vex> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return Animations.VEX_HIT;
 	}
 	

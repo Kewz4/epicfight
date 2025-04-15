@@ -1,91 +1,130 @@
 package yesman.epicfight.api.animation;
 
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
-import yesman.epicfight.api.animation.types.AttackAnimation;
+import net.minecraftforge.common.MinecraftForge;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public abstract class Animator {
-	protected final Map<LivingMotion, StaticAnimation> livingAnimations = Maps.newHashMap();
-	protected final TypeFlexibleHashMap<TypeKey<?>> animationVariables = new TypeFlexibleHashMap<> (false);
-	protected LivingEntityPatch<?> entitypatch;
+	protected final Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingAnimations = Maps.newHashMap();
+	protected final AnimationVariables animationVariables = new AnimationVariables(this);
+	protected final LivingEntityPatch<?> entitypatch;
 	
-	public Animator() {
-		// Put default variables
-		this.animationVariables.put(AttackAnimation.HIT_ENTITIES, Lists.newArrayList());
-		this.animationVariables.put(AttackAnimation.HURT_ENTITIES, Lists.newArrayList());
+	public Animator(LivingEntityPatch<?> entitypatch) {
+		this.entitypatch = entitypatch;
 	}
 	
-	public abstract void playAnimation(StaticAnimation nextAnimation, float convertTimeModifier);
-	public abstract void playAnimationInstantly(StaticAnimation nextAnimation);
+	/**
+	 * Play an animation
+	 * 
+	 * @param nextAnimation
+	 * @param transitionTimeModifier extends the transition time if positive value provided, or starts in time as an amount of time (e.g. -0.1F starts in 0.1F frame time)
+	 */
+	public abstract void playAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation, float transitionTimeModifier);
+	
+	public final void playAnimation(int id, float transitionTimeModifier) {
+		this.playAnimation(AnimationManager.byId(id), transitionTimeModifier);
+	}
+	
+	/**
+	 * Play a given animation without transition animation.
+	 * @param nextAnimation
+	 */
+	public abstract void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> nextAnimation);
+	
+	public final void playAnimationInstantly(int id) {
+		this.playAnimationInstantly(AnimationManager.byId(id));
+	}
+	
+	/**
+	 * Reserve a given animation until the current animation ends.
+	 * If the given animation has a higher priority than current animation, it terminates the current animation by force and play the next animation
+	 * @param nextAnimation
+	 */
+	public abstract void reserveAnimation(AssetAccessor<? extends StaticAnimation> nextAnimation);
+	
+	public final void reserveAnimation(int id) {
+		this.reserveAnimation(AnimationManager.byId(id));
+	}
+	
+	/**
+	 * Stop playing given animation if exist
+	 * @param targetAnimation
+	 * @return true when found and successfully stop the target animation
+	 */
+	public abstract boolean stopPlaying(AssetAccessor<? extends StaticAnimation> targetAnimation);
+	
+	/**
+	 * Play an shooting animation to end aiming pose
+	 */
+	public abstract void playShootingAnimation();
+	
+	public final boolean stopPlaying(int id) {
+		return this.stopPlaying(AnimationManager.byId(id));
+	}
+	
+	public abstract void setSoftPause(boolean paused);
+	public abstract void setHardPause(boolean paused);
 	public abstract void tick();
-	/** Standby until the current animation is completely end. Mostly used for link two animations having the same last & first keyframe pose on {@link DynamicAnimation#end(LivingEntityPatch, boolean)} **/
-	public abstract void reserveAnimation(StaticAnimation nextAnimation);
+	
 	public abstract EntityState getEntityState();
-	/** Give a null value as a parameter to get an animation that is highest priority on client **/
-	public abstract AnimationPlayer getPlayerFor(@Nullable DynamicAnimation playingAnimation);
+	
+	/**
+	 * Searches an animation player playing the given animation parameter or return base layer if it's null
+	 * Secure non-null but returned animation player won't match with a given animation
+	 */
+	@Nullable
+	public abstract AnimationPlayer getPlayerFor(@Nullable AssetAccessor<? extends DynamicAnimation> playingAnimation);
+	
+	/**
+	 * Searches an animation player playing the given animation parameter
+	 */
+	@Nullable
+	public abstract Optional<AnimationPlayer> getPlayer(AssetAccessor<? extends DynamicAnimation> playingAnimation);
+	
 	public abstract <T> Pair<AnimationPlayer, T> findFor(Class<T> animationType);
 	public abstract Pose getPose(float partialTicks);
 	
-	public void init() {
-		this.entitypatch.initAnimator(this);
-	}
-	
-	public final void playAnimation(int id, float convertTimeModifier) {
-		this.playAnimation(AnimationManager.getInstance().byId(id), convertTimeModifier);
-	}
-	
-	public final void playAnimationInstantly(int id) {
-		this.playAnimationInstantly(AnimationManager.getInstance().byId(id));
-	}
-	
-	public boolean isReverse() {
-		return false;
+	public void postInit() {
+		InitAnimatorEvent initAnimatorEvent = new InitAnimatorEvent(this.entitypatch, this);
+		MinecraftForge.EVENT_BUS.post(initAnimatorEvent);
 	}
 	
 	public void playDeathAnimation() {
 		this.playAnimation(this.livingAnimations.getOrDefault(LivingMotions.DEATH, Animations.BIPED_DEATH), 0);
 	}
 	
-	public void addLivingAnimation(LivingMotion livingMotion, StaticAnimation animation) {
+	public void addLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> animation) {
 		this.livingAnimations.put(livingMotion, animation);
 	}
 	
-	public StaticAnimation getLivingAnimation(LivingMotion livingMotion, StaticAnimation defaultGetter) {
+	public AssetAccessor<? extends StaticAnimation> getLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> defaultGetter) {
 		return this.livingAnimations.getOrDefault(livingMotion, defaultGetter);
 	}
 	
-	public Map<LivingMotion, StaticAnimation> getLivingAnimations() {
+	public Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> getLivingAnimations() {
 		return ImmutableMap.copyOf(this.livingAnimations);
 	}
 	
-	public void removeAnimationVariables(TypeKey<?> typeKey) {
-		this.animationVariables.remove(typeKey);
+	public AnimationVariables getVariables() {
+		return this.animationVariables;
 	}
 	
-	public <T> void putAnimationVariable(TypeKey<T> typeKey, T value) {
-		if (this.animationVariables.containsKey(typeKey)) {
-			this.animationVariables.replace(typeKey, value);
-		} else {
-			this.animationVariables.put(typeKey, value);
-		}
-	}
-	
-	public <T> T getAnimationVariables(TypeKey<T> key) {
-		return this.animationVariables.get(key);
+	public LivingEntityPatch<?> getEntityPatch() {
+		return this.entitypatch;
 	}
 	
 	public void resetLivingAnimations() {

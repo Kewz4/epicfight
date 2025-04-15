@@ -39,46 +39,94 @@ import yesman.epicfight.client.renderer.EpicFightVertexFormat.AnimationVertexFor
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.client.renderer.shader.VanillaAnimationShader;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class EpicFightRenderTypes extends RenderType {
-	private static final Function<ResourceLocation, RenderType> ENTITY_INDICATOR = Util.memoize((textureLocation) -> {
-		RenderType.CompositeState state = RenderType.CompositeState.builder()
+	private static final Function<ResourceLocation, RenderType> ENTITY_INDICATOR = Util.memoize(
+		(textureLocation) -> create( 
+			  EpicFightMod.MODID + ":entity_indicator"
+			, DefaultVertexFormat.POSITION_TEX
+			, VertexFormat.Mode.QUADS
+			, 256
+			, true
+			, false
+			, RenderType.CompositeState.builder()
 				.setShaderState(POSITION_TEX_SHADER)
 				.setTextureState(new RenderStateShard.TextureStateShard(textureLocation, false, false))
 				.setTransparencyState(NO_TRANSPARENCY)
 				.setLightmapState(NO_LIGHTMAP)
 				.setOverlayState(NO_OVERLAY)
-				.createCompositeState(true);
-		return create(EpicFightMod.MODID + ":entity_indicator", DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS, 256, true, false, state);
-	});
-	
-	private static final RenderType DEBUG_COLLIDER = create(EpicFightMod.MODID + ":debug_collider", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINE_STRIP, 256, false, false,
-			RenderType.CompositeState.builder()
-				.setShaderState(POSITION_COLOR_SHADER)
-				.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
-				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
-				.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-				.setOutputState(ITEM_ENTITY_TARGET)
-				.setWriteMaskState(COLOR_DEPTH_WRITE)
-				.setCullState(NO_CULL)
-				.createCompositeState(false)
+				.createCompositeState(true)
+		)
 	);
 	
-	private static final RenderType DEBUG_QUADS = create(EpicFightMod.MODID + ":debug_quad", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 256, false, false,
-			RenderType.CompositeState.builder()
-				.setShaderState(POSITION_COLOR_SHADER)
-				.setLayeringState(VIEW_OFFSET_Z_LAYERING)
-				.setTransparencyState(NO_TRANSPARENCY)
-				.setWriteMaskState(COLOR_DEPTH_WRITE)
-				.setCullState(NO_CULL)
-				.createCompositeState(false)
+	private static final RenderType DEBUG_COLLIDER = create(
+		  EpicFightMod.MODID + ":debug_collider"
+		, DefaultVertexFormat.POSITION_COLOR_NORMAL
+		, VertexFormat.Mode.LINE_STRIP
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(POSITION_COLOR_SHADER)
+			.setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
+			.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+			.setOutputState(ITEM_ENTITY_TARGET)
+			.setWriteMaskState(COLOR_DEPTH_WRITE)
+			.setCullState(NO_CULL)
+			.createCompositeState(false)
 	);
+	
+	private static final RenderType DEBUG_QUADS = create(
+		  EpicFightMod.MODID + ":debug_quad"
+		, DefaultVertexFormat.POSITION_COLOR
+		, VertexFormat.Mode.QUADS
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(POSITION_COLOR_SHADER)
+			.setLayeringState(VIEW_OFFSET_Z_LAYERING)
+			.setTransparencyState(NO_TRANSPARENCY)
+			.setWriteMaskState(COLOR_DEPTH_WRITE)
+			.setCullState(NO_CULL)
+			.createCompositeState(false)
+	);
+	
+	private static final RenderType GUI_TRIANGLE = create(
+		  EpicFightMod.MODID + ":gui_triangle"
+		, DefaultVertexFormat.POSITION_COLOR
+		, VertexFormat.Mode.TRIANGLES
+		, 256
+		, false
+		, false
+		, RenderType.CompositeState.builder()
+			.setShaderState(RENDERTYPE_GUI_SHADER)
+			.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+			.setDepthTestState(LEQUAL_DEPTH_TEST)
+			.createCompositeState(false)
+	);
+	
+	private static final Map<String, Map<ResourceLocation, RenderType>> TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE = Maps.newHashMap();
 	
 	private static final Function<RenderType, RenderType> TRIANGULATED_RENDER_TYPES = Util.memoize((renderType$1) -> {
 		if (renderType$1 instanceof CompositeRenderType compositeRenderType) {
+			if (TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.containsKey(renderType$1.name)) {
+				Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.get(renderType$1.name);
+				
+				if (compositeRenderType.state.textureState instanceof TextureStateShard texStateShard) {
+					ResourceLocation texLocation = texStateShard.texture.orElse(null);
+					
+					if (renderTypesByTexture.containsKey(texLocation)) {
+						return renderTypesByTexture.get(texLocation);
+					}
+				}
+			}
+			
 			return new CompositeRenderType(renderType$1.name, renderType$1.format, VertexFormat.Mode.TRIANGLES, renderType$1.bufferSize(), renderType$1.affectsCrumbling(), renderType$1.sortOnUpload, compositeRenderType.state);
 		} else {
 			return renderType$1;
@@ -87,6 +135,60 @@ public class EpicFightRenderTypes extends RenderType {
 	
 	public static RenderType getTriangulated(RenderType renderType) {
 		return TRIANGULATED_RENDER_TYPES.apply(renderType);
+	}
+	
+	/**
+	 * Cache all Texture - RenderType entries to replace texture by MeshPart
+	 */
+	public static void addRenderType(String name, ResourceLocation textureLocation, RenderType renderType) {
+		Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.computeIfAbsent(name, (k) -> Maps.newHashMap());
+		renderTypesByTexture.put(textureLocation, renderType);
+	}
+	
+	private static RenderType createTextureShardReplaced(ResourceLocation texToReplace, RenderType renderType) {
+		if (renderType instanceof CompositeRenderType compositeRenderType && compositeRenderType.state.textureState instanceof TextureStateShard texStateShard) {
+			CompositeState textureReplacedState = new CompositeState(
+				  new RenderStateShard.TextureStateShard(texToReplace, texStateShard.blur, texStateShard.mipmap)
+				, compositeRenderType.state.shaderState
+				, compositeRenderType.state.transparencyState
+				, compositeRenderType.state.depthTestState
+				, compositeRenderType.state.cullState
+				, compositeRenderType.state.lightmapState
+				, compositeRenderType.state.overlayState
+				, compositeRenderType.state.layeringState
+				, compositeRenderType.state.outputState
+				, compositeRenderType.state.texturingState
+				, compositeRenderType.state.writeMaskState
+				, compositeRenderType.state.lineState
+				, compositeRenderType.state.colorLogicState
+				, compositeRenderType.state.outlineProperty
+			);
+			
+			return new CompositeRenderType(renderType.name, renderType.format, compositeRenderType.mode(), renderType.bufferSize(), renderType.affectsCrumbling(), renderType.sortOnUpload, textureReplacedState);
+		} else {
+			return null;
+		}
+	}
+	
+	public static RenderType replaceTexture(ResourceLocation texLocation, RenderType renderType) {
+		if (TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.containsKey(renderType.name)) {
+			Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.get(renderType.name);
+			
+			if (renderTypesByTexture.containsKey(texLocation)) {
+				return renderTypesByTexture.get(texLocation);
+			}
+		}
+		
+		RenderType textureReplacedRenderType = createTextureShardReplaced(texLocation, renderType);
+		
+		if (textureReplacedRenderType == null) {
+			return renderType;
+		}
+		
+		Map<ResourceLocation, RenderType> renderTypesByTexture = TRIANGLED_RENDERTYPES_BY_NAME_TEXTURE.computeIfAbsent(textureReplacedRenderType.name, k -> Maps.newHashMap());
+		renderTypesByTexture.put(texLocation, textureReplacedRenderType);
+		
+		return textureReplacedRenderType;
 	}
 	
 	public static RenderType entityIndicator(ResourceLocation resourcelocation) {
@@ -99,6 +201,10 @@ public class EpicFightRenderTypes extends RenderType {
 	
 	public static RenderType debugQuads() {
 		return DEBUG_QUADS;
+	}
+	
+	public static RenderType guiTriangle() {
+		return GUI_TRIANGLE;
 	}
 	
 	private static Map<ResourceLocation, Resource> SHADER_LIBS;
@@ -153,9 +259,9 @@ public class EpicFightRenderTypes extends RenderType {
 			Minecraft.getInstance().levelRenderer.allChanged();
 			Minecraft.getInstance().gui.getChat().addMessage(Component.translatable("epicfight.messages.shader_transform_fail", shaderInstance.getName()).withStyle(ChatFormatting.RED));
 			
-			EpicFightMod.CLIENT_CONFIGS.shaderModeSwitchingLocked = true;
-			EpicFightMod.CLIENT_CONFIGS.useAnimationShader.setValue(false);
-			EpicFightMod.CLIENT_CONFIGS.save();
+			ClientConfig.animationShaderLockedByException = true;
+			ClientConfig.activateAnimationShader = false;
+			ClientConfig.saveChanges();
 		}
 		
 		return ANIMATION_SHADERS.get(shaderInstance.getName());
@@ -195,7 +301,7 @@ public class EpicFightRenderTypes extends RenderType {
 		});
 		
 		SHADER_LIBS = ImmutableMap.copyOf(shaderLibs); 
-		EpicFightMod.CLIENT_CONFIGS.shaderModeSwitchingLocked = false;
+		ClientConfig.animationShaderLockedByException = false;
 	}
 	
 	public static void clearAnimationShaderInstance(String shaderName) {
@@ -216,7 +322,7 @@ public class EpicFightRenderTypes extends RenderType {
 			
 			try {
 				ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-				ResourceLocation shaderLocation = new ResourceLocation(shaderInstance.getName());
+				ResourceLocation shaderLocation = ResourceLocation.parse(shaderInstance.getName());
 				shaderParser = new ShaderParser(resourceManager, shaderInstance.getName());
 				boolean hasNormalAttribute = shaderParser.hasAttribute("Normal");
 				boolean isEyesShader = "rendertype_eyes".equals(shaderLocation.getPath());
@@ -243,7 +349,7 @@ public class EpicFightRenderTypes extends RenderType {
 					shaderParser.addUniform("Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 				}
 				
-				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.MAX_JOINTS);
+				shaderParser.addUniformArray("Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.SHADER_ARRAY_LIMIT);
 				shaderParser.replaceScript("Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "gl_Position", "in vec3 Position;");
 				
 				if (hasNormalAttribute && !isEyesShader) {
@@ -291,7 +397,7 @@ public class EpicFightRenderTypes extends RenderType {
 				shaderParser.addToResourceCache(cache);
 				GameRenderer.ResourceCache resourceProvider = new GameRenderer.ResourceCache(resourceManager, cache);
 				
-				return new VanillaAnimationShader(resourceProvider, new ResourceLocation(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
+				return new VanillaAnimationShader(resourceProvider, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, shaderLocation.getPath()), EpicFightRenderTypes.getAnimationVertexFormat(shaderInstance.getVertexFormat()));
 			} catch (IOException | ShaderParsingException e) {
 				e.printStackTrace();
 				

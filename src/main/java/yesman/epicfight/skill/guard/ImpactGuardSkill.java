@@ -69,11 +69,8 @@ public class ImpactGuardSkill extends GuardSkill {
 		event.setAmount(isSpecialSource ? event.getAmount() * this.damageReducer * 0.01F : 0.0F);
 		event.setResult(isSpecialSource ? AttackResult.ResultType.SUCCESS : AttackResult.ResultType.BLOCKED);
 		
-		LivingEntityPatch<?> attackerpatch = EpicFightCapabilities.getEntityPatch(event.getDamageSource().getEntity(), LivingEntityPatch.class);
-		
-		if (attackerpatch != null) {
-			attackerpatch.setLastAttackEntity(playerpatch.getOriginal());
-		}
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getDamageSource().getEntity(), LivingEntityPatch.class)
+			.ifPresent(attackerpatch -> attackerpatch.setLastAttackEntity(playerpatch.getOriginal()));
 		
 		if (event.getDamageSource() instanceof EpicFightDamageSource epicfightDamageSource) {
 			epicfightDamageSource.setStunType(StunType.NONE);
@@ -81,16 +78,14 @@ public class ImpactGuardSkill extends GuardSkill {
 		
 		event.setCanceled(true);
 		Entity directEntity = event.getDamageSource().getDirectEntity();
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(directEntity, LivingEntityPatch.class);
 		
 		if (advanced) {
 			LivingEntity original = playerpatch.getOriginal();
 			EpicFightParticles.AIR_BURST.get().spawnParticleWithArgument(((ServerLevel)original.level()), null, null, original, directEntity);
 		}
 		
-		if (entitypatch != null) {
-			entitypatch.onAttackBlocked(event.getDamageSource(), playerpatch);
-		}
+		EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(directEntity, LivingEntity.class, LivingEntityPatch.class)
+			.ifPresent(entitypatch -> entitypatch.onAttackBlocked(event.getDamageSource(), playerpatch));
 	}
 	
 	@Override

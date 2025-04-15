@@ -187,24 +187,10 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 			serverResourceManager = resourceManager;
 		}
 		
-		Armatures.build(resourceManager);
-		
-		this.animationIdMap.clear();
-		this.animationRegistry.clear();
-		this.userAnimations.clear();
-		this.userAnimationInvocationCommands.clear();
-		
-		Map<String, Runnable> registryMap = Maps.newLinkedHashMap();
-		ModLoader.get().postEvent(new AnimationRegistryEvent(registryMap));
-		this.animationClips.clear();
-		
-		registryMap.entrySet().stream().sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey())).forEach((entry) -> {
-			EpicFightMod.LOGGER.info("Register animations from " + entry.getKey());
-			this.currentWorkingModid = entry.getKey();
-			entry.getValue().run();
-			
-			this.currentWorkingModid = null;
-		});
+		this.animations.clear();
+		this.animationById.entrySet().removeIf((entry) -> !entry.getValue().inRegistry());
+		this.animationByName.entrySet().removeIf((entry) -> !entry.getValue().inRegistry());
+		this.resourcepackAnimationCommands.clear();
 		
 		return super.prepare(resourceManager, profilerIn);
 	}

@@ -75,7 +75,7 @@ public class HitEntityList {
 			
 			Outer:
 			for (Entity e : list) {
-				if (attacker.isTeammate(e)) {
+				if (attacker.isTargetInvulnerable(e)) {
 					continue;
 				}
 

@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
 import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 
 public class SkillBuildEvent extends Event implements IModBusEvent {
 	private final List<ModRegistryWorker> modRegisterWorkers = Lists.newArrayList();
@@ -44,8 +45,8 @@ public class SkillBuildEvent extends Event implements IModBusEvent {
 			this.modid = modid;
 		}
 		
-		public <S extends Skill, B extends Skill.Builder<S>> S build(String name, Function<B, S> constructor, B builder) {
-			final ResourceLocation registryName = new ResourceLocation(this.modid, name);
+		public <S extends Skill, B extends SkillBuilder<S>> S build(String name, Function<B, S> constructor, B builder) {
+			final ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(this.modid, name);
 			builder.setRegistryName(registryName);
 			
 			final S skill = constructor.apply(builder);

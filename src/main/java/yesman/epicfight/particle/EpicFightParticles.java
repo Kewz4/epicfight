@@ -33,4 +33,5 @@ public class EpicFightParticles {
 	
 	public static final RegistryObject<HitParticleType> AIR_BURST = PARTICLES.register("air_burst", () -> new HitParticleType(true, HitParticleType.MIDDLE_OF_ENTITIES, HitParticleType.ATTACKER_Y_ROTATION));
 	public static final RegistryObject<SimpleParticleType> SWING_TRAIL = PARTICLES.register("swing_trail", () -> new SimpleParticleType(true));
+	public static final RegistryObject<SimpleParticleType> PROJECTILE_TRAIL = PARTICLES.register("projectile_trail", () -> new SimpleParticleType(true));
 }

@@ -1,6 +1,6 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -8,7 +8,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
@@ -16,30 +15,29 @@ public abstract class EntityPatch<T extends Entity> {
 	protected T original;
 	protected boolean initialized = false;
 	
-	public void tick(LivingEvent.LivingTickEvent event) {
-		if (this.isLogicalClient()) {
-			this.clientTick(event);
-		} else {
-			this.serverTick(event);
-		}
+	public void onOldPosUpdate() {
 	}
 	
-	protected void clientTick(LivingEvent.LivingTickEvent event) {}
-	protected void serverTick(LivingEvent.LivingTickEvent event) {}
+	public void onAddedToWorld() {
+	}
+	
 	public abstract boolean overrideRender();
 	
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 	}
 	
+	public void onStopTracking(ServerPlayer trackingPlayer) {
+	}
+	
 	@OnlyIn(Dist.CLIENT)
-	public void processSpawnData(ByteBuf buf) {
+	public void processEntityPacket(FriendlyByteBuf buf) {
 	}
 	
-	public void onConstructed(T entityIn) {
-		this.original = entityIn;
+	public void onConstructed(T entity) {
+		this.original = entity;
 	}
 	
-	public void onJoinWorld(T entityIn, EntityJoinLevelEvent event) {
+	public void onJoinWorld(T entity, EntityJoinLevelEvent event) {
 		this.initialized = true;
 	}
 

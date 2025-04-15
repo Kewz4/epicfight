@@ -10,6 +10,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.network.client.CPExecuteSkill;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class KnockdownWakeupSkill extends DodgeSkill {
@@ -19,9 +20,10 @@ public class KnockdownWakeupSkill extends DodgeSkill {
 	
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public Object getExecutionPacket(LocalPlayerPatch executer, FriendlyByteBuf args) {
-		Input input = executer.getOriginal().input;
-		float pulse = Mth.clamp(0.3F + EnchantmentHelper.getSneakingSpeedBonus(executer.getOriginal()), 0.0F, 1.0F);
+	public Object getExecutionPacket(SkillContainer skillContainer, FriendlyByteBuf args) {
+		LocalPlayerPatch executor = skillContainer.getClientExecutor();
+		Input input = executor.getOriginal().input;
+		float pulse = Mth.clamp(0.3F + EnchantmentHelper.getSneakingSpeedBonus(executor.getOriginal()), 0.0F, 1.0F);
 		input.tick(false, pulse);
 		
         int left = input.left ? 1 : 0;
@@ -29,7 +31,7 @@ public class KnockdownWakeupSkill extends DodgeSkill {
 		int horizon = left + right;
 		float yRot = Minecraft.getInstance().gameRenderer.getMainCamera().getYRot();
 		
-		CPExecuteSkill packet = new CPExecuteSkill(executer.getSkill(this).getSlotId());
+		CPExecuteSkill packet = new CPExecuteSkill(skillContainer.getSlotId());
 		packet.getBuffer().writeInt(horizon >= 0 ? 0 : 1);
 		packet.getBuffer().writeFloat(yRot);
 		

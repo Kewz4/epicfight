@@ -23,6 +23,7 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class IrisAnimationShader extends ExtendedShader implements AnimationShaderInstance {
@@ -48,9 +49,9 @@ public class IrisAnimationShader extends ExtendedShader implements AnimationShad
 		this.UV2 = this.getUniform("UV2");
 		this.NORMAL_MODEL_VIEW_MATRIX = this.getUniform("Normal_Mv_Matrix");
 		
-		this.POSES = new Uniform[ShaderParser.MAX_JOINTS];
+		this.POSES = new Uniform[ShaderParser.SHADER_ARRAY_LIMIT];
 		
-		for (int i = 0; i < ShaderParser.MAX_JOINTS; i++) {
+		for (int i = 0; i < ShaderParser.SHADER_ARRAY_LIMIT; i++) {
 			this.POSES[i] = this.getUniform("Poses[" + String.valueOf(i) + "]");
 		}
 	}

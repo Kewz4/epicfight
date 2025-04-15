@@ -22,10 +22,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import yesman.epicfight.api.animation.types.EntityState;
+import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.screen.SkillEditScreen;
 import yesman.epicfight.client.gui.screen.config.IngameConfigurationScreen;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
+import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.skill.ChargeableSkill;
@@ -35,7 +37,7 @@ import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.entity.eventlistener.MovementInputEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.SkillExecuteEvent;
-import yesman.epicfight.world.gamerule.EpicFightGamerules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @OnlyIn(Dist.CLIENT)
 public class ControllEngine {
@@ -89,20 +91,30 @@ public class ControllEngine {
 	}
 	
 	public void handleEpicFightKeyMappings() {
+		// Pause here if playerpatch is null
+		if (this.playerpatch == null) {
+			return;
+		}
+		
 		if (keyPressed(EpicFightKeyMappings.SKILL_EDIT, false)) {
 			if (this.playerpatch.getSkillCapability() != null) {
 				Minecraft.getInstance().setScreen(new SkillEditScreen(this.player, this.playerpatch.getSkillCapability()));
 			}
 		}
 		
-		if (keyPressed(EpicFightKeyMappings.CONFIG, false)) {
-			Minecraft.getInstance().setScreen(new IngameConfigurationScreen(this.minecraft, null));
+		if (keyPressed(EpicFightKeyMappings.OPEN_CONFIG_SCREEN, false)) {
+			Minecraft.getInstance().setScreen(new IngameConfigurationScreen(null));
+		}
+		
+		if (keyPressed(EpicFightKeyMappings.SWITCH_VANILLA_MODEL_DEBUGGING, false)) {
+			boolean flag = ClientEngine.getInstance().switchVanillaModelDebuggingMode();
+			this.minecraft.keyboardHandler.debugFeedbackTranslated(flag ? "debug.vanilla_model_debugging.on" : "debug.vanilla_model_debugging.off");
 		}
 		
 		while (keyPressed(EpicFightKeyMappings.ATTACK, true)) {
 			if (this.playerpatch.isBattleMode() && this.currentChargingKey != EpicFightKeyMappings.ATTACK) {
 				if (!EpicFightKeyMappings.ATTACK.getKey().equals(EpicFightKeyMappings.WEAPON_INNATE_SKILL.getKey())) {
-					SkillSlot slot = (!this.player.onGround() && !this.player.isInWater() && this.player.getDeltaMovement().y > 0.05D) ? SkillSlots.AIR_ATTACK : SkillSlots.BASIC_ATTACK;
+					SkillSlot slot = (!this.player.onGround() && !this.player.isInWater() && this.player.getDeltaMovement().y > 0.03D) ? SkillSlots.AIR_ATTACK : SkillSlots.BASIC_ATTACK;
 					
 					if (this.playerpatch.getSkill(slot).sendExecuteRequest(this.playerpatch, this).isExecutable()) {
 						this.player.resetAttackStrengthTicker();
@@ -186,7 +198,7 @@ public class ControllEngine {
 		}
 		
 		while (keyPressed(EpicFightKeyMappings.SWITCH_MODE, false)) {
-			if (this.playerpatch.getOriginal().level().getGameRules().getBoolean(EpicFightGamerules.CAN_SWITCH_COMBAT)) {
+			if (EpicFightGameRules.CAN_SWITCH_PLAYER_MODE.getRuleValue(this.playerpatch.getOriginal().level())) {
 				this.playerpatch.toggleMode();
 			}
 		}
@@ -195,16 +207,13 @@ public class ControllEngine {
 			this.playerpatch.toggleLockOn();
 		}
 		
-		//Disable swap hand items
+		// Disable swap hand items
 		if (this.playerpatch.getEntityState().inaction() || (!this.playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).canBePlacedOffhand())) {
 			disableKey(this.minecraft.options.keySwapOffhand);
 		}
 		
-		this.tick();
-	}
-	
-	private void tick() {
-		if (this.playerpatch == null || !this.playerpatch.isBattleMode() || Minecraft.getInstance().isPaused()) {
+		// Pause here if player is not in battle mode
+		if (!this.playerpatch.isBattleMode() || Minecraft.getInstance().isPaused()) {
 			return;
 		}
 		
@@ -219,8 +228,8 @@ public class ControllEngine {
 				this.weaponInnatePressCounter = 0;
 			} else {
 				if (EpicFightKeyMappings.WEAPON_INNATE_SKILL.getKey().equals(EpicFightKeyMappings.ATTACK.getKey())) {
-					if (this.weaponInnatePressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
-						if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK && this.playerpatch.getTarget() == null && !EpicFightMod.CLIENT_CONFIGS.noMiningInCombat.getValue()) {
+					if (this.weaponInnatePressCounter > ClientConfig.longPressCounter) {
+						if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK && this.playerpatch.getTarget() == null && !ClientConfig.preventMiningInCombatMode) {
 				            this.minecraft.startAttack();
 				            setKeyBind(EpicFightKeyMappings.ATTACK, true);
 						} else if (this.playerpatch.getSkill(SkillSlots.WEAPON_INNATE).sendExecuteRequest(this.playerpatch, this).shouldReserverKey()) {
@@ -241,7 +250,7 @@ public class ControllEngine {
 		}
 		
 		if (this.attackLightPressToggle) {
-			SkillSlot slot = (!this.player.onGround() && !this.player.isInWater() && this.player.getDeltaMovement().y > 0.05D) ? SkillSlots.AIR_ATTACK : SkillSlots.BASIC_ATTACK;
+			SkillSlot slot = (!this.player.onGround() && !this.player.isInWater() && this.player.getDeltaMovement().y > 0.03D) ? SkillSlots.AIR_ATTACK : SkillSlots.BASIC_ATTACK;
 			
 			if (this.playerpatch.getSkill(slot).sendExecuteRequest(this.playerpatch, this).isExecutable()) {
 				this.player.resetAttackStrengthTicker();
@@ -271,7 +280,7 @@ public class ControllEngine {
 				this.sneakPressToggle = false;
 				this.sneakPressCounter = 0;
 			} else {
-				if (this.sneakPressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
+				if (this.sneakPressCounter > ClientConfig.longPressCounter) {
 					this.sneakPressToggle = false;
 					this.sneakPressCounter = 0;
 				} else {
@@ -341,7 +350,7 @@ public class ControllEngine {
 					input.jumping = true;
 				}
 			} else {
-				if (this.moverPressCounter > EpicFightMod.CLIENT_CONFIGS.longPressCount.getValue()) {
+				if (this.moverPressCounter > ClientConfig.longPressCounter) {
 					SkillContainer skill = this.playerpatch.getSkill(SkillSlots.MOVER);
 					skill.sendExecuteRequest(this.playerpatch, this);
 					

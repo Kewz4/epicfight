@@ -18,8 +18,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.gui.datapack.widgets.ModelPreviewer;
 
@@ -28,12 +28,12 @@ public class SelectAnimationScreen extends Screen {
 	private final Screen parentScreen;
 	private final AnimationList animationList;
 	private final ModelPreviewer modelPreviewer;
-	private final Consumer<StaticAnimation> selectCallback;
-	private final Consumer<StaticAnimation> cancelCallback;
-	private final Predicate<StaticAnimation> filter;
+	private final Consumer<AssetAccessor<? extends StaticAnimation>> selectCallback;
+	private final Consumer<AssetAccessor<? extends StaticAnimation>> cancelCallback;
+	private final Predicate<AssetAccessor<? extends StaticAnimation>> filter;
 	private final EditBox searchBox;
 	
-	public SelectAnimationScreen(Screen parentScreen, Consumer<StaticAnimation> selectCallback, Consumer<StaticAnimation> cancelCallback, Predicate<StaticAnimation> filter, Armature armature, MeshProvider<AnimatedMesh> mesh) {
+	public SelectAnimationScreen(Screen parentScreen, Consumer<AssetAccessor<? extends StaticAnimation>> selectCallback, Consumer<AssetAccessor<? extends StaticAnimation>> cancelCallback, Predicate<AssetAccessor<? extends StaticAnimation>> filter, AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 		super(Component.translatable("gui.epicfight.select.animations"));
 		
 		this.modelPreviewer = new ModelPreviewer(10, 20, 36, 60, null, null, armature, mesh);
@@ -150,24 +150,31 @@ public class SelectAnimationScreen extends Screen {
 			this.setScrollAmount(0.0D);
 			this.children().clear();
 			
-			AnimationManager.getInstance().getAnimations(SelectAnimationScreen.this.filter).values().stream().filter((animation) -> StringUtil.isNullOrEmpty(keyward) ? true : animation.getRegistryName().toString().contains(keyward))
-																							.map(AnimationEntry::new).sorted((a1, a2) -> Integer.compare(a1.animation.getId(), a2.animation.getId())).forEach(this::addEntry);
+			AnimationManager.getInstance().getAnimations(SelectAnimationScreen.this.filter).values().stream()
+				.filter((accessor) -> StringUtil.isNullOrEmpty(keyward) ? true : accessor.registryName().toString().contains(keyward))
+				.map(AnimationEntry::new)
+				.sorted((a1, a2) -> Integer.compare(a1.animation.get().getId(), a2.animation.get().getId()))
+				.forEach(this::addEntry);
 			
-			DatapackEditScreen.getCurrentScreen().getUserAniamtions().values().stream().map((packEntry) -> packEntry.getValue().cast()).filter(SelectAnimationScreen.this.filter).map(AnimationEntry::new)
-																		.sorted((a1, a2) -> a1.animation.getRegistryName().compareTo(a2.animation.getRegistryName())).forEach(this::addEntry);
+			DatapackEditScreen.getCurrentScreen().getUserAniamtions().values().stream()
+				.map((packEntry) -> packEntry.getValue())
+				.filter(SelectAnimationScreen.this.filter)
+				.map(AnimationEntry::new)
+				.sorted((a1, a2) -> a1.animation.registryName().compareTo(a2.animation.registryName()))
+				.forEach(this::addEntry);
 		}
 		
 		@OnlyIn(Dist.CLIENT)
 		class AnimationEntry extends ObjectSelectionList.Entry<AnimationList.AnimationEntry> {
-			private final StaticAnimation animation;
+			private final AssetAccessor<? extends StaticAnimation> animation;
 			
-			public AnimationEntry(StaticAnimation animation) {
+			public AnimationEntry(AssetAccessor<? extends StaticAnimation> animation) {
 				this.animation = animation;
 			}
 			
 			@Override
 			public void render(GuiGraphics guiGraphics, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean isMouseOver, float partialTicks) {
-				guiGraphics.drawString(SelectAnimationScreen.this.minecraft.font, this.animation.getRegistryName().toString(), left + 5, top + 5, 16777215, false);
+				guiGraphics.drawString(SelectAnimationScreen.this.minecraft.font, this.animation.registryName().toString(), left + 5, top + 5, 16777215, false);
 			}
 			
 			@Override

@@ -37,7 +37,7 @@ import yesman.epicfight.client.renderer.shader.ShaderParser;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.main.EpicFightMod;
 
-@Mixin(targets = {"net.irisshaders.iris.pipeline.programs.ExtendedShader"})
+@Mixin(value = net.irisshaders.iris.pipeline.programs.ExtendedShader.class)
 public abstract class IrisMixinExtendedShader {
 	@Inject(at = @At(value = "TAIL"), method = "<init>", cancellable = true)
 	private void epicfight_constructor(ResourceProvider resourceFactory, String name, VertexFormat vertexFormat, boolean usesTessellation, GlFramebuffer writingToBeforeTranslucent, GlFramebuffer writingToAfterTranslucent,
@@ -50,7 +50,7 @@ public abstract class IrisMixinExtendedShader {
 				
 				try {
 					shaderParser = new ShaderParser(resourceFactory, name);
-					ResourceLocation shaderLocation = new ResourceLocation(name);
+					ResourceLocation shaderLocation = ResourceLocation.parse(name);
 					boolean hasNormalAttribute = shaderParser.hasAttribute("Normal");
 					boolean isEyesShader = "rendertype_eyes".equals(shaderLocation.getPath());
 					
@@ -79,7 +79,7 @@ public abstract class IrisMixinExtendedShader {
 						shaderParser.addUniform("iris_Normal_Mv_Matrix", ShaderParser.GLSLType.MATRIX3F, ShaderParser.ExceptionHandler.THROW, null);
 					}
 					
-					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.MAX_JOINTS);
+					shaderParser.addUniformArray("iris_Poses", ShaderParser.GLSLType.MATRIX4F, ShaderParser.ExceptionHandler.THROW, null, ShaderParser.SHADER_ARRAY_LIMIT);
 					
 					shaderParser.replaceScript("iris_Position", "Position_a", -1, ShaderParser.ExceptionHandler.THROW, "in vec3 iris_Position;");
 					
@@ -125,7 +125,7 @@ public abstract class IrisMixinExtendedShader {
 					Map<ResourceLocation, Resource> cache = Maps.newHashMap();
 					shaderParser.addToResourceCache(cache);
 					GameRenderer.ResourceCache resourceProvider = new GameRenderer.ResourceCache(resourceFactory, cache);
-					ResourceLocation rl = new ResourceLocation(name);
+					ResourceLocation rl = ResourceLocation.parse(name);
 					VertexFormat animationvertexFormat = EpicFightRenderTypes.getAnimationVertexFormat(vertexFormat);
 					
 					return new IrisAnimationShader(resourceProvider, EpicFightMod.MODID + ":" + rl.getPath(), animationvertexFormat, usesTessellation, writingToBeforeTranslucent, writingToAfterTranslucent, blendModeOverride, alphaTest,

@@ -30,16 +30,8 @@ public class TargetInDistance extends EntityPatchCondition {
 	
 	@Override
 	public TargetInDistance read(CompoundTag tag) {
-		if (!tag.contains("min")) {
-			throw new IllegalArgumentException("TargetInDistance condition error: min distance not specified!");
-		}
-		
-		if (!tag.contains("max")) {
-			throw new IllegalArgumentException("TargetInDistance condition error: max distance not specified!");
-		}
-		
-		this.min = tag.getDouble("min");
-		this.max = tag.getDouble("max");
+		this.min = this.assertTag("min", "decimal", tag, Tag.TAG_DOUBLE, CompoundTag::getDouble);
+		this.max = this.assertTag("max", "decimal", tag, Tag.TAG_DOUBLE, CompoundTag::getDouble);
 		
 		return this;
 	}

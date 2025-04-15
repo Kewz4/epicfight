@@ -2,7 +2,6 @@ package yesman.epicfight.data.conditions.entity;
 
 import java.util.List;
 
-import io.netty.util.internal.StringUtil;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
@@ -21,12 +20,7 @@ public class PlayerName extends EntityPatchCondition {
 	
 	@Override
 	public PlayerName read(CompoundTag tag) {
-		if (!tag.contains("name") || StringUtil.isNullOrEmpty(tag.getString("name"))) {
-			throw new IllegalArgumentException("Undefined name");
-		}
-		
-		this.name = tag.getString("name");
-		
+		this.name = this.assertTag("name", "string", tag, Tag.TAG_STRING, CompoundTag::getString);
 		return this;
 	}
 	

@@ -1,5 +1,7 @@
 package yesman.epicfight.world.capabilities;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.world.entity.Entity;
@@ -19,7 +21,7 @@ public class EpicFightCapabilities {
     public static final Capability<CapabilityItem> CAPABILITY_ITEM = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<ProjectilePatch> CAPABILITY_PROJECTILE = CapabilityManager.get(new CapabilityToken<>(){});
     public static final Capability<CapabilitySkill> CAPABILITY_SKILL = CapabilityManager.get(new CapabilityToken<>(){});
-	
+    
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.register(CapabilityItem.class);
 		event.register(EntityPatch.class);
@@ -35,6 +37,13 @@ public class EpicFightCapabilities {
 		return stack.isEmpty() ? defaultCap : stack.getCapability(CAPABILITY_ITEM).orElse(defaultCap);
 	}
 	
+	/**
+	 * This method should remain as the secondary option, especially when you can't fix local variables inside lambda expression.
+	 * 
+	 * @param entity An entity object to extract an entity patch
+	 * @param type A class type to cast
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends EntityPatch> T getEntityPatch(Entity entity, Class<T> type) {
 		if (entity != null) {
@@ -46,5 +55,49 @@ public class EpicFightCapabilities {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Returns entity patch with unparameterized original entity
+	 * This is useful to reduce the amount of code when type-casting for {@link EntityPatch#getOriginal} is unnecessary.
+	 * 
+	 * @param entity An entity object to extract an entity patch
+	 * @param type A class type to cast
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T extends EntityPatch<?>> Optional<T> getUnparameterizedEntityPatch(Entity entity, Class<T> type) {
+		if (entity != null) {
+			EntityPatch<?> entitypatch = entity.getCapability(EpicFightCapabilities.CAPABILITY_ENTITY).orElse(null);
+			
+			if (entitypatch != null && type.isAssignableFrom(entitypatch.getClass())) {
+				return Optional.of((T)entitypatch);
+			}
+		}
+		
+		return Optional.empty();
+		
+	}
+	
+	/**
+	 * Returns entity patch with parameterized original entity
+	 * This method is used when you need parameterized return value of {@link EntityPatch#getOriginal}.
+	 * 
+	 * @param entity An entity object to extract an entity patch
+	 * @param entitytype An entity type to cast
+	 * @param patchtype A class type to cast
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E extends Entity, T extends EntityPatch<E>> Optional<T> getParameterizedEntityPatch(Entity entity, Class<E> entitytype, Class<?> patchtype) {
+		if (entity != null && entitytype.isAssignableFrom(entity.getClass())) {
+			EntityPatch<?> entitypatch = entity.getCapability(EpicFightCapabilities.CAPABILITY_ENTITY).orElse(null);
+			
+			if (entitypatch != null && patchtype.isAssignableFrom(entitypatch.getClass())) {
+				return Optional.of((T)entitypatch);
+			}
+		}
+		
+		return Optional.empty();
 	}
 }

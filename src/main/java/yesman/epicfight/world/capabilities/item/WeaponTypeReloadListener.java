@@ -33,7 +33,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.LivingMotion;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.SkillManager;
@@ -49,22 +51,22 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	public static void registerDefaultWeaponTypes() {
 		Map<ResourceLocation, Function<Item, CapabilityItem.Builder>> typeEntry = Maps.newHashMap();
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "axe"), WeaponCapabilityPresets.AXE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "fist"), WeaponCapabilityPresets.FIST);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "hoe"), WeaponCapabilityPresets.HOE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "pickaxe"), WeaponCapabilityPresets.PICKAXE);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "shovel"), WeaponCapabilityPresets.SHOVEL);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "sword"), WeaponCapabilityPresets.SWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "spear"), WeaponCapabilityPresets.SPEAR);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "greatsword"), WeaponCapabilityPresets.GREATSWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "uchigatana"), WeaponCapabilityPresets.UCHIGATANA);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "tachi"), WeaponCapabilityPresets.TACHI);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "longsword"), WeaponCapabilityPresets.LONGSWORD);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "dagger"), WeaponCapabilityPresets.DAGGER);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "bow"), WeaponCapabilityPresets.BOW);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "crossbow"), WeaponCapabilityPresets.CROSSBOW);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "trident"), WeaponCapabilityPresets.TRIDENT);
-		typeEntry.put(new ResourceLocation(EpicFightMod.MODID, "shield"), WeaponCapabilityPresets.SHIELD);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "axe"), WeaponCapabilityPresets.AXE);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "fist"), WeaponCapabilityPresets.FIST);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "hoe"), WeaponCapabilityPresets.HOE);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "pickaxe"), WeaponCapabilityPresets.PICKAXE);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "shovel"), WeaponCapabilityPresets.SHOVEL);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "sword"), WeaponCapabilityPresets.SWORD);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "spear"), WeaponCapabilityPresets.SPEAR);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "greatsword"), WeaponCapabilityPresets.GREATSWORD);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "uchigatana"), WeaponCapabilityPresets.UCHIGATANA);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "tachi"), WeaponCapabilityPresets.TACHI);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "longsword"), WeaponCapabilityPresets.LONGSWORD);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "dagger"), WeaponCapabilityPresets.DAGGER);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "bow"), WeaponCapabilityPresets.BOW);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "crossbow"), WeaponCapabilityPresets.CROSSBOW);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "trident"), WeaponCapabilityPresets.TRIDENT);
+		typeEntry.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "shield"), WeaponCapabilityPresets.SHIELD);
 		
 		WeaponCapabilityPresetRegistryEvent weaponCapabilityPresetRegistryEvent = new WeaponCapabilityPresetRegistryEvent(typeEntry);
 		ModLoader.get().postEvent(weaponCapabilityPresetRegistryEvent);
@@ -106,7 +108,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> getOrThrow(String typeName) {
-		ResourceLocation rl = new ResourceLocation(typeName);
+		ResourceLocation rl = ResourceLocation.parse(typeName);
 		
 		if (!PRESETS.containsKey(rl)) {
 			throw new IllegalArgumentException("Can't find weapon type: " + rl);
@@ -116,7 +118,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> get(String typeName) {
-		ResourceLocation rl = new ResourceLocation(typeName);
+		ResourceLocation rl = ResourceLocation.parse(typeName);
 		return PRESETS.get(rl);
 	}
 	
@@ -136,7 +138,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		builder.canBePlacedOffhand(tag.contains("usable_in_offhand") ? tag.getBoolean("usable_in_offhand") : true);
 		
 		if (tag.contains("hit_particle")) {
-			ParticleType<?> particleType = ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation(tag.getString("hit_particle")));
+			ParticleType<?> particleType = ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.parse(tag.getString("hit_particle")));
 			
 			if (particleType == null) {
 				EpicFightMod.LOGGER.warn("Can't find a particle type " + tag.getString("hit_particle") + " in " + rl);
@@ -148,7 +150,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		}
 		
 		if (tag.contains("swing_sound")) {
-			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("swing_sound")));
+			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("swing_sound")));
 			
 			if (sound == null) {
 				EpicFightMod.LOGGER.warn("Can't find a swing sound " + tag.getString("swing_sound") + " in " + rl);
@@ -158,7 +160,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		}
 		
 		if (tag.contains("hit_sound")) {
-			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(tag.getString("hit_sound")));
+			SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(ResourceLocation.parse(tag.getString("hit_sound")));
 			
 			if (sound == null) {
 				EpicFightMod.LOGGER.warn("Can't find a hit sound " + tag.getString("hit_sound") + " in " + rl);
@@ -172,10 +174,11 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 		for (String key : combosTag.getAllKeys()) {
 			Style style = Style.ENUM_MANAGER.getOrThrow(key);
 			ListTag comboAnimations = combosTag.getList(key, Tag.TAG_STRING);
-			StaticAnimation[] animArray = new StaticAnimation[comboAnimations.size()];
+			@SuppressWarnings("unchecked")
+			AnimationAccessor<? extends AttackAnimation>[] animArray = new AnimationAccessor[comboAnimations.size()];
 			
 			for (int i = 0; i < comboAnimations.size(); i++) {
-				animArray[i] = AnimationManager.getInstance().byKeyOrThrow(comboAnimations.getString(i));
+				animArray[i] = AnimationManager.byKey(comboAnimations.getString(i));
 			}
 			
 			builder.newStyleCombo(style, animArray);
@@ -197,7 +200,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (String sLivingmotion : styleAnimationTag.getAllKeys()) {
 				LivingMotion livingmotion = LivingMotion.ENUM_MANAGER.getOrThrow(sLivingmotion);
-				StaticAnimation animation = AnimationManager.getInstance().byKeyOrThrow(styleAnimationTag.getString(sLivingmotion));
+				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(styleAnimationTag.getString(sLivingmotion));
 				
 				builder.livingMotionModifier(style, livingmotion, animation);
 			}
@@ -213,7 +216,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (Tag offhandTag : caseCompTag.getList("conditions", Tag.TAG_COMPOUND)) {
 				CompoundTag offhandCompound = (CompoundTag)offhandTag;
-				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(offhandCompound.getString("predicate")));
+				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(offhandCompound.getString("predicate")));
 				EntityPatchCondition condition = conditionProvider.get();
 				condition.read(offhandCompound);
 				conditionList.add(condition);
@@ -246,7 +249,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			
 			for (Tag offhandTag : offhandValidatorList) {
 				CompoundTag offhandCompound = (CompoundTag)offhandTag;
-				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(offhandCompound.getString("predicate")));
+				Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(offhandCompound.getString("predicate")));
 				EntityPatchCondition condition = conditionProvider.get();
 				condition.read(offhandCompound);
 				conditionList.add(condition);
@@ -294,7 +297,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			registerDefaultWeaponTypes();
 			
 			for (CompoundTag tag : packet.getTags()) {
-				ResourceLocation rl = new ResourceLocation(tag.getString("registry_name"));
+				ResourceLocation rl = ResourceLocation.parse(tag.getString("registry_name"));
 				
 				PRESETS.put(rl, (itemstack) -> deserializeWeaponCapabilityBuilder(rl, tag));
 			}

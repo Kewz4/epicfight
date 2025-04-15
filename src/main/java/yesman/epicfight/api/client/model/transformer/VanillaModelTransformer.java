@@ -20,19 +20,19 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.Mesh.RenderProperties;
 import yesman.epicfight.api.client.model.MeshPartDefinition;
-import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.client.model.SingleGroupVertexBuilder;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
+import yesman.epicfight.mixin.MixinAgeableListModel;
 
 @OnlyIn(Dist.CLIENT)
 public class VanillaModelTransformer extends HumanoidModelTransformer {
@@ -50,8 +50,8 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@Override
-	public AnimatedMesh transformArmorModel(ResourceLocation modelLocation, HumanoidModel<?> humanoidModel) {
-		List<VanillaModelPartition> boxes = Lists.newArrayList();
+	public SkinnedMesh transformArmorModel(HumanoidModel<?> humanoidModel) {
+		List<VanillaModelPartition> partitions = Lists.newArrayList();
 		
 		//Remove entity animation
 		humanoidModel.head.loadPose(humanoidModel.head.getInitialPose());
@@ -62,41 +62,70 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 		humanoidModel.leftLeg.loadPose(humanoidModel.leftLeg.getInitialPose());
 		humanoidModel.rightLeg.loadPose(humanoidModel.rightLeg.getInitialPose());
 		
+		List<ModelPart> modelParts = Lists.newArrayList();
+		MixinAgeableListModel accessorAgeableListModel = ((MixinAgeableListModel)humanoidModel);
+		
+		Iterable<ModelPart> headParts = accessorAgeableListModel.invoke_headParts();
+		Iterable<ModelPart> bodyParts = accessorAgeableListModel.invoke_bodyParts();
+		
+		if (headParts != null) {
+			headParts.forEach(modelParts::add);
+		}
+		
+		if (bodyParts != null) {
+			bodyParts.forEach(modelParts::add);
+		}
+		
+		modelParts.forEach((modelPart) -> modelPart.loadPose(modelPart.getInitialPose()));
+		
 		if (humanoidModel.head.visible) {
-			boxes.add(new VanillaModelPartition(HEAD, humanoidModel.head, "head"));
+			partitions.add(new VanillaModelPartition(HEAD, humanoidModel.head, "head"));
 		}
 		
 		if (humanoidModel.hat.visible) {
-			boxes.add(new VanillaModelPartition(HEAD, humanoidModel.hat, "hat"));
+			partitions.add(new VanillaModelPartition(HEAD, humanoidModel.hat, "hat"));
 		}
 		
 		if (humanoidModel.body.visible) {
-			boxes.add(new VanillaModelPartition(CHEST, humanoidModel.body, "body"));
+			partitions.add(new VanillaModelPartition(CHEST, humanoidModel.body, "body"));
 		}
 		
 		if (humanoidModel.rightArm.visible) {
-			boxes.add(new VanillaModelPartition(RIGHT_ARM, humanoidModel.rightArm, "rightArm"));
+			partitions.add(new VanillaModelPartition(RIGHT_ARM, humanoidModel.rightArm, "rightArm"));
 		}
 		
 		if (humanoidModel.leftArm.visible) {
-			boxes.add(new VanillaModelPartition(LEFT_ARM, humanoidModel.leftArm, "leftArm"));
+			partitions.add(new VanillaModelPartition(LEFT_ARM, humanoidModel.leftArm, "leftArm"));
 		}
 		
 		if (humanoidModel.leftLeg.visible) {
-			boxes.add(new VanillaModelPartition(LEFT_LEG, humanoidModel.leftLeg, "leftLeg"));
+			partitions.add(new VanillaModelPartition(LEFT_LEG, humanoidModel.leftLeg, "leftLeg"));
 		}
 		
 		if (humanoidModel.rightLeg.visible) {
-			boxes.add(new VanillaModelPartition(RIGHT_LEG, humanoidModel.rightLeg, "rightLeg"));
+			partitions.add(new VanillaModelPartition(RIGHT_LEG, humanoidModel.rightLeg, "rightLeg"));
 		}
 		
-		AnimatedMesh mesh = bakeMeshFromCubes(boxes);
-		Meshes.addMesh(modelLocation, mesh);
+		modelParts.remove(humanoidModel.head);
+		modelParts.remove(humanoidModel.hat);
+		modelParts.remove(humanoidModel.body);
+		modelParts.remove(humanoidModel.rightArm);
+		modelParts.remove(humanoidModel.leftArm);
+		modelParts.remove(humanoidModel.rightLeg);
+		modelParts.remove(humanoidModel.leftLeg);
 		
-		return mesh;
+		int i = 0;
+		
+		for (ModelPart modelpart : modelParts) {
+			if (modelpart.visible) {
+				partitions.add(new VanillaModelPartition(HEAD, modelpart, "part" + (i++)));
+			}
+		}
+		
+		return bakeMeshFromCubes(partitions);
 	}
 	
-	private static AnimatedMesh bakeMeshFromCubes(List<VanillaModelPartition> partitions) {
+	private static SkinnedMesh bakeMeshFromCubes(List<VanillaModelPartition> partitions) {
 		List<SingleGroupVertexBuilder> vertices = Lists.newArrayList();
 		Map<MeshPartDefinition, IntList> indices = Maps.newHashMap();
 		PoseStack poseStack = new PoseStack();
@@ -614,13 +643,25 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public record VanillaMeshPartDefinition(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) implements MeshPartDefinition {
-		public static MeshPartDefinition of(String partName) {
-			return new VanillaMeshPartDefinition(partName, null, null, null);
+	public record VanillaMeshPartDefinition(String partName, RenderProperties renderProperties, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) implements MeshPartDefinition {
+		public static MeshPartDefinition of(String partName, RenderProperties renderProperties) {
+			return new VanillaMeshPartDefinition(partName, renderProperties, null, null, null);
 		}
 		
+		public static MeshPartDefinition of(String partName) {
+			return new VanillaMeshPartDefinition(partName, null, null, null, null);
+		}
+		
+		/**
+		 * For animated models
+		 * @param partName
+		 * @param path
+		 * @param invertedParentTransform
+		 * @param root
+		 * @return
+		 */
 		public static MeshPartDefinition of(String partName, List<String> path, OpenMatrix4f invertedParentTransform, ModelPart root) {
-			return new VanillaMeshPartDefinition(partName, path, invertedParentTransform, root);
+			return new VanillaMeshPartDefinition(partName, null, path, invertedParentTransform, root);
 		}
 		
 		public Supplier<OpenMatrix4f> getModelPartAnimationProvider() {

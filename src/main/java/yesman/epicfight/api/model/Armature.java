@@ -2,7 +2,9 @@ package yesman.epicfight.api.model;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -10,39 +12,44 @@ import com.google.gson.JsonObject;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.asset.JsonAssetLoader;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 public class Armature {
 	private final String name;
 	private final Int2ObjectMap<Joint> jointById;
 	private final Map<String, Joint> jointByName;
-	private final Object2IntMap<String> pathIndexMap;
-	private final int jointNumber;
+	private final Map<String, String> pathIndexMap;
+	private final int jointCount;
+	private final OpenMatrix4f[] poseMatrices;
 	public final Joint rootJoint;
-	private final TransformSheet actionAnimationCoord = new TransformSheet();
 	
 	public Armature(String name, int jointNumber, Joint rootJoint, Map<String, Joint> jointMap) {
 		this.name = name;
-		this.jointNumber = jointNumber;
+		this.jointCount = jointNumber;
 		this.rootJoint = rootJoint;
 		this.jointByName = jointMap;
 		this.jointById = new Int2ObjectOpenHashMap<>();
-		this.pathIndexMap = new Object2IntOpenHashMap<>();
+		this.pathIndexMap = Maps.newHashMap();
+		
 		this.jointByName.values().forEach((joint) -> {
 			this.jointById.put(joint.getId(), joint);
 		});
+		
+		this.poseMatrices = OpenMatrix4f.allocateMatrixArray(this.jointCount);
 	}
 	
 	protected Joint getOrLogException(Map<String, Joint> jointMap, String name) {
 		if (!jointMap.containsKey(name)) {
-			EpicFightMod.LOGGER.debug("Cannot find the joint named " + name + " in " + this.getClass().getCanonicalName());
+			if (EpicFightSharedConstants.IS_DEV_ENV) {
+				EpicFightMod.LOGGER.debug("Cannot find the joint named " + name + " in " + this.getClass().getCanonicalName());
+			}
 			
 			return Joint.EMPTY;
 		}
@@ -50,17 +57,29 @@ public class Armature {
 		return jointMap.get(name);
 	}
 	
+	public void setPose(Pose pose) {
+		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, this.poseMatrices, false);
+	}
+	
+	public void bakeOriginMatrices() {
+		this.rootJoint.initOriginTransform(new OpenMatrix4f());
+	}
+	
+	public OpenMatrix4f[] getPoseMatrices() {
+		return this.poseMatrices;
+	}
+	
+	/**
+	 * @param applyOriginTransform if you need a final pose of the animations, give it false.
+	 */
 	public OpenMatrix4f[] getPoseAsTransformMatrix(Pose pose, boolean applyOriginTransform) {
-		OpenMatrix4f[] jointMatrices = new OpenMatrix4f[this.jointNumber];
+		OpenMatrix4f[] jointMatrices = new OpenMatrix4f[this.jointCount];
 		this.getPoseTransform(this.rootJoint, new OpenMatrix4f(), pose, jointMatrices, applyOriginTransform);
 		return jointMatrices;
 	}
 	
-	/**
-	 * @param applyOriginTransform if you need a final pose of the animations, give it false. 
-	 */
 	private void getPoseTransform(Joint joint, OpenMatrix4f parentTransform, Pose pose, OpenMatrix4f[] jointMatrices, boolean applyOriginTransform) {
-		OpenMatrix4f result = pose.getOrDefaultTransform(joint.getName()).getAnimationBindedMatrix(joint, parentTransform);
+		OpenMatrix4f result = pose.orElseEmpty(joint.getName()).getAnimationBoundMatrix(joint, parentTransform);
 		jointMatrices[joint.getId()] = result;
 		
 		for (Joint joints : joint.getSubJoints()) {
@@ -77,53 +96,71 @@ public class Armature {
 	}
 	
 	/** Get binded position of joint **/
-	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, int pathIndex) {
-		return getBindedJointTransformByIndexInternal(pose, this.rootJoint, new OpenMatrix4f(), pathIndex);
+	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, String pathIndex) {
+		return getBindedJointTransformByIndexInternal(pose, this.rootJoint, new OpenMatrix4f(), pathIndex, pathIndex.length() - 1);
 	}
 	
-	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, int pathIndex) {
-		JointTransform jt = pose.getOrDefaultTransform(joint.getName());
-		OpenMatrix4f result = jt.getAnimationBindedMatrix(joint, parentTransform);
-		int nextIndex = pathIndex % 10;
-		return nextIndex > 0 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoints().get(nextIndex - 1), result, pathIndex / 10) : result;
+	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
+		JointTransform jt = pose.orElseEmpty(joint.getName());
+		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
+		
+		return index > -1 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
+	}
+	
+	public boolean hasJoint(String name) {
+		return this.jointByName.containsKey(name);
 	}
 	
 	public Joint searchJointById(int id) {
 		return this.jointById.get(id);
 	}
-
+	
 	public Joint searchJointByName(String name) {
 		return this.jointByName.get(name);
 	}
 	
-	public int searchPathIndex(String joint) {
-		if (this.pathIndexMap.containsKey(joint)) {
-			return this.pathIndexMap.getInt(joint);
+	/**
+	 * Search a joint path to given joint name
+	 * For root joints, it returns empty string
+	 * 
+	 * @param terminalJointName
+	 * @return
+	 */
+	public String searchPathIndex(String terminalJointName) {
+		if (this.pathIndexMap.containsKey(terminalJointName)) {
+			return this.pathIndexMap.get(terminalJointName);
 		} else {
-			String pathIndex = this.rootJoint.searchPath("", joint);
-			int pathIndex2Int = 0;
+			String pathIndex = this.rootJoint.searchPath("", terminalJointName);
 			
 			if (pathIndex == null) {
-				throw new IllegalArgumentException("failed to get joint path index for " + joint);
+				throw new IllegalArgumentException("Failed to get joint path index for " + terminalJointName);
 			} else {
-				pathIndex2Int = (pathIndex.length() == 0) ? -1 : Integer.parseInt(pathIndex);
-				this.pathIndexMap.put(joint, pathIndex2Int);
+				this.pathIndexMap.put(terminalJointName, pathIndex);
 			}
 			
-			return pathIndex2Int;
+			return pathIndex;
 		}
 	}
 	
-	public TransformSheet getActionAnimationCoord() {
-		return this.actionAnimationCoord;
+	public void gatherAllJointsInPathToTerminal(String terminalJointName, Collection<String> collections) {
+		if (!this.jointByName.containsKey(terminalJointName)) {
+			throw new NoSuchElementException("No " + terminalJointName + " joint in this armature!");
+		}
+		
+		String pathIndices = this.searchPathIndex(terminalJointName);
+		Joint joint = this.rootJoint;
+		int index = pathIndices.length() - 1;
+		collections.add(joint.getName());
+		
+		while (index > -1) {
+			joint = joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndices.charAt(index)) - 1);
+			collections.add(joint.getName());
+			index--;
+		}
 	}
 	
 	public int getJointNumber() {
-		return this.jointNumber;
-	}
-
-	public Joint getRootJoint() {
-		return this.rootJoint;
+		return this.jointCount;
 	}
 	
 	@Override
@@ -139,10 +176,10 @@ public class Armature {
 		newRoot.initOriginTransform(new OpenMatrix4f());
 		Armature newArmature = null;
 		
-		//Uses reflection to keep the type of copied armature
+		// Uses reflection to keep the type of copied armature
 		try {
 			Constructor<? extends Armature> constructor = this.getClass().getConstructor(String.class, int.class, Joint.class, Map.class);
-			newArmature = constructor.newInstance(this.name, this.jointNumber, newRoot, oldToNewJoint);
+			newArmature = constructor.newInstance(this.name, this.jointCount, newRoot, oldToNewJoint);
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			throw new IllegalStateException("Armature copy failed! " + e);
 		}
@@ -155,11 +192,11 @@ public class Armature {
 			return Joint.EMPTY;
 		}
 		
-		Joint newJoint = new Joint(joint.getName(), joint.getId(), joint.getLocalTrasnform());
+		Joint newJoint = new Joint(joint.getName(), joint.getId(), joint.getLocalTransform());
 		oldToNewJoint.put(joint.getName(), newJoint);
 		
 		for (Joint subJoint : joint.getSubJoints()) {
-			newJoint.addSubJoint(this.copyHierarchy(subJoint, oldToNewJoint));
+			newJoint.addSubJoints(this.copyHierarchy(subJoint, oldToNewJoint));
 		}
 		
 		return newJoint;
@@ -188,10 +225,10 @@ public class Armature {
 		jointJson.addProperty("name", joint.getName());
 		
 		JsonArray transformMatrix = new JsonArray();
-		OpenMatrix4f localMatrixInBlender = new OpenMatrix4f(joint.getLocalTrasnform());
+		OpenMatrix4f localMatrixInBlender = new OpenMatrix4f(joint.getLocalTransform());
 		
 		if (root) {
-			localMatrixInBlender.mulFront(OpenMatrix4f.invert(JsonModelLoader.BLENDER_TO_MINECRAFT_COORD, null));
+			localMatrixInBlender.mulFront(OpenMatrix4f.invert(JsonAssetLoader.BLENDER_TO_MINECRAFT_COORD, null));
 		}
 		
 		localMatrixInBlender.transpose();

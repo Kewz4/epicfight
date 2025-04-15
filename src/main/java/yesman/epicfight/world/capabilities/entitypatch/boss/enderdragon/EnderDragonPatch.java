@@ -1,15 +1,19 @@
 package yesman.epicfight.world.capabilities.entitypatch.boss.enderdragon;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.google.common.collect.Maps;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -23,59 +27,86 @@ import net.minecraft.world.entity.boss.enderdragon.phases.DragonPhaseInstance;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
+import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
-import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.animation.types.procedural.IKInfo;
-import yesman.epicfight.api.animation.types.procedural.TipPointAnimation;
+import yesman.epicfight.api.physics.PhysicsSimulator;
+import yesman.epicfight.api.physics.SimulationTypes;
+import yesman.epicfight.api.physics.ik.InverseKinematicsProvider;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulatable;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator;
+import yesman.epicfight.api.physics.ik.InverseKinematicsSimulator.BakedInverseKinematicsDefinition;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.EpicFightSkills;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
+import yesman.epicfight.world.capabilities.entitypatch.boss.BossPatch;
 import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.item.EpicFightItems;
 import yesman.epicfight.world.item.SkillBookItem;
 
-public class EnderDragonPatch extends MobPatch<EnderDragon> {
+public class EnderDragonPatch extends MobPatch<EnderDragon> implements InverseKinematicsSimulatable, BossPatch<EnderDragon> {
 	public static final TargetingConditions DRAGON_TARGETING = TargetingConditions.forCombat().ignoreLineOfSight();
-	public static EnderDragonPatch INSTANCE_CLIENT;
-	public static EnderDragonPatch INSTANCE_SERVER;
-	private final Map<String, TipPointAnimation> tipPointAnimations = Maps.newHashMap();
-	private final Map<LivingMotions, StaticAnimation> livingMotions = Maps.newHashMap();
+	private final Map<LivingMotions, AnimationAccessor<? extends StaticAnimation>> livingMotions = Maps.newHashMap();
 	private final Object2IntMap<Player> contributors = new Object2IntOpenHashMap<>();
 	private boolean groundPhase;
-	public float xRoot;
-	public float xRootO;
-	public float zRoot;
-	public float zRootO;
 	public LivingMotion prevMotion = LivingMotions.FLY;
 	
+	private float xRoot;
+	private float xRootO;
+	private float zRoot;
+	private float zRootO;
+	
 	@Override
-	public void onConstructed(EnderDragon entityIn) {
+	public void onConstructed(EnderDragon enderdragon) {
 		this.livingMotions.put(LivingMotions.IDLE, Animations.DRAGON_IDLE);
 		this.livingMotions.put(LivingMotions.WALK, Animations.DRAGON_WALK);
 		this.livingMotions.put(LivingMotions.FLY, Animations.DRAGON_FLY);
 		this.livingMotions.put(LivingMotions.CHASE, Animations.DRAGON_AIRSTRIKE);
 		this.livingMotions.put(LivingMotions.DEATH, Animations.DRAGON_DEATH);
-		super.onConstructed(entityIn);
+		
+		super.onConstructed(enderdragon);
 		
 		this.currentLivingMotion = LivingMotions.FLY;
+	}
+	
+	@Override
+	public void onStartTracking(ServerPlayer trackingPlayer) {
+		if (this.getBossEvent() != null) {
+			this.recordBossEventOwner(trackingPlayer);
+		}
+	}
+	
+	@Override
+	public void onStopTracking(ServerPlayer trackingPlayer) {
+		if (this.getBossEvent() != null) {
+			this.removeBossEventOwner(trackingPlayer);
+		}
+	}
+	
+	@Override
+	public void processEntityPacket(FriendlyByteBuf buf) {
+		this.processOwnerRecordPacket(buf);
 	}
 	
 	@Override
@@ -87,12 +118,6 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 		this.original.phaseManager = new PhaseManagerPatch(this.original, this);
 		this.original.phaseManager.setPhase(startPhase);
 		enderdragon.setMaxUpStep(1.0f);
-		
-		if (enderdragon.level().isClientSide()) {
-			INSTANCE_CLIENT = this;
-		} else {
-			INSTANCE_SERVER = this;
-		}
 	}
 	
 	public static void initAttributes(EntityAttributeModificationEvent event) {
@@ -103,7 +128,9 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
-		for (Map.Entry<LivingMotions, StaticAnimation> livingmotionEntry : this.livingMotions.entrySet()) {
+		super.initAnimator(animator);
+		
+		for (Map.Entry<LivingMotions, AnimationAccessor<? extends StaticAnimation>> livingmotionEntry : this.livingMotions.entrySet()) {
 			animator.addLivingAnimation(livingmotionEntry.getKey(), livingmotionEntry.getValue());
 		}
 	}
@@ -147,6 +174,42 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	}
 	
 	@Override
+	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
+		if (animation instanceof InverseKinematicsProvider inverseKinematicsProvider) {
+			if (animation.getProperty(StaticAnimationProperty.BAKED_IK_DEFINITION).isEmpty()) {
+				return;
+			}
+			
+			float x = (float)this.getOriginal().getX();
+	    	float y = (float)this.getOriginal().getY();
+	    	float z = (float)this.getOriginal().getZ();
+	    	float xo = (float)this.getOriginal().xo;
+	    	float yo = (float)this.getOriginal().yo;
+	    	float zo = (float)this.getOriginal().zo;
+	    	OpenMatrix4f toModelPos = OpenMatrix4f.mul(OpenMatrix4f.translate(new Vec3f(xo + (x - xo) * partialTicks, yo + (y - yo) * partialTicks, zo + (z - zo) * partialTicks), new OpenMatrix4f(), null), this.getModelMatrix(partialTicks), null).invert();
+	    	
+	    	if (pose.hasTransform("Root")) {
+	    		inverseKinematicsProvider.correctRootRotation(pose.get("Root"), this, partialTicks);
+	    	}
+	    	
+	    	animation.getProperty(StaticAnimationProperty.BAKED_IK_DEFINITION).ifPresent((ikDefinitions) -> {
+	    		for (BakedInverseKinematicsDefinition bakedIKInfo : ikDefinitions) {
+		    		if (!this.ikSimulator.isRunning(bakedIKInfo.endJoint())) continue;
+		    		
+		    		for (String jointName : bakedIKInfo.pathToEndJoint()) {
+						pose.putJointData(jointName, animation.getTransfroms().get(jointName).getKeyframes()[bakedIKInfo.initialPoseFrame()].transform().copy());
+					}
+		    		
+		    		InverseKinematicsSimulator.InverseKinematicsObject ikObject = this.ikSimulator.getRunningObject(bakedIKInfo.endJoint()).get();
+		    		JointTransform jt = ikObject.getTipTransform(partialTicks);
+			    	Vec3f jointModelpos = OpenMatrix4f.transform3v(toModelPos, jt.translation(), null);
+			    	inverseKinematicsProvider.applyFabrikToJoint(jointModelpos.multiply(-1.0F, 1.0F, -1.0F), pose, this.getArmature(), bakedIKInfo.startJoint(), bakedIKInfo.endJoint(), jt.rotation());
+		    	}
+	    	});
+		}
+	}
+	
+	@Override
 	public void serverTick(LivingEvent.LivingTickEvent event) {
 		super.serverTick(event);
 		this.original.hurtTime = 2;
@@ -161,7 +224,8 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 			this.prevMotion = this.currentLivingMotion;
 		}
 		
-		this.updateTipPoints();
+		this.ikSimulator.tick(null);
+		this.setIKHeightAndRootRotation();
 		
 		Entity bodyPart = this.original.getParts()[2];
 		AABB bodyBoundingBox = bodyPart.getBoundingBox();
@@ -199,17 +263,14 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	}
 	
 	@Override
-	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-	}
-	
-	@Override
 	public void clientTick(LivingEvent.LivingTickEvent event) {
 		this.xRootO = this.xRoot;
 		this.zRootO = this.zRoot;
 		
 		super.clientTick(event);
 		
-		this.updateTipPoints();
+		this.ikSimulator.tick(null);
+		this.setIKHeightAndRootRotation();
 	}
 	
 	@Override
@@ -255,24 +316,26 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 			player.addItem(skillbook);
 		}
 	}
-
-	public void updateTipPoints() {
-		for (Map.Entry<String, TipPointAnimation> entry : this.tipPointAnimations.entrySet()) {
-			if (entry.getValue().isOnWorking()) {
-				entry.getValue().tick();
-			}
-		}
+	
+	public void setIKHeightAndRootRotation() {
+		this.ikSimulator.getAllRunningObjects().stream().map((pair) -> pair.getRight()).filter(InverseKinematicsSimulator.InverseKinematicsObject::isOnWorking).forEach(InverseKinematicsSimulator.InverseKinematicsObject::tick);
 		
-		if (!this.tipPointAnimations.isEmpty()) {
-			TipPointAnimation frontL = this.getTipPointAnimation("Leg_Front_L3");
-			TipPointAnimation frontR = this.getTipPointAnimation("Leg_Front_R3");
-			TipPointAnimation backL = this.getTipPointAnimation("Leg_Back_L3");
-			TipPointAnimation backR = this.getTipPointAnimation("Leg_Back_R3");
+		if (
+			this.ikSimulator.isRunning(Armatures.DRAGON.get().legFrontL3) &&
+			this.ikSimulator.isRunning(Armatures.DRAGON.get().legFrontR3) &&
+			this.ikSimulator.isRunning(Armatures.DRAGON.get().legBackL3) &&
+			this.ikSimulator.isRunning(Armatures.DRAGON.get().legBackR3)
+		) {
+			InverseKinematicsSimulator.InverseKinematicsObject frontL = this.ikSimulator.getRunningObject(Armatures.DRAGON.get().legFrontL3).get();
+			InverseKinematicsSimulator.InverseKinematicsObject frontR = this.ikSimulator.getRunningObject(Armatures.DRAGON.get().legFrontR3).get();
+			InverseKinematicsSimulator.InverseKinematicsObject backL = this.ikSimulator.getRunningObject(Armatures.DRAGON.get().legBackL3).get();
+			InverseKinematicsSimulator.InverseKinematicsObject backR = this.ikSimulator.getRunningObject(Armatures.DRAGON.get().legBackR3).get();
+			
 			float entityPosY = (float)this.original.position().y;
-			float yFrontL = (frontL != null && frontL.isTouchingGround()) ? frontL.getTargetPosition().y : entityPosY;
-			float yFrontR = (frontR != null && frontR.isTouchingGround()) ? frontR.getTargetPosition().y : entityPosY;
-			float yBackL = (backL != null && backL.isTouchingGround()) ? backL.getTargetPosition().y : entityPosY;
-			float yBackR = (backR != null && backR.isTouchingGround()) ? backR.getTargetPosition().y : entityPosY;
+			float yFrontL = (frontL != null && frontL.isTouchingGround()) ? frontL.getDestination().y : entityPosY;
+			float yFrontR = (frontR != null && frontR.isTouchingGround()) ? frontR.getDestination().y : entityPosY;
+			float yBackL = (backL != null && backL.isTouchingGround()) ? backL.getDestination().y : entityPosY;
+			float yBackR = (backR != null && backR.isTouchingGround()) ? backR.getDestination().y : entityPosY;
 			float xdiff = (yFrontL + yBackL) * 0.5F - (yFrontR + yBackR) * 0.5F;
 			float zdiff = (yFrontL + yFrontR) * 0.5F - (yBackL + yBackR) * 0.5F;
 			float xdistance = 4.0F;
@@ -317,7 +380,7 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 	
@@ -344,19 +407,61 @@ public class EnderDragonPatch extends MobPatch<EnderDragon> {
 		return Math.toDegrees(Math.acos(cos));
 	}
 	
-	public void resetTipAnimations() {
-		this.tipPointAnimations.clear();
+	private final InverseKinematicsSimulator ikSimulator = new InverseKinematicsSimulator();
+	
+	@Override
+	public <SIM extends PhysicsSimulator<?, ?, ?, ?, ?>> Optional<SIM> getSimulator(SimulationTypes<?, ?, ?, ?, ?, SIM> simulationType) {
+		if (simulationType == SimulationTypes.INVERSE_KINEMATICS) {
+			Optional.of(this.ikSimulator);
+		}
+		
+		return Optional.empty();
 	}
 	
-	public TipPointAnimation getTipPointAnimation(String jointName) {
-		return this.tipPointAnimations.get(jointName);
+	@Override
+	public InverseKinematicsSimulator getIKSimulator() {
+		return this.ikSimulator;
 	}
 	
-	public void addTipPointAnimation(String jointName, Vec3f initpos, TransformSheet transformSheet, IKInfo ikSetter) {
-		this.tipPointAnimations.put(jointName, new TipPointAnimation(transformSheet, initpos, ikSetter));
+	@Override
+	public Entity toEntity() {
+		return this.getOriginal();
 	}
 	
-	public Collection<TipPointAnimation> getTipPointAnimations() {
-		return this.tipPointAnimations.values();
+	@Override
+	public float getRootXRot() {
+		return this.xRoot;
+	}
+	
+	@Override
+	public float getRootXRotO() {
+		return this.xRootO;
+	}
+	
+	@Override
+	public float getRootZRot() {
+		return this.zRoot;
+	}
+	
+	@Override
+	public float getRootZRotO() {
+		return this.zRootO;
+	}
+	
+	@Override
+	public BossEvent getBossEvent() {
+		/**
+		 * A copy from {@link EnderDragon#aiStep()}
+		**/
+		if (this.original.getDragonFight() == null && !this.original.level().isClientSide) {
+			ServerLevel serverlevel = (ServerLevel)this.original.level();
+            EndDragonFight enddragonfight = serverlevel.getDragonFight();
+            
+            if (enddragonfight != null && this.original.getUUID().equals(enddragonfight.getDragonUUID())) {
+            	this.original.setDragonFight(enddragonfight);
+            }
+		}
+		
+		return this.original.getDragonFight().dragonEvent;
 	}
 }

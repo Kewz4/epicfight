@@ -5,6 +5,8 @@ import java.util.Iterator;
 
 import javax.annotation.Nullable;
 
+import org.joml.Matrix4f;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -19,23 +21,21 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.config.ClientConfig;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.effect.VisibleMobEffect;
-
-import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public class HealthBarIndicator extends EntityIndicator {
 	@Override
 	public boolean shouldDraw(LivingEntity entity, @Nullable LivingEntityPatch<?> entitypatch, LocalPlayerPatch playerpatch) {
-		ClientConfig.HealthBarShowOptions option = EpicFightMod.CLIENT_CONFIGS.healthBarShowOption.getValue();
+		HealthBarType healthBarType = ClientConfig.healthBarType;
 		Minecraft mc = Minecraft.getInstance();
 		
-		if (option == ClientConfig.HealthBarShowOptions.NONE) {
+		if (healthBarType == HealthBarType.NONE) {
 			return false;
 		} else if (!entity.canChangeDimensions() || entity.isInvisible() || entity == playerpatch.getOriginal().getVehicle()) {
 			return false;
@@ -49,7 +49,7 @@ public class HealthBarIndicator extends EntityIndicator {
 			}
 		}
 		
-		if (option == ClientConfig.HealthBarShowOptions.TARGET) {
+		if (healthBarType == HealthBarType.TARGET) {
 			return playerpatch.getTarget() == entity;
 		}
 
@@ -78,7 +78,7 @@ public class HealthBarIndicator extends EntityIndicator {
 					if (effect instanceof VisibleMobEffect visibleMobEffect) {
 						rl = visibleMobEffect.getIcon(effectInstance);
 					} else {
-						rl = new ResourceLocation(ForgeRegistries.MOB_EFFECTS.getKey(effect).getNamespace(), "textures/mob_effect/" + ForgeRegistries.MOB_EFFECTS.getKey(effect).getPath() + ".png");
+						rl = ResourceLocation.fromNamespaceAndPath(ForgeRegistries.MOB_EFFECTS.getKey(effect).getNamespace(), "textures/mob_effect/" + ForgeRegistries.MOB_EFFECTS.getKey(effect).getPath() + ".png");
 					}
 					
 					Minecraft.getInstance().getTextureManager().bindForSetup(rl);
@@ -87,7 +87,8 @@ public class HealthBarIndicator extends EntityIndicator {
 					
 					VertexConsumer vertexBuilder1 = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(rl));
 					
-					this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder1, x, y, x + 0.3F, y + 0.3F, 0, 0, 256, 256);
+					this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder1, x, y, x + 0.3F, y + 0.3F, 0, 0, 256, 256, 0.003921F);
+					
 					if (!iter.hasNext()) {
 						break;
 					}
@@ -96,18 +97,22 @@ public class HealthBarIndicator extends EntityIndicator {
 		}
 		
 		VertexConsumer vertexBuilder = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(BATTLE_ICON));
+		//VertexConsumer vertexBuilder = multiBufferSource.getBuffer(EpicFightRenderTypes.entityIndicator(new ResourceLocation(EpicFightMod.MODID, "textures/gui/custom_health_bars.png")));
 		
+		float size = 0.003921F;
 		float ratio = Mth.clamp(entity.getHealth() / entity.getMaxHealth(), 0.0F, 1.0F);
 		float healthRatio = -0.5F + ratio;
+		
 		int textureRatio = (int) (62 * ratio);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, healthRatio, 0.05F, 1, 15, textureRatio, 20);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -0.05F, 0.5F, 0.05F, textureRatio, 10, 62, 15);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, healthRatio, 0.05F, 1, 15, textureRatio, 20, size);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, healthRatio, -0.05F, 0.5F, 0.05F, textureRatio, 10, 62, 15, size);
+		
 		float absorption = entity.getAbsorptionAmount();
 		
 		if (absorption > 0.0D) {
 			float absorptionRatio = Mth.clamp(absorption / entity.getMaxHealth(), 0.0F, 1.0F);
 			int absTexRatio = (int) (62 * absorptionRatio);
-			this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, absorptionRatio - 0.5F, 0.05F, 1, 20, absTexRatio, 25);
+			this.drawTexturedModalRect2DPlane(mvMatrix, vertexBuilder, -0.5F, -0.05F, absorptionRatio - 0.5F, 0.05F, 1, 20, absTexRatio, 25, size);
 		}
 		
 		if (entitypatch != null) {
@@ -120,11 +125,25 @@ public class HealthBarIndicator extends EntityIndicator {
 			return;
 		}
 		
+		float size = 0.003921F;
 		float ratio = Mth.clamp(entitypatch.getStunShield() / entitypatch.getMaxStunShield(), 0.0F, 1.0F);
 		float barRatio = -0.5F + ratio;
 		int textureRatio = (int) (62 * ratio);
 		
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, -0.5F, -0.1F, barRatio, -0.05F, 1, 5, textureRatio, 10);
-		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, barRatio, -0.1F, 0.5F, -0.05F, textureRatio, 0, 63, 5);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, -0.5F, -0.1F, barRatio, -0.05F, 1, 5, textureRatio, 10, size);
+		this.drawTexturedModalRect2DPlane(mvMatrix, vertexConsumer, barRatio, -0.1F, 0.5F, -0.05F, textureRatio, 0, 63, 5, size);
+	}
+	
+	public enum HealthBarType {
+		NONE, HURT, TARGET;
+		
+		@Override
+		public String toString() {
+			return ParseUtil.toLowerCase(this.name());
+		}
+		
+		public HealthBarType nextEnum() {
+			return HealthBarType.values()[(this.ordinal() + 1) % 3];
+		}
 	}
 }

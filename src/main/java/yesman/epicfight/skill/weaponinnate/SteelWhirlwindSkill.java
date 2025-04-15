@@ -9,17 +9,17 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import yesman.epicfight.api.animation.AttackAnimationProvider;
-import yesman.epicfight.api.animation.StaticAnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
+import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.skill.ChargeableSkill;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -39,19 +39,19 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 		return skillContainer.getDataManager().getDataValue(SkillDataKeys.CHARGING_POWER.get());
 	}
 	
-	private StaticAnimationProvider chargingAnimation;
-	private AttackAnimationProvider attackAnimation;
+	private AnimationAccessor<? extends StaticAnimation> chargingAnimation;
+	private AnimationAccessor<? extends AttackAnimation> attackAnimation;
 	
-	public SteelWhirlwindSkill(Builder<? extends Skill> builder) {
+	public SteelWhirlwindSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
 		
-		this.chargingAnimation = () -> Animations.STEEL_WHIRLWIND_CHARGING;
-		this.attackAnimation = () -> (AttackAnimation)Animations.STEEL_WHIRLWIND;
+		this.chargingAnimation = Animations.STEEL_WHIRLWIND_CHARGING;
+		this.attackAnimation = Animations.STEEL_WHIRLWIND;
 	}
 	
 	@Override
 	public void onInitiate(SkillContainer container) {
-		PlayerEventListener listener = container.getExecuter().getEventListener();
+		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
 			if (event.getPlayerPatch().isChargingSkill(this)) {
@@ -70,7 +70,7 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID);
 	}
 	
 	@Override
@@ -101,18 +101,23 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 	
 	@Override
 	public void startCharging(PlayerPatch<?> caster) {
-		caster.playAnimationSynchronized(this.chargingAnimation.get(), 0.0F);
+		caster.playAnimationSynchronized(this.chargingAnimation, 0.0F);
 	}
 	
 	@Override
 	public void resetCharging(PlayerPatch<?> caster) {
+		if (caster.isLogicalClient()) {
+			caster.getAnimator().stopPlaying(this.chargingAnimation);
+		} else {
+			caster.stopPlaying(this.chargingAnimation);
+		}
 	}
 	
 	@Override
 	public void castSkill(ServerPlayerPatch caster, SkillContainer skillContainer, int chargingTicks, SPSkillExecutionFeedback feedbackPacket, boolean onMaxTick) {
-		caster.getSkill(this).getDataManager().setDataSync(SkillDataKeys.CHARGING_POWER.get(), chargingTicks, caster.getOriginal());
-		caster.playAnimationSynchronized(this.attackAnimation.get(), 0.0F);
-		this.cancelOnServer(caster, null);
+		skillContainer.getDataManager().setDataSync(SkillDataKeys.CHARGING_POWER.get(), chargingTicks, caster.getOriginal());
+		caster.playAnimationSynchronized(this.attackAnimation, 0.0F);
+		this.cancelOnServer(skillContainer, null);
 	}
 	
 	@Override

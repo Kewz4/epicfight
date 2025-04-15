@@ -1,17 +1,22 @@
 package yesman.epicfight.client.events;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import yesman.epicfight.api.client.model.SoftBodyTranslatable;
+import yesman.epicfight.api.client.physics.cloth.ClothSimulatable;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.particle.AirBurstParticle;
+import yesman.epicfight.client.particle.AnimationTrailParticle;
 import yesman.epicfight.client.particle.BladeRushParticle;
 import yesman.epicfight.client.particle.BloodParticle;
 import yesman.epicfight.client.particle.CutParticle;
@@ -26,12 +31,14 @@ import yesman.epicfight.client.particle.GroundSlamParticle;
 import yesman.epicfight.client.particle.HitBluntParticle;
 import yesman.epicfight.client.particle.HitCutParticle;
 import yesman.epicfight.client.particle.LaserParticle;
-import yesman.epicfight.client.particle.TrailParticle;
+import yesman.epicfight.client.particle.ProjectileTrailParticle;
 import yesman.epicfight.client.particle.TsunamiSplashParticle;
 import yesman.epicfight.client.renderer.blockentity.FractureBlockRenderer;
 import yesman.epicfight.client.renderer.entity.DroppedNetherStarRenderer;
 import yesman.epicfight.client.renderer.entity.WitherGhostRenderer;
 import yesman.epicfight.client.renderer.entity.WitherSkeletonMinionRenderer;
+import yesman.epicfight.client.renderer.patched.item.RenderItemBase;
+import yesman.epicfight.client.renderer.patched.layer.WearableItemLayer;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.entity.EpicFightEntities;
@@ -61,7 +68,8 @@ public class ClientModBusEvent {
     	event.registerSpecial(EpicFightParticles.NEUTRALIZE.get(), new DustParticle.ExpansiveMetaParticle.Provider());
     	event.registerSpecial(EpicFightParticles.BOSS_CASTING.get(), new DustParticle.ContractiveMetaParticle.Provider());
     	event.registerSpriteSet(EpicFightParticles.TSUNAMI_SPLASH.get(), TsunamiSplashParticle.Provider::new);
-    	event.registerSpriteSet(EpicFightParticles.SWING_TRAIL.get(), TrailParticle.Provider::new);
+    	event.registerSpecial(EpicFightParticles.SWING_TRAIL.get(), new AnimationTrailParticle.Provider());
+    	event.registerSpecial(EpicFightParticles.PROJECTILE_TRAIL.get(), new ProjectileTrailParticle.Provider());
     	event.registerSpriteSet(EpicFightParticles.FEATHER.get(), FeatherParticle.Provider::new);
     	event.registerSpecial(EpicFightParticles.AIR_BURST.get(), new AirBurstParticle.Provider());
     }
@@ -71,15 +79,32 @@ public class ClientModBusEvent {
 		event.registerEntityRenderer(EpicFightEntities.AREA_EFFECT_BREATH.get(), NoopRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.DROPPED_NETHER_STAR.get(), DroppedNetherStarRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.DEATH_HARVEST_ORB.get(), NoopRenderer::new);
-		event.registerEntityRenderer(EpicFightEntities.DODGE_LEFT.get(), NoopRenderer::new);
+		event.registerEntityRenderer(EpicFightEntities.DODGE_LOCATION_INDICATOR.get(), NoopRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.WITHER_GHOST_CLONE.get(), WitherGhostRenderer::new);
 		event.registerEntityRenderer(EpicFightEntities.WITHER_SKELETON_MINION.get(), WitherSkeletonMinionRenderer::new);
 		
 		event.registerBlockEntityRenderer(EpicFightBlockEntities.FRACTURE.get(), FractureBlockRenderer::new);
 	}
 	
+	/**
+	 * Not directly related, but used this method to initialize {@link RenderItemBase#itemRenderer} and {@link RenderItemBase#itemInHandRenderer} because the event called right after gameRenerer created
+	 * @param event
+	 */
+	@SubscribeEvent
+	public static void registerStageEvent(RenderLevelStageEvent.RegisterStageEvent event) {
+		RenderItemBase.initItemRenderers(Minecraft.getInstance());
+	}
+	
 	@SubscribeEvent
 	public static void addLayersEvent(EntityRenderersEvent.AddLayers event) {
-		ClientEngine.getInstance().renderEngine.bootstrap(event.getContext());
+		WearableItemLayer.clearModels();
+		ClientEngine.getInstance().renderEngine.reloadEntityRenderers(event.getContext());
+		SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS.removeIf(ClothSimulatable::invalid);
+		
+		for (ClothSimulatable simOwner : SoftBodyTranslatable.TRACKING_SIMULATION_SUBJECTS) {
+			simOwner.getClothSimulator().getAllRunningObjects().forEach((entry) -> {
+				simOwner.getClothSimulator().restart(entry.getKey());
+			});
+		}
 	}
 }

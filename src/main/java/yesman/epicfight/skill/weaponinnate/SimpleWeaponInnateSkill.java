@@ -5,36 +5,20 @@ import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import yesman.epicfight.api.animation.AttackAnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillCategories;
-import yesman.epicfight.skill.SkillCategory;
+import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class SimpleWeaponInnateSkill extends WeaponInnateSkill {
-	public static class Builder extends Skill.Builder<SimpleWeaponInnateSkill> {
-		protected AttackAnimationProvider attackAnimation;
+	public static class Builder extends SkillBuilder<SimpleWeaponInnateSkill> {
+		protected AnimationAccessor<? extends AttackAnimation> attackAnimation;
 		
-		public Builder setCategory(SkillCategory category) {
-			this.category = category;
-			return this;
-		}
-		
-		public Builder setActivateType(ActivateType activateType) {
-			this.activateType = activateType;
-			return this;
-		}
-		
-		public Builder setResource(Resource resource) {
-			this.resource = resource;
-			return this;
-		}
-		
-		public Builder setAnimations(AttackAnimationProvider attackAnimation) {
+		public Builder setAnimations(AnimationAccessor<? extends AttackAnimation> attackAnimation) {
 			this.attackAnimation = attackAnimation;
 			return this;
 		}
@@ -44,7 +28,7 @@ public class SimpleWeaponInnateSkill extends WeaponInnateSkill {
 		return (new Builder()).setCategory(SkillCategories.WEAPON_INNATE).setResource(Resource.WEAPON_CHARGE);
 	}
 	
-	protected AttackAnimationProvider attackAnimation;
+	protected AnimationAccessor<? extends AttackAnimation> attackAnimation;
 	
 	public SimpleWeaponInnateSkill(Builder builder) {
 		super(builder);
@@ -53,9 +37,9 @@ public class SimpleWeaponInnateSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		executer.playAnimationSynchronized(this.attackAnimation.get(), 0);
-		super.executeOnServer(executer, args);
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		container.getExecutor().playAnimationSynchronized(this.attackAnimation, 0);
+		super.executeOnServer(container, args);
 	}
 	
 	@Override

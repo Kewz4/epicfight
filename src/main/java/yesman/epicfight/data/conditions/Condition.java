@@ -1,6 +1,10 @@
 package yesman.epicfight.data.conditions;
 
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.Locale;
+import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.google.gson.JsonElement;
@@ -15,6 +19,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.utils.ExtendableEnum;
+import yesman.epicfight.api.utils.ExtendableEnumManager;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public interface Condition<T> {
@@ -22,9 +28,49 @@ public interface Condition<T> {
 		return this.read(TagParser.parseTag(json.toString()));
 	}
 	
-	public Condition<T> read(CompoundTag tag);
+	public Condition<T> read(CompoundTag tag) throws IllegalArgumentException;
 	public CompoundTag serializePredicate();
 	public boolean predicate(T target);
+	
+	default <O> O assertTag(String key, String tagFormatMessage, CompoundTag tag, int tagType, BiFunction<CompoundTag, String, O> getter) throws IllegalArgumentException {
+		if (!tag.contains(key)) {
+			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: {1} not specified!", this.getClass().getSimpleName(), key));
+		}
+		
+		if (!tag.contains(key, tagType)) {
+			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: the {1} value must be a {2} format", this.getClass().getSimpleName(), key, tagFormatMessage));
+		}
+		
+		return getter.apply(tag, key);
+	}
+	
+	default <E extends Enum<E>> E assertEnumTag(String key, Class<E> enumCls, CompoundTag tag) throws IllegalArgumentException {
+		if (!tag.contains(key)) {
+			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: {1} not specified!", this.getClass().getSimpleName(), key));
+		}
+		
+		String enumString = this.assertTag(key, "string", tag, Tag.TAG_STRING, CompoundTag::getString).toUpperCase(Locale.ROOT);
+		
+		try {
+			return Enum.valueOf(enumCls, enumString);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: invalid enum for {1}: {2}", this.getClass().getSimpleName(), key, enumString));
+		}
+	}
+	
+	default <E extends ExtendableEnum> E assertExtendableEnumTag(String key, ExtendableEnumManager<E> extendableEnumManager, CompoundTag tag) throws IllegalArgumentException, NoSuchElementException {
+		if (!tag.contains(key)) {
+			throw new IllegalArgumentException(MessageFormat.format("{0} condition error: {1} not specified!", this.getClass().getSimpleName(), key));
+		}
+		
+		String enumString = this.assertTag(key, "string", tag, Tag.TAG_STRING, CompoundTag::getString).toLowerCase(Locale.ROOT);
+		
+		try {
+			return extendableEnumManager.getOrThrow(enumString);
+		} catch (NoSuchElementException ex) {
+			throw new NoSuchElementException(MessageFormat.format("{0} condition error: {1}", this.getClass().getSimpleName(), ex.getMessage()));
+		}
+	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public List<ParameterEditor> getAcceptingParameters(Screen screen);

@@ -11,6 +11,7 @@ import net.minecraft.world.item.UseAnim;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
@@ -32,6 +33,7 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 
 	public CustomHumanoidMobPatch(Faction faction, MobPatchReloadListener.CustomHumanoidMobPatchProvider provider) {
 		super(faction);
+		
 		this.provider = provider;
 		this.weaponLivingMotions = this.provider.getHumanoidWeaponMotions();
 		this.weaponAttackMotions = this.provider.getHumanoidCombatBehaviors();
@@ -58,13 +60,6 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 		}
 	}
 	
-	@Override
-	protected void setWeaponMotions() {
-		if (this.weaponAttackMotions == null) {
-			super.setWeaponMotions();
-		}
-	}
-	
 	public void initAttributes() {
 		this.original.getAttribute(EpicFightAttributes.MAX_STRIKES.get()).setBaseValue(this.provider.getAttributeValues().getDouble(EpicFightAttributes.MAX_STRIKES.get()));
 		this.original.getAttribute(EpicFightAttributes.ARMOR_NEGATION.get()).setBaseValue(this.provider.getAttributeValues().getDouble(EpicFightAttributes.ARMOR_NEGATION.get()));
@@ -77,9 +72,11 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 	}
 	
 	@Override
-	public void initAnimator(Animator clientAnimator) {
-		for (Pair<LivingMotion, StaticAnimation> pair : this.provider.getDefaultAnimations()) {
-			clientAnimator.addLivingAnimation(pair.getFirst(), pair.getSecond());
+	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
+		
+		for (Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>> pair : this.provider.getDefaultAnimations()) {
+			animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
 		}
 	}
 	
@@ -106,21 +103,21 @@ public class CustomHumanoidMobPatch<T extends PathfinderMob> extends HumanoidMob
 		} else {
 			if (CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().isReboundAnimation())
+			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
 				currentCompositeMotion = LivingMotions.NONE;
 			else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
 				currentCompositeMotion = LivingMotions.DIGGING;
 			else
 				currentCompositeMotion = currentLivingMotion;
 			
-			if (this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM) {
-				this.playReboundAnimation();
+			if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM) {
+				this.playShootingAnimation();
 			}
 		}
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return this.provider.getStunAnimations().get(stunType);
 	}
 	

@@ -14,7 +14,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 @Mixin(value = LocalPlayer.class)
 public abstract class MixinLocalPlayer {
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;sendPosition()V", shift = At.Shift.BEFORE), method = "tick()V")
-	private void epicfight_tick(CallbackInfo ci) {
+	private void epicfight_tick(CallbackInfo callbackInfo) {
 		LocalPlayer epicfight$entity = (LocalPlayer)(Object)this;
 		LocalPlayerPatch localPlayerPatch = EpicFightCapabilities.getEntityPatch(epicfight$entity, LocalPlayerPatch.class);
 		

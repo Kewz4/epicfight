@@ -17,7 +17,7 @@ public class EpicFightCreativeTabs {
 					.title(Component.translatable("itemGroup.epicfight.items"))
 					.icon(() -> new ItemStack(EpicFightItems.SKILLBOOK.get()))
 					.withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
-					.withBackgroundLocation(new ResourceLocation(EpicFightMod.MODID, "textures/gui/container/epicfight_creative_tab.png"))
+					.withBackgroundLocation(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/container/epicfight_creative_tab.png"))
 					.hideTitle()
 					.displayItems((params, output) -> {
 						EpicFightItems.ITEMS.getEntries().forEach(item -> {

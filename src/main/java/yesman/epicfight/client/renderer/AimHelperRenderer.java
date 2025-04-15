@@ -19,12 +19,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 
 @OnlyIn(Dist.CLIENT)
 public class AimHelperRenderer {
 	public void doRender(PoseStack poseStack, float partialTicks) {
-		if (!EpicFightMod.CLIENT_CONFIGS.enableAimHelperPointer.getValue()) {
+		if (!ClientConfig.enableAimHelper) {
 			return;
 		}
 		
@@ -44,7 +44,7 @@ public class AimHelperRenderer {
 		
 		Matrix4f matrix = poseStack.last().pose();
 		
-		int color = EpicFightMod.CLIENT_CONFIGS.aimHelperRealColor;
+		int color = ClientConfig.aimHelperPackedColor;
 		float f1 = (float)(color >> 16 & 255) / 255.0F;
 		float f2 = (float)(color >> 8 & 255) / 255.0F;
 		float f3 = (float)(color & 255) / 255.0F;

@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -35,11 +34,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
 import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
-import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.ParseUtil;
@@ -58,7 +56,7 @@ import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class PopupBox<T> extends AbstractWidget implements DataBindingComponent<T, Pair<String, T>> {
-	public static final ResourceLocation POPUP_ICON = new ResourceLocation(EpicFightMod.MODID, "textures/gui/popup_icon.png");
+	public static final ResourceLocation POPUP_ICON = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/popup_icon.png");
 	
 	protected final Screen owner;
 	protected final Font font;
@@ -189,15 +187,15 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class AnimationPopupBox extends PopupBox<StaticAnimation> {
-		private Supplier<Armature> armature;
-		private MeshProvider<AnimatedMesh> mesh;
+	public static class AnimationPopupBox extends PopupBox<AssetAccessor<? extends StaticAnimation>> {
+		private AssetAccessor<? extends Armature> armature;
+		private AssetAccessor<? extends SkinnedMesh> mesh;
 		
-		public AnimationPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, StaticAnimation>> responder) {
-			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (animation) -> ParseUtil.nullOrToString(animation, (a) -> a.getRegistryName().toString()), responder);
+		public AnimationPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<? extends StaticAnimation>>> responder) {
+			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (animation) -> ParseUtil.nullOrToString(animation, (a) -> a.registryName().toString()), responder);
 		}
 		
-		public void setModel(Supplier<Armature> armature, MeshProvider<AnimatedMesh> mesh) {
+		public void setModel(AssetAccessor<? extends Armature> armature, AssetAccessor<? extends SkinnedMesh> mesh) {
 			this.armature = armature;
 			this.mesh = mesh;
 		}
@@ -208,7 +206,7 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 				if (this.armature.get() == null || this.mesh.get() == null) {
 					this.owner.getMinecraft().setScreen(new MessageScreen<>("", "Define model and armature first.", this.owner, (button2) -> this.owner.getMinecraft().setScreen(this.owner), 180, 60));
 				} else {
-					this.owner.getMinecraft().setScreen(new SelectAnimationScreen(this.owner, this::_setValue, this::_setValue, this.getFilter(), this.armature.get(), this.mesh));
+					this.owner.getMinecraft().setScreen(new SelectAnimationScreen(this.owner, this::_setValue, this::_setValue, this.getFilter(), this.armature, this.mesh));
 				}
 			}
 		}
@@ -302,9 +300,9 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class MeshPopupBox extends PopupBox<MeshProvider<AnimatedMesh>> {
-		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, MeshProvider<AnimatedMesh>>> responder) {
-			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullOrToString(mesh, (mp) -> ParseUtil.nullParam(Meshes.getKey(mp.get()))), responder);
+	public static class MeshPopupBox extends PopupBox<AssetAccessor<? extends SkinnedMesh>> {
+		public MeshPopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<? extends SkinnedMesh>>> responder) {
+			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (mesh) -> ParseUtil.nullOrToString(mesh, (accessor) -> ParseUtil.nullOrToString(accessor, accessor$2 -> accessor$2.registryName().toString())), responder);
 		}
 		
 		@Override
@@ -322,15 +320,19 @@ public abstract class PopupBox<T> extends AbstractWidget implements DataBindingC
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static class ArmaturePopupBox extends PopupBox<Armature> {
-		public ArmaturePopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, Armature>> responder) {
-			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (armature) -> ParseUtil.nullParam(Armatures.getKey(armature)), responder);
+	public static class ArmaturePopupBox extends PopupBox<AssetAccessor<Armature>> {
+		public ArmaturePopupBox(Screen owner, Font font, int x1, int x2, int y1, int y2, HorizontalSizing horizontal, VerticalSizing vertical, Component title, Consumer<Pair<String, AssetAccessor<Armature>>> responder) {
+			super(owner, font, x1, x2, y1, y2, horizontal, vertical, title, (accessor) -> ParseUtil.nullOrToString(accessor, accessor$2 -> accessor$2.registryName().toString()), responder);
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public void onClick(double x, double y) {
 			if (this.clickedPopupButton(x, y)) {
-				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<>(this.owner, ParseUtil.mapEntryToPair(Armatures.entries()), "Armature", (name, item) -> {
+				Set<Pair<ResourceLocation, AssetAccessor<Armature>>> entries = Armatures.entry();
+				DatapackEditScreen.getCurrentScreen().getUserArmatures().entrySet().forEach((entry) -> entries.add(Pair.of(entry.getKey(), (AssetAccessor<Armature>)entry.getValue())));
+				
+				this.owner.getMinecraft().setScreen(new SelectFromRegistryScreen<> (this.owner, entries, "Armature", (name, item) -> {
 					this._setValue(item);
 					this.setDisplayText(name);
 				}, (name, item) -> {

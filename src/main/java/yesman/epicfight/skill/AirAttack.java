@@ -5,18 +5,17 @@ import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import yesman.epicfight.api.animation.AnimationProvider;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
-import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 
 public class AirAttack extends Skill {
-	public static Skill.Builder<AirAttack> createAirAttackBuilder() {
-		return new Skill.Builder<AirAttack>().setCategory(SkillCategories.AIR_ATTACK).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.STAMINA);
+	public static SkillBuilder<AirAttack> createAirAttackBuilder() {
+		return new SkillBuilder<AirAttack>().setCategory(SkillCategories.AIR_ATTACK).setActivateType(ActivateType.ONE_SHOT).setResource(Resource.STAMINA);
 	}
 	
-	public AirAttack(Builder<? extends Skill> builder) {
+	public AirAttack(SkillBuilder<? extends AirAttack> builder) {
 		super(builder);
 	}
 	
@@ -28,13 +27,18 @@ public class AirAttack extends Skill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		List<AnimationProvider<?>> motions = executer.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttckMotion(executer);
-		StaticAnimation attackMotion = motions.get(motions.size() - 1).get();
+	public void executeOnServer(SkillContainer skillContainer, FriendlyByteBuf args) {
+		List<AnimationAccessor<? extends AttackAnimation>> motions = skillContainer.getExecutor().getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(skillContainer.getExecutor());
+		
+		if (motions == null) {
+			return;
+		}
+		
+		AnimationAccessor<? extends AttackAnimation> attackMotion = motions.get(motions.size() - 1);
 		
 		if (attackMotion != null) {
-			super.executeOnServer(executer, args);
-			executer.playAnimationSynchronized(attackMotion, 0);
+			super.executeOnServer(skillContainer, args);
+			skillContainer.getExecutor().playAnimationSynchronized(attackMotion, 0);
 		}
 	}
 }

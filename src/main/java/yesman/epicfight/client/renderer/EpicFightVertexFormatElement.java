@@ -7,13 +7,13 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightVertexFormatElement extends VertexFormatElement {
-	private static AnimatedMesh drawing;
+	private static SkinnedMesh drawing;
 	
-	public static void bindDrawing(AnimatedMesh mesh) {
+	public static void bindDrawing(SkinnedMesh mesh) {
 		drawing = mesh;
 	}
 	
@@ -21,9 +21,9 @@ public class EpicFightVertexFormatElement extends VertexFormatElement {
 		drawing = null;
 	}
 	
-	private final BiConsumer<AnimatedMesh, Integer> onSetupBuffer;
+	private final BiConsumer<SkinnedMesh, Integer> onSetupBuffer;
 	
-	public EpicFightVertexFormatElement(int index, Type type, Usage usage, int count, BiConsumer<AnimatedMesh, Integer> onSetupBuffer) {
+	public EpicFightVertexFormatElement(int index, Type type, Usage usage, int count, BiConsumer<SkinnedMesh, Integer> onSetupBuffer) {
 		super(index, type, usage, count);
 		
 		this.onSetupBuffer = onSetupBuffer;

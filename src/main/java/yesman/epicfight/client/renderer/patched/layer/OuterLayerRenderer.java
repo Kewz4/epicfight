@@ -18,10 +18,10 @@ import yesman.epicfight.world.capabilities.entitypatch.mob.DrownedPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class OuterLayerRenderer extends ModelRenderLayer<Drowned, DrownedPatch, DrownedModel<Drowned>, DrownedOuterLayer<Drowned>, HumanoidMesh> {
-	public static final ResourceLocation DROWNED_OUTER_LAYER = new ResourceLocation("textures/entity/zombie/drowned_outer_layer.png");
+	public static final ResourceLocation DROWNED_OUTER_LAYER = ResourceLocation.withDefaultNamespace("textures/entity/zombie/drowned_outer_layer.png");
 	
 	public OuterLayerRenderer() {
-		super(() -> Meshes.BIPED_OUTLAYER);
+		super(Meshes.BIPED_OUTLAYER);
 	}
 	
 	@Override

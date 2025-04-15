@@ -8,34 +8,46 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.client.online.EpicFightServerConnectionHelper;
 import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.client.gui.datapack.screen.MessageScreen;
+import yesman.epicfight.epicskins.client.screen.AvatarEditScreen;
 import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class IngameConfigurationScreen extends Screen {
 	protected final Screen parentScreen;
 	
-	public IngameConfigurationScreen(Minecraft mc, Screen screen) {
+	public IngameConfigurationScreen(Screen screen) {
 		super(Component.translatable("gui." + EpicFightMod.MODID + ".configurations"));
 		this.parentScreen = screen;
 	}
 	
 	@Override
 	protected void init() {
-		EpicFightOptions configs = EpicFightMod.CLIENT_CONFIGS;
-		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.graphics"), (button) -> {
-			Minecraft.getInstance().setScreen(new EpicFightGraphicOptionScreen(this, configs));
+			Minecraft.getInstance().setScreen(new EpicFightGraphicOptionScreen(this));
 		}).pos(this.width / 2 - 165, 42).size(160, 20).build());
 		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.controls"), (button) -> {
-			Minecraft.getInstance().setScreen(new EpicFightControlOptionScreen(this, configs));
+			Minecraft.getInstance().setScreen(new EpicFightControlOptionScreen(this));
 		}).pos(this.width / 2 + 5, 42).size(160, 20).build());
 		
 		this.addRenderableWidget(Button.builder(Component.translatable("gui." + EpicFightMod.MODID + ".button.datapack_edit"), (button) -> {
 			Minecraft.getInstance().setScreen(new DatapackEditScreen(this));
 		}).pos(this.width / 2 - 165, 68).size(160, 20).build());
+		
+		Button skinConfigScreen = Button.builder(Component.translatable("gui." + EpicFightMod.EPICSKINS_MODID + ".button.skin_configuration"), (button) -> {
+			if (Minecraft.getInstance().level == null) {
+				Minecraft.getInstance().setScreen(new AvatarEditScreen(this));
+			} else {
+				Minecraft.getInstance().setScreen(new MessageScreen<> ("Warning", "You may not open avatar screen while in the world", this, (button2) -> Minecraft.getInstance().setScreen(this), 300, 70).autoCalculateHeight());
+			}
+		}).pos(this.width / 2 + 5, 68).size(160, 20).build();
+		
+		skinConfigScreen.active = EpicFightServerConnectionHelper.supported();
+		
+		this.addRenderableWidget(skinConfigScreen);
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
 			this.minecraft.setScreen(this.parentScreen);

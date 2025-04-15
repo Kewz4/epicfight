@@ -8,7 +8,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.client.mesh.VexMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedItemInHandLayer;
@@ -22,7 +22,7 @@ public class PVexRenderer extends PatchedLivingEntityRenderer<Vex, VexPatch, Vex
 	}
 	
 	@Override
-	public MeshProvider<VexMesh> getDefaultMesh() {
+	public AssetAccessor<VexMesh> getDefaultMesh() {
 		return Meshes.VEX;
 	}
 }

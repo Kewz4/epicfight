@@ -1,0 +1,49 @@
+package yesman.epicfight.api.asset;
+
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import net.minecraft.resources.ResourceLocation;
+
+public interface AssetAccessor<O> extends Supplier<O> {
+	public O get();
+	
+	public ResourceLocation registryName();
+	
+	public boolean isPresent();
+	
+	public boolean inRegistry();
+	
+	default O orElse(O whenNull) {
+		return this.isPresent() ? this.get() : whenNull;
+	}
+	
+	default void ifPresent(Consumer<O> action) {
+		if (this.isPresent()) {
+			action.accept(this.get());
+		}
+	}
+	
+	default void ifPresentOrElse(Consumer<O> action, Runnable whenNull) {
+		if (this.isPresent()) {
+			action.accept(this.get());
+		} else {
+			whenNull.run();
+		}
+	}
+	
+	default void doOrThrow(Consumer<O> action) {
+		if (this.isPresent()) {
+			action.accept(this.get());
+		} else {
+			throw new NoSuchElementException("No asset " + this.registryName());
+		}
+	}
+	
+	default void checkNotNull() {
+		if (!this.isPresent()) {
+			throw new NoSuchElementException("No asset " + this.registryName());
+		}
+	}
+}

@@ -8,30 +8,28 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.client.gui.widgets.EpicFightOptionList;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.config.ClientConfig;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightOptionSubScreen extends Screen {
 	protected final Screen lastScreen;
-	protected final EpicFightOptions config;
 
-	public EpicFightOptionSubScreen(Screen parentScreen, EpicFightOptions config, Component title) {
+	public EpicFightOptionSubScreen(Screen parentScreen, Component title) {
 		super(title);
 		this.lastScreen = parentScreen;
-		this.config = config;
 	}
 	
 	@Override
 	protected void init() {
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
-			this.config.save();
+			ClientConfig.saveChanges();
 			this.onClose();
 		}).bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
 	}
 	
 	@Override
 	public void removed() {
-		this.config.save();
+		ClientConfig.saveChanges();
 	}
 	
 	@Override

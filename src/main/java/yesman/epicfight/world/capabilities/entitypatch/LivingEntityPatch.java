@@ -2,9 +2,11 @@ package yesman.epicfight.world.capabilities.entitypatch;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
 
 import net.minecraft.client.Minecraft;
@@ -35,8 +37,10 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Animator;
+import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -47,6 +51,7 @@ import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
@@ -57,9 +62,11 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Armatures;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.server.SPPlayAnimation;
+import yesman.epicfight.network.client.CPAnimatorControl;
+import yesman.epicfight.network.common.AnimatorControlPacket;
+import yesman.epicfight.network.server.SPAnimatorControl;
 import yesman.epicfight.particle.HitParticleType;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -93,29 +100,47 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public static final double WEIGHT_CORRECTION = 37.037D;
 	
-	protected ResultType lastResultType;
-	protected float lastDealDamage;
-	protected Entity lastTryHurtEntity;
-	protected LivingEntity grapplingTarget;
 	protected Armature armature;
-	protected EntityState state = EntityState.DEFAULT_STATE;
 	protected Animator animator;
+	protected EntityState state = EntityState.DEFAULT_STATE;
+	
 	protected Vec3 lastAttackPosition;
 	protected EpicFightDamageSource epicFightDamageSource;
+	
 	protected boolean isLastAttackSuccess;
+	protected float lastDealDamage;
+	protected ResultType lastAttackResultType;
+	
+	protected Entity lastTryHurtEntity;
+	protected LivingEntity grapplingTarget;
 	
 	public LivingMotion currentLivingMotion = LivingMotions.IDLE;
 	public LivingMotion currentCompositeMotion = LivingMotions.IDLE;
 	
 	private Style oStyle;
 	
+	private final Map<InteractionHand, Joint> parentJointOfHands = Maps.newHashMap();
+	
 	@Override
 	public void onConstructed(T entityIn) {
 		super.onConstructed(entityIn);
 		
 		this.armature = Armatures.getArmatureFor(this);
-		this.animator = EpicFightMod.getAnimator(this);
-		this.animator.init();
+		
+		Animator animator = EpicFightSharedConstants.getAnimator(this);
+		this.animator = animator;
+		
+		this.initAnimator(animator);
+		animator.postInit();
+	}
+	
+	protected void initAnimator(Animator animator) {
+		animator.getVariables().putSharedVariable(AttackAnimation.HIT_ENTITIES);
+		animator.getVariables().putSharedVariable(AttackAnimation.HURT_ENTITIES);
+		animator.getVariables().putSharedVariable(ActionAnimation.ACTION_ANIMATION_COORD);
+		
+		this.setParentJointOfHand(InteractionHand.MAIN_HAND, Armatures.BIPED.get().toolR);
+		this.setParentJointOfHand(InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL);
 	}
 	
 	@Override
@@ -130,14 +155,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
-	public abstract void initAnimator(Animator clientAnimator);
 	public abstract void updateMotion(boolean considerInaction);
 	
 	public Armature getArmature() {
 		return this.armature;
 	}
 	
-	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
 		this.oStyle = this.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(this);
 		
@@ -152,7 +175,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 		
 		this.animator.tick();
-		super.tick(event);
+		
+		if (this.isLogicalClient()) {
+			this.clientTick(event);
+		} else {
+			this.serverTick(event);
+		}
 		
 		if (this.original.deathTime == 19) {
 			this.aboutToDeath();
@@ -163,8 +191,14 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
+	protected void clientTick(LivingEvent.LivingTickEvent event) {}
+	
+	protected void serverTick(LivingEvent.LivingTickEvent event) {
+		super.updateStunTime();
+	}
+	
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
-		if (pose.getJointTransformData().containsKey("Head")) {
+		if (pose.hasTransform("Head") && this.armature.hasJoint("Head")) {
 			if (animation.doesHeadRotFollowEntityHead()) {
 				float headRotO = this.original.yBodyRotO - this.original.yHeadRotO;
 				float headRot = this.original.yBodyRot - this.original.yHeadRot;
@@ -172,15 +206,15 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 				OpenMatrix4f toOriginalRotation = new OpenMatrix4f(this.armature.getBindedTransformFor(pose, this.armature.searchJointByName("Head"))).removeScale().removeTranslation().invert();
 				Vec3f xAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.X_AXIS, null);
 				Vec3f yAxis = OpenMatrix4f.transform3v(toOriginalRotation, Vec3f.Y_AXIS, null);
-				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(-this.original.getXRot(), xAxis).mulFront(OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis));
-				pose.getOrDefaultTransform("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
+				OpenMatrix4f headRotation = OpenMatrix4f.createRotatorDeg(partialHeadRot, yAxis).rotateDeg(-this.original.getXRot(), xAxis);
+				pose.orElseEmpty("Head").frontResult(JointTransform.fromMatrix(headRotation), OpenMatrix4f::mul);
 			}
 		}
 	}
 	
 	public void onFall(LivingFallEvent event) {
 		if (!this.getOriginal().level().isClientSide() && this.isAirborneState()) {
-			StaticAnimation fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
+			AssetAccessor<? extends StaticAnimation> fallAnimation = this.getAnimator().getLivingAnimation(LivingMotions.LANDING_RECOVERY, this.getHitAnimation(StunType.FALL));
 			
 			if (fallAnimation != null) {
 				this.playAnimationSynchronized(fallAnimation, 0);
@@ -200,7 +234,11 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.state = this.animator.getEntityState();
 	}
 	
-	public void cancelAnyAction() {
+	public void updateEntityState(EntityState entityState) {
+		this.state = entityState;
+	}
+	
+	public void cancelItemUse() {
 		this.original.stopUsingItem();
 		ForgeEventFactory.onUseItemStop(this.original, this.original.getUseItem(), this.original.getUseItemRemainingTicks());
 	}
@@ -220,7 +258,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 	}
 	
-	public EpicFightDamageSource getDamageSource(StaticAnimation animation, InteractionHand hand) {
+	public EpicFightDamageSource getDamageSource(AnimationAccessor<? extends StaticAnimation> animation, InteractionHand hand) {
 		EpicFightDamageSources damageSources = EpicFightDamageSources.of(this.original.level());
 		EpicFightDamageSource damagesource = damageSources.mobAttack(this.original).setAnimation(animation);
 		damagesource.setImpact(this.getImpact(hand));
@@ -286,7 +324,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public void setLastAttackResult(AttackResult attackResult) {
-		this.lastResultType = attackResult.resultType;
+		this.lastAttackResultType = attackResult.resultType;
 		this.lastDealDamage = attackResult.damage;
 	}
 
@@ -306,7 +344,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 
 	public AttackResult attack(EpicFightDamageSource damageSource, Entity target, InteractionHand hand) {
-		return this.checkLastAttackSuccess(target) ? new AttackResult(this.lastResultType, this.lastDealDamage) : AttackResult.missed(0.0F);
+		return this.checkLastAttackSuccess(target) ? new AttackResult(this.lastAttackResultType, this.lastDealDamage) : AttackResult.missed(0.0F);
 	}
 	
 	public float getModifiedBaseDamage(float baseDamage) {
@@ -382,7 +420,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public float getAttackDirectionPitch() {
-		float partialTicks = EpicFightMod.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
+		float partialTicks = EpicFightSharedConstants.isPhysicalClient() ? Minecraft.getInstance().getFrameTime() : 1.0F;
 		float pitch = -this.getOriginal().getViewXRot(partialTicks);
 		float correct = (pitch > 0) ? 0.03333F * (float)Math.pow(pitch, 2) : -0.03333F * (float)Math.pow(pitch, 2);
 		
@@ -414,27 +452,204 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, yRotO, yRot, partialTicks, scale, scale, scale);
 	}
 	
-	public void reserveAnimation(StaticAnimation animation) {
-		this.animator.reserveAnimation(animation);
-		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPPlayAnimation(animation, this.original.getId(), 0.0F), this.original);
+	/**
+	 * Play an animation after the current animation is finished
+	 * @param animation
+	 */
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.reserveAnimation(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, SPAnimatorControl::new);
+		}
 	}
 	
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier) {
-		this.playAnimationSynchronized(animation, convertTimeModifier, SPPlayAnimation::new);
+	/**
+	 * Play an animation after the current animation is finished
+	 * @param animation
+	 * @param packetProvider
+	 */
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, packetProvider);
 	}
 	
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
-		this.animator.playAnimation(animation, convertTimeModifier);
-		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(packetProvider.get(animation, convertTimeModifier, this), this.original);
+	/**
+	 * Play an animation without convert time
+	 * @param animation
+	 */
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimationInstantly(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation without convert time
+	 * @param animation
+	 * @param packetProvider
+	 */
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, packetProvider);
+	}
+	
+	/**
+	 * Play an animation
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Stop playing an animation
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void stopPlaying(AssetAccessor<? extends StaticAnimation> animation) {
+		if (this.isLogicalClient()) {
+			this.animator.stopPlaying(animation);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.STOP, animation, -1.0F, false, false, false));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.STOP, animation, -1.0F, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation with custom packet
+	 * @param animation
+	 * @param transitionTimeModifier
+	 * @param packetProvider
+	 */
+	public void playAnimation(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
+	}
+	
+	/**
+	 * Play an animation ensuring synchronization between client-server
+	 * Plays animation when getting response from server if it called in client side.
+	 * Do not call this in client side for non-player entities.
+	 * 
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
+		} else {
+			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
+		}
+	}
+	
+	/**
+	 * Play an animation ensuring synchronization between client-server
+	 * Plays animation when getting response from server if it called in client side.
+	 * Do not call this in client side for non-player entities.
+	 * 
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, packetProvider);
+	}
+	
+	/**
+	 * Play an animation only in client side, including all clients tracking this entity
+	 * @param animation
+	 * @param convertTimeModifier
+	 */
+	public void playAnimationInClientSide(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, true, false));
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, this.original.getId(), transitionTimeModifier, false));
+		}
+	}
+	
+	/**
+	 * Play a shooting animation to end aim pose
+	 * This method doesn't send packet from client to server
+	 */
+	public void playShootingAnimation() {
+		if (this.isLogicalClient()) {
+			this.animator.playShootingAnimation();
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(AnimatorControlPacket.Action.SHOT, -1, this.getOriginal().getId(), 0.0F, false));
+		}
+	}
+	
+	/**
+	 * Play an animation with custom packet
+	 * @param animation
+	 * @param transitionTimeModifier
+	 * @param packetProvider
+	 */
+	private void handleAnimationPacket(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier, ServerAnimationPacketProvider packetProvider) {
+		if (this.isLogicalClient()) {
+			throw new IllegalStateException("Cannot send animation play packet in client side.");
+		}
+		
+		switch (action) {
+		case PLAY -> {
+			this.animator.playAnimation(animation, transitionTimeModifier);
+		}
+		case PLAY_INSTANTLY -> {
+			this.animator.playAnimationInstantly(animation);
+		}
+		case STOP -> {
+			this.animator.stopPlaying(animation);
+		}
+		case RESERVE -> {
+			this.animator.reserveAnimation(animation);
+		}
+		case SHOT -> {
+			this.animator.playShootingAnimation();
+		}
+		default -> {
+			throw new UnsupportedOperationException("Only PLAY, PLAY_INSTANTLY, STOP and RESERVE are allowed");
+		}
+		}
+		
+		this.sendToAllPlayerTrackingMe(packetProvider.get(action, animation, transitionTimeModifier, this));
+	}
+	
+	public void pauseAnimator(AnimatorControlPacket.Action action, boolean pause) {
+		switch (action) {
+		case SOFT_PAUSE -> {
+			this.animator.setSoftPause(pause);
+		}
+		case HARD_PAUSE -> {
+			this.animator.setHardPause(pause);
+		}
+		default -> {
+			throw new UnsupportedOperationException("Only SOFT_PAUSE and HARD_PAUSE are allowed");
+		}
+		}
+		
+		if (this.isLogicalClient()) {
+			this.sendToAllPlayerTrackingMe(new CPAnimatorControl(action, -1, 0.0F, pause, false, true));
+		} else {
+			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(action, -1, this.original.getId(), 0.0F, pause));
+		}
+	}
+	
+	public void sendToAllPlayerTrackingMe(Object packet) {
+		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(packet, this.original);
 	}
 	
 	@FunctionalInterface
-	public interface AnimationPacketProvider {
-		SPPlayAnimation get(StaticAnimation animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
-	}
-	
-	protected void playReboundAnimation() {
-		this.getClientAnimator().playReboundAnimation();
+	public interface ServerAnimationPacketProvider {
+		SPAnimatorControl get(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float convertTimeModifier, LivingEntityPatch<?> entitypatch);
 	}
 	
 	public void resetSize(EntityDimensions size) {
@@ -444,12 +659,28 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		
 	    if (entitysize1.width < entitysize.width) {
 	    	double d0 = (double)entitysize1.width / 2.0D;
-	    	this.original.setBoundingBox(new AABB(this.original.getX() - d0, this.original.getY(), this.original.getZ() - d0, this.original.getX() + d0,
-	    			this.original.getY() + (double)entitysize1.height, this.original.getZ() + d0));
+	    	this.original.setBoundingBox(
+	    		new AABB(
+	    			  this.original.getX() - d0
+	    			, this.original.getY()
+	    			, this.original.getZ() - d0
+	    			, this.original.getX() + d0
+	    			, this.original.getY() + (double)entitysize1.height
+	    			, this.original.getZ() + d0
+	    		)
+	    	);
 	    } else {
 	    	AABB axisalignedbb = this.original.getBoundingBox();
-	    	this.original.setBoundingBox(new AABB(axisalignedbb.minX, axisalignedbb.minY, axisalignedbb.minZ, axisalignedbb.minX + (double)entitysize1.width,
-	    			axisalignedbb.minY + (double)entitysize1.height, axisalignedbb.minZ + (double)entitysize1.width));
+	    	this.original.setBoundingBox(
+	    		new AABB(
+	    			  axisalignedbb.minX
+	    			, axisalignedbb.minY
+	    			, axisalignedbb.minZ
+	    			, axisalignedbb.minX + (double)entitysize1.width
+	    			, axisalignedbb.minY + (double)entitysize1.height
+	    			, axisalignedbb.minZ + (double)entitysize1.width
+	    		)
+	    	);
 	    	
 	    	if (entitysize1.width > entitysize.width && !this.original.level().isClientSide()) {
 	    		float f = entitysize.width - entitysize1.width;
@@ -466,7 +697,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.original.setDeltaMovement(0.0D, 0.0D, 0.0D);
 		this.cancelKnockback = true;
 		
-		StaticAnimation hitAnimation = this.getHitAnimation(stunType);
+		AssetAccessor<? extends StaticAnimation> hitAnimation = this.getHitAnimation(stunType);
 		
 		if (hitAnimation != null) {
 			this.playAnimationSynchronized(hitAnimation, stunType.hasFixedStunTime() ? 0.0F : stunTime);
@@ -476,7 +707,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return false;
 	}
 	
-	public void correctRotation() {
+	public void beginAction(ActionAnimation animation) {
 	}
 	
 	public void updateHeldItem(CapabilityItem fromCap, CapabilityItem toCap, ItemStack from, ItemStack to, InteractionHand hand) {
@@ -485,7 +716,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void updateArmor(CapabilityItem fromCap, CapabilityItem toCap, EquipmentSlot slotType) {
 	}
 	
-	public void onAttackBlocked(DamageSource damageSource, LivingEntityPatch<?> opponent) {
+	/**
+	 * Fired when my attack is blocked
+	 * @param damageSource
+	 * @param blocker
+	 */
+	public void onAttackBlocked(DamageSource damageSource, LivingEntityPatch<?> blocker) {
 	}
 	
 	public void onMount(boolean isMountOrDismount, Entity ridingEntity) {
@@ -516,7 +752,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.getAnimator();
 	}
 	
-	public abstract StaticAnimation getHitAnimation(StunType stunType);
+	public abstract AssetAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType);
 	public void aboutToDeath() {}
 	
 	public SoundEvent getWeaponHitSound(InteractionHand hand) {
@@ -576,14 +812,24 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.getHoldingItemCapability(InteractionHand.MAIN_HAND).checkOffhandValid(this);
 	}
 	
-	public boolean isTeammate(Entity entityIn) {
-		if (this.original.getVehicle() != null && this.original.getVehicle().equals(entityIn)) {
-			return true;
-		} else if (this.isRideOrBeingRidden(entityIn)) {
+	public Joint getParentJointOfHand(InteractionHand hand) {
+		return this.parentJointOfHands.getOrDefault(hand, this.armature.rootJoint);
+	}
+	
+	public void setParentJointOfHand(InteractionHand hand, Joint joint) {
+		this.parentJointOfHands.put(hand, joint);
+	}
+	
+	public boolean isTargetInvulnerable(Entity taget) {
+		if (!taget.isPickable() || taget.isSpectator()) {
 			return true;
 		}
 		
-		return this.original.isAlliedTo(entityIn) && this.original.getTeam() != null && !this.original.getTeam().isAllowFriendlyFire();
+		if (this.original.getRootVehicle() == taget.getRootVehicle() && !taget.canRiderInteract()) {
+			return true;
+		}
+		
+		return this.original.isAlliedTo(taget) && this.original.getTeam() != null && !this.original.getTeam().isAllowFriendlyFire();
 	}
 	
 	public boolean canPush(Entity entity) {
@@ -616,24 +862,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void setLastAttackPosition() {
 		this.lastAttackPosition = this.original.position();
-	}
-	
-	private boolean isRideOrBeingRidden(Entity entityIn) {
-		LivingEntity orgEntity = this.getOriginal();
-		
-		for (Entity passanger : orgEntity.getPassengers()) {
-			if (passanger.equals(entityIn)) {
-				return true;
-			}
-		}
-		
-		for (Entity passanger : entityIn.getPassengers()) {
-			if (passanger.equals(orgEntity)) {
-				return true;
-			}
-		}
-		
-		return false;
 	}
 	
 	public void setAirborneState(boolean airborne) {
@@ -689,8 +917,16 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.original.zOld;
 	}
 	
+	/**
+	 * Use this instead of {@link Entity#getYRot()} to get the fixed rotation when player's taking action
+	 * @return
+	 */
 	public float getYRot() {
 		return this.original.getYRot();
+	}
+	
+	public float getYRotO() {
+		return this.original.yRotO;
 	}
 	
 	public void setYRot(float yRot) {
@@ -720,18 +956,18 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public List<LivingEntity> getCurrenltyAttackedEntities() {
-		return this.getAnimator().getAnimationVariables(AttackAnimation.HIT_ENTITIES);
+		return this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HIT_ENTITIES);
 	}
 
 	public List<LivingEntity> getCurrenltyHurtEntities() {
-		return this.getAnimator().getAnimationVariables(AttackAnimation.HURT_ENTITIES);
+		return this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HURT_ENTITIES);
 	}
 
 	public void removeHurtEntities() {
-		this.getAnimator().getAnimationVariables(AttackAnimation.HIT_ENTITIES).clear();
-		this.getAnimator().getAnimationVariables(AttackAnimation.HURT_ENTITIES).clear();
+		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HIT_ENTITIES).clear();
+		this.getAnimator().getVariables().getSharedVariable(AttackAnimation.HURT_ENTITIES).clear();
 	}
-
+	
 	@OnlyIn(Dist.CLIENT)
 	public boolean flashTargetIndicator(LocalPlayerPatch playerpatch) {
 		TargetIndicatorCheckEvent event = new TargetIndicatorCheckEvent(playerpatch, this);

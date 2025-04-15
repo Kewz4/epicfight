@@ -35,8 +35,8 @@ public class EditItemListScreen extends Screen {
 	private final Screen parentScreen;
 	private final EditSwitchingItemScreen.RegisteredItemList targetList;
 	private final EditSwitchingItemScreen.RegisteredItemList opponentList;
-	private final List<Item> registered;
-	private final List<Item> opponentRegistered;
+	private final Set<Item> registered;
+	private final Set<Item> opponentRegistered;
 	private EditItemListScreen.ItemList allItemsList;
 	private EditItemListScreen.ItemList selectedItemList;
 	private final EditBox searchBox;
@@ -46,8 +46,8 @@ public class EditItemListScreen extends Screen {
 		this.parentScreen = parentScreen;
 		this.targetList = targetList;
 		this.opponentList = opponentList;
-		this.registered = targetList.toList();
-		this.opponentRegistered = opponentList.toList();
+		this.registered = targetList.toSet();
+		this.opponentRegistered = opponentList.toSet();
 		
 		this.allItemsList = new EditItemListScreen.ItemList(this.minecraft, 0, 0, 0, 0, Lists.newArrayList(ForgeRegistries.ITEMS.getValues()), Type.SELECTABLES);
 		this.selectedItemList = new EditItemListScreen.ItemList(this.minecraft, 0, 0, 0, 0, Lists.newArrayList(), Type.SELECTED);
@@ -71,7 +71,7 @@ public class EditItemListScreen extends Screen {
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
 			for (Item item : this.selectedItemList.toList()) {
 				this.targetList.addEntry(item);
-				this.opponentList.removeIfPresent(item);
+				this.opponentList.removeEntryHaving(item);
 			}
 			this.onClose();
 		}).bounds(this.width - 85, this.height - 26, 60, 20).build());
@@ -82,7 +82,9 @@ public class EditItemListScreen extends Screen {
 		this.renderDirtBackground(guiGraphics);
 		this.allItemsList.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.selectedItemList.render(guiGraphics, mouseX, mouseY, partialTicks);
+		
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		
 		guiGraphics.drawString(this.font, Component.literal("Item List").withStyle(ChatFormatting.UNDERLINE), 28, 18, 16777215, false);
 		guiGraphics.drawString(this.font, Component.literal("Seleted Items").withStyle(ChatFormatting.UNDERLINE), 28, this.height-114, 16777215, false);
 	}

@@ -71,7 +71,8 @@ public class SPSkillExecutionFeedback {
 			if (playerpatch != null) {
 				switch(msg.feedbackType) {
 				case EXECUTED -> {
-					playerpatch.getSkill(msg.skillSlot).getSkill().executeOnClient(playerpatch, msg.getBuffer());
+					SkillContainer skillContainer = playerpatch.getSkill(msg.skillSlot);
+					skillContainer.getSkill().executeOnClient(skillContainer, msg.getBuffer());
 				}
 				case CHARGING_BEGIN -> {
 					SkillContainer skillContainer = playerpatch.getSkill(msg.skillSlot);
@@ -82,7 +83,8 @@ public class SPSkillExecutionFeedback {
 					}
 				}
 				case EXPIRED -> {
-					playerpatch.getSkill(msg.skillSlot).getSkill().cancelOnClient(playerpatch, msg.getBuffer());
+					SkillContainer skillContainer = playerpatch.getSkill(msg.skillSlot);
+					skillContainer.getSkill().cancelOnClient(skillContainer, msg.getBuffer());
 				}
 				}
 			}

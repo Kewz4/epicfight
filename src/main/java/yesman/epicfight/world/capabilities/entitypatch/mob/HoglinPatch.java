@@ -11,6 +11,7 @@ import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
@@ -31,6 +32,7 @@ public class HoglinPatch extends MobPatch<Hoglin> {
 	
 	@Override
 	public void initAnimator(Animator animator) {
+		super.initAnimator(animator);
 		animator.addLivingAnimation(LivingMotions.IDLE, Animations.HOGLIN_IDLE);
 		animator.addLivingAnimation(LivingMotions.WALK, Animations.HOGLIN_WALK);
 		animator.addLivingAnimation(LivingMotions.DEATH, Animations.HOGLIN_DEATH);
@@ -47,7 +49,7 @@ public class HoglinPatch extends MobPatch<Hoglin> {
 	}
 	
 	@Override
-	public StaticAnimation getHitAnimation(StunType stunType) {
+	public AnimationAccessor<? extends StaticAnimation> getHitAnimation(StunType stunType) {
 		return null;
 	}
 	

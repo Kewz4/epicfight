@@ -6,55 +6,61 @@ import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedMo
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackTimeModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class AnimationPlayer {
 	protected float elapsedTime;
 	protected float prevElapsedTime;
 	protected boolean isEnd;
-	protected boolean doNotResetNext;
+	protected boolean doNotResetTime;
 	protected boolean reversed;
-	protected DynamicAnimation play;
+	protected AssetAccessor<? extends DynamicAnimation> play;
 	
 	public AnimationPlayer() {
-		this.setPlayAnimation(Animations.DUMMY_ANIMATION);
+		this.setPlayAnimation(Animations.EMPTY_ANIMATION);
 	}
 	
 	public void tick(LivingEntityPatch<?> entitypatch) {
+		DynamicAnimation currentPlay = this.getAnimation().get();
+		DynamicAnimation currentPlayStatic = currentPlay.getRealAnimation().get();
 		this.prevElapsedTime = this.elapsedTime;
 		
-		float playbackSpeed = this.getAnimation().getPlaySpeed(entitypatch, this.getAnimation());
-		PlaybackSpeedModifier playSpeedModifier = this.getAnimation().getRealAnimation().getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).orElse(null);
+		float playbackSpeed = currentPlay.getPlaySpeed(entitypatch, currentPlay);
+		PlaybackSpeedModifier playSpeedModifier = currentPlayStatic.getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).orElse(null);
 		
 		if (playSpeedModifier != null) {
-			playbackSpeed = playSpeedModifier.modify(this.getAnimation(), entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
+			playbackSpeed = playSpeedModifier.modify(currentPlay, entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
 		}
 		
-		this.elapsedTime += EpicFightOptions.A_TICK * playbackSpeed * (this.isReversed() && this.getAnimation().canBePlayedReverse() ? -1.0F : 1.0F);
-		PlaybackTimeModifier playTimeModifier = this.getAnimation().getRealAnimation().getProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER).orElse(null);
+		this.elapsedTime += EpicFightSharedConstants.A_TICK * playbackSpeed * (this.isReversed() && currentPlay.canBePlayedReverse() ? -1.0F : 1.0F);
+		PlaybackTimeModifier playTimeModifier = currentPlayStatic.getProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER).orElse(null);
 		
 		if (playTimeModifier != null) {
-			Pair<Float, Float> time = playTimeModifier.modify(this.getAnimation(), entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
+			Pair<Float, Float> time = playTimeModifier.modify(currentPlay, entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
 			this.prevElapsedTime = time.first;
 			this.elapsedTime = time.second;
 		}
 		
-		if (this.elapsedTime > this.play.getTotalTime()) {
-			if (this.play.isRepeat()) {
-				this.prevElapsedTime = this.prevElapsedTime - this.play.getTotalTime();
-				this.elapsedTime %= this.play.getTotalTime();
+		if (this.elapsedTime > currentPlay.getTotalTime()) {
+			if (currentPlay.isRepeat()) {
+				this.prevElapsedTime = this.prevElapsedTime - currentPlay.getTotalTime();
+				this.elapsedTime %= currentPlay.getTotalTime();
 			} else {
-				this.elapsedTime = this.play.getTotalTime();
+				this.elapsedTime = currentPlay.getTotalTime();
+				currentPlay.end(entitypatch, null, true);
 				this.isEnd = true;
 			}
 		} else if (this.elapsedTime < 0) {
-			if (this.play.isRepeat()) {
-				this.prevElapsedTime = this.play.getTotalTime() - this.elapsedTime;
-				this.elapsedTime = this.play.getTotalTime() + this.elapsedTime;
+			if (currentPlay.isRepeat()) {
+				this.prevElapsedTime = currentPlay.getTotalTime() - this.elapsedTime;
+				this.elapsedTime = currentPlay.getTotalTime() + this.elapsedTime;
 			} else {
 				this.elapsedTime = 0.0F;
+				currentPlay.end(entitypatch, null, true);
 				this.isEnd = true;
 			}
 		}
@@ -66,9 +72,10 @@ public class AnimationPlayer {
 		this.isEnd = false;
 	}
 	
-	public void setPlayAnimation(DynamicAnimation animation) {
-		if (this.doNotResetNext) {
-			this.doNotResetNext = false;
+	public void setPlayAnimation(AssetAccessor<? extends DynamicAnimation> animation) {
+		if (this.doNotResetTime) {
+			this.doNotResetTime = false;
+			this.isEnd = false;
 		} else {
 			this.reset();
 		}
@@ -77,7 +84,7 @@ public class AnimationPlayer {
 	}
 	
 	public Pose getCurrentPose(LivingEntityPatch<?> entitypatch, float partialTicks) {
-		return this.play.getPoseByTime(entitypatch, this.prevElapsedTime + (this.elapsedTime - this.prevElapsedTime) * partialTicks, partialTicks);
+		return this.play.get().getPoseByTime(entitypatch, this.prevElapsedTime + (this.elapsedTime - this.prevElapsedTime) * partialTicks, partialTicks);
 	}
 	
 	public float getElapsedTime() {
@@ -105,20 +112,28 @@ public class AnimationPlayer {
 		this.isEnd = false;
 	}
 	
-	public void begin(DynamicAnimation animation, LivingEntityPatch<?> entitypatch) {
-		animation.tick(entitypatch);
+	public void begin(AssetAccessor<? extends DynamicAnimation> animation, LivingEntityPatch<?> entitypatch) {
+		animation.get().tick(entitypatch);
 	}
 	
-	public DynamicAnimation getAnimation() {
+	public AssetAccessor<? extends DynamicAnimation> getAnimation() {
 		return this.play;
 	}
-
-	public void markToDoNotReset() {
-		this.doNotResetNext = true;
+	
+	public AssetAccessor<? extends StaticAnimation> getRealAnimation() {
+		return this.play.get().getRealAnimation();
+	}
+	
+	public void markDoNotResetTime() {
+		this.doNotResetTime = true;
 	}
 
 	public boolean isEnd() {
 		return this.isEnd;
+	}
+	
+	public void terminate() {
+		this.isEnd = true;
 	}
 	
 	public boolean isReversed() {
@@ -130,7 +145,7 @@ public class AnimationPlayer {
 	}
 	
 	public boolean isEmpty() {
-		return this.play == Animations.DUMMY_ANIMATION;
+		return this.play == Animations.EMPTY_ANIMATION;
 	}
 	
 	@Override

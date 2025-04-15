@@ -20,7 +20,8 @@ public class EpicFightKeyMappings {
 	public static final KeyMapping MOVER_SKILL = new  CombatKeyMapping("key." + EpicFightMod.MODID + ".mover_skill", InputConstants.Type.KEYSYM, InputConstants.KEY_SPACE, "key." + EpicFightMod.MODID + ".combat");
 	public static final KeyMapping SKILL_EDIT = new KeyMapping("key." + EpicFightMod.MODID + ".skill_gui", InputConstants.KEY_K, "key." + EpicFightMod.MODID + ".gui");
 	public static final KeyMapping LOCK_ON = new KeyMapping("key." + EpicFightMod.MODID + ".lock_on", InputConstants.KEY_G, "key." + EpicFightMod.MODID + ".combat");
-	public static final KeyMapping CONFIG = new KeyMapping("key." + EpicFightMod.MODID + ".config", -1, "key." + EpicFightMod.MODID + ".gui");
+	public static final KeyMapping OPEN_CONFIG_SCREEN = new KeyMapping("key." + EpicFightMod.MODID + ".config", -1, "key." + EpicFightMod.MODID + ".gui");
+	public static final KeyMapping SWITCH_VANILLA_MODEL_DEBUGGING = new KeyMapping("key." + EpicFightMod.MODID + ".switch_vanilla_model_debug", -1, "key." + EpicFightMod.MODID + ".system");
 	
 	@SubscribeEvent
 	public static void registerKeys(RegisterKeyMappingsEvent event) {
@@ -33,6 +34,7 @@ public class EpicFightKeyMappings {
 		event.register(MOVER_SKILL);
 		event.register(SKILL_EDIT);
 		event.register(LOCK_ON);
-		event.register(CONFIG);
+		event.register(OPEN_CONFIG_SCREEN);
+		event.register(SWITCH_VANILLA_MODEL_DEBUGGING);
 	}
 }

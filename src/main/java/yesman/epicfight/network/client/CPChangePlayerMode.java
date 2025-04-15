@@ -3,7 +3,6 @@ package yesman.epicfight.network.client;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPModifyPlayerData;
@@ -28,16 +27,10 @@ public class CPChangePlayerMode {
 	
 	public static void handle(CPChangePlayerMode msg, Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			ServerPlayer player = ctx.get().getSender();
-			
-			if (player != null) {
-				ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(player, ServerPlayerPatch.class);
-				
-				if (playerpatch != null) {
-					playerpatch.toMode(msg.mode, false);
-					EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.setPlayerMode(player.getId(), playerpatch.getPlayerMode()), player);
-				}
-			}
+			EpicFightCapabilities.getUnparameterizedEntityPatch(ctx.get().getSender(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+				playerpatch.toMode(msg.mode, false);
+				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(SPModifyPlayerData.setPlayerMode(playerpatch.getOriginal().getId(), playerpatch.getPlayerMode()), playerpatch.getOriginal());
+			});
 		});
 		ctx.get().setPacketHandled(true);
 	}

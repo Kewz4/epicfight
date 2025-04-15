@@ -4,20 +4,32 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class HitAnimation extends MainFrameAnimation {
-	public HitAnimation(float convertTime, String path, Armature armature) {
-		this(convertTime, path, armature, false);
+	public HitAnimation(float transitionTime, AnimationAccessor<? extends HitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, accessor, armature);
+		
+		this.stateSpectrumBlueprint.clear()
+			.newTimePair(0.0F, Float.MAX_VALUE)
+			.addState(EntityState.TURNING_LOCKED, true)
+			.addState(EntityState.MOVEMENT_LOCKED, true)
+			.addState(EntityState.UPDATE_LIVING_MOTION, false)
+			.addState(EntityState.CAN_BASIC_ATTACK, false)
+			.addState(EntityState.CAN_SKILL_EXECUTION, false)
+			.addState(EntityState.INACTION, true)
+			.addState(EntityState.HURT_LEVEL, 1);
 	}
 	
-	public HitAnimation(float convertTime, String path, Armature armature, boolean noRegister) {
-		super(convertTime, path, armature, noRegister);
+	public HitAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
+		super(transitionTime, path, armature);
 		
 		this.stateSpectrumBlueprint.clear()
 			.newTimePair(0.0F, Float.MAX_VALUE)
@@ -32,24 +44,25 @@ public class HitAnimation extends MainFrameAnimation {
 	
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
+		entitypatch.cancelItemUse();
+		
 		super.begin(entitypatch);
-		entitypatch.cancelAnyAction();
 	}
 	
 	@Override
-	public void setLinkAnimation(DynamicAnimation fromAnimation, Pose startPose, boolean isOnSameLayer, float convertTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
+	public void setLinkAnimation(AssetAccessor<? extends DynamicAnimation> fromAnimation, Pose startPose, boolean isOnSameLayer, float transitionTimeModifier, LivingEntityPatch<?> entitypatch, LinkAnimation dest) {
 		dest.resetNextStartTime();
 		
 		dest.getTransfroms().clear();
-		dest.setTotalTime(convertTimeModifier + this.convertTime);
-		dest.setConnectedAnimations(fromAnimation, this);
+		dest.setTotalTime(transitionTimeModifier + this.transitionTime);
+		dest.setConnectedAnimations(fromAnimation, this.getAccessor());
 		
 		Map<String, JointTransform> data1 = startPose.getJointTransformData();
 		Map<String, JointTransform> data2 = super.getPoseByTime(entitypatch, 0.0F, 0.0F).getJointTransformData();
 		Map<String, JointTransform> data3 = super.getPoseByTime(entitypatch, this.getTotalTime(), 0.0F).getJointTransformData();
 		
 		Set<String> joint1 = new HashSet<> (data1.keySet());
-		joint1.removeIf((jointName) -> !fromAnimation.hasTransformFor(jointName));
+		joint1.removeIf((jointName) -> !fromAnimation.get().hasTransformFor(jointName));
 		Set<String> joint2 = new HashSet<> (data2.keySet());
 		joint2.removeIf((jointName) -> !this.hasTransformFor(jointName));
 		joint1.addAll(joint2);
@@ -58,9 +71,9 @@ public class HitAnimation extends MainFrameAnimation {
 			if (data1.containsKey(jointName) && data2.containsKey(jointName)) {
 				Keyframe[] keyframes = new Keyframe[4];
 				keyframes[0] = new Keyframe(0, data1.get(jointName));
-				keyframes[1] = new Keyframe(this.convertTime, data2.get(jointName));
-				keyframes[2] = new Keyframe(this.convertTime + 0.033F, data3.get(jointName));
-				keyframes[3] = new Keyframe(convertTimeModifier + this.convertTime, data3.get(jointName));
+				keyframes[1] = new Keyframe(this.transitionTime, data2.get(jointName));
+				keyframes[2] = new Keyframe(this.transitionTime + 0.033F, data3.get(jointName));
+				keyframes[3] = new Keyframe(transitionTimeModifier + this.transitionTime, data3.get(jointName));
 				TransformSheet sheet = new TransformSheet(keyframes);
 				dest.getAnimationClip().addJointTransform(jointName, sheet);
 			}

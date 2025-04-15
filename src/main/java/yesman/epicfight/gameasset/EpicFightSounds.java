@@ -41,7 +41,7 @@ public class EpicFightSounds {
 	public static final RegistryObject<SoundEvent> ROLL = registerSound("skill.roll");
 
 	private static RegistryObject<SoundEvent> registerSound(String name) {
-		ResourceLocation res = new ResourceLocation(EpicFightMod.MODID, name);
+		ResourceLocation res = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, name);
 		return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(res));
 
 	}

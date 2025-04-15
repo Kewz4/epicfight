@@ -3,7 +3,6 @@ package yesman.epicfight.data.conditions.entity;
 import java.util.List;
 import java.util.Locale;
 
-import io.netty.util.internal.StringUtil;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
@@ -24,19 +23,13 @@ public class OffhandItemCategory extends EntityPatchCondition {
 	
 	@Override
 	public OffhandItemCategory read(CompoundTag tag) {
-		if (!tag.contains("category") || StringUtil.isNullOrEmpty(tag.getString("category"))) {
-			throw new IllegalArgumentException("Undefined weapon category");
-		}
-		
-		this.category = WeaponCategory.ENUM_MANAGER.getOrThrow(tag.getString("category"));
-		
+		this.category = this.assertExtendableEnumTag("category", WeaponCategory.ENUM_MANAGER, tag);
 		return this;
 	}
 	
 	@Override
 	public CompoundTag serializePredicate() {
 		CompoundTag tag = new CompoundTag();
-		
 		tag.putString("category", this.category.toString());
 		
 		return tag;

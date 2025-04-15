@@ -22,11 +22,11 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	public static final float STUN_SHIELD_AMOUNT = 20.0F;
 	public static final int CHARGING_TICK = 158;
-	private int chargingCount;
-	private EndCrystal linkingCrystal;
+	private int absorbCount;
+	private EndCrystal absorbingCrystal;
 	
-	public DragonCrystalLinkPhase(EnderDragon dragon) {
-		super(dragon);
+	public DragonCrystalLinkPhase(EnderDragon enderdragon) {
+		super(enderdragon);
 	}
 	
 	@Override
@@ -39,6 +39,11 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 		double d0 = Double.MAX_VALUE;
 		
 		for (EndCrystal endcrystal : list) {
+			// Exclude already being absorbed crystal
+			if (endcrystal.isInvulnerable()) {
+				continue;
+			}
+			
 			double d1 = endcrystal.distanceToSqr(this.dragon);
 			
 			if (d1 < d0) {
@@ -47,8 +52,9 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 			}
 		}
 		
-		this.linkingCrystal = nearestCrystal;
-		this.chargingCount = CHARGING_TICK;
+		this.absorbingCrystal = nearestCrystal;
+		this.absorbingCrystal.setInvulnerable(true);
+		this.absorbCount = CHARGING_TICK;
 		
 		if (this.dragonpatch.isLogicalClient()) {
 			double x = -45.0D;
@@ -74,9 +80,9 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	
 	@Override
 	public void end() {
-		BlockPos blockpos = this.linkingCrystal.blockPosition();
+		BlockPos blockpos = this.absorbingCrystal.blockPosition();
 		this.dragon.nearestCrystal = null;
-		this.linkingCrystal = null;
+		this.absorbingCrystal = null;
 		
 		if (!this.dragonpatch.isLogicalClient()) {
 			this.dragon.level().explode(null, blockpos.getX(), blockpos.getY(), blockpos.getZ(), 6.0F, Level.ExplosionInteraction.BLOCK);
@@ -85,12 +91,12 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	
 	@Override
 	public float onHurt(DamageSource damagesource, float amount) {
-		LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(damagesource.getEntity(), LivingEntityPatch.class);
-		
-		if (entitypatch != null && entitypatch.getEpicFightDamageSource() != null) {
-			float impact = entitypatch.getEpicFightDamageSource().getImpact();
-			this.dragonpatch.setStunShield(this.dragonpatch.getStunShield() - impact);
-		}
+		EpicFightCapabilities.getUnparameterizedEntityPatch(damagesource.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+			if (entitypatch.getEpicFightDamageSource() != null) {
+				float impact = entitypatch.getEpicFightDamageSource().getImpact();
+				this.dragonpatch.setStunShield(this.dragonpatch.getStunShield() - impact);
+			}
+		});
 		
 		return amount;
 	}
@@ -99,26 +105,22 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 	public void doClientTick() {
 		super.doClientTick();
 		this.dragon.growlTime = 200;
-		this.chargingCount--;
-		this.dragon.nearestCrystal = this.linkingCrystal;
+		this.absorbCount--;
+		this.dragon.nearestCrystal = this.absorbingCrystal;
 	}
 	
 	@Override
 	public void doServerTick() {
-		this.chargingCount--;
+		this.absorbCount--;
 		this.dragon.ambientSoundTime = 0;
 		
-		if (this.chargingCount > 0) {
+		if (this.absorbCount > 0) {
 			this.dragon.setHealth(this.dragon.getHealth() + 0.5F);
 		}
 	}
 	
 	public int getChargingCount() {
-		return this.chargingCount;
-	}
-	
-	public EndCrystal getLinkingCrystal() {
-		return this.linkingCrystal;
+		return this.absorbCount;
 	}
 	
 	@Override

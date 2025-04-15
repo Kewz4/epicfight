@@ -10,21 +10,22 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 public class RushingTempoSkill extends WeaponInnateSkill {
-	private final Map<StaticAnimation, AttackAnimation> comboAnimation = Maps.newHashMap();
+	private final Map<AnimationAccessor<? extends StaticAnimation>, AnimationAccessor<? extends AttackAnimation>> comboAnimation = Maps.newHashMap();
 	
-	public RushingTempoSkill(Builder<? extends Skill> builder) {
+	public RushingTempoSkill(SkillBuilder<? extends WeaponInnateSkill> builder) {
 		super(builder);
 	}
 	
@@ -38,20 +39,20 @@ public class RushingTempoSkill extends WeaponInnateSkill {
 	}
 	
 	@Override
-	public void executeOnServer(ServerPlayerPatch executer, FriendlyByteBuf args) {
-		DynamicAnimation animation = executer.getAnimator().getPlayerFor(null).getAnimation();
+	public void executeOnServer(SkillContainer container, FriendlyByteBuf args) {
+		AssetAccessor<? extends DynamicAnimation> animation = container.getExecutor().getAnimator().getPlayerFor(null).getAnimation();
 		
 		if (this.comboAnimation.containsKey(animation)) {
-			executer.playAnimationSynchronized(this.comboAnimation.get(animation), 0.0F);
-			super.executeOnServer(executer, args);
+			container.getExecutor().playAnimationSynchronized(this.comboAnimation.get(animation), 0.0F);
+			super.executeOnServer(container, args);
 		}
 	}
 	
 	@Override
-	public boolean checkExecuteCondition(PlayerPatch<?> executer) {
-		EntityState playerState = executer.getEntityState();
+	public boolean checkExecuteCondition(SkillContainer container) {
+		EntityState playerState = container.getExecutor().getEntityState();
 		
-		return this.comboAnimation.containsKey(executer.getAnimator().getPlayerFor(null).getAnimation()) && playerState.canUseSkill() && playerState.inaction();
+		return this.comboAnimation.containsKey(container.getExecutor().getAnimator().getPlayerFor(null).getAnimation()) && playerState.canUseSkill() && playerState.inaction();
 	}
 	
 	@Override
@@ -69,12 +70,12 @@ public class RushingTempoSkill extends WeaponInnateSkill {
 	@Override
 	public WeaponInnateSkill registerPropertiesToAnimation() {
 		this.comboAnimation.clear();
-		this.comboAnimation.put(Animations.TACHI_AUTO1, (AttackAnimation)Animations.RUSHING_TEMPO1);
-		this.comboAnimation.put(Animations.TACHI_AUTO2, (AttackAnimation)Animations.RUSHING_TEMPO2);
-		this.comboAnimation.put(Animations.TACHI_AUTO3, (AttackAnimation)Animations.RUSHING_TEMPO3);
+		this.comboAnimation.put(Animations.TACHI_AUTO1, Animations.RUSHING_TEMPO1);
+		this.comboAnimation.put(Animations.TACHI_AUTO2, Animations.RUSHING_TEMPO2);
+		this.comboAnimation.put(Animations.TACHI_AUTO3, Animations.RUSHING_TEMPO3);
 		
 		this.comboAnimation.values().forEach((animation) -> {
-			animation.phases[0].addProperties(this.properties.get(0).entrySet());
+			animation.get().phases[0].addProperties(this.properties.get(0).entrySet());
 		});
 		
 		return this;

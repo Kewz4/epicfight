@@ -12,7 +12,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.config.ClientConfig;
 
 @OnlyIn(Dist.CLIENT)
 public class BloodParticle extends TextureSheetParticle {
@@ -52,7 +52,7 @@ public class BloodParticle extends TextureSheetParticle {
 			particle.setSize(mass, mass);
 			particle.pickSprite(this.spriteSet);
 			
-			float green = EpicFightMod.CLIENT_CONFIGS.bloodEffects.getValue() ? 0.0F : Mth.clamp(random.nextFloat(), 0.6F, 0.4F);
+			float green = ClientConfig.bloodEffects ? 0.0F : Mth.clamp(random.nextFloat(), 0.6F, 0.4F);
 			particle.setColor(Mth.clamp(random.nextFloat(), 0.6F, 0.4F), green, 0.0F);
 			
 			return particle;

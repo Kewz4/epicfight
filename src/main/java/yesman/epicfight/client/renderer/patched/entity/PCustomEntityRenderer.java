@@ -13,20 +13,17 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
-import yesman.epicfight.api.animation.AnimationPlayer;
-import yesman.epicfight.api.client.animation.Layer;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.forgeevent.PrepareModelEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
-public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, AnimatedMesh> {
-	private final MeshProvider<AnimatedMesh> mesh;
+public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, LivingEntityPatch<LivingEntity>, EntityRenderer<LivingEntity>, SkinnedMesh> {
+	private final AssetAccessor<SkinnedMesh> mesh;
 	
-	public PCustomEntityRenderer(MeshProvider<AnimatedMesh> mesh, EntityRendererProvider.Context context) {
+	public PCustomEntityRenderer(AssetAccessor<SkinnedMesh> mesh, EntityRendererProvider.Context context) {
 		this.mesh = mesh;
 	}
 	
@@ -41,23 +38,19 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 		Armature armature = entitypatch.getArmature();
 		poseStack.pushPose();
 		this.mulPoseStack(poseStack, armature, entity, entitypatch, partialTicks);
-		OpenMatrix4f[] poseMatrices = this.getPoseMatrices(entitypatch, armature, partialTicks, false);
+		this.setArmaturePose(entitypatch, armature, partialTicks);
 		
 		if (renderType != null) {
-		    AnimatedMesh mesh = this.mesh.get();
+		    SkinnedMesh mesh = this.mesh.get();
 			PrepareModelEvent prepareModelEvent = new PrepareModelEvent(this, mesh, entitypatch, buffer, poseStack, packedLight, partialTicks);
 			
 			if (!MinecraftForge.EVENT_BUS.post(prepareModelEvent)) {
-				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, !entity.isInvisibleTo(mc.player) ? 0.15F : 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), entitypatch.getArmature(), poseMatrices);
+				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, !entity.isInvisibleTo(mc.player) ? 0.15F : 1.0F, this.getOverlayCoord(entity, entitypatch, partialTicks), armature, armature.getPoseMatrices());
 			}
 		}
 		
 		if (Minecraft.getInstance().getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-			for (Layer layer : entitypatch.getClientAnimator().getAllLayers()) {
-				AnimationPlayer animPlayer = layer.animationPlayer;
-				float playTime = animPlayer.getPrevElapsedTime() + (animPlayer.getElapsedTime() - animPlayer.getPrevElapsedTime()) * partialTicks;
-				animPlayer.getAnimation().renderDebugging(poseStack, buffer, entitypatch, playTime, partialTicks);
-			}
+			entitypatch.getClientAnimator().renderDebuggingInfoForAllLayers(poseStack, buffer, partialTicks);
 		}
 		
 		poseStack.popPose();
@@ -68,7 +61,7 @@ public class PCustomEntityRenderer extends PatchedEntityRenderer<LivingEntity, L
 	}
 	
 	@Override
-	public MeshProvider<AnimatedMesh> getDefaultMesh() {
+	public AssetAccessor<SkinnedMesh> getDefaultMesh() {
 		return this.mesh;
 	}
 }

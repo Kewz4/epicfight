@@ -21,9 +21,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import yesman.epicfight.api.animation.AnimationProvider;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPAddLearnedSkill;
@@ -31,10 +31,8 @@ import yesman.epicfight.network.server.SPAddOrRemoveSkillData;
 import yesman.epicfight.network.server.SPChangeLivingMotion;
 import yesman.epicfight.network.server.SPChangeSkill;
 import yesman.epicfight.network.server.SPModifyPlayerData;
-import yesman.epicfight.network.server.SPPlayAnimation;
 import yesman.epicfight.network.server.SPSkillExecutionFeedback;
 import yesman.epicfight.skill.ChargeableSkill;
-import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillCategory;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.SkillDataKey;
@@ -81,7 +79,7 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 					float value = container.getResource() + playerevent.getAttackDamage();
 					
 					if (value > 0.0F) {
-						this.getSkill(SkillSlots.WEAPON_INNATE).getSkill().setConsumptionSynchronize(this, value);
+						container.getSkill().setConsumptionSynchronize(container, value);
 					}
 				}
 			}
@@ -121,11 +119,12 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	@Override
 	public void updateHeldItem(CapabilityItem fromCap, CapabilityItem toCap, ItemStack from, ItemStack to, InteractionHand hand) {
 		if (this.isChargingSkill()) {
-			Skill skill = this.chargingSkill.asSkill();
-			skill.cancelOnServer(this, null);
-			this.resetSkillCharging();
+			this.getSkillContainerFor(this.chargingSkill.asSkill()).ifPresent((container) -> {
+				container.getSkill().cancelOnServer(container, null);
+				EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(container.getSlotId()), this.original);
+			});
 			
-			EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.expired(this.getSkill(skill).getSlotId()), this.original);
+			this.resetSkillCharging();
 		}
 		
 		CapabilityItem mainHandCap = (hand == InteractionHand.MAIN_HAND) ? toCap : this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
@@ -176,17 +175,17 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 			return;
 		}
 		
-		Map<LivingMotion, StaticAnimation> oldLivingAnimations = this.getAnimator().getLivingAnimations();
-		Map<LivingMotion, StaticAnimation> newLivingAnimations = Maps.newHashMap();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
 		
 		CapabilityItem mainhandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		CapabilityItem offhandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
 		
-		Map<LivingMotion, AnimationProvider<?>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
 		livingMotionModifiers.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
 		
-		for (Map.Entry<LivingMotion, AnimationProvider<?>> entry : livingMotionModifiers.entrySet()) {
-			StaticAnimation aniamtion = entry.getValue().get();
+		for (Map.Entry<LivingMotion, AssetAccessor<? extends StaticAnimation>> entry : livingMotionModifiers.entrySet()) {
+			AssetAccessor<? extends StaticAnimation> aniamtion = entry.getValue();
 			
 			if (!oldLivingAnimations.containsKey(entry.getKey())) {
 				this.updatedMotionCurrentTick = true;
@@ -216,15 +215,8 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public void playAnimationSynchronized(StaticAnimation animation, float convertTimeModifier, AnimationPacketProvider packetProvider) {
-		super.playAnimationSynchronized(animation, convertTimeModifier, packetProvider);
-		EpicFightNetworkManager.sendToPlayer(packetProvider.get(animation, convertTimeModifier, this), this.original);
-	}
-	
-	@Override
-	public void reserveAnimation(StaticAnimation animation) {
-		super.reserveAnimation(animation);
-		EpicFightNetworkManager.sendToPlayer(new SPPlayAnimation(animation, this.original.getId(), 0.0F), this.original);
+	public void sendToAllPlayerTrackingMe(Object packet) {
+		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(packet, this.original);
 	}
 	
 	@Override
@@ -283,12 +275,12 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public boolean isTeammate(Entity entityIn) {
+	public boolean isTargetInvulnerable(Entity entityIn) {
 		if (entityIn instanceof Player && !this.getOriginal().server.isPvpAllowed()) {
 			return true;
 		}
 		
-		return super.isTeammate(entityIn);
+		return super.isTargetInvulnerable(entityIn);
 	}
 	
 	@Override
@@ -308,9 +300,13 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public void startSkillCharging(ChargeableSkill chargingSkill) {
-		super.startSkillCharging(chargingSkill);
-		EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.chargingBegin(this.getSkill((Skill)chargingSkill).getSlotId()), this.getOriginal());
+	public boolean startSkillCharging(ChargeableSkill chargingSkill) {
+		if (super.startSkillCharging(chargingSkill)) {
+			EpicFightNetworkManager.sendToPlayer(SPSkillExecutionFeedback.chargingBegin(this.getSkillContainerFor(chargingSkill.asSkill()).get().getSlotId()), this.getOriginal());
+			return true;
+		}
+		
+		return false;
 	}
 
 	@Override

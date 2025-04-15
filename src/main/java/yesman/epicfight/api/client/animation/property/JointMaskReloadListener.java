@@ -26,14 +26,14 @@ import yesman.epicfight.main.EpicFightMod;
 public class JointMaskReloadListener extends SimpleJsonResourceReloadListener {
 	private static final BiMap<ResourceLocation, JointMaskSet> JOINT_MASKS = HashBiMap.create();
 	private static final Map<String, JointMask.BindModifier> BIND_MODIFIERS = Maps.newHashMap();
-	private static final ResourceLocation NONE_MASK = new ResourceLocation(EpicFightMod.MODID, "none");
+	private static final ResourceLocation NONE_MASK = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "none");
 	
 	static {
 		BIND_MODIFIERS.put("keep_child_locrot", JointMask.KEEP_CHILD_LOCROT);
 	}
 	
 	public static JointMaskSet getJointMaskEntry(String type) {
-		ResourceLocation rl = new ResourceLocation(type);
+		ResourceLocation rl = ResourceLocation.parse(type);
 		return JOINT_MASKS.getOrDefault(rl, JOINT_MASKS.get(NONE_MASK));
 	}
 	
@@ -76,7 +76,7 @@ public class JointMaskReloadListener extends SimpleJsonResourceReloadListener {
 			}
 			
 			String path = entry.getKey().toString();
-			ResourceLocation key = new ResourceLocation(entry.getKey().getNamespace(), path.substring(path.lastIndexOf("/") + 1));
+			ResourceLocation key = ResourceLocation.fromNamespaceAndPath(entry.getKey().getNamespace(), path.substring(path.lastIndexOf("/") + 1));
 			
 			JOINT_MASKS.put(key, JointMaskSet.of(masks));
 		}

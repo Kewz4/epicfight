@@ -26,19 +26,22 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.registries.RegistryObject;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.animation.AnimationVariables;
+import yesman.epicfight.api.animation.AnimationVariables.SharedAnimationVariableKey;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.HitEntityList;
-import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap.TypeKey;
-import yesman.epicfight.config.EpicFightOptions;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.particle.HitParticleType;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -51,50 +54,59 @@ import yesman.epicfight.world.entity.eventlistener.AttackEndEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 public class AttackAnimation extends ActionAnimation {
+	/** Entities that collided **/
+	public static final SharedAnimationVariableKey<List<LivingEntity>> HIT_ENTITIES = AnimationVariables.shared(Lists::newArrayList, false);
+	/** Entities that actually hurt **/
+	public static final SharedAnimationVariableKey<List<LivingEntity>> HURT_ENTITIES = AnimationVariables.shared(Lists::newArrayList, false);
+	
 	public final Phase[] phases;
 	
-	/** Entities that collided **/
-	public static final TypeKey<List<LivingEntity>> HIT_ENTITIES = new TypeKey<>() {
-		public List<LivingEntity> defaultValue() {
-			return Lists.newArrayList();
-		}
-	};
-	
-	/** Entities that actually hurt **/
-	public static final TypeKey<List<LivingEntity>> HURT_ENTITIES = new TypeKey<>() {
-		public List<LivingEntity> defaultValue() {
-			return Lists.newArrayList();
-		}
-	};
-	
-	public static final TypeKey<Integer> MAX_STRIKES_COUNT = new TypeKey<>() {
-		public Integer defaultValue() {
-			return 0;
-		}
-	};
-
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
-		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
+	public AttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
+	public AttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
+	}
+	
+	public AttackAnimation(float transitionTime, AnimationAccessor<? extends AttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, accessor, armature);
+		
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
+		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.MODEL_COORD);
+		this.addProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER, MoveCoordFunctions.ATTACK_TARGET_LOCATION);
+		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		
+		this.phases = phases;
+		this.stateSpectrumBlueprint.clear();
+		
+		for (Phase phase : phases) {
+			if (!phase.noStateBind) {
+				this.bindPhaseState(phase);
+			}
+		}
+	}
+	
+	/**
+	 * For resourcepack animation
+	 */
+	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, AssetAccessor<? extends Armature> armature) {
 		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
 	}
 	
-	public AttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, InteractionHand hand, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature, boolean noRegister) {
-		this(convertTime, path, armature, noRegister, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, hand, colliderJoint, collider));
-	}
-	
-	public AttackAnimation(float convertTime, String path, Armature armature, Phase... phases) {
-		this(convertTime, path, armature, false, phases);
-	}
-	
-	public AttackAnimation(float convertTime, String path, Armature armature, boolean noRegister, Phase... phases) {
-		super(convertTime, path, armature, noRegister);
+	/**
+	 * For resourcepack animation
+	 */
+	public AttackAnimation(float convertTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(convertTime, 0.0F, path, armature);
 		
-		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_LOC_TARGET);
-		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_LOC_TARGET);
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, MoveCoordFunctions.TRACE_TARGET_DISTANCE);
+		this.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.MODEL_COORD);
+		this.addProperty(ActionAnimationProperty.DEST_LOCATION_PROVIDER, MoveCoordFunctions.ATTACK_TARGET_LOCATION);
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		
 		this.phases = phases;
 		this.stateSpectrumBlueprint.clear();
 		
@@ -137,13 +149,13 @@ public class AttackAnimation extends ActionAnimation {
 	}
 	
 	@Override
-	public void linkTick(LivingEntityPatch<?> entitypatch, DynamicAnimation linkAnimation) {
+	public void linkTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> linkAnimation) {
 		super.linkTick(entitypatch, linkAnimation);
 		
 		if (!entitypatch.isLogicalClient() && entitypatch instanceof MobPatch<?> mobpatch) {
-			AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this);
+			AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 			float elapsedTime = player.getElapsedTime();
-			EntityState state = linkAnimation.getState(entitypatch, elapsedTime);
+			EntityState state = linkAnimation.get().getState(entitypatch, elapsedTime);
 			
 			if (state.getLevel() == 1 && !state.turningLocked()) {
 				mobpatch.getOriginal().getNavigation().stop();
@@ -166,16 +178,16 @@ public class AttackAnimation extends ActionAnimation {
 		super.tick(entitypatch);
 		
 		if (!entitypatch.isLogicalClient()) {
-			this.attackTick(entitypatch, this);
+			this.attackTick(entitypatch, this.getAccessor());
 		}
 	}
 	
 	@Override
-	public void end(LivingEntityPatch<?> entitypatch, DynamicAnimation nextAnimation, boolean isEnd) {
+	public void end(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> nextAnimation, boolean isEnd) {
 		super.end(entitypatch, nextAnimation, isEnd);
 		
 		if (entitypatch instanceof ServerPlayerPatch playerpatch && isEnd) {
-			playerpatch.getEventListener().triggerEvents(EventType.ATTACK_ANIMATION_END_EVENT, new AttackEndEvent(playerpatch, this));
+			playerpatch.getEventListener().triggerEvents(EventType.ATTACK_ANIMATION_END_EVENT, new AttackEndEvent(playerpatch, this.getAccessor()));
 		}
 		
 		if (entitypatch instanceof HumanoidMobPatch<?> mobpatch && entitypatch.isLogicalClient()) {
@@ -187,13 +199,13 @@ public class AttackAnimation extends ActionAnimation {
 		}
 	}
 	
-	protected void attackTick(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
-		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this);
+	protected void attackTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> animation) {
+		AnimationPlayer player = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 		float prevElapsedTime = player.getPrevElapsedTime();
 		float elapsedTime = player.getElapsedTime();
-		EntityState prevState = animation.getState(entitypatch, prevElapsedTime);
-		EntityState state = animation.getState(entitypatch, elapsedTime);
-		Phase phase = this.getPhaseByTime(animation.isLinkAnimation() ? 0.0F : elapsedTime);
+		EntityState prevState = animation.get().getState(entitypatch, prevElapsedTime);
+		EntityState state = animation.get().getState(entitypatch, elapsedTime);
+		Phase phase = this.getPhaseByTime(animation.get().isLinkAnimation() ? 0.0F : elapsedTime);
 		
 		if (state.getLevel() == 1 && !state.turningLocked()) {
 			if (entitypatch instanceof MobPatch<?> mobpatch) {
@@ -207,8 +219,8 @@ public class AttackAnimation extends ActionAnimation {
 			}
 		}
 		
-		if (prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2)) {
-			if (!prevState.attacking() || (phase != this.getPhaseByTime(prevElapsedTime) && (state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2)))) {
+		if (prevState.attacking() || state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)) {
+			if (!prevState.attacking() || (phase != this.getPhaseByTime(prevElapsedTime) && (state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)))) {
 				entitypatch.playSound(this.getSwingSound(entitypatch, phase), 0.0F, 0.0F);
 				entitypatch.removeHurtEntities();
 			}
@@ -228,22 +240,22 @@ public class AttackAnimation extends ActionAnimation {
 			int maxStrikes = this.getMaxStrikes(entitypatch, phase);
 			
 			while (entitypatch.getCurrenltyHurtEntities().size() < maxStrikes && hitEntities.next()) {
-				Entity hitten = hitEntities.getEntity();
-				LivingEntity trueEntity = this.getTrueEntity(hitten);
+				Entity target = hitEntities.getEntity();
+				LivingEntity trueEntity = this.getTrueEntity(target);
 				
-				if (trueEntity != null && trueEntity.isAlive() && !entitypatch.getCurrenltyAttackedEntities().contains(trueEntity) && !entitypatch.isTeammate(hitten)) {
-					if (hitten instanceof LivingEntity || hitten instanceof PartEntity) {
-						if (entity.hasLineOfSight(hitten)) {
-							EpicFightDamageSource damagesource = this.getEpicFightDamageSource(entitypatch, hitten, phase);
-							int prevInvulTime = hitten.invulnerableTime;
-							hitten.invulnerableTime = 0;
+				if (trueEntity != null && trueEntity.isAlive() && !entitypatch.getCurrenltyAttackedEntities().contains(trueEntity) && !entitypatch.isTargetInvulnerable(target)) {
+					if (target instanceof LivingEntity || target instanceof PartEntity) {
+						if (entity.hasLineOfSight(target)) {
+							EpicFightDamageSource damagesource = this.getEpicFightDamageSource(entitypatch, target, phase);
+							int prevInvulTime = target.invulnerableTime;
+							target.invulnerableTime = 0;
 							
-							AttackResult attackResult = entitypatch.attack(damagesource, hitten, phase.hand);
-							hitten.invulnerableTime = prevInvulTime;
+							AttackResult attackResult = entitypatch.attack(damagesource, target, phase.hand);
+							target.invulnerableTime = prevInvulTime;
 							
 							if (attackResult.resultType.dealtDamage()) {
-								hitten.level().playSound(null, hitten.getX(), hitten.getY(), hitten.getZ(), this.getHitSound(entitypatch, phase), hitten.getSoundSource(), 1.0F, 1.0F);
-								this.spawnHitParticle((ServerLevel)hitten.level(), entitypatch, hitten, phase);
+								target.level().playSound(null, target.getX(), target.getY(), target.getZ(), this.getHitSound(entitypatch, phase), target.getSoundSource(), 1.0F, 1.0F);
+								this.spawnHitParticle((ServerLevel)target.level(), entitypatch, target, phase);
 							}
 							
 							entitypatch.getCurrenltyAttackedEntities().add(trueEntity);
@@ -285,12 +297,12 @@ public class AttackAnimation extends ActionAnimation {
 	}
 	
 	public EpicFightDamageSource getEpicFightDamageSource(LivingEntityPatch<?> entitypatch, Entity target, Phase phase) {
-		return this.getEpicFightDamageSource(entitypatch.getDamageSource(this, phase.hand), entitypatch, target, phase);
+		return this.getEpicFightDamageSource(entitypatch.getDamageSource(this.getAccessor(), phase.hand), entitypatch, target, phase);
 	}
 	
 	public EpicFightDamageSource getEpicFightDamageSource(DamageSource originalSource, LivingEntityPatch<?> entitypatch, Entity target, Phase phase) {
 		if (phase == null) {
-			phase = this.getPhaseByTime(entitypatch.getAnimator().getPlayerFor(this).getElapsedTime());
+			phase = this.getPhaseByTime(entitypatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime());
 		}
 		
 		EpicFightDamageSource extendedSource;
@@ -298,7 +310,7 @@ public class AttackAnimation extends ActionAnimation {
 		if (originalSource instanceof EpicFightDamageSource epicfightDamageSource) {
 			extendedSource = epicfightDamageSource;
 		} else {
-			extendedSource = EpicFightDamageSources.copy(originalSource).setAnimation(this);
+			extendedSource = EpicFightDamageSources.copy(originalSource).setAnimation(this.getAccessor());
 		}
 		
 		phase.getProperty(AttackPhaseProperty.DAMAGE_MODIFIER).ifPresent((opt) -> {
@@ -347,7 +359,7 @@ public class AttackAnimation extends ActionAnimation {
 	@Override
 	public float getPlaySpeed(LivingEntityPatch<?> entitypatch, DynamicAnimation animation) {
 		if (entitypatch instanceof PlayerPatch<?> playerpatch) {
-			Phase phase = this.getPhaseByTime(playerpatch.getAnimator().getPlayerFor(this).getElapsedTime());
+			Phase phase = this.getPhaseByTime(playerpatch.getAnimator().getPlayerFor(this.getAccessor()).getElapsedTime());
 			float speedFactor = this.getProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR).orElse(1.0F);
 			Optional<Float> property = this.getProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED);
 			float correctedSpeed = property.map((value) -> playerpatch.getAttackSpeed(phase.hand) / value).orElse(this.getTotalTime() * playerpatch.getAttackSpeed(phase.hand));
@@ -359,18 +371,15 @@ public class AttackAnimation extends ActionAnimation {
 		return 1.0F;
 	}
 	
-	public <V> AttackAnimation addProperty(AttackAnimationProperty<V> propertyType, V value) {
-		this.properties.put(propertyType, value);
-		return this;
+	@SuppressWarnings("unchecked")
+	public <V, A extends AttackAnimation> A addProperty(AttackPhaseProperty<V> propertyType, V value) {
+		return (A)this.addProperty(propertyType, value, 0);
 	}
 	
-	public <V> AttackAnimation addProperty(AttackPhaseProperty<V> propertyType, V value) {
-		return this.addProperty(propertyType, value, 0);
-	}
-	
-	public <V> AttackAnimation addProperty(AttackPhaseProperty<V> propertyType, V value, int index) {
+	@SuppressWarnings("unchecked")
+	public <V, A extends AttackAnimation> A addProperty(AttackPhaseProperty<V> propertyType, V value, int index) {
 		this.phases[index].addProperty(propertyType, value);
-		return this;
+		return (A)this;
 	}
 	
 	public Phase getPhaseByTime(float elapsedTime) {
@@ -389,7 +398,7 @@ public class AttackAnimation extends ActionAnimation {
 	
 	@Override
 	public Object getModifiedLinkState(StateFactor<?> factor, Object val, LivingEntityPatch<?> entitypatch, float elapsedTime) {
-		if (factor == EntityState.ATTACKING && elapsedTime < this.getPlaySpeed(entitypatch, this) * EpicFightOptions.A_TICK) {
+		if (factor == EntityState.ATTACKING && elapsedTime < this.getPlaySpeed(entitypatch, this) * EpicFightSharedConstants.A_TICK) {
 			return false;
 		}
 		
@@ -399,7 +408,7 @@ public class AttackAnimation extends ActionAnimation {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void renderDebugging(PoseStack poseStack, MultiBufferSource buffer, LivingEntityPatch<?> entitypatch, float playbackTime, float partialTicks) {
-		AnimationPlayer animPlayer = entitypatch.getAnimator().getPlayerFor(this);
+		AnimationPlayer animPlayer = entitypatch.getAnimator().getPlayerFor(this.getAccessor());
 		float prevElapsedTime = animPlayer.getPrevElapsedTime();
 		float elapsedTime = animPlayer.getElapsedTime();
 		Phase phase = this.getPhaseByTime(playbackTime);

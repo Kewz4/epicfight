@@ -1,13 +1,13 @@
 package yesman.epicfight.api.animation.types;
 
-import net.minecraft.server.packs.resources.ResourceManager;
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class OffAnimation extends StaticAnimation {
-	public OffAnimation(String path) {
-		super(0.0F, false, path, null);
+	public OffAnimation(AnimationAccessor<? extends OffAnimation> accessor) {
+		super(0.0F, false, accessor, null);
 	}
 	
 	@Override
@@ -19,7 +19,7 @@ public class OffAnimation extends StaticAnimation {
 				entitypatch.getClientAnimator().getCompositeLayer(this.getPriority()).off(entitypatch);
 			}
 		} else {
-			entitypatch.getAnimator().playAnimation(Animations.DUMMY_ANIMATION, 0.0F);
+			entitypatch.getAnimator().playAnimation(Animations.EMPTY_ANIMATION, 0.0F);
 		}
 	}
 	
@@ -27,8 +27,4 @@ public class OffAnimation extends StaticAnimation {
 	public boolean isMetaAnimation() {
 		return true;
 	}
-	
-	@Override
-	public void loadAnimation(ResourceManager resourceManager) {
-    }
 }

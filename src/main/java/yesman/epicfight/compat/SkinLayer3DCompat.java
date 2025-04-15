@@ -1,7 +1,5 @@
 package yesman.epicfight.compat;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
@@ -11,7 +9,6 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.tr7zw.skinlayers.SkinLayersModBase;
-import dev.tr7zw.skinlayers.SkinUtil;
 import dev.tr7zw.skinlayers.accessor.PlayerEntityModelAccessor;
 import dev.tr7zw.skinlayers.accessor.PlayerSettings;
 import dev.tr7zw.skinlayers.api.Mesh;
@@ -48,7 +45,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.SkinLayer3DTransformer;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.ClientEngine;
@@ -57,6 +54,8 @@ import yesman.epicfight.client.renderer.patched.entity.PPlayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.mixin.SkinLayer3DMixinSkinUtil;
+import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class SkinLayer3DCompat implements ICompatModule {
 	private static Capability<SkinLayer3DMeshes> SKIN_LAYER_3D_CAPABILITY;
@@ -83,6 +82,8 @@ public class SkinLayer3DCompat implements ICompatModule {
 		});
 	}
 	
+	private static boolean REVERT_TO_MINING = false;
+	
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void onForgeEventBusClient(IEventBus eventBus) {
@@ -90,6 +91,13 @@ public class SkinLayer3DCompat implements ICompatModule {
 		
 		eventBus.<ScreenEvent.Opening>addListener((event) -> {
 			if (event.getScreen() instanceof dev.tr7zw.skinlayers.config.CustomConfigScreen) {
+				PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
+				
+				if (playerpatch != null && playerpatch.isMiningMode()) {
+					REVERT_TO_MINING = true;
+					playerpatch.toBattleMode(false);
+				}
+				
 				if (!ClientEngine.getInstance().isVanillaModelDebuggingMode()) {
 					ClientEngine.getInstance().switchVanillaModelDebuggingMode();
 				}
@@ -101,6 +109,11 @@ public class SkinLayer3DCompat implements ICompatModule {
 				if (ClientEngine.getInstance().isVanillaModelDebuggingMode()) {
 					ClientEngine.getInstance().switchVanillaModelDebuggingMode();
 				}
+				
+				if (REVERT_TO_MINING) {
+					ClientEngine.getInstance().getPlayerPatch().toMiningMode(false);
+					REVERT_TO_MINING = false;
+				}
 			}
 		});
 	}
@@ -108,7 +121,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 	@OnlyIn(Dist.CLIENT)
 	public void onCapabilityRegister(AttachCapabilitiesEvent<Entity> event) {
 		if (event.getObject().level().isClientSide() && event.getObject().getType() == EntityType.PLAYER) {
-			event.addCapability(new ResourceLocation(EpicFightMod.MODID, "animated_3d_skinlayer_mesh"), new ICapabilityProvider() {
+			event.addCapability(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "animated_3d_skinlayer_mesh"), new ICapabilityProvider() {
 				final SkinLayer3DMeshes epicFight3dSkinLayerCapability = new SkinLayer3DMeshes();
 				
 				@Override
@@ -128,11 +141,11 @@ public class SkinLayer3DCompat implements ICompatModule {
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class SkinLayer3DMeshes {
-		private final Map<PlayerModelPart, AnimatedMesh> partMeshes = Maps.newHashMap();
+		private final Map<PlayerModelPart, SkinnedMesh> partMeshes = Maps.newHashMap();
 		
-		public void put(PlayerModelPart playerModelPart, AnimatedMesh animatedMesh) {
+		public void put(PlayerModelPart playerModelPart, SkinnedMesh animatedMesh) {
 			if (this.partMeshes.containsKey(playerModelPart)) {
-				AnimatedMesh oldMesh = this.partMeshes.get(playerModelPart);
+				SkinnedMesh oldMesh = this.partMeshes.get(playerModelPart);
 				
 				if (oldMesh != animatedMesh) {
 					oldMesh.destroy();
@@ -141,25 +154,10 @@ public class SkinLayer3DCompat implements ICompatModule {
 			
 			this.partMeshes.put(playerModelPart, animatedMesh);
 		}
-		
-		public void onDestroyed() {
-			this.partMeshes.forEach((k, v) -> v.destroy());
-		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	public static class EpicFight3DSkinLayerRenderer extends ModelRenderLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>, PlayerModel<AbstractClientPlayer>, CustomLayerFeatureRenderer, HumanoidMesh> {
-		private static Method skinUtil$getSkinTexture;
-		
-		static {
-			try {
-				skinUtil$getSkinTexture = SkinUtil.class.getDeclaredMethod("getSkinTexture", AbstractClientPlayer.class);
-				skinUtil$getSkinTexture.setAccessible(true);
-			} catch (NoSuchMethodException | SecurityException e) {
-				e.printStackTrace();
-			}
-		}
-		
 		private final Map<PlayerModelPart, Function<Player, Boolean>> partVisibilities = Maps.newHashMap();
 		
 		public EpicFight3DSkinLayerRenderer() {
@@ -235,7 +233,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 				}
 				
 				if (this.partVisibilities.get(playerModelPart).apply(player)) {
-					AnimatedMesh mesh = skin3dlayerMeshes.partMeshes.get(playerModelPart);
+					SkinnedMesh mesh = skin3dlayerMeshes.partMeshes.get(playerModelPart);
 					
 					if (mesh != null) {
 						mesh.draw(poseStack, buffer, RenderType.entityTranslucent(player.getSkinTextureLocation(), true), packedLight, 1.0F, 1.0F, 1.0F, 1.0F, overlay, entitypatch.getArmature(), poses);
@@ -244,20 +242,19 @@ public class SkinLayer3DCompat implements ICompatModule {
 			}
 		}
 		
-		private static AnimatedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
+		private static SkinnedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
             CustomizableCubeListBuilder builder = new CustomizableCubeListBuilder();
-			NativeImage skinImage = null;
-			
-			try {
-				skinImage = (NativeImage)skinUtil$getSkinTexture.invoke(null, player);
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
-				return null;
-			}
+			NativeImage skinImage = SkinLayer3DMixinSkinUtil.invokeGetSkinTexture(player);
             
             if (SolidPixelWrapper.wrapBox(builder, new WrappedNativeImage(skinImage), width, height, depth, textureU, textureV, topPivot, rotationOffset) != null) {
-                return SkinLayer3DTransformer.transformMesh(player, (skinlayerModelPart == null) ? new CustomizableModelPart(builder.getVanillaCubes(), builder.getCubes(), Collections.emptyMap()) : (CustomizableModelPart)skinlayerModelPart,
-                											vanillaModelPart, playerModelPart, builder.getVanillaCubes(), builder.getCubes());
+                return SkinLayer3DTransformer.transformMesh(
+	                			player
+	                		 , (skinlayerModelPart == null) ? new CustomizableModelPart(builder.getVanillaCubes(), builder.getCubes(), Collections.emptyMap()) : (CustomizableModelPart)skinlayerModelPart
+	                		 , vanillaModelPart
+	                		 , playerModelPart
+	                		 , builder.getVanillaCubes()
+	                		 , builder.getCubes()
+                	   );
             }
             
             return null;

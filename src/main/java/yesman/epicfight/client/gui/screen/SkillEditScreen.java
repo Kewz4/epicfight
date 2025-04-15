@@ -31,7 +31,7 @@ import yesman.epicfight.world.capabilities.skill.CapabilitySkill;
 
 @OnlyIn(Dist.CLIENT)
 public class SkillEditScreen extends Screen {
-	private static final ResourceLocation SKILL_EDIT_UI = new ResourceLocation(EpicFightMod.MODID, "textures/gui/screen/skill_edit.png");
+	private static final ResourceLocation SKILL_EDIT_UI = ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/screen/skill_edit.png");
 	private static final MutableComponent NO_SKILLS = Component.translatable("gui.epicfight.no_skills");
 	private static final int MAX_SHOWING_BUTTONS = 6;
 	
@@ -80,6 +80,11 @@ public class SkillEditScreen extends Screen {
 								
 								this.skills.skillContainers[skillSlot.universalOrdinal()].setSkill(learnedSkill);
 								EpicFightNetworkManager.sendToServer(new CPChangeSkill(skillSlot.universalOrdinal(), -1, learnedSkill.toString(), !this.minecraft.player.isCreative()));
+								
+								if (!this.skills.getLearnedSkills(skillSlot.category()).contains(learnedSkill)) {
+									this.skills.addLearnedSkill(learnedSkill);
+								}
+								
 								this.onClose();
 							}
 						}).setActive(this.skills.getSkillContainer(learnedSkill) == null));

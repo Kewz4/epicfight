@@ -6,7 +6,7 @@ import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.skill.Skill;
+import yesman.epicfight.skill.SkillBuilder;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
@@ -18,7 +18,7 @@ public class SwordmasterSkill extends PassiveSkill {
 	
 	private float speedBonus;
 	
-	public SwordmasterSkill(Builder<? extends Skill> builder) {
+	public SwordmasterSkill(SkillBuilder<? extends PassiveSkill> builder) {
 		super(builder);
 	}
 	
@@ -32,7 +32,7 @@ public class SwordmasterSkill extends PassiveSkill {
 	public void onInitiate(SkillContainer container) {
 		super.onInitiate(container);
 		
-		container.getExecuter().getEventListener().addEventListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID, (event) -> {
+		container.getExecutor().getEventListener().addEventListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID, (event) -> {
 			WeaponCategory heldWeaponCategory = event.getItemCapability().getWeaponCategory();
 			
 			for (WeaponCategory weaponCategory : AVAILABLE_WEAPON_TYPES) {
@@ -49,7 +49,7 @@ public class SwordmasterSkill extends PassiveSkill {
 	public void onRemoved(SkillContainer container) {
 		super.onRemoved(container);
 		
-		container.getExecuter().getEventListener().removeListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID);
+		container.getExecutor().getEventListener().removeListener(EventType.MODIFY_ATTACK_SPEED_EVENT, EVENT_UUID);
 	}
 	
 	@OnlyIn(Dist.CLIENT)

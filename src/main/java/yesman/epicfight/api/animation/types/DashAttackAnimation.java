@@ -2,41 +2,50 @@ package yesman.epicfight.api.animation.types;
 
 import javax.annotation.Nullable;
 
+import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.AttackPhaseProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.gameasset.Animations;
 
 public class DashAttackAnimation extends AttackAnimation {
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature) {
-		this(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, path, armature, false);
+	public DashAttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
+		this(transitionTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature, false);
 	}
 	
-	public DashAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, String path, Armature armature, boolean directional) {
-		this(convertTime, path, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
+	public DashAttackAnimation(float transitionTime, float antic, float preDelay, float contact, float recovery, @Nullable Collider collider, Joint colliderJoint, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, boolean directional) {
+		this(transitionTime, accessor, armature, new Phase(0.0F, antic, preDelay, contact, recovery, Float.MAX_VALUE, colliderJoint, collider));
 		
 		if (directional) {
 			this.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER);
 		}
 	}
 	
-	public DashAttackAnimation(float convertTime, String path, Armature armature, Phase... phases) {
-		super(convertTime, path, armature, phases);
+	public DashAttackAnimation(float transitionTime, AnimationAccessor<? extends DashAttackAnimation> accessor, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, accessor, armature, phases);
 		
 		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
-		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.333F));
+		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.4F));
+		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.1F));
+	}
+	
+	public DashAttackAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature, Phase... phases) {
+		super(transitionTime, path, armature, phases);
+		
+		this.addProperty(AttackAnimationProperty.ATTACK_SPEED_FACTOR, 0.5F);
+		this.addProperty(AttackPhaseProperty.IMPACT_MODIFIER, ValueModifier.multiplier(1.4F));
+		this.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.multiplier(1.1F));
 	}
 	
 	@Override
 	protected void bindPhaseState(Phase phase) {
-		float preDelay = phase.preDelay;
-		
 		this.stateSpectrumBlueprint
-			.newTimePair(phase.start, preDelay)
+			.newTimePair(phase.start, phase.preDelay)
 			.addState(EntityState.PHASE_LEVEL, 1)
 			.newTimePair(phase.start, phase.contact)
 			.addState(EntityState.CAN_SKILL_EXECUTION, false)
@@ -48,12 +57,11 @@ public class DashAttackAnimation extends AttackAnimation {
 			.addState(EntityState.INACTION, true)
 			.newTimePair(phase.antic, phase.end)
 			.addState(EntityState.TURNING_LOCKED, true)
-			.newTimePair(preDelay, phase.contact)
+			.newTimePair(phase.preDelay, phase.contact)
 			.addState(EntityState.ATTACKING, true)
 			.addState(EntityState.PHASE_LEVEL, 2)
-			.newConditionalTimePair((entitypatch) -> (entitypatch.isLastAttackSuccess() ? 1 : 0), phase.contact, phase.recovery)
-			.addConditionalState(0, EntityState.CAN_BASIC_ATTACK, false)
-			.addConditionalState(1, EntityState.CAN_BASIC_ATTACK, true)
+			.newTimePair(phase.contact, phase.recovery)
+			.addState(EntityState.CAN_BASIC_ATTACK, false)
 			.newTimePair(phase.contact, phase.end)
 			.addState(EntityState.PHASE_LEVEL, 3)
 			;

@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
@@ -23,29 +22,31 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.forgeevent.RegisterResourceLayersEvent;
-import yesman.epicfight.api.client.model.AnimatedMesh;
 import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.renderer.LayerRenderer;
 import yesman.epicfight.data.conditions.Condition.EntityPatchCondition;
 import yesman.epicfight.data.conditions.EpicFightConditions;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
 public class LayerUtil {
 	@FunctionalInterface
-	public interface LayerProvider<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends AnimatedMesh> {
+	public interface LayerProvider<E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> {
 		PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getLayer(JsonObject properties);
 	}
 	
-	public static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends AnimatedMesh> void addLayer(LayerRenderer<E, T, M> renderer, EntityType<?> entityType, List<Pair<ResourceLocation, JsonElement>> layers) {
+	public static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> void addLayer(LayerRenderer<E, T, M> renderer, EntityType<?> entityType, List<Pair<ResourceLocation, JsonElement>> layers) {
 		Map<ResourceLocation, LayerProvider<E, T, M, R, AM>> layersbyid = Maps.newHashMap();
 		
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "invisible"), LayerUtil::getInvisibleLayer);
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "eyes"), LayerUtil::getEyesLayer);
-		layersbyid.put(new ResourceLocation(EpicFightMod.MODID, "model_original"), LayerUtil::getOriginalModelLayer);
+		layersbyid.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "invisible"), LayerUtil::getInvisibleLayer);
+		layersbyid.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "eyes"), LayerUtil::getEyesLayer);
+		layersbyid.put(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "model_original"), LayerUtil::getOriginalModelLayer);
 		
 		MinecraftForge.EVENT_BUS.post(new RegisterResourceLayersEvent<> (layersbyid));
 		
@@ -72,7 +73,7 @@ public class LayerUtil {
 					clss = Class.forName(targetLayer);
 				}
 				
-				ResourceLocation rl = new ResourceLocation(layerType);
+				ResourceLocation rl = ResourceLocation.parse(layerType);
 				
 				if (!layersbyid.containsKey(rl)) {
 					throw new NoSuchElementException("No layer type " + layerType);
@@ -88,7 +89,7 @@ public class LayerUtil {
 					
 					for (JsonElement conditionElement : conditionsArray) {
 						JsonObject conditionObj = conditionElement.getAsJsonObject();
-						Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(new ResourceLocation(GsonHelper.getAsString(conditionObj, "predicate")));
+						Supplier<EntityPatchCondition> conditionProvider = EpicFightConditions.getConditionOrThrow(ResourceLocation.parse(GsonHelper.getAsString(conditionObj, "predicate")));
 						EntityPatchCondition condition = conditionProvider.get();
 						condition.read(conditionObj);
 						conditions[idx] = condition;
@@ -111,13 +112,17 @@ public class LayerUtil {
 				} else {
 					renderer.addCustomLayer(patchedLayer);
 				}
-			} catch (NoSuchElementException | ClassNotFoundException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {
-				EpicFightMod.LOGGER.error("Couldn't read layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
+			} catch (ClassNotFoundException e) {
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
+					EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
+				}
+			} catch (NoSuchElementException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {
+				EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
 			}
 		}
 	}
 	
-	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends AnimatedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getInvisibleLayer(JsonObject properties) {
+	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getInvisibleLayer(JsonObject properties) {
 		if ("none".equals(properties.get("target_layer").getAsString())) {
 			throw new IllegalArgumentException("Empty layer must define a target layer");
 		}
@@ -125,7 +130,7 @@ public class LayerUtil {
 		return new EmptyLayer<E, T, M> ();
 	}
 	
-	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends AnimatedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getEyesLayer(JsonObject properties) {
+	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getEyesLayer(JsonObject properties) {
 		if (!properties.has("texture")) {
 			throw new NoSuchElementException("Layer type epicfight:eyes requires to specify texture");
 		}
@@ -134,13 +139,13 @@ public class LayerUtil {
 			throw new NoSuchElementException("Layer type epicfight:eyes requires to specify model");
 		}
 		
-		ResourceLocation textureLocation = new ResourceLocation(properties.get("texture").getAsString());
-		AnimatedMesh mesh = Meshes.getOrCreateAnimatedMesh(Minecraft.getInstance().getResourceManager(), new ResourceLocation(properties.get("model").getAsString()), AnimatedMesh::new);
+		ResourceLocation textureLocation = ResourceLocation.parse(properties.get("texture").getAsString());
+		AssetAccessor<SkinnedMesh> mesh = Meshes.getOrCreate(ResourceLocation.parse(properties.get("model").getAsString()), jsonAssetLoader -> jsonAssetLoader.loadSkinnedMesh(SkinnedMesh::new));
 		
-		return new PatchedEyesLayer<> (textureLocation, () -> mesh);
+		return new PatchedEyesLayer<> (textureLocation, mesh);
 	}
 	
-	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends AnimatedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getOriginalModelLayer(JsonObject properties) {
+	private static <E extends LivingEntity, T extends LivingEntityPatch<E>, M extends EntityModel<E>, R extends LivingEntityRenderer<E, M>, AM extends SkinnedMesh> PatchedLayer<E, T, M, ? extends RenderLayer<E, M>> getOriginalModelLayer(JsonObject properties) {
 		if ("none".equals(properties.get("target_layer").getAsString())) {
 			throw new IllegalArgumentException("Original model layer must define a target layer");
 		}

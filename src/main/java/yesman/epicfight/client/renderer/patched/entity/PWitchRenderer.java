@@ -8,7 +8,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.api.client.model.MeshProvider;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.client.mesh.VillagerMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedItemInHandLayer;
@@ -22,7 +22,7 @@ public class PWitchRenderer extends PatchedLivingEntityRenderer<Witch, WitchPatc
 	}
 	
 	@Override
-	public MeshProvider<VillagerMesh> getDefaultMesh() {
+	public AssetAccessor<VillagerMesh> getDefaultMesh() {
 		return Meshes.WITCH;
 	}
 }

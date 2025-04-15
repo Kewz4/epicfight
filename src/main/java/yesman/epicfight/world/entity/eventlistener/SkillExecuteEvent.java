@@ -5,7 +5,6 @@ import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class SkillExecuteEvent extends PlayerEvent<PlayerPatch<?>> {
 	private final SkillContainer skillContainer;
-	private boolean resourceAvailable;
 	private boolean skillExecutable;
 	private boolean stateExecutable;
 	
@@ -19,20 +18,12 @@ public class SkillExecuteEvent extends PlayerEvent<PlayerPatch<?>> {
 		return this.skillContainer;
 	}
 	
-	public boolean isResourceAvailable() {
-		return this.resourceAvailable;
-	}
-
 	public boolean isSkillExecutable() {
 		return this.skillExecutable;
 	}
-
+	
 	public boolean isStateExecutable() {
 		return this.stateExecutable;
-	}
-
-	public void setResourcePredicate(boolean resourcePredicate) {
-		this.resourceAvailable = resourcePredicate;
 	}
 	
 	public void setSkillExecutable(boolean skillExecutable) {
@@ -44,7 +35,7 @@ public class SkillExecuteEvent extends PlayerEvent<PlayerPatch<?>> {
 	}
 	
 	public boolean isExecutable() {
-		return (this.resourceAvailable || this.getPlayerPatch().getOriginal().isCreative()) && this.skillExecutable && this.stateExecutable;
+		return this.skillExecutable && this.stateExecutable;
 	}
 	
 	public boolean shouldReserverKey() {

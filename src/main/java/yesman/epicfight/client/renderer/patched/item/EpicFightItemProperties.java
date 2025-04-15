@@ -12,7 +12,7 @@ import yesman.epicfight.world.item.SkillBookItem;
 @OnlyIn(Dist.CLIENT)
 public class EpicFightItemProperties {
 	public static void registerItemProperties() {
-		ItemProperties.register(EpicFightItems.SKILLBOOK.get(), new ResourceLocation("skill"), (itemstack, level, entity, i) -> {
+		ItemProperties.register(EpicFightItems.SKILLBOOK.get(), ResourceLocation.withDefaultNamespace("skill"), (itemstack, level, entity, i) -> {
 			Skill skill = SkillBookItem.getContainSkill(itemstack);
 			
 			if (skill != null) {
