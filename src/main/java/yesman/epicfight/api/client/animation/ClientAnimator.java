@@ -208,8 +208,6 @@ public class ClientAnimator extends Animator {
 				this.playAnimation(this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion), 0.0F);
 			}
 			
-			//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println("play when ends " + this.entitypatch.currentLivingMotion);
-			
 			this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
 		} else {
 			if (!this.compareCompositeMotion(this.entitypatch.currentCompositeMotion)) {
@@ -233,11 +231,8 @@ public class ClientAnimator extends Animator {
 				}
 			}
 			
-			//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println(this.currentMotion +" "+ this.entitypatch.currentLivingMotion);
-			
 			if (!this.compareMotion(this.entitypatch.currentLivingMotion) && this.entitypatch.currentLivingMotion != LivingMotions.DEATH) {
 				if (this.livingAnimations.containsKey(this.entitypatch.currentLivingMotion)) {
-					//if (this.entitypatch instanceof PlayerPatch<?>) System.out.println("play when living changed " + this.entitypatch.currentLivingMotion);
 					this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
 				}
 			}
@@ -448,8 +443,8 @@ public class ClientAnimator extends Animator {
 		}
 	}
 	
-	public void resetMotion() {
-		//this.currentMotion = LivingMotions.IDLE;
+	public void resetMotion(boolean resetPrevMotion) {
+		if (resetPrevMotion) this.currentMotion = LivingMotions.IDLE;
 		this.entitypatch.currentLivingMotion = LivingMotions.IDLE;
 	}
 	

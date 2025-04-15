@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.world.entity.Entity;
+import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -36,9 +37,9 @@ public abstract class MixinEntity {
 	public void lerpMotion(double pX, double pY, double pZ, CallbackInfo callback) {
 		Entity e = (Entity)(Object)this;
 		
-		// Cancel reflecting server delta movement while playing action animation
+		// Remove the delta movement from the server while playing animation with REMOVE_DELTA_MOVEMENT property set as true
 		EpicFightCapabilities.getUnparameterizedEntityPatch(e, LivingEntityPatch.class).ifPresent(entitypatch -> {
-			if (entitypatch.getAnimator().getPlayerFor(null).getRealAnimation().get().isMainFrameAnimation()) {
+			if (entitypatch.getAnimator().getPlayerFor(null).getRealAnimation().get().getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
 				callback.cancel();
 			}
 		});

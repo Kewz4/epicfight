@@ -7,7 +7,9 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.TransformSheet;
+import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.animation.property.MoveCoordFunctions;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
@@ -22,6 +24,9 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class EnderDragonAttackAnimation extends AttackAnimation {
 	public EnderDragonAttackAnimation(float convertTime, float antic, float preDelay, float contact, float recovery, Collider collider, Joint colliderJoint, AnimationAccessor<? extends EnderDragonAttackAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		super(convertTime, antic, preDelay, contact, recovery, collider, colliderJoint, accessor, armature);
+		
+		this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD);
+		this.addProperty(ActionAnimationProperty.COORD_SET_TICK, null);
 	}
 	
 	@Override
@@ -62,13 +67,10 @@ public class EnderDragonAttackAnimation extends AttackAnimation {
 		}
 	}
 	
-	//this.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.RAW_COORD);
-	//this.addProperty(ActionAnimationProperty.COORD_SET_TICK, null);
-	
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
 		if (entitypatch.isLogicalClient()) {
-			entitypatch.getClientAnimator().resetMotion();
+			entitypatch.getClientAnimator().resetMotion(true);
 			entitypatch.getClientAnimator().resetCompositeMotion();
 		}
 	}
