@@ -225,7 +225,7 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record PovSettings(TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
+	public static record PovSettings(@Nullable TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
 	}
 	
 	@OnlyIn(Dist.CLIENT)

@@ -511,9 +511,16 @@ public class RenderEngine {
 			}
 			
 			// First person camera correction
-			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isBattleMode() && localPlayerPatch.getPovSettings() != null && localPlayerPatch.getPovSettings().cameraTransform() != null) {
+			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isBattleMode() && !localPlayerPatch.getFirstPersonLayer().isOff() && localPlayerPatch.hasCameraAnimation()) {
 				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
-				JointTransform cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+				JointTransform cameraTransform;
+				
+				if (localPlayerPatch.getFirstPersonLayer().animationPlayer.getAnimation().get().isLinkAnimation() || localPlayerPatch.getPovSettings() == null) {
+					cameraTransform = localPlayerPatch.getFirstPersonLayer().getLinkCameraTransform().getInterpolatedTransform(time);
+				} else {
+					cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+				}
+				
 				float xRot = localPlayerPatch.getOriginal().getXRot();
 				float yRot = localPlayerPatch.getOriginal().getYRot();
 				
@@ -527,7 +534,7 @@ public class RenderEngine {
 				
 				camera.move(translation.x, translation.y, translation.z);
 				
-				event.setPitch(event.getPitch() - CAMERA_ROTATION_EULER.x);
+				event.setPitch(event.getPitch() + CAMERA_ROTATION_EULER.x);
 				event.setYaw(event.getYaw() + CAMERA_ROTATION_EULER.y);
 				event.setRoll(event.getRoll() + CAMERA_ROTATION_EULER.z);
 			}

@@ -1,5 +1,6 @@
 package yesman.epicfight.client.world.capabilites.entitypatch.player;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +24,10 @@ import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import yesman.epicfight.api.animation.JointTransform;
+import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.ActionAnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
@@ -40,6 +44,7 @@ import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPChangePlayerMode;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
@@ -63,7 +68,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	private float lockOnYRot;
 	private float lockOnYRotO;
 	
-	private Layer firstPersonLayer = new FirstPersonLayer();
+	private FirstPersonLayer firstPersonLayer = new FirstPersonLayer();
 	private AnimationSubFileReader.PovSettings povSettings;
 	
 	@Override
@@ -95,37 +100,6 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			this.prevChargingAmount = 0;
 		}
 		
-		final AssetAccessor<? extends StaticAnimation> currentPlaying = this.firstPersonLayer.animationPlayer.getRealAnimation();
-		
-		boolean noPovAnimation = this.getClientAnimator().iterVisibleLayersUntilFalse(layer -> {
-			if (layer.isOff()) {
-				return true;
-			}
-			
-			Optional<DirectStaticAnimation> optPovAnimation = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_ANIMATION);
-			Optional<PovSettings> optPovSettings = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_SETTINGS);
-			
-			optPovAnimation.ifPresent(povAnimation -> {
-				if (!povAnimation.equals(currentPlaying.get())) {
-					this.firstPersonLayer.playAnimation(povAnimation, this, 0.0F);
-					this.povSettings = optPovSettings.get();
-				}
-			});
-			
-			return !optPovAnimation.isPresent();
-		});
-		
-		if (noPovAnimation && !currentPlaying.equals(Animations.EMPTY_ANIMATION)) {
-			this.firstPersonLayer.playAnimation(Animations.EMPTY_ANIMATION, this, 0.0F);
-			this.povSettings = null;
-		}
-		
-		this.firstPersonLayer.update(this);
-		
-		if (this.firstPersonLayer.animationPlayer.getRealAnimation().equals(Animations.EMPTY_ANIMATION)) {
-			this.povSettings = null;
-		}
-		
 		super.tick(event);
 	}
 
@@ -135,6 +109,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		
 		super.clientTick(event);
 		
+		// Handle targeting entity
 		HitResult cameraHitResult = this.minecraft.hitResult;
 		
 		if (cameraHitResult != null && cameraHitResult.getType() == HitResult.Type.ENTITY) {
@@ -161,6 +136,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			}
 		}
 		
+		// Handle camera lock - on
 		if (this.rayTarget != null) {
 			if (this.targetLockedOn) {
 				Vec3 playerPosition = this.original.getEyePosition();
@@ -208,6 +184,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			this.targetLockedOn = false;
 		}
 		
+		// Handle camera zoom in/out
 		CapabilityItem itemCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		
 		switch (itemCap.getZoomInType()) {
@@ -235,6 +212,37 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			break;
 		default:
 			ClientEngine.getInstance().renderEngine.zoomOut(0);
+		}
+		
+		// Handle first person animation
+		final AssetAccessor<? extends StaticAnimation> currentPlaying = this.firstPersonLayer.animationPlayer.getRealAnimation();
+		
+		boolean noPovAnimation = this.getClientAnimator().iterVisibleLayersUntilFalse(layer -> {
+			if (layer.isOff()) {
+				return true;
+			}
+			
+			Optional<DirectStaticAnimation> optPovAnimation = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_ANIMATION);
+			Optional<PovSettings> optPovSettings = layer.animationPlayer.getRealAnimation().get().getProperty(ClientAnimationProperties.POV_SETTINGS);
+			
+			optPovAnimation.ifPresent(povAnimation -> {
+				if (!povAnimation.equals(currentPlaying.get())) {
+					this.firstPersonLayer.playAnimation(povAnimation, layer.animationPlayer.getRealAnimation(), this, 0.0F);
+					this.povSettings = optPovSettings.get();
+				}
+			});
+			
+			return !optPovAnimation.isPresent();
+		});
+		
+		if (noPovAnimation && !currentPlaying.equals(Animations.EMPTY_ANIMATION)) {
+			this.firstPersonLayer.off();
+		}
+		
+		this.firstPersonLayer.update(this);
+		
+		if (this.firstPersonLayer.animationPlayer.getAnimation().equals(Animations.EMPTY_ANIMATION)) {
+			this.povSettings = null;
 		}
 	}
 	
@@ -358,12 +366,16 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		this.targetLockedOn = !this.targetLockedOn;
 	}
 	
-	public Layer getFirstPersonLayer() {
+	public FirstPersonLayer getFirstPersonLayer() {
 		return this.firstPersonLayer;
 	}
 	
 	public AnimationSubFileReader.PovSettings getPovSettings() {
 		return this.povSettings;
+	}
+	
+	public boolean hasCameraAnimation() {
+		return this.povSettings != null && this.povSettings.cameraTransform() != null;
 	}
 	
 	@Override
@@ -441,14 +453,57 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private class FirstPersonLayer extends Layer {
+	public class FirstPersonLayer extends Layer {
+		private TransformSheet linkCameraTransform = new TransformSheet(List.of(new Keyframe(0.0F, JointTransform.empty()), new Keyframe(Float.MAX_VALUE, JointTransform.empty())));
+		
 		public FirstPersonLayer() {
 			super(null);
+		}
+		
+		public void playAnimation(AssetAccessor<? extends StaticAnimation> nextFirstPersonAnimation, AssetAccessor<? extends StaticAnimation> originalAnimation, LivingEntityPatch<?> entitypatch, float transitionTimeModifier) {
+			Optional<PovSettings> povSettings = originalAnimation.get().getProperty(ClientAnimationProperties.POV_SETTINGS);
+			
+			boolean hasPrevCameraAnimation = LocalPlayerPatch.this.povSettings != null && LocalPlayerPatch.this.povSettings.cameraTransform() != null;
+			boolean hasNextCameraAnimation = povSettings.isPresent() && povSettings.get().cameraTransform() != null;
+			
+			// Activate pov animation
+			if (hasPrevCameraAnimation || hasNextCameraAnimation) {
+				if (hasPrevCameraAnimation) {
+					this.linkCameraTransform.getKeyframes()[0].transform().copyFrom(LocalPlayerPatch.this.povSettings.cameraTransform().getInterpolatedTransform(this.animationPlayer.getElapsedTime()));
+				} else {
+					this.linkCameraTransform.getKeyframes()[0].transform().copyFrom(JointTransform.empty());
+				}
+				
+				if (hasNextCameraAnimation) {
+					this.linkCameraTransform.getKeyframes()[1].transform().copyFrom(povSettings.get().cameraTransform().getKeyframes()[0].transform());
+				} else {
+					this.linkCameraTransform.getKeyframes()[1].transform().clearTransform();
+				}
+				
+				this.linkCameraTransform.getKeyframes()[1].setTime(nextFirstPersonAnimation.get().getTransitionTime());
+			}
+			
+			super.playAnimation(nextFirstPersonAnimation, entitypatch, transitionTimeModifier);
+		}
+		
+		public void off() {
+			// Off camera animation
+			if (LocalPlayerPatch.this.povSettings != null && LocalPlayerPatch.this.povSettings.cameraTransform() != null) {
+				this.linkCameraTransform.getKeyframes()[0].transform().copyFrom(LocalPlayerPatch.this.povSettings.cameraTransform().getInterpolatedTransform(this.animationPlayer.getElapsedTime()));
+				this.linkCameraTransform.getKeyframes()[1].transform().copyFrom(JointTransform.empty());
+				this.linkCameraTransform.getKeyframes()[1].setTime(EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME);
+			}
+			
+			this.playAnimation(Animations.EMPTY_ANIMATION, LocalPlayerPatch.this, EpicFightSharedConstants.GENERAL_ANIMATION_TRANSITION_TIME);
 		}
 		
 		@Override
 		protected Pose getCurrentPose(LivingEntityPatch<?> entitypatch) {
 			return this.animationPlayer.isEmpty() ? super.getCurrentPose(entitypatch) : this.animationPlayer.getCurrentPose(entitypatch, 0.0F);
+		}
+		
+		public TransformSheet getLinkCameraTransform() {
+			return this.linkCameraTransform;
 		}
 	}
 }

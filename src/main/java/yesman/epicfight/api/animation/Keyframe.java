@@ -23,6 +23,10 @@ public class Keyframe {
 		return this.timeStamp;
 	}
 	
+	public void setTime(float time) {
+		this.timeStamp = time;
+	}
+	
 	public JointTransform transform() {
 		return this.transform;
 	}

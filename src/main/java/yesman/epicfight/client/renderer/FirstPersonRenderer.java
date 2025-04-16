@@ -23,9 +23,11 @@ import net.minecraft.client.renderer.entity.layers.PlayerItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.layers.SpinAttackEffectLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.model.Meshes;
@@ -56,24 +58,38 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 	}
 	
 	@Override
-	public void render(LocalPlayer entity, LocalPlayerPatch entitypatch, LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>> renderer, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
-		if (entitypatch.getPovSettings() != null) {
-			Pose pose = entitypatch.getFirstPersonLayer().getEnabledPose(entitypatch, true, partialTicks);
-			OpenMatrix4f[] poses = entitypatch.getArmature().getPoseAsTransformMatrix(pose, false);
+	public void render(LocalPlayer entity, LocalPlayerPatch localPlayerPatch, LivingEntityRenderer<LocalPlayer, PlayerModel<LocalPlayer>> renderer, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
+		if (localPlayerPatch.getPovSettings() != null) {
+			Pose pose = localPlayerPatch.getFirstPersonLayer().getEnabledPose(localPlayerPatch, true, partialTicks);
+			OpenMatrix4f[] poses = localPlayerPatch.getArmature().getPoseAsTransformMatrix(pose, false);
 			poseStack.pushPose();
 			Matrix4f lastPose = new Matrix4f(poseStack.last().pose());
 			float standingEyeHeight = entity.getStandingEyeHeight(net.minecraft.world.entity.Pose.STANDING, entity.getDimensions(net.minecraft.world.entity.Pose.STANDING));
 			
 			poseStack.setIdentity();
+			
+			if (localPlayerPatch.hasCameraAnimation()) {
+				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
+				JointTransform cameraTransform;
+				
+				if (localPlayerPatch.getFirstPersonLayer().animationPlayer.getAnimation().get().isLinkAnimation() || localPlayerPatch.getPovSettings() == null) {
+					cameraTransform = localPlayerPatch.getFirstPersonLayer().getLinkCameraTransform().getInterpolatedTransform(time);
+				} else {
+					cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+				}
+				
+				MathUtils.mulStack(poseStack, cameraTransform.toMatrix().invert());
+			}
+			
 			poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
 			poseStack.mulPoseMatrix(lastPose);
 			
-			HumanoidMesh mesh = this.getMeshProvider(entitypatch).get();
-			this.prepareModel(mesh, entity, entitypatch, renderer);
+			HumanoidMesh mesh = this.getMeshProvider(localPlayerPatch).get();
+			this.prepareModel(mesh, entity, localPlayerPatch, renderer);
 			
-			if (!entitypatch.getOriginal().isInvisible()) {
-				Map<String, Boolean> visibilities = entitypatch.getPovSettings().visibilities();
-				boolean defaultVisibility = entitypatch.getPovSettings().visibilityOthers();
+			if (!localPlayerPatch.getOriginal().isInvisible()) {
+				Map<String, Boolean> visibilities = localPlayerPatch.getPovSettings().visibilities();
+				boolean defaultVisibility = localPlayerPatch.getPovSettings().visibilityOthers();
 				
 				for (Map.Entry<String, SkinnedMeshPart> entry : mesh.getPartEntry()) {
 					if (visibilities.containsKey(entry.getKey())) {
@@ -84,17 +100,17 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 				}
 				
 				RenderType renderType = RenderType.entityCutoutNoCull(entity.getSkinTextureLocation());
-				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, localPlayerPatch.getArmature(), poses);
 			}
 			
 			if (!entity.isSpectator()) {
-				this.renderLayer(renderer, entitypatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
+				this.renderLayer(renderer, localPlayerPatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
 			}
 			
 			poseStack.popPose();
 		} else {
-			Pose pose = entitypatch.getAnimator().getPose(partialTicks);
-			OpenMatrix4f[] poses = entitypatch.getArmature().getPoseAsTransformMatrix(pose, false);
+			Pose pose = localPlayerPatch.getAnimator().getPose(partialTicks);
+			OpenMatrix4f[] poses = localPlayerPatch.getArmature().getPoseAsTransformMatrix(pose, false);
 			poseStack.pushPose();
 			
 			Matrix4f lastPose = new Matrix4f(poseStack.last().pose());
@@ -112,10 +128,10 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 			poseStack.translate(0.0F, -standingEyeHeight - 0.05F, correction);
 			poseStack.mulPoseMatrix(lastPose);
 			
-			HumanoidMesh mesh = this.getMeshProvider(entitypatch).get();
-			this.prepareModel(mesh, entity, entitypatch, renderer);
+			HumanoidMesh mesh = this.getMeshProvider(localPlayerPatch).get();
+			this.prepareModel(mesh, entity, localPlayerPatch, renderer);
 			
-			if (!entitypatch.getOriginal().isInvisible()) {
+			if (!localPlayerPatch.getOriginal().isInvisible()) {
 				for (SkinnedMeshPart p : mesh.getAllParts()) {
 					p.setHidden(true);
 				}
@@ -126,11 +142,11 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 				mesh.rightSleeve.setHidden(false);
 				
 				RenderType renderType = RenderType.entityCutoutNoCull(entity.getSkinTextureLocation());
-				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, entitypatch.getArmature(), poses);
+				mesh.draw(poseStack, buffer, renderType, packedLight, 1.0F, 1.0F, 1.0F, 1.0F, OverlayTexture.NO_OVERLAY, localPlayerPatch.getArmature(), poses);
 			}
 			
 			if (!entity.isSpectator()) {
-				this.renderLayer(renderer, entitypatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
+				this.renderLayer(renderer, localPlayerPatch, entity, poses, buffer, poseStack, packedLight, partialTicks);
 			}
 			
 			poseStack.popPose();
