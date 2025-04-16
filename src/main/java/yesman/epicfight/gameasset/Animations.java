@@ -1131,12 +1131,8 @@ public class Animations {
 		LONGSWORD_GUARD_ACTIVE_HIT2 = builder.nextAccessor("biped/skill/guard_longsword_hit_active2", (accessor) -> new GuardAnimation(0.05F, 0.2F, accessor, Armatures.BIPED));
 		
 		SWORD_DUAL_GUARD_HIT = builder.nextAccessor("biped/skill/guard_dualsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
-		BIPED_COMMON_NEUTRALIZED = builder.nextAccessor("biped/skill/guard_break1", (accessor) ->
-			new LongHitAnimation(0.05F, accessor, Armatures.BIPED)
-				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true));
-		GREATSWORD_GUARD_BREAK = builder.nextAccessor("biped/skill/guard_break2", (accessor) ->
-			new LongHitAnimation(0.05F, accessor, Armatures.BIPED)
-				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true));
+		BIPED_COMMON_NEUTRALIZED = builder.nextAccessor("biped/skill/guard_break1", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
+		GREATSWORD_GUARD_BREAK = builder.nextAccessor("biped/skill/guard_break2", (accessor) -> new LongHitAnimation(0.05F, accessor, Armatures.BIPED));
 		
 		LONGSWORD_GUARD_HIT = builder.nextAccessor("biped/skill/guard_longsword_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
 		SPEAR_GUARD_HIT = builder.nextAccessor("biped/skill/guard_spear_hit", (accessor) -> new GuardAnimation(0.05F, accessor, Armatures.BIPED));
@@ -1221,9 +1217,7 @@ public class Animations {
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
 		
-		BIPED_LANDING = builder.nextAccessor("biped/living/landing", (accessor) ->
-			new LongHitAnimation(0.03F, accessor, Armatures.BIPED)
-				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true));
+		BIPED_LANDING = builder.nextAccessor("biped/living/landing", (accessor) -> new LongHitAnimation(0.03F, accessor, Armatures.BIPED));
 		
 		BIPED_KNOCKDOWN = builder.nextAccessor("biped/combat/knockdown", (accessor) -> new KnockdownAnimation(0.08F, accessor, Armatures.BIPED));
 		BIPED_DEATH = builder.nextAccessor("biped/living/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.BIPED));

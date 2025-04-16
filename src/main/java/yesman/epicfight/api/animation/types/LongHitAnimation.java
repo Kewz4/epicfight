@@ -11,6 +11,7 @@ public class LongHitAnimation extends ActionAnimation {
 		super(transitionTime, accessor, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		this.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true);
 		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);
 		
 		this.stateSpectrumBlueprint.clear()
@@ -31,6 +32,7 @@ public class LongHitAnimation extends ActionAnimation {
 		super(transitionTime, Float.MAX_VALUE, path, armature);
 		
 		this.addProperty(ActionAnimationProperty.STOP_MOVEMENT, true);
+		this.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true);
 		this.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true);
 		
 		this.stateSpectrumBlueprint.clear()
