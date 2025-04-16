@@ -37,6 +37,7 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.asset.JsonAssetLoader;
 import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.data.reloader.SkillManager;
+import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.utils.InstantiateInvoker;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
@@ -172,11 +173,17 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		}, (list1, list2) -> {
 			list1.addAll(list2);
 			return list1;
-		}).forEach((animation) -> {
-			animation.get().postInit();
+		}).forEach((accessor) -> {
+			accessor.ifPresentOrElse(StaticAnimation::postInit, () -> {
+				EpicFightMod.LOGGER.error("Animation loading failed: No animation inside accessor: " + accessor.registryName());
+				
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
+					new AssetLoadingException("No animation inside accessor: " + accessor.registryName()).printStackTrace();
+				}
+			});
 			
 			if (EpicFightSharedConstants.isPhysicalClient()) {
-				AnimationManager.readAnimationProperties(animation.get());
+				AnimationManager.readAnimationProperties(accessor.get());
 			}
 		});
 	}
@@ -325,7 +332,13 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 			if (NO_WARNING_MODID.contains(rl.getNamespace())) {
 				return;
 			} else {
-				throw new IllegalStateException("No constructor information has provided in User animation " + rl);
+				EpicFightMod.LOGGER.error("Datapack animation reading failed: No constructor information has provided: " + rl);
+				
+				if (EpicFightSharedConstants.IS_DEV_ENV) {
+					new IllegalStateException("No constructor information has provided in User animation, " + rl + "\nPlease remove this resouce if it's unnecessary to optimize your project.").printStackTrace();
+				}
+				
+				return;
 			}
 		}
 		
