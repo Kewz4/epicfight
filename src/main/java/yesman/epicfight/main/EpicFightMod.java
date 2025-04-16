@@ -1,6 +1,8 @@
 package yesman.epicfight.main;
 
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -143,6 +145,18 @@ public class EpicFightMod {
 	public static final String MODID = "epicfight";
 	public static final String EPICSKINS_MODID = "epicskins";
 	public static final Logger LOGGER = LogManager.getLogger(MODID);
+	
+	public static void logAndStacktraceIfDevSide(BiConsumer<Logger, String> logFunction, String message, Function<String, Throwable> exceptionProvider) {
+		logAndStacktraceIfDevSide(logFunction, message, exceptionProvider, message);
+	}
+	
+	public static void logAndStacktraceIfDevSide(BiConsumer<Logger, String> logFunction, String message, Function<String, Throwable> exceptionProvider, String stackTraceMessage) {
+		logFunction.accept(LOGGER, message);
+		
+		if (exceptionProvider != null && EpicFightSharedConstants.IS_DEV_ENV) {
+			exceptionProvider.apply(stackTraceMessage).printStackTrace();
+		}
+	}
 	
     public EpicFightMod(FMLJavaModLoadingContext context) {
     	if (EpicFightSharedConstants.isPhysicalClient()) {
