@@ -10,6 +10,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.Logger;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -39,6 +41,7 @@ import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.api.exception.AssetLoadingException;
 import yesman.epicfight.api.utils.InstantiateInvoker;
+import yesman.epicfight.api.utils.MutableBoolean;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightMod;
@@ -166,21 +169,32 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 		
 		SkillManager.reloadAllSkillsAnimations();
 		
-		this.animations.values().stream().reduce(Lists.<AssetAccessor<? extends StaticAnimation>>newArrayList(), (list, anim) -> {
-			list.add(anim.getAccessor());
-			list.addAll(anim.getSubAnimations());
+		this.animations.entrySet().stream().reduce(Lists.<AssetAccessor<? extends StaticAnimation>>newArrayList(), (list, entry) -> {
+			MutableBoolean init = new MutableBoolean(true);
+			
+			if (entry.getValue() == null || entry.getValue().getAccessor() == null) {
+				EpicFightMod.logAndStacktraceIfDevSide(Logger::error, "Invalid animation implementation: " + entry.getKey(), AssetLoadingException::new);
+				init.set(false);
+			}
+			
+			entry.getValue().getSubAnimations().forEach((subAnimation) -> {
+				if (subAnimation == null || subAnimation.get() == null) {
+					EpicFightMod.logAndStacktraceIfDevSide(Logger::error, "Invalid sub animation implementation: " + entry.getKey(), AssetLoadingException::new);
+					init.set(false);
+				}
+			});
+			
+			if (init.value()) {
+				list.add(entry.getValue().getAccessor());
+				list.addAll(entry.getValue().getSubAnimations());
+			}
+			
 			return list;
 		}, (list1, list2) -> {
 			list1.addAll(list2);
 			return list1;
 		}).forEach((accessor) -> {
-			accessor.ifPresentOrElse(StaticAnimation::postInit, () -> {
-				EpicFightMod.LOGGER.error("Animation loading failed: No animation inside accessor: " + accessor.registryName());
-				
-				if (EpicFightSharedConstants.IS_DEV_ENV) {
-					new AssetLoadingException("No animation inside accessor: " + accessor.registryName()).printStackTrace();
-				}
-			});
+			accessor.doOrThrow(StaticAnimation::postInit);
 			
 			if (EpicFightSharedConstants.isPhysicalClient()) {
 				AnimationManager.readAnimationProperties(accessor.get());
@@ -332,12 +346,12 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 			if (NO_WARNING_MODID.contains(rl.getNamespace())) {
 				return;
 			} else {
-				EpicFightMod.LOGGER.error("Datapack animation reading failed: No constructor information has provided: " + rl);
-				
-				if (EpicFightSharedConstants.IS_DEV_ENV) {
-					new IllegalStateException("No constructor information has provided in User animation, " + rl + "\nPlease remove this resouce if it's unnecessary to optimize your project.").printStackTrace();
-				}
-				
+				EpicFightMod.logAndStacktraceIfDevSide(
+					  Logger::error
+					, "Datapack animation reading failed: No constructor information has provided: " + rl
+					, IllegalStateException::new
+					, "No constructor information has provided in User animation, " + rl + "\nPlease remove this resouce if it's unnecessary to optimize your project."
+				);
 				return;
 			}
 		}
