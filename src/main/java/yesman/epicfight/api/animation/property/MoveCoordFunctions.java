@@ -257,8 +257,8 @@ public class MoveCoordFunctions {
 			float worldLength = Math.max((float)toDestWorld.length() - entityRadius, 0.0F);
 			float animLength = toDestAnim.length();
 			
-			float dot = entitypatch.getAnimator().getVariables().get(ActionAnimation.INITIAL_LOOK_VEC_DOT, self.getRealAnimation());
-			float lookLength = Mth.lerp(dot, animLength, worldLength);
+			Float dot = entitypatch.getAnimator().getVariables().get(ActionAnimation.INITIAL_LOOK_VEC_DOT, self.getRealAnimation());
+			float lookLength = Mth.lerp(dot == null ? 1.0F : dot.floatValue(), animLength, worldLength);
 			float scale = Math.min(lookLength / animLength, 1.0F);
 			
 			if (self.isLinkAnimation()) {

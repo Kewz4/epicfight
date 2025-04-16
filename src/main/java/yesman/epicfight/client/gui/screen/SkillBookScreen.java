@@ -600,7 +600,7 @@ public class SkillBookScreen extends Screen {
 			}
 			
 			if (this.isHovered()) {
-				this.setTooltip(Tooltip.create(this.getMessage()));
+				this.setTooltip(this.getMessage() == null ? null : Tooltip.create(this.getMessage()));
 			} else {
 				this.setTooltip(null);
 			}
