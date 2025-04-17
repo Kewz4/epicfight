@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.event.IModBusEvent;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.skill.SkillBuilder;
@@ -49,11 +50,31 @@ public class SkillBuildEvent extends Event implements IModBusEvent {
 			final ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(this.modid, name);
 			builder.setRegistryName(registryName);
 			
-			final S skill = constructor.apply(builder);
+			SkillCreateEvent<S, B> skillCreateEvent = new SkillCreateEvent<> (registryName, builder);
+			ModLoader.get().postEvent(skillCreateEvent);
 			
+			final S skill = constructor.apply(builder);
 			this.modSkills.add(skill);
 			
 			return skill;
+		}
+		
+		public class SkillCreateEvent<S extends Skill, B extends SkillBuilder<S>> extends Event implements IModBusEvent {
+			private final ResourceLocation registryName;
+			private final B skillBuilder;
+			
+			private SkillCreateEvent(ResourceLocation registryName, B skillBuilder) {
+				this.registryName = registryName;
+				this.skillBuilder = skillBuilder;
+			}
+			
+			public ResourceLocation getRegistryName() {
+				return this.registryName;
+			}
+			
+			public B getSkillBuilder() {
+				return this.skillBuilder;
+			}
 		}
 	}
 }
