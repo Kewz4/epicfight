@@ -567,10 +567,11 @@ public class ClientAnimator extends Animator {
 				continue;
 			}
 			
-			if (!layer.isOff()) {
+			if (!layer.isOff() && layer.animationPlayer.getRealAnimation().get().isMainFrameAnimation()) {
 				stateMap.putAll(layer.animationPlayer.getAnimation().get().getStatesMap(this.entitypatch, layer.animationPlayer.getElapsedTime()));
 			}
 			
+			// put base layer states
 			if (layer.priority == this.baseLayer.baseLayerPriority) {
 				stateMap.putAll(this.baseLayer.animationPlayer.getAnimation().get().getStatesMap(this.entitypatch, this.baseLayer.animationPlayer.getElapsedTime()));
 			}

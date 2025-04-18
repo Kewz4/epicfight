@@ -100,42 +100,43 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
- *  Changes from 20.9.7 -> 20.10.1
+ *  Major version change
+ *  20.9.7 -> 20.10.1
  *  
- *  1. Fixed skill book screen not showing up when Enhanced Visuals installed
+ *  Cloth simulation for cape
+ *  Added arrow trails
+ *  Added first person animations for some animations
  *  
- *  2. Fixed witches not throwing potion
+ *  Fixed witches not throwing potion
+ *  Fixed custom armors parts invisible
+ *  Fixed a crash when selecting mob capability model in datapack editor
+ *  Enhanced the accuracy of tracing ability of attack animations
+ *  Fixed skill book screen not showing up when Enhanced Visuals installed
  *  
- *  3. Fixed custom armors parts invisible
+ *  Fixed player model jitters when flying with elytra
+ *  Fixed guard skill activates rapidly when blocking vanilla attacks
  *  
- *  4. Fixed a crash when selecting mob capability model in datapack editor
+ *  ***************************************************************
  *  
- *  5. Enhanced the accuracy of tracing ability of the player when attacking
+ *  Minor changes in alpha verison
+ *  20.10.310 -> 20.10.401
  *  
- *  6. Cloth simulation for cape
- *  
- *  7. Fixed player model jitters when flying with elytra
- *  
+ *  Fixed guard skill activates rapidly when blocking vanilla attacks
+ *  Better null check for {@link AnimationVariables.class}
+ *  Added {@link SkillCreateEvent.class} to modify skill builder before instantiate skills
+ *  Added first-person animations for drink and eat animation
+ * 
  *  --- TO DO ---
  *  
  *  Update language files (always)
- *  
  *  Add an reach property to attack animation (idea)
- *  
  *  Add an alert function when an entity targeting the player tries grappling or execution attack
- *  
  *  Add UI for execution resistance
- *  
  *  Add functionality to blooming effect (resists wither effect)
- *  
  *  Add a screen for setting animation properties in datapack editor
- *  
  *  First person animation system by adding /data/ folder in the path, and few samples
- *  
  *  Enhance the stun system (maybe remove or barely leave knockback)
- *  
  *  Add toasts & achievements to guide beginners
- *  
  *  Add resource hashing for animation file to prevent client modifying animation by resource pack
  *  
  *  @author yesman

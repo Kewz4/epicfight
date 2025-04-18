@@ -239,8 +239,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	public void cancelItemUse() {
-		this.original.stopUsingItem();
-		ForgeEventFactory.onUseItemStop(this.original, this.original.getUseItem(), this.original.getUseItemRemainingTicks());
+		if (this.original.isUsingItem()) {
+			this.original.stopUsingItem();
+			ForgeEventFactory.onUseItemStop(this.original, this.original.getUseItem(), this.original.getUseItemRemainingTicks());
+		}
 	}
 	
 	public CapabilityItem getHoldingItemCapability(InteractionHand hand) {
