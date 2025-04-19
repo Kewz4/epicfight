@@ -50,7 +50,7 @@ public class SelectAnimationScreen extends Screen {
 		this.animationList.refreshAniamtionList(null);
 		
 		if (armature != null) {
-			this.searchBox.setValue(armature.toString().substring(armature.toString().indexOf("/") + 1));
+			this.searchBox.setValue(armature.get().toString().substring(armature.get().toString().indexOf("/") + 1));
 			this.searchBox.moveCursorTo(0);
 		}
 	}
