@@ -121,10 +121,12 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Minor changes in alpha verison
  *  20.10.310 -> 20.10.401
  *  
- *  Fixed guard skill activates rapidly when blocking vanilla attacks
- *  Better null check for {@link AnimationVariables.class}
- *  Added {@link SkillCreateEvent.class} to modify skill builder before instantiate skills
  *  Added first-person animations for drink and eat animation
+ *  Fixed guard consuming stamina rapidly when players block vanilla attacks
+ *  Fixed arrow trail remaining after hitting a player in creative mode
+ *  Corrected the shield's location when in the player's back
+ *  Added {@link SkillCreateEvent.class} to modify skill builder before instantiate skills
+ *  Better null check for {@link AnimationVariables.class}
  * 
  *  --- TO DO ---
  *  
