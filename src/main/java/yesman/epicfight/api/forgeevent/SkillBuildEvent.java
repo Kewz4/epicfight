@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.GenericEvent;
 import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.event.IModBusEvent;
 import yesman.epicfight.skill.Skill;
@@ -50,7 +51,7 @@ public class SkillBuildEvent extends Event implements IModBusEvent {
 			final ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(this.modid, name);
 			builder.setRegistryName(registryName);
 			
-			SkillCreateEvent<S, B> skillCreateEvent = new SkillCreateEvent<> (registryName, builder);
+			SkillCreateEvent<B> skillCreateEvent = new SkillCreateEvent<> (registryName, builder);
 			ModLoader.get().postEvent(skillCreateEvent);
 			
 			final S skill = constructor.apply(builder);
@@ -59,11 +60,14 @@ public class SkillBuildEvent extends Event implements IModBusEvent {
 			return skill;
 		}
 		
-		public class SkillCreateEvent<S extends Skill, B extends SkillBuilder<S>> extends Event implements IModBusEvent {
+		public class SkillCreateEvent<B extends SkillBuilder<?>> extends GenericEvent<B> implements IModBusEvent {
 			private final ResourceLocation registryName;
 			private final B skillBuilder;
 			
+			@SuppressWarnings("unchecked")
 			private SkillCreateEvent(ResourceLocation registryName, B skillBuilder) {
+				super((Class<B>)skillBuilder.getClass());
+				
 				this.registryName = registryName;
 				this.skillBuilder = skillBuilder;
 			}
