@@ -448,7 +448,10 @@ public class SkillBookScreen extends Screen {
 				}
 				
 				WeaponCategory category = this.availableCategories.get(i);
-				guiGraphics.renderItem(WEAPON_CATEGORY_ICONS.get(category), (int)x, y);
+				
+				if (WEAPON_CATEGORY_ICONS.containsKey(category)) {
+					guiGraphics.renderItem(WEAPON_CATEGORY_ICONS.get(category), (int)x, y);
+				}
 				
 				if (mouseX >= x && mouseX <= x + ICON_LENGTH && mouseY >= y && mouseY <= y + ICON_LENGTH) {
 					this.setTooltip(Tooltip.create(Component.translatable("epicfight.weapon_category." + category.toString().toLowerCase(Locale.ROOT))));
