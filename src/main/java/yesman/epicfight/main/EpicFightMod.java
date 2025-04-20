@@ -127,7 +127,17 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Corrected the shield's location when in the player's back
  *  Added {@link SkillCreateEvent.class} to modify skill builder before instantiate skills
  *  Better null check for {@link AnimationVariables.class}
- * 
+ *  
+ *  ***************************************************************
+ *  
+ *  20.10.401 -> 20.10.403
+ *  
+ *  Fixed multiple datapack editor crashes
+ *  Fixed tooltips being hidden by the skill book screen
+ *  Fixed zombies attacking each other
+ *  Fixed {@link SkillCreateEvent.class} to follow generic event rule
+ *  Added to register custom available weapon categories in {@link SwordmasterSkill$Builder.class}
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
