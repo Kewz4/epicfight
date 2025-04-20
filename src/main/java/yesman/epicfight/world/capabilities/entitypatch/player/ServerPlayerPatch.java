@@ -280,12 +280,12 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 	
 	@Override
-	public boolean isTargetInvulnerable(Entity entityIn) {
-		if (entityIn instanceof Player && !this.getOriginal().server.isPvpAllowed()) {
+	public boolean isTargetInvulnerable(Entity target) {
+		if (target instanceof Player && !this.getOriginal().server.isPvpAllowed()) {
 			return true;
 		}
 		
-		return super.isTargetInvulnerable(entityIn);
+		return super.isTargetInvulnerable(target);
 	}
 	
 	@Override
