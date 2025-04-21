@@ -100,7 +100,7 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
- *  Major version change
+ *  Major version changes
  *  20.9.7 -> 20.10.1
  *  
  *  Cloth simulation for cape
@@ -110,15 +110,15 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed witches not throwing potion
  *  Fixed custom armors parts invisible
  *  Fixed a crash when selecting mob capability model in datapack editor
- *  Enhanced the accuracy of tracing ability of attack animations
+ *  Fixed a crash with better nether when player equips armors
  *  Fixed skill book screen not showing up when Enhanced Visuals installed
- *  
  *  Fixed player model jitters when flying with elytra
  *  Fixed guard skill activates rapidly when blocking vanilla attacks
+ *  Enhanced the accuracy of tracing ability of attack animations
  *  
  *  ***************************************************************
  *  
- *  Minor changes in alpha verison
+ *  Minor version changes
  *  20.10.310 -> 20.10.401
  *  
  *  Added first-person animations for drink and eat animation
@@ -165,7 +165,14 @@ public class EpicFightMod {
 	
 	public static void logAndStacktraceIfDevSide(BiConsumer<Logger, String> logFunction, String message, Function<String, Throwable> exceptionProvider, String stackTraceMessage) {
 		logFunction.accept(LOGGER, message);
-		
+		stacktraceIfDevSide(message, exceptionProvider, stackTraceMessage);
+	}
+	
+	public static void stacktraceIfDevSide(String message, Function<String, Throwable> exceptionProvider) {
+		stacktraceIfDevSide(message, exceptionProvider, message);
+	}
+	
+	public static void stacktraceIfDevSide(String message, Function<String, Throwable> exceptionProvider, String stackTraceMessage) {
 		if (exceptionProvider != null && EpicFightSharedConstants.IS_DEV_ENV) {
 			exceptionProvider.apply(stackTraceMessage).printStackTrace();
 		}
