@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.Joint;
@@ -38,6 +39,7 @@ import yesman.epicfight.api.client.animation.property.JointMask.JointMaskSet;
 import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 import yesman.epicfight.gameasset.Animations;
+import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
@@ -124,6 +126,11 @@ public class ClientAnimator extends Animator {
 	
 	@Override
 	public void addLivingAnimation(LivingMotion livingMotion, AssetAccessor<? extends StaticAnimation> animation) {
+		if (!AnimationManager.checkNonNull(animation)) {
+			EpicFightMod.LOGGER.warn("Unable to put an empty animation for " + livingMotion);
+			return;
+		}
+		
 		Layer.LayerType layerType = animation.get().getLayerType();
 		boolean isBaseLayer = (layerType == Layer.LayerType.BASE_LAYER);
 		
