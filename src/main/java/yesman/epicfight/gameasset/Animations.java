@@ -114,7 +114,6 @@ import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
-import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.skill.identity.MeteorSlamSkill;
 import yesman.epicfight.skill.weaponinnate.SteelWhirlwindSkill;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -1919,7 +1918,15 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 4)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (animation, entitypatch, transformSheet) -> {
 					if (!animation.isLinkAnimation() && entitypatch instanceof PlayerPatch<?> playerpatch) {
-						int chargingPower = SteelWhirlwindSkill.getChargingPower(playerpatch.getSkill(SkillSlots.WEAPON_INNATE));
+						Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.STEEL_WHIRLWIND);
+						int chargingPower;
+						
+						if (skill.isEmpty()) {
+							chargingPower = 1;
+						} else {
+							chargingPower = SteelWhirlwindSkill.getChargingPower(skill.get());
+						}
+						
 						transformSheet.readFrom(animation.getCoord().copyAll().extendsZCoord(0.6666F + chargingPower / 5.0F, 0, 2));
 					} else {
 						MoveCoordFunctions.RAW_COORD.set(animation, entitypatch, transformSheet);
@@ -1931,7 +1938,13 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (elapsedTime < 1.05F) {
 						if (entitypatch instanceof PlayerPatch<?> playerpatch) {
-							int chargingPower = SteelWhirlwindSkill.getChargingPower(playerpatch.getSkill(SkillSlots.WEAPON_INNATE));
+							Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.STEEL_WHIRLWIND);
+							
+							if (skill.isEmpty()) {
+								return 1.0F;
+							}
+							
+							int chargingPower = SteelWhirlwindSkill.getChargingPower(skill.get());
 							return 0.6666F + chargingPower / 20.0F;
 						}
 					}
