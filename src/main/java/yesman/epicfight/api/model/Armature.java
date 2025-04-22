@@ -97,14 +97,14 @@ public class Armature {
 	
 	/** Get binded position of joint **/
 	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, String pathIndex) {
-		return getBindedJointTransformByIndexInternal(pose, this.rootJoint, new OpenMatrix4f(), pathIndex, pathIndex.length() - 1);
+		return this.getBoundJointTransformRecursively(pose, this.rootJoint, new OpenMatrix4f(), pathIndex, pathIndex.length() - 1);
 	}
 	
-	private OpenMatrix4f getBindedJointTransformByIndexInternal(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
+	private OpenMatrix4f getBoundJointTransformRecursively(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
 		JointTransform jt = pose.orElseEmpty(joint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
 		
-		return index > -1 ? this.getBindedJointTransformByIndexInternal(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
+		return index > -1 ? this.getBoundJointTransformRecursively(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
 	}
 	
 	public boolean hasJoint(String name) {
