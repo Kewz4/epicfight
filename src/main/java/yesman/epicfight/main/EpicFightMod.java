@@ -114,6 +114,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed skill book screen not showing up when Enhanced Visuals installed
  *  Fixed player model jitters when flying with elytra
  *  Fixed guard skill activates rapidly when blocking vanilla attacks
+ *  Now players can't target or lock-on invisible entities
  *  Enhanced the accuracy of tracing ability of attack animations
  *  
  *  ***************************************************************

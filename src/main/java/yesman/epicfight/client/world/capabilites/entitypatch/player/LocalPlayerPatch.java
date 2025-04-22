@@ -136,7 +136,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			}
 		}
 		
-		// Handle camera lock - on
+		// Handle camera lock-on
 		if (this.rayTarget != null) {
 			if (this.targetLockedOn) {
 				Vec3 playerPosition = this.original.getEyePosition();
@@ -174,7 +174,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 				this.lockOnYRotO = this.lockOnYRot;
 			}
 			
-			if (this.rayTarget.isRemoved() || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
+			if (this.rayTarget.isRemoved() || this.rayTarget.isInvisibleTo(this.original) || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 100.0D && !this.targetLockedOn)) {
 				this.rayTarget = null;
 				EpicFightNetworkManager.sendToServer(new CPSetPlayerTarget(-1));
 			}
