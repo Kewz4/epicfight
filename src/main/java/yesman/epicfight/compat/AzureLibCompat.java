@@ -68,7 +68,7 @@ public class AzureLibCompat implements ICompatModule {
 					
 					if (ClientEngine.getInstance().getPlayerPatch() != null && !renderEngine.minecraft.options.hideGui && !EpicFightGameRules.DISABLE_ENTITY_UI.getRuleValue(livingentity.level())) {
 						for (EntityUI entityIndicator : EntityUI.ENTITY_UI_LIST) {
-							if (entityIndicator.shouldDraw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch())) {
+							if (entityIndicator.shouldDraw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch(), event.getPartialTick())) {
 								entityIndicator.draw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch(), event.getPoseStack(), event.getBufferSource(), event.getPartialTick());
 							}
 						}
@@ -97,7 +97,7 @@ public class AzureLibCompat implements ICompatModule {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(livingentity, LivingEntityPatch.class);
 				
 				for (EntityUI entityIndicator : EntityUI.ENTITY_UI_LIST) {
-					if (entityIndicator.shouldDraw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch())) {
+					if (entityIndicator.shouldDraw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch(), event.getPartialTick())) {
 						entityIndicator.draw(livingentity, entitypatch, ClientEngine.getInstance().getPlayerPatch(), event.getPoseStack(), event.getBufferSource(), event.getPartialTick());
 					}
 				}
