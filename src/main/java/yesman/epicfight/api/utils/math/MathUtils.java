@@ -12,6 +12,7 @@ import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector4i;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -445,6 +446,27 @@ public class MathUtils {
 	
 	public static Vec3f getLeastAngleVector(Vec3f src, Vec3f... candidates) {
 		return candidates[getLeastAngleVectorIdx(src, candidates)];
+	}
+	
+	public static int packColor(int r, int g, int b, int a) {
+		int ir = r << 16;
+		int ig = g << 8;
+		int ib = b;
+		int ia = a << 24;
+		
+		return ir | ig | ib | ia;
+	}
+	
+	public static void unpackColor(int packedColor, Vector4i result) {
+		int b = (packedColor & 0x000000FF);
+		int g = (packedColor & 0x0000FF00) >>> 8;
+		int r = (packedColor & 0x00FF0000) >>> 16;
+		int a = (packedColor & 0xFF000000) >>> 24;
+		
+		result.x = r;
+		result.y = g;
+		result.z = b;
+		result.w = a;
 	}
 	
 	private MathUtils() {}

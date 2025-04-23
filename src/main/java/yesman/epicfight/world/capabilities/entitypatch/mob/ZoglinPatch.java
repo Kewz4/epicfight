@@ -16,6 +16,7 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
 import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
@@ -24,6 +25,10 @@ import yesman.epicfight.world.entity.ai.behavior.MoveToTargetSinkStopInaction;
 import yesman.epicfight.world.entity.ai.brain.BrainRecomposer;
 
 public class ZoglinPatch extends MobPatch<Zoglin> {
+	public ZoglinPatch() {
+		super(Factions.ZOMBIFIED_PIGLIN);
+	}
+	
 	@Override
 	public void initAI() {
 		super.initAI();

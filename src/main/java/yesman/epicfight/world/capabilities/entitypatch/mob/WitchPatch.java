@@ -7,7 +7,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
@@ -15,7 +15,7 @@ import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
 
 public class WitchPatch extends HumanoidMobPatch<Witch> {
 	public WitchPatch() {
-		super(Faction.NEUTRAL);
+		super(Factions.NEUTRAL);
 	}
 	
 	@Override

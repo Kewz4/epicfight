@@ -11,6 +11,7 @@ import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
 import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
@@ -20,7 +21,7 @@ import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
 
 public class SkeletonPatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 	public SkeletonPatch() {
-		super(Faction.UNDEAD);
+		super(Factions.UNDEAD);
 	}
 	
 	public SkeletonPatch(Faction faction) {

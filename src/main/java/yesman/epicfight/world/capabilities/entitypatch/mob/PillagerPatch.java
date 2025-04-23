@@ -5,11 +5,11 @@ import net.minecraft.world.entity.monster.Pillager;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 
 public class PillagerPatch extends AbstractIllagerPatch<Pillager> {
 	public PillagerPatch() {
-		super(Faction.ILLAGER);
+		super(Factions.ILLAGER);
 	}
 	
 	@Override

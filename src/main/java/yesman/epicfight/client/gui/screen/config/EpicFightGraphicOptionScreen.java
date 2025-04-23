@@ -42,9 +42,9 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 			button.setMessage(Component.translatable("gui." + modid + ".filter_animation." + (ClientConfig.filterAnimation ? "on" : "off")));
 		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(title)).build();
 		
-		Button healthBarShowOptionButton = Button.builder(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarType.toString()), (button) -> {
-			ClientConfig.healthBarType = ClientConfig.healthBarType.nextEnum();
-			button.setMessage(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarType.toString()));
+		Button healthBarShowOptionButton = Button.builder(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()), (button) -> {
+			ClientConfig.healthBarVisibility = ClientConfig.healthBarVisibility.nextEnum();
+			button.setMessage(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()));
 		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".filter_animation.tooltip"))).build();
 		
 		this.optionsList.addSmall(filterAnimationButton, healthBarShowOptionButton);

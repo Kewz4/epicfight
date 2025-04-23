@@ -60,7 +60,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	private Minecraft minecraft;
 	private LivingEntity rayTarget;
 	private boolean targetLockedOn;
-	private float prevStamina;
+	private float staminaO;
 	private int prevChargingAmount;
 	
 	private float lockOnXRot;
@@ -92,7 +92,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	
 	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
-		this.prevStamina = this.getStamina();
+		this.staminaO = this.getStamina();
 		
 		if (this.isChargingSkill()) {
 			this.prevChargingAmount = this.getChargingSkill().getChargingAmount(this);
@@ -105,7 +105,7 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 
 	@Override
 	public void clientTick(LivingEvent.LivingTickEvent event) {
-		this.prevStamina = this.getStamina();
+		this.staminaO = this.getStamina();
 		
 		super.clientTick(event);
 		
@@ -338,8 +338,8 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		return actionAnimation.shouldPlayerMove(this);
 	}
 	
-	public float getPrevStamina() {
-		return this.prevStamina;
+	public float getStaminaO() {
+		return this.staminaO;
 	}
 	
 	public int getPrevChargingAmount() {

@@ -19,7 +19,7 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPEntityPacket;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.behavior.AnimatedCombatBehavior;
@@ -29,7 +29,7 @@ import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
 
 public class PiglinPatch extends HumanoidMobPatch<Piglin> {
 	public PiglinPatch() {
-		super(Faction.PIGLINS);
+		super(Factions.PIGLINS);
 	}
 	
 	public static void initAttributes(EntityAttributeModificationEvent event) {

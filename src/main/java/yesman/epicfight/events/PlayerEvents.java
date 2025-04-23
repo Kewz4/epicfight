@@ -17,6 +17,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.network.EpicFightNetworkManager;
+import yesman.epicfight.network.server.SPAbsorption;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -31,6 +33,13 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules;
 public class PlayerEvents {
 	@SubscribeEvent
 	public static void startTrackingEvent(PlayerEvent.StartTracking event) {
+		// Sync absorption attribute
+		if (event.getTarget() instanceof LivingEntity livingEntity) {
+			if (livingEntity.getAbsorptionAmount() > 0.0F) {
+				EpicFightNetworkManager.sendToPlayer(new SPAbsorption(event.getTarget().getId(), livingEntity.getAbsorptionAmount()), (ServerPlayer)event.getEntity());
+			}
+		}
+		
 		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getTarget(), EntityPatch.class).ifPresent(entitypatch -> {
 			entitypatch.onStartTracking((ServerPlayer)event.getEntity());
 		});

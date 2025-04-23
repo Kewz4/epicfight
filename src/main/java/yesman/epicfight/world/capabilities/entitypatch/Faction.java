@@ -1,16 +1,13 @@
 package yesman.epicfight.world.capabilities.entitypatch;
 
-public enum Faction {
-	ENDERMAN, PIGLINS, WITHER, NEUTRAL, UNDEAD, ILLAGER, VILLAGER
-}
+import net.minecraft.resources.ResourceLocation;
+import yesman.epicfight.api.utils.ExtendableEnum;
+import yesman.epicfight.api.utils.ExtendableEnumManager;
 
-/**
-public record Faction(ResourceLocation healthBarLocation, int texU, int texV, int texWidth, int texHeight) {
-	public static final Faction ENDERMAN;
-	public static final Faction PIGLINS;
-	public static final Faction WITHER;
-	public static final Faction NEUTRAL;
-	public static final Faction UNDEAD;
-	public static final Faction ILLAGER;
-	public static final Faction VILLAGER;
-}**/
+public interface Faction extends ExtendableEnum {
+	ExtendableEnumManager<Faction> ENUM_MANAGER = new ExtendableEnumManager<> ("faction");
+	
+	public ResourceLocation healthBarTexture();
+	public int healthBarIndex();
+	public int damageColor();
+}

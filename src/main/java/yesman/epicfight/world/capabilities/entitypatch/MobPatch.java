@@ -40,7 +40,7 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 	protected final Faction mobFaction;
 	
 	public MobPatch() {
-		this.mobFaction = Faction.NEUTRAL;
+		this.mobFaction = Factions.NEUTRAL;
 	}
 	
 	public MobPatch(Faction faction) {
@@ -211,5 +211,9 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		} else {
 			return super.getAttackDirectionPitch();
 		}
+	}
+	
+	public Faction getFaction() {
+		return this.mobFaction;
 	}
 }

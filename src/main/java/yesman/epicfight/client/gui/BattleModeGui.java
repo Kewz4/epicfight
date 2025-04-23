@@ -37,7 +37,7 @@ import yesman.epicfight.skill.SkillSlot;
 import yesman.epicfight.skill.SkillSlots;
 
 @OnlyIn(Dist.CLIENT)
-public class BattleModeGui extends ModIngameGui {
+public class BattleModeGui {
 	private static final Vec2f[] CLOCK_POS = {
 		new Vec2f(0.5F, 0.5F),
 		new Vec2f(0.5F, 0.0F),
@@ -99,14 +99,14 @@ public class BattleModeGui extends ModIngameGui {
 		
 		if (maxStamina > 0.0F && stamina < maxStamina) {
 			Vec2i pos = ClientConfig.getStaminaPosition(width, height);
-			float prevStamina = playerpatch.getPrevStamina();
+			float prevStamina = playerpatch.getStaminaO();
 			float ratio = (prevStamina + (stamina - prevStamina) * partialTicks) / maxStamina;
 
 			poseStack.pushPose();
 			poseStack.translate(0, this.sliding, 0);
 			RenderSystem.setShaderColor(1.0F, ratio, 0.25F, 1.0F);
-			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 118, 4, 2, 38, 237, 9, 255, 255);
-			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, (int)(118*ratio), 4, 2, 47, (int)(237*ratio), 9, 255, 255);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 118, 4, 2, 38, 237, 9, 255, 255);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, (int)(118*ratio), 4, 2, 47, (int)(237*ratio), 9, 255, 255);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 			poseStack.popPose();
 		}
@@ -120,8 +120,8 @@ public class BattleModeGui extends ModIngameGui {
 			poseStack.pushPose();
 			poseStack.translate(0, this.sliding, 0);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
-			guiGraphics.blit(EntityIndicator.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 71, 238, 13, 255, 255);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 1, 57, (int)(238 * ratio), 13, 255, 255);
 
 			ResourceLocation rl = ResourceLocation.parse(playerpatch.getChargingSkill().toString());
 			String skillName = Component.translatable(String.format("skill.%s.%s", rl.getNamespace(), rl.getPath())).getString();

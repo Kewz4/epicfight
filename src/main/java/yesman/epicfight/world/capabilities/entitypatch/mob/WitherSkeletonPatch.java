@@ -13,14 +13,14 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public class WitherSkeletonPatch<T extends PathfinderMob> extends SkeletonPatch<T> {
 	public WitherSkeletonPatch() {
-		super(Faction.WITHER);
+		super(Factions.WITHER);
 	}
 	
 	public static void initAttributes(EntityAttributeModificationEvent event) {

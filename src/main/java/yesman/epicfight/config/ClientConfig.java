@@ -23,7 +23,7 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.client.online.EpicFightServerConnectionHelper;
 import yesman.epicfight.api.utils.math.Vec2i;
-import yesman.epicfight.client.gui.HealthBarIndicator.HealthBarType;
+import yesman.epicfight.client.gui.HealthBar.HealthBarVisibility;
 import yesman.epicfight.client.gui.ScreenCalculations.AlignDirection;
 import yesman.epicfight.client.gui.ScreenCalculations.HorizontalBasis;
 import yesman.epicfight.client.gui.ScreenCalculations.VerticalBasis;
@@ -71,7 +71,7 @@ public class ClientConfig {
 	
 	// UI configurations
 	public static final BooleanValue SHOW_TARGET_INDICATOR = BUILDER.define("ingame.show_target_indicator", () -> true);
-	public static final EnumValue<HealthBarType> HEALTH_BAR_TYPE = BUILDER.defineEnum("ingame.health_bar_show_option", HealthBarType.HURT);
+	public static final EnumValue<HealthBarVisibility> HEALTH_BAR_VISIBILITY = BUILDER.defineEnum("ingame.health_bar_show_option", HealthBarVisibility.HURT);
 	
 	public static final ConfigValue<Integer> STAMINA_BAR_X = BUILDER.define("ingame.ui.stamina_bar_x", 120);
 	public static final ConfigValue<Integer> STAMINA_BAR_Y = BUILDER.define("ingame.ui.stamina_bar_y", 10);
@@ -122,7 +122,7 @@ public class ClientConfig {
 	
 	// UI configurations
 	public static boolean showTargetIndicator;
-	public static HealthBarType healthBarType;
+	public static HealthBarVisibility healthBarVisibility;
 	public static int staminaBarX;
 	public static int staminaBarY;
 	public static HorizontalBasis staminaBarBaseX;
@@ -172,7 +172,7 @@ public class ClientConfig {
 				.collect(Collectors.toSet());
 		
 		showTargetIndicator = SHOW_TARGET_INDICATOR.get();
-		healthBarType = HEALTH_BAR_TYPE.get();
+		healthBarVisibility = HEALTH_BAR_VISIBILITY.get();
 		staminaBarX = STAMINA_BAR_X.get();
 		staminaBarY = STAMINA_BAR_Y.get();
 		staminaBarBaseX = STAMINA_BAR_BASE_X.get();
@@ -233,7 +233,7 @@ public class ClientConfig {
 		}
 		
 		if (showTargetIndicator != SHOW_TARGET_INDICATOR.get()) SHOW_TARGET_INDICATOR.set(showTargetIndicator);
-		if (healthBarType != HEALTH_BAR_TYPE.get()) HEALTH_BAR_TYPE.set(healthBarType);
+		if (healthBarVisibility != HEALTH_BAR_VISIBILITY.get()) HEALTH_BAR_VISIBILITY.set(healthBarVisibility);
 		if (staminaBarX != STAMINA_BAR_X.get()) STAMINA_BAR_X.set(staminaBarX);
 		if (staminaBarY != STAMINA_BAR_Y.get()) STAMINA_BAR_Y.set(staminaBarY);
 		if (staminaBarBaseX != STAMINA_BAR_BASE_X.get()) STAMINA_BAR_BASE_X.set(staminaBarBaseX);

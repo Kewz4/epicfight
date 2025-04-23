@@ -118,7 +118,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public LivingMotion currentCompositeMotion = LivingMotions.IDLE;
 	
 	private Style oStyle;
-	
 	private final Map<InteractionHand, Joint> parentJointOfHands = Maps.newHashMap();
 	
 	@Override
@@ -976,6 +975,8 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.getAnimator().getVariables().getOrDefaultSharedVariable(AttackAnimation.HIT_ENTITIES).clear();
 		this.getAnimator().getVariables().getOrDefaultSharedVariable(AttackAnimation.HURT_ENTITIES).clear();
 	}
+	
+	public abstract Faction getFaction();
 	
 	@OnlyIn(Dist.CLIENT)
 	public boolean flashTargetIndicator(LocalPlayerPatch playerpatch) {

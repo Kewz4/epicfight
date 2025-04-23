@@ -17,6 +17,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import yesman.epicfight.api.utils.AttackResult;
+import yesman.epicfight.network.EpicFightNetworkManager;
+import yesman.epicfight.network.server.SPAbsorption;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.CustomHumanoidMobPatch;
 import yesman.epicfight.world.capabilities.entitypatch.CustomMobPatch;
@@ -126,8 +128,17 @@ public abstract class MixinLivingEntity {
 	private void epicfight_constructor(EntityType<?> entityType, Level level, CallbackInfo info) {
 		LivingEntity self = (LivingEntity)((Object)this);
 		
-		if (EpicFightCapabilities.getEntityPatch(self, HurtableEntityPatch.class) != null) {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(self, HurtableEntityPatch.class).ifPresent((entitypatch) -> {
 			self.getAttributes().supplier = new EpicFightAttributeSupplier(self.getAttributes().supplier);
+		});
+	}
+	
+	@Inject(at = @At(value = "TAIL"), method = "setAbsorptionAmount(F)V", cancellable = true)
+	private void epicfight_setAbsorptionAmount(float absorptionAmount, CallbackInfo info) {
+		LivingEntity self = (LivingEntity)((Object)this);
+		
+		if (!self.level().isClientSide()) {
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAbsorption(self.getId(), absorptionAmount), self);
 		}
 	}
 }

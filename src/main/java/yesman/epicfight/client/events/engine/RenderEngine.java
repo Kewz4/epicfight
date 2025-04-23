@@ -80,7 +80,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.BattleModeGui;
-import yesman.epicfight.client.gui.EntityIndicator;
+import yesman.epicfight.client.gui.EntityUI;
 import yesman.epicfight.client.gui.VersionNotifier;
 import yesman.epicfight.client.gui.screen.config.UISetupScreen;
 import yesman.epicfight.client.gui.screen.overlay.OverlayManager;
@@ -164,7 +164,6 @@ public class RenderEngine {
 	
 	public RenderEngine() {
 		Events.renderEngine = this;
-		EntityIndicator.init();
 		
 		this.minecraft = Minecraft.getInstance();
 		this.battleModeUI = new BattleModeGui(this.minecraft);
@@ -640,9 +639,9 @@ public class RenderEngine {
 			if (playerpatch != null && !renderEngine.minecraft.options.hideGui && !EpicFightGameRules.DISABLE_ENTITY_UI.getRuleValue(livingentity.level())) {
 				LivingEntityPatch<?> entitypatch = EpicFightCapabilities.getEntityPatch(livingentity, LivingEntityPatch.class);
 				
-				for (EntityIndicator entityIndicator : EntityIndicator.ENTITY_INDICATOR_RENDERERS) {
-					if (entityIndicator.shouldDraw(livingentity, entitypatch, playerpatch)) {
-						entityIndicator.drawIndicator(livingentity, entitypatch, playerpatch, event.getPoseStack(), event.getMultiBufferSource(), event.getPartialTick());
+				for (EntityUI entityIndicator : EntityUI.ENTITY_UI_LIST) {
+					if (entityIndicator.shouldDraw(livingentity, entitypatch, playerpatch, event.getPartialTick())) {
+						entityIndicator.draw(livingentity, entitypatch, playerpatch, event.getPoseStack(), event.getMultiBufferSource(), event.getPartialTick());
 					}
 				}
 			}
@@ -825,12 +824,28 @@ public class RenderEngine {
 		}
 		
 		@SubscribeEvent
+		public static void renderTickEvent(TickEvent.RenderTickEvent event) {
+			if (event.phase == TickEvent.Phase.START) {
+				EntityUI.HEALTH_BAR.reset();
+			} else {
+				EntityUI.HEALTH_BAR.remove();
+			}
+		}
+		
+		@SubscribeEvent
 		public static void clientTickEvent(TickEvent.ClientTickEvent event) {
 			if (event.phase == TickEvent.Phase.START) {
 				renderEngine.bossEventOwners.entrySet().removeIf((entry) -> {
 					Entity entity = entry.getValue().cast().getOriginal();
 					return !entity.isAlive() || entity.isRemoved();
 				});
+			}
+		}
+		
+		@SubscribeEvent
+		public static void levelTickEvent(TickEvent.LevelTickEvent event) {
+			if (event.phase == TickEvent.Phase.END) {
+				EntityUI.HEALTH_BAR.tick();
 			}
 		}
 	}

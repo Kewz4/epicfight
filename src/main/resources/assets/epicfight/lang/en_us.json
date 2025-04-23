@@ -184,6 +184,7 @@
 	"gui.epicfight.health_bar_show_option.none": "Health Bar Show Option: None",
 	"gui.epicfight.health_bar_show_option.hurt": "Health Bar Show Option: Hurt",
 	"gui.epicfight.health_bar_show_option.target": "Health Bar Show Option: Target",
+	"gui.epicfight.health_bar_show_option.target_and_hurt": "Health Bar Show Option: Target and Hurt",
 	"gui.epicfight.target_indicator.on": "Show Target Indicator: ON",
 	"gui.epicfight.target_indicator.off": "Show Target Indicator: OFF",
 	

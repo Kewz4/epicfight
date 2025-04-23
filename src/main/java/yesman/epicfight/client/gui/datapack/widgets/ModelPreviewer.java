@@ -92,6 +92,7 @@ import yesman.epicfight.client.particle.AnimationTrailParticle;
 import yesman.epicfight.client.renderer.EpicFightShaders;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightSharedConstants;
+import yesman.epicfight.world.capabilities.entitypatch.Faction;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.StunType;
 
@@ -791,6 +792,11 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 
 		@Override
 		public ClothSimulator getClothSimulator() {
+			return null;
+		}
+		
+		@Override
+		public Faction getFaction() {
 			return null;
 		}
 	}

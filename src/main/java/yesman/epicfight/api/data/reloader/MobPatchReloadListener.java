@@ -317,7 +317,8 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			Armatures.registerEntityTypeArmature(entityType, Armatures.getOrCreate(armatureId, Armature::new));
 			
 			provider.defaultAnimations = deserializeDefaultAnimations(tag.getCompound("default_livingmotions"));
-			provider.faction = Faction.valueOf(tag.getString("faction").toUpperCase(Locale.ROOT));
+			provider.faction = Faction.ENUM_MANAGER.getOrThrow(tag.getString("faction"));
+			
 			provider.scale = tag.getCompound("attributes").contains("scale") ? (float)tag.getCompound("attributes").getDouble("scale") : 1.0F;
 			
 			if (tag.contains("swing_sound")) {

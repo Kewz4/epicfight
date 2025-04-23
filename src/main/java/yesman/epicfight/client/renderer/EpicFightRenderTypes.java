@@ -45,9 +45,25 @@ import yesman.epicfight.main.EpicFightMod;
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class EpicFightRenderTypes extends RenderType {
-	private static final Function<ResourceLocation, RenderType> ENTITY_INDICATOR = Util.memoize(
+	private static final RenderType ENTITY_UI_COLORED = 
+		create(
+			  EpicFightMod.MODID + ":ui_color"
+			, DefaultVertexFormat.POSITION_COLOR
+			, VertexFormat.Mode.QUADS
+			, 256
+			, true
+			, false
+			, RenderType.CompositeState.builder()
+				.setShaderState(POSITION_COLOR_SHADER)
+				.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+				.setLightmapState(NO_LIGHTMAP)
+				.setOverlayState(NO_OVERLAY)
+				.createCompositeState(true)
+		);
+	
+	private static final Function<ResourceLocation, RenderType> ENTITY_UI_TEXTURE = Util.memoize(
 		(textureLocation) -> create( 
-			  EpicFightMod.MODID + ":entity_indicator"
+			  EpicFightMod.MODID + ":ui_texture"
 			, DefaultVertexFormat.POSITION_TEX
 			, VertexFormat.Mode.QUADS
 			, 256
@@ -63,7 +79,7 @@ public class EpicFightRenderTypes extends RenderType {
 		)
 	);
 	
-	private static final RenderType DEBUG_COLLIDER = create(
+	private static final RenderType OBB = create(
 		  EpicFightMod.MODID + ":debug_collider"
 		, DefaultVertexFormat.POSITION_COLOR_NORMAL
 		, VertexFormat.Mode.LINE_STRIP
@@ -191,12 +207,16 @@ public class EpicFightRenderTypes extends RenderType {
 		return textureReplacedRenderType;
 	}
 	
-	public static RenderType entityIndicator(ResourceLocation resourcelocation) {
-		return ENTITY_INDICATOR.apply(resourcelocation);
+	public static RenderType entityUIColor() {
+		return ENTITY_UI_COLORED;
+	}
+	
+	public static RenderType entityUITexture(ResourceLocation resourcelocation) {
+		return ENTITY_UI_TEXTURE.apply(resourcelocation);
 	}
 	
 	public static RenderType debugCollider() {
-		return DEBUG_COLLIDER;
+		return OBB;
 	}
 	
 	public static RenderType debugQuads() {

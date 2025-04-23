@@ -12,13 +12,13 @@ import yesman.epicfight.api.client.animation.ClientAnimator;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPEntityPacket;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public class ZombiePatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 	public ZombiePatch() {
-		super(Faction.UNDEAD);
+		super(Factions.UNDEAD);
 	}
 	
 	@Override

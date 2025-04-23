@@ -6,7 +6,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.goal.AnimatedAttackGoal;
 import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
@@ -14,7 +14,7 @@ import yesman.epicfight.world.entity.ai.goal.TargetChasingGoal;
 
 public class ZombifiedPiglinPatch extends HumanoidMobPatch<ZombifiedPiglin> {
 	public ZombifiedPiglinPatch() {
-		super(Faction.NEUTRAL);
+		super(Factions.ZOMBIFIED_PIGLIN);
 	}
 	
 	@Override

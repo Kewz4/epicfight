@@ -43,6 +43,8 @@ import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.skill.SkillSlot;
 import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.skill.CapabilitySkill;
@@ -701,6 +703,11 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 				default -> null;
 			};
 		}
+	}
+	
+	@Override
+	public Faction getFaction() {
+		return Factions.NEUTRAL;
 	}
 	
 	public enum PlayerMode {

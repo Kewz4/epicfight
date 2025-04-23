@@ -13,14 +13,14 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public class VindicatorPatch<T extends PathfinderMob> extends AbstractIllagerPatch<T> {
 	public VindicatorPatch() {
-		super(Faction.ILLAGER);
+		super(Factions.ILLAGER);
 	}
 	
 	@Override

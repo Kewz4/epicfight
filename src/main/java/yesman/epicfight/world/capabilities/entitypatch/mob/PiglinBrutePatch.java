@@ -13,7 +13,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.gameasset.Animations;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 import yesman.epicfight.world.entity.ai.behavior.AnimatedCombatBehavior;
@@ -23,7 +23,7 @@ import yesman.epicfight.world.entity.ai.goal.CombatBehaviors;
 
 public class PiglinBrutePatch extends HumanoidMobPatch<PiglinBrute> {
 	public PiglinBrutePatch() {
-		super(Faction.PIGLINS);
+		super(Factions.PIGLINS);
 	}
 	
 	public static void initAttributes(EntityAttributeModificationEvent event) {

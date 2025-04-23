@@ -41,7 +41,7 @@ import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPChangeLivingMotion;
 import yesman.epicfight.network.server.SPEntityPacket;
 import yesman.epicfight.particle.EpicFightParticles;
-import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.StunType;
@@ -63,7 +63,7 @@ public class EndermanPatch extends MobPatch<EnderMan> {
 	private Goal rageTargeting;
 	
 	public EndermanPatch() {
-		super(Faction.ENDERMAN);
+		super(Factions.ENDERMAN);
 	}
 	
 	@Override
