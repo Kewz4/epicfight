@@ -100,7 +100,9 @@ import yesman.epicfight.world.level.block.EpicFightBlocks;
 import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
 
 /**
+ *  ***************************************************************
  *  Major version changes
+ *  ***************************************************************
  *  20.9.7 -> 20.10.1
  *  
  *  Cloth simulation for cape
@@ -118,8 +120,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Enhanced the accuracy of tracing ability of attack animations
  *  
  *  ***************************************************************
- *  
  *  Minor version changes
+ *  ***************************************************************
  *  20.10.310 -> 20.10.401
  *  
  *  Added first-person animations for drink and eat animation
@@ -138,6 +140,15 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed zombies attacking each other
  *  Fixed {@link SkillCreateEvent.class} to follow generic event rule
  *  Added to register custom available weapon categories in {@link SwordmasterSkill$Builder.class}
+ *  
+ *  ***************************************************************
+ *  
+ *  20.10.501 Created.
+ *  
+ *  Added an health bar visibility option shows both target and hurt entities
+ *  Added health bar animation
+ *  Added health bar variations based on factions
+ *  Fixed the absorption amount to be expressed in health bar
  *  
  *  --- TO DO ---
  *  
