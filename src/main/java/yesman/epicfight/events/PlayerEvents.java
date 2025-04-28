@@ -124,7 +124,7 @@ public class PlayerEvents {
 			InteractionHand hand = playerpatch.getOriginal().getItemInHand(InteractionHand.MAIN_HAND).equals(event.getItem()) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 			CapabilityItem itemCap = playerpatch.getHoldingItemCapability(hand);
 			
-			if (!playerpatch.getEntityState().canUseSkill() || !playerpatch.getEntityState().canUseItem()) {
+			if (!playerpatch.getEntityState().canUseItem()) {
 				event.setCanceled(true);
 			} else if (event.getItem() == playerpatch.getOriginal().getOffhandItem() && !playerpatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(playerpatch).canUseOffhand()) {
 				event.setCanceled(true);

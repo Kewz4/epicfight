@@ -34,7 +34,6 @@ public class EntityState {
 	public static final StateFactor<Boolean> CAN_SKILL_EXECUTION = new StateFactor<>("canExecuteSkill", true);
 	public static final StateFactor<Boolean> CAN_USE_ITEM = new StateFactor<>("canSwitchHandItem", true);
 	public static final StateFactor<Boolean> CAN_SWITCH_HAND_ITEM = new StateFactor<>("canSwitchHandItem", true);
-	// CAN_USE_ITEM + CAN_SWITCH_HAND_ITEM = INACTION
 	public static final StateFactor<Boolean> INACTION = new StateFactor<>("takingAction", false);
 	public static final StateFactor<Boolean> KNOCKDOWN = new StateFactor<>("knockdown", false);
 	public static final StateFactor<Boolean> LOCKON_ROTATE = new StateFactor<>("lockonRotate", false);
@@ -86,7 +85,7 @@ public class EntityState {
 	}
 	
 	public boolean canUseItem() {
-		return !this.inaction() && this.getState(EntityState.CAN_USE_ITEM);
+		return this.canUseSkill() && this.getState(EntityState.CAN_USE_ITEM);
 	}
 	
 	public boolean canSwitchHoldingItem() {
