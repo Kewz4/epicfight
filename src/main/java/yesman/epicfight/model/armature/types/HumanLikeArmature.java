@@ -3,7 +3,7 @@ package yesman.epicfight.model.armature.types;
 import yesman.epicfight.api.animation.Joint;
 
 /**
- * This class is not being used by Epic Fight, but leave to meet various purpose of developers
+ * This class is not being used by Epic Fight, but is left to meet various purposes of developers
  * Also presents developers which joints are necessary when an armature would be Human-like
  */
 public interface HumanLikeArmature extends ToolHolderArmature {
