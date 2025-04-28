@@ -456,4 +456,12 @@ public class Vec3f extends Vec2f {
 	public static Vec3f fromDoubleVector(Vec3 vec3) {
 		return new Vec3f((float)vec3.x(), (float)vec3.y(), (float)vec3.z());
 	}
+	
+	private static final OpenMatrix4f DEST = new OpenMatrix4f();
+	
+	public Vec3f rotateDegree(Vec3f axis, float degree) {
+		OpenMatrix4f.ofRotationDegree(degree, axis, DEST);
+		OpenMatrix4f.transform3v(DEST, this, this);
+		return this;
+	}
 }

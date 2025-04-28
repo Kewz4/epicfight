@@ -80,15 +80,15 @@ public class TransformSheet {
 	/**
 	 * Transform each joint
 	 */
-	public void forEach(BiConsumer<Integer, Keyframe> transformFunc) {
-		this.transform(transformFunc, 0, this.keyframes.length);
+	public void forEach(BiConsumer<Integer, Keyframe> task) {
+		this.forEach(task, 0, this.keyframes.length);
 	}
 	
-	public void transform(BiConsumer<Integer, Keyframe> transformFunc, int start, int end) {
+	public void forEach(BiConsumer<Integer, Keyframe> task, int start, int end) {
 		end = Math.min(end, this.keyframes.length);
 		
 		for (int i = start; i < end; i++) {
-			transformFunc.accept(i, this.keyframes[i]);
+			task.accept(i, this.keyframes[i]);
 		}
 	}
 	

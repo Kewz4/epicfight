@@ -601,7 +601,8 @@ public class OpenMatrix4f {
 	}
 	
 	public static OpenMatrix4f ofRotationDegree(float degree, Vec3f axis, @Nullable OpenMatrix4f dest) {
-		return rotate((float)Math.toRadians(degree), axis, dest, null);
+		dest.setIdentity();
+		return rotate((float)Math.toRadians(degree), axis, dest, dest);
 	}
 	
 	public static OpenMatrix4f rotate(float angle, Vec3f axis, OpenMatrix4f src, @Nullable OpenMatrix4f dest) {
