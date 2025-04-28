@@ -427,27 +427,30 @@ public class ClientAnimator extends Animator {
 		return this.currentCompositeMotion.isSame(motion);
 	}
 	
-	public void resumeLivingMotionUpdate(boolean playLivingMotion) {
-		this.entitypatch.updateMotion(false);
-		this.currentMotion = this.entitypatch.currentLivingMotion;
+	public void forceChangeLivingMotion(LivingMotions livingMotion, LivingMotions compositeLivingMotion) {
+		this.entitypatch.currentLivingMotion = livingMotion;
+		this.currentMotion = livingMotion;
 		
-		if (playLivingMotion && this.livingAnimations.containsKey(this.entitypatch.currentLivingMotion)) {
-			this.baseLayer.playAnimation(this.getLivingMotion(this.entitypatch.currentLivingMotion), this.entitypatch, 0.0F);
+		if (this.livingAnimations.containsKey(this.currentMotion)) {
+			this.baseLayer.playAnimation(this.getLivingMotion(this.currentMotion), this.entitypatch, 0.0F);
 		}
 		
-		this.currentCompositeMotion = LivingMotions.NONE;
-		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
+		this.currentCompositeMotion = compositeLivingMotion;
 		
-		if (playLivingMotion && this.compositeLivingAnimations.containsKey(LivingMotions.IDLE)) {
-			AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(LivingMotions.IDLE);
+		if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
+			AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(this.currentCompositeMotion);
 			AssetAccessor<? extends StaticAnimation> currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
 			
 			if (nextLivingAnimation == null || (currentLivingMotion != null && nextLivingAnimation.get().getPriority() != currentLivingMotion.get().getPriority())) {
 				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
 			}
 			
-			this.playAnimation(this.getCompositeLivingMotion(LivingMotions.IDLE), 0.0F);
+			this.playAnimation(this.getCompositeLivingMotion(this.currentCompositeMotion), 0.0F);
+		} else if (this.compositeLivingAnimations.containsKey(this.entitypatch.currentCompositeMotion)) {
+			this.getCompositeLayer(this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
 		}
+		
+		this.entitypatch.currentCompositeMotion = compositeLivingMotion;
 	}
 	
 	public void resetMotion(boolean resetPrevMotion) {

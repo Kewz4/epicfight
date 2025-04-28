@@ -784,7 +784,7 @@ public class Animations {
 					MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
 				})
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
-					entitypatch.getClientAnimator().resumeLivingMotionUpdate(true);
+					entitypatch.getClientAnimator().forceChangeLivingMotion(LivingMotions.IDLE, LivingMotions.NONE);
 				}, Side.CLIENT))
 				.newTimePair(0.0F, Float.MAX_VALUE)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)

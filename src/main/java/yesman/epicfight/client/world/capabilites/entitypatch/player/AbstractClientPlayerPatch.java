@@ -126,41 +126,46 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		MinecraftForge.EVENT_BUS.post(baseLayerEvent);
 		
 		this.currentLivingMotion = baseLayerEvent.getMotion();
-		CapabilityItem holdingItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
 		
-		if (this.original.isUsingItem()) {
-			UseAnim useAnim = this.original.getUseItem().getUseAnimation();
-			UseAnim capUseAnim = holdingItemCap.getUseAnimation(this);
-			
-			if (useAnim == UseAnim.BLOCK || capUseAnim == UseAnim.BLOCK)
-				if (holdingItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
-					currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
-				else
-					currentCompositeMotion = LivingMotions.BLOCK;
-			else if (useAnim == UseAnim.BOW || useAnim == UseAnim.SPEAR)
-				currentCompositeMotion = LivingMotions.AIM;
-			else if (useAnim == UseAnim.CROSSBOW)
-				currentCompositeMotion = LivingMotions.RELOAD;
-			else if (useAnim == UseAnim.DRINK)
-				currentCompositeMotion = LivingMotions.DRINK;
-			else if (useAnim == UseAnim.EAT)
-				currentCompositeMotion = LivingMotions.EAT;
-			else if (useAnim == UseAnim.SPYGLASS)
-				currentCompositeMotion = LivingMotions.SPECTATE;
-			else
-				currentCompositeMotion = currentLivingMotion;
+		if (!this.state.updateLivingMotion() && considerInaction) {
+			this.currentCompositeMotion = LivingMotions.NONE;
 		} else {
-			if (this.getEntityState().canUseItem() && this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
-				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
-				currentCompositeMotion = LivingMotions.NONE;
-			else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
-				currentCompositeMotion = LivingMotions.DIGGING;
-			else
-				currentCompositeMotion = currentLivingMotion;
+			CapabilityItem holdingItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
 			
-			if (this.getEntityState().canUseItem() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && holdingItemCap instanceof RangedWeaponCapability) {
-				this.playShootingAnimation();
+			if (this.original.isUsingItem()) {
+				UseAnim useAnim = this.original.getUseItem().getUseAnimation();
+				UseAnim capUseAnim = holdingItemCap.getUseAnimation(this);
+				
+				if (useAnim == UseAnim.BLOCK || capUseAnim == UseAnim.BLOCK)
+					if (holdingItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
+						currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
+					else
+						currentCompositeMotion = LivingMotions.BLOCK;
+				else if (useAnim == UseAnim.BOW || useAnim == UseAnim.SPEAR)
+					currentCompositeMotion = LivingMotions.AIM;
+				else if (useAnim == UseAnim.CROSSBOW)
+					currentCompositeMotion = LivingMotions.RELOAD;
+				else if (useAnim == UseAnim.DRINK)
+					currentCompositeMotion = LivingMotions.DRINK;
+				else if (useAnim == UseAnim.EAT)
+					currentCompositeMotion = LivingMotions.EAT;
+				else if (useAnim == UseAnim.SPYGLASS)
+					currentCompositeMotion = LivingMotions.SPECTATE;
+				else
+					currentCompositeMotion = currentLivingMotion;
+			} else {
+				if (this.getEntityState().canUseItem() && this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
+					currentCompositeMotion = LivingMotions.AIM;
+				else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
+					currentCompositeMotion = LivingMotions.NONE;
+				else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
+					currentCompositeMotion = LivingMotions.DIGGING;
+				else
+					currentCompositeMotion = currentLivingMotion;
+				
+				if (this.getEntityState().canUseItem() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && holdingItemCap instanceof RangedWeaponCapability) {
+					this.playShootingAnimation();
+				}
 			}
 		}
 		
