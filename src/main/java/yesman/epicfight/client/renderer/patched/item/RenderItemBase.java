@@ -23,7 +23,7 @@ import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.model.armature.HumanoidArmature;
+import yesman.epicfight.model.armature.ToolHolderArmature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)
@@ -154,7 +154,7 @@ public class RenderItemBase {
 		}
 	}
 	
-	public void renderItemInHand(ItemStack stack, LivingEntityPatch<?> entitypatch, InteractionHand hand, HumanoidArmature armature, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
+	public void renderItemInHand(ItemStack stack, LivingEntityPatch<?> entitypatch, InteractionHand hand, OpenMatrix4f[] poses, MultiBufferSource buffer, PoseStack poseStack, int packedLight, float partialTicks) {
 		OpenMatrix4f modelMatrix = this.getCorrectionMatrix(entitypatch, hand, poses);
 		poseStack.pushPose();
 		MathUtils.mulStack(poseStack, modelMatrix);
@@ -166,13 +166,15 @@ public class RenderItemBase {
 	public final OpenMatrix4f transformHolder = new OpenMatrix4f();
 	
 	protected OpenMatrix4f getCorrectionMatrix(LivingEntityPatch<?> entitypatch, InteractionHand hand, OpenMatrix4f[] poses) {
-		Joint parentJoint;
+		Joint parentJoint = null;
 		
 		if (this.alwaysInHand) {
-			parentJoint = entitypatch.getArmature().searchJointByName(hand == InteractionHand.MAIN_HAND ? "Tool_R" : "Tool_L");
+			if (entitypatch.getArmature() instanceof ToolHolderArmature toolArmature) {
+				parentJoint = hand == InteractionHand.MAIN_HAND ? toolArmature.rightToolJoint() : toolArmature.leftToolJoint();
+			}
 			
 			if (parentJoint == null) {
-				entitypatch.getArmature().searchJointByName("Root");
+				parentJoint = entitypatch.getArmature().rootJoint;
 			}
 		} else {
 			parentJoint = entitypatch.getParentJointOfHand(hand);

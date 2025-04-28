@@ -5,7 +5,7 @@ import java.util.Map;
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.model.Armature;
 
-public class HumanoidArmature extends Armature {
+public class HumanoidArmature extends Armature implements ToolHolderArmature {
 	public final Joint thighR;
 	public final Joint legR;
 	public final Joint kneeR;
@@ -48,5 +48,20 @@ public class HumanoidArmature extends Armature {
 		this.handL = this.getOrLogException(jointMap, "Hand_L");
 		this.toolL = this.getOrLogException(jointMap, "Tool_L");
 		this.elbowL = this.getOrLogException(jointMap, "Elbow_L");
+	}
+
+	@Override
+	public Joint leftToolJoint() {
+		return this.toolL;
+	}
+
+	@Override
+	public Joint rightToolJoint() {
+		return this.toolR;
+	}
+
+	@Override
+	public Joint backToolJoint() {
+		return this.chest;
 	}
 }

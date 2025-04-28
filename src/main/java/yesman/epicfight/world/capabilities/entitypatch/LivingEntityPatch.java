@@ -63,6 +63,7 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightSharedConstants;
+import yesman.epicfight.model.armature.ToolHolderArmature;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPAnimatorControl;
 import yesman.epicfight.network.common.AnimatorControlPacket;
@@ -138,8 +139,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		animator.getVariables().putDefaultSharedVariable(AttackAnimation.HURT_ENTITIES);
 		animator.getVariables().putDefaultSharedVariable(ActionAnimation.ACTION_ANIMATION_COORD);
 		
-		this.setParentJointOfHand(InteractionHand.MAIN_HAND, Armatures.BIPED.get().toolR);
-		this.setParentJointOfHand(InteractionHand.OFF_HAND, Armatures.BIPED.get().toolL);
+		if (this.armature instanceof ToolHolderArmature toolArmature) {
+			this.setParentJointOfHand(InteractionHand.MAIN_HAND, toolArmature.rightToolJoint());
+			this.setParentJointOfHand(InteractionHand.OFF_HAND, toolArmature.leftToolJoint());
+		}
 	}
 	
 	@Override
