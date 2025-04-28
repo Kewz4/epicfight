@@ -30,7 +30,6 @@ public class VexPatch extends MobPatch<Vex> {
 		super.initAI();
 		
         this.original.goalSelector.addGoal(0, new ChargeAttackGoal());
-        //this.original.goalSelector.addGoal(1, new StopStandGoal());
 	}
 	
 	@Override
@@ -105,22 +104,6 @@ public class VexPatch extends MobPatch<Vex> {
 		return Animations.VEX_HIT;
 	}
 	
-	class StopStandGoal extends Goal {
-		public StopStandGoal() {
-			this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-		}
-
-		@Override
-		public boolean canUse() {
-			return VexPatch.this.getEntityState().inaction();
-		}
-
-		@Override
-		public void start() {
-			VexPatch.this.original.getMoveControl().setWantedPosition(VexPatch.this.original.getX(), VexPatch.this.original.getY(), VexPatch.this.original.getZ(), 0.25F);
-		}
-	}
-	
 	class ChargeAttackGoal extends Goal {
 		private int chargingCounter;
 		
@@ -130,9 +113,9 @@ public class VexPatch extends MobPatch<Vex> {
 		
 		@Override
 		public boolean canUse() {
-			if (VexPatch.this.original.getTarget() != null && !VexPatch.this.getEntityState().inaction() && VexPatch.this.original.getRandom().nextInt(3) == 0) {
+			if (VexPatch.this.original.getTarget() != null && !VexPatch.this.getEntityState().inaction() && VexPatch.this.original.getRandom().nextInt(10) == 0) {
 				double distance = VexPatch.this.original.distanceToSqr(VexPatch.this.original.getTarget());
-				return distance < 25.0D;
+				return distance < 49.0D;
 			} else {
 				return false;
 			}
