@@ -2,8 +2,6 @@ package yesman.epicfight.api.animation.property;
 
 import java.util.Optional;
 
-import org.joml.Quaternionf;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -340,20 +338,30 @@ public class MoveCoordFunctions {
 	};
 	
 	public static final MoveCoordSetter VEX_TRACE = (self, entitypatch, transformSheet) -> {
-		TransformSheet transform = self.getCoord().copyAll();
-		Keyframe[] keyframes = transform.getKeyframes();
-		int startFrame = 0;
-		int endFrame = 6;
-		Vec3 pos = entitypatch.getOriginal().position();
-		Vec3 targetpos = entitypatch.getTarget().position();
-		float verticalDistance = (float) (targetpos.y - pos.y);
-		Quaternionf rotator = Vec3f.getRotatorBetween(new Vec3f(0.0F, -verticalDistance, (float)targetpos.subtract(pos).horizontalDistance()), new Vec3f(0.0F, 0.0F, 1.0F), null);
-		
-		for (int i = startFrame; i <= endFrame; i++) {
-			Vec3f translation = keyframes[i].transform().translation();
-			OpenMatrix4f.transform3v(OpenMatrix4f.fromQuaternion(rotator), translation, translation);
+		if (!self.isLinkAnimation()) {
+			TransformSheet transform = self.getCoord().copyAll();
+			Keyframe[] keyframes = transform.getKeyframes();
+			Vec3 pos = entitypatch.getOriginal().position();
+			Vec3 targetpos = entitypatch.getTarget().getEyePosition();
+			double flyDistance = Math.max(5.0D, targetpos.subtract(pos).length() * 2);
+			
+			transform.forEach((index, keyframe) -> {
+				keyframe.transform().translation().scale((float)(flyDistance / Math.abs(keyframes[keyframes.length - 1].transform().translation().z)));
+			});
+			
+			Vec3 toTarget = targetpos.subtract(pos);
+			float xRot = (float)-MathUtils.getXRotOfVector(toTarget);
+			float yRot = (float)MathUtils.getYRotOfVector(toTarget);
+			
+			entitypatch.setYRot(yRot);
+			
+			transform.forEach((index, keyframe) -> {
+				keyframe.transform().translation().rotateDegree(Vec3f.X_AXIS, xRot);
+				keyframe.transform().translation().rotateDegree(Vec3f.Y_AXIS, 180.0F - yRot);
+				keyframe.transform().translation().add(entitypatch.getOriginal().position());
+			});
+			
+			transformSheet.readFrom(transform);
 		}
-		
-		transformSheet.readFrom(transform);
 	};
 }
