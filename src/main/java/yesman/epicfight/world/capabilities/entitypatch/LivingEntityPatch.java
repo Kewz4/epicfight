@@ -63,7 +63,7 @@ import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightSharedConstants;
-import yesman.epicfight.model.armature.ToolHolderArmature;
+import yesman.epicfight.model.armature.types.ToolHolderArmature;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.client.CPAnimatorControl;
 import yesman.epicfight.network.common.AnimatorControlPacket;

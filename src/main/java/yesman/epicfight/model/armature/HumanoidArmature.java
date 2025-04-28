@@ -4,8 +4,9 @@ import java.util.Map;
 
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.model.armature.types.HumanLikeArmature;
 
-public class HumanoidArmature extends Armature implements ToolHolderArmature {
+public class HumanoidArmature extends Armature implements HumanLikeArmature {
 	public final Joint thighR;
 	public final Joint legR;
 	public final Joint kneeR;
@@ -63,5 +64,50 @@ public class HumanoidArmature extends Armature implements ToolHolderArmature {
 	@Override
 	public Joint backToolJoint() {
 		return this.chest;
+	}
+
+	@Override
+	public Joint leftHandJoint() {
+		return this.handL;
+	}
+
+	@Override
+	public Joint rightHandJoint() {
+		return this.handR;
+	}
+
+	@Override
+	public Joint leftArmJoint() {
+		return this.armL;
+	}
+
+	@Override
+	public Joint rightArmJoint() {
+		return this.armR;
+	}
+
+	@Override
+	public Joint leftLegJoint() {
+		return this.legL;
+	}
+
+	@Override
+	public Joint rightLegJoint() {
+		return this.legR;
+	}
+
+	@Override
+	public Joint leftThighJoint() {
+		return this.thighL;
+	}
+
+	@Override
+	public Joint rightThighJoint() {
+		return this.thighR;
+	}
+
+	@Override
+	public Joint headJoint() {
+		return this.head;
 	}
 }

@@ -111,7 +111,7 @@ import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
-import yesman.epicfight.model.armature.ToolHolderArmature;
+import yesman.epicfight.model.armature.types.ToolHolderArmature;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.identity.MeteorSlamSkill;

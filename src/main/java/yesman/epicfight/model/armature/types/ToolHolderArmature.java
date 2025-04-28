@@ -1,4 +1,4 @@
-package yesman.epicfight.model.armature;
+package yesman.epicfight.model.armature.types;
 
 import yesman.epicfight.api.animation.Joint;
 

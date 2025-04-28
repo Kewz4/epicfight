@@ -23,7 +23,7 @@ import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.model.armature.ToolHolderArmature;
+import yesman.epicfight.model.armature.types.ToolHolderArmature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 @OnlyIn(Dist.CLIENT)

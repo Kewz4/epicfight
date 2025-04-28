@@ -4,6 +4,7 @@ import java.util.Map;
 
 import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.model.armature.types.ToolHolderArmature;
 
 public class VexArmature extends Armature implements ToolHolderArmature {
 	public final Joint tail;
