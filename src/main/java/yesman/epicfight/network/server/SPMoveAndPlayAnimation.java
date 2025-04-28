@@ -56,9 +56,11 @@ public class SPMoveAndPlayAnimation extends SPPlayAnimationAndSetTarget {
 	}
 	
 	public static void toBytes(SPMoveAndPlayAnimation msg, FriendlyByteBuf buf) {
+		buf.writeEnum(msg.action);
 		buf.writeInt(msg.animationId);
 		buf.writeInt(msg.entityId);
 		buf.writeFloat(msg.transitionTimeModifier);
+		buf.writeBoolean(msg.pause);
 		buf.writeInt(msg.targetId);
 		buf.writeDouble(msg.posX);
 		buf.writeDouble(msg.posY);

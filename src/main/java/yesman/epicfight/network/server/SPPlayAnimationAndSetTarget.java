@@ -47,6 +47,7 @@ public class SPPlayAnimationAndSetTarget extends SPAnimatorControl {
 		buf.writeInt(msg.animationId);
 		buf.writeInt(msg.entityId);
 		buf.writeFloat(msg.transitionTimeModifier);
+		buf.writeBoolean(msg.pause);
 		buf.writeInt(msg.targetId);
 	}
 
