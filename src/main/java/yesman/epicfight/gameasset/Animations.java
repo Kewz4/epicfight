@@ -111,7 +111,7 @@ import yesman.epicfight.api.utils.math.ValueModifier;
 import yesman.epicfight.api.utils.math.Vec3f;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
-import yesman.epicfight.model.armature.HumanoidArmature;
+import yesman.epicfight.model.armature.ToolHolderArmature;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.identity.MeteorSlamSkill;
@@ -1578,12 +1578,18 @@ public class Animations {
 		VEX_HIT = builder.nextAccessor("vex/hit", (accessor) -> new HitAnimation(0.048F, accessor, Armatures.VEX));
 		VEX_DEATH = builder.nextAccessor("vex/death", (accessor) -> new LongHitAnimation(0.16F, accessor, Armatures.VEX));
 		VEX_CHARGE = builder.nextAccessor("vex/charge", (accessor) ->
-			new AttackAnimation(0.11F, 0.3F, 0.3F, 0.5F, 1.2F, ColliderPreset.VEX_CHARGE, Armatures.VEX.get().rootJoint, accessor, Armatures.VEX)
-				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, (entitypatch) -> entitypatch.getLastAttackPosition())
+			new AttackAnimation(0.11F, 0.3F, 0.3F, 0.5F, 1.5F, ColliderPreset.VEX_CHARGE, Armatures.VEX.get().rootJoint, accessor, Armatures.VEX)
+				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, LivingEntityPatch::getLastAttackPosition)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, MoveCoordFunctions.VEX_TRACE)
-				.addProperty(ActionAnimationProperty.COORD_SET_TICK, (self, entitypatch, transformSheet) -> {})
+				.addProperty(ActionAnimationProperty.COORD_SET_TICK, null)
+				.addProperty(ActionAnimationProperty.COORD_GET, MoveCoordFunctions.WORLD_COORD)
+				.addProperty(ActionAnimationProperty.MOVE_ON_LINK, false)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, true)
-				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> entitypatch.setLastAttackPosition(), Side.SERVER)));
+				.addProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT, true)
+				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> entitypatch.setLastAttackPosition(), Side.SERVER))
+				.newTimePair(0.0F, 1.5F)
+				.addStateRemoveOld(EntityState.MOVEMENT_LOCKED, true)
+				.addStateRemoveOld(EntityState.TURNING_LOCKED, true));
 		
 		VEX_NEUTRALIZED = builder.nextAccessor("vex/neutralized", (accessor) -> new LongHitAnimation(0.1F, accessor, Armatures.VEX));
 		
@@ -1603,7 +1609,7 @@ public class Animations {
 			new AttackAnimation(0.35F, 0.35F, 0.35F, 0.66F, 2.05F, ColliderPreset.WITHER_CHARGE, Armatures.WITHER.get().rootJoint, accessor, Armatures.WITHER)
 				.addProperty(AttackPhaseProperty.SWING_SOUND, EpicFightSounds.BIG_ENTITY_MOVE.get())
 				.addProperty(AttackPhaseProperty.HIT_SOUND, EpicFightSounds.BLUNT_HIT_HARD.get())
-				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, (entitypatch) -> entitypatch.getLastAttackPosition())
+				.addProperty(AttackPhaseProperty.SOURCE_LOCATION_PROVIDER, LivingEntityPatch::getLastAttackPosition)
 				.addProperty(AttackPhaseProperty.STUN_TYPE, StunType.KNOCKDOWN)
 				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(100))
 				.addProperty(AttackPhaseProperty.DAMAGE_MODIFIER, ValueModifier.setter(15.0F))
@@ -2298,32 +2304,32 @@ public class Animations {
 		public static final AnimationEvent.E1<SoundEvent> PLAY_SOUND = (entitypatch, animation, params) -> entitypatch.playSound(params.first(), 0, 0);
 		public static final IndependentAnimationVariableKey<Boolean> TOOLS_IN_BACK = AnimationVariables.independent((animator) -> false, true);
 		
-		private static void moveToolBonesToBack(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, HumanoidArmature humanoidArmature) {
-			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, humanoidArmature.chest);
-			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, humanoidArmature.chest);
+		private static void moveToolBonesToBack(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, ToolHolderArmature toolArmature) {
+			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, toolArmature.backToolJoint());
+			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, toolArmature.backToolJoint());
 			entitypatch.getAnimator().getVariables().put(TOOLS_IN_BACK, animation, true);
 		}
 		
-		private static void moveToolBonesToHands(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, HumanoidArmature humanoidArmature) {
-			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, humanoidArmature.toolR);
-			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, humanoidArmature.toolL);
+		private static void moveToolBonesToHands(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends StaticAnimation> animation, ToolHolderArmature toolArmature) {
+			entitypatch.setParentJointOfHand(InteractionHand.MAIN_HAND, toolArmature.rightToolJoint());
+			entitypatch.setParentJointOfHand(InteractionHand.OFF_HAND, toolArmature.leftToolJoint());
 			entitypatch.getAnimator().getVariables().remove(TOOLS_IN_BACK, animation);
 		}
 		
 		public static final AnimationEvent.E0 SET_TOOLS_BACK = (entitypatch, animation, params) -> {
-			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
-				moveToolBonesToBack(entitypatch, animation, humanoidArmature);
+			if (entitypatch.getArmature() instanceof ToolHolderArmature toolArmature) {
+				moveToolBonesToBack(entitypatch, animation, toolArmature);
 			}
 		};
 		
 		public static final AnimationEvent.E0 SET_TOOLS_BACK_WHEN_MOUNT = (entitypatch, animation, params) -> {
-			if (!entitypatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).availableOnHorse() && entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
-				moveToolBonesToBack(entitypatch, animation, humanoidArmature);
+			if (!entitypatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).availableOnHorse() && entitypatch.getArmature() instanceof ToolHolderArmature toolArmature) {
+				moveToolBonesToBack(entitypatch, animation, toolArmature);
 			}
 		};
 		
 		public static final AnimationEvent.E2<CapabilityItem, CapabilityItem> SET_TOOLS_BACK_WHEN_ITEM_CHANGED = (entitypatch, animation, params) -> {
-			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
+			if (entitypatch.getArmature() instanceof ToolHolderArmature humanoidArmature) {
 				if (!params.first().isEmpty()) {
 					moveToolBonesToBack(entitypatch, animation, humanoidArmature);
 				} else {
@@ -2333,7 +2339,7 @@ public class Animations {
 		};
 		
 		public static final AnimationEvent.E2<CapabilityItem, CapabilityItem> SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED = (entitypatch, animation, params) -> {
-			if (entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
+			if (entitypatch.getArmature() instanceof ToolHolderArmature humanoidArmature) {
 				if (!params.first().availableOnHorse()) {
 					moveToolBonesToBack(entitypatch, animation, humanoidArmature);
 				} else {
@@ -2343,8 +2349,8 @@ public class Animations {
 		};
 		
 		public static final AnimationEvent.E0 REVERT_TO_HANDS = (entitypatch, animation, params) -> {
-			if (entitypatch.getAnimator().getVariables().getOrDefault(TOOLS_IN_BACK, animation) && entitypatch.getArmature() instanceof HumanoidArmature humanoidArmature) {
-				moveToolBonesToHands(entitypatch, animation, humanoidArmature);
+			if (entitypatch.getAnimator().getVariables().getOrDefault(TOOLS_IN_BACK, animation) && entitypatch.getArmature() instanceof ToolHolderArmature toolArmature) {
+				moveToolBonesToHands(entitypatch, animation, toolArmature);
 			}
 		};
 		
