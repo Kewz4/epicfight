@@ -9,11 +9,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.monster.Vex;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
@@ -30,7 +30,7 @@ public class VexPatch extends MobPatch<Vex> {
 		super.initAI();
 		
         this.original.goalSelector.addGoal(0, new ChargeAttackGoal());
-        this.original.goalSelector.addGoal(1, new StopStandGoal());
+        //this.original.goalSelector.addGoal(1, new StopStandGoal());
 	}
 	
 	@Override
@@ -51,6 +51,27 @@ public class VexPatch extends MobPatch<Vex> {
 			
 			index++;
         }
+	}
+	
+	@Override
+	public void tick(LivingEvent.LivingTickEvent event) {
+		super.tick(event);
+		
+		if (!this.isLogicalClient()) {
+			if (this.getEntityState().movementLocked()) {
+				this.original.goalSelector.disableControlFlag(Goal.Flag.MOVE);
+				this.original.goalSelector.disableControlFlag(Goal.Flag.JUMP);
+			} else {
+				this.original.goalSelector.enableControlFlag(Goal.Flag.MOVE);
+				this.original.goalSelector.enableControlFlag(Goal.Flag.JUMP);
+			}
+			
+			if (this.getEntityState().turningLocked()) {
+				this.original.goalSelector.disableControlFlag(Goal.Flag.LOOK);
+			} else {
+				this.original.goalSelector.enableControlFlag(Goal.Flag.LOOK);
+			}
+		}
 	}
 	
 	@Override
@@ -84,11 +105,6 @@ public class VexPatch extends MobPatch<Vex> {
 		return Animations.VEX_HIT;
 	}
 	
-	@Override
-	public OpenMatrix4f getModelMatrix(float partialTicks) {
-		return super.getModelMatrix(partialTicks).scale(0.4F, 0.4F, 0.4F);
-	}
-	
 	class StopStandGoal extends Goal {
 		public StopStandGoal() {
 			this.setFlags(EnumSet.of(Goal.Flag.MOVE));
@@ -114,9 +130,9 @@ public class VexPatch extends MobPatch<Vex> {
 		
 		@Override
 		public boolean canUse() {
-			if (VexPatch.this.original.getTarget() != null && !VexPatch.this.getEntityState().inaction() && VexPatch.this.original.getRandom().nextInt(10) == 0) {
+			if (VexPatch.this.original.getTarget() != null && !VexPatch.this.getEntityState().inaction() && VexPatch.this.original.getRandom().nextInt(3) == 0) {
 				double distance = VexPatch.this.original.distanceToSqr(VexPatch.this.original.getTarget());
-				return distance < 50.0D;
+				return distance < 25.0D;
 			} else {
 				return false;
 			}

@@ -89,7 +89,7 @@ public class ColliderPreset implements PreparableReloadListener {
 	public static final Collider DUAL_SWORD_AIR_SLASH = registerCollider(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "dual_sword_air_slash"), new OBBCollider(0.8D, 0.4D, 1.0D, 0D, 0.5D, -0.5D));
 	public static final Collider DUAL_DAGGER_AIR_SLASH = registerCollider(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "dual_dagger_air_slash"), new OBBCollider(0.8D, 0.4D, 0.75D, 0D, 0.5D, -0.5D));
 	public static final Collider WITHER_CHARGE = registerCollider(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "wither_charge"), new MultiOBBCollider(5, 0.7D, 0.9D, 0.7D, 0D, 1.0D, -0.35D));
-	public static final Collider VEX_CHARGE = registerCollider(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "vex_charge"), new MultiOBBCollider(3, 0.4D, 0.4D, 0.95D, 0D, 1.0D, -0.85D));
+	public static final Collider VEX_CHARGE = registerCollider(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "vex_charge"), new MultiOBBCollider(3, 0.4D, 0.4D, 0.95D, 0D, 0.2D, -0.85D));
 	
 	public static Collider deserializeSimpleCollider(CompoundTag tag) throws IllegalArgumentException {
 		int number = tag.getInt("number");
