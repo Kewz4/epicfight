@@ -114,7 +114,7 @@ public class LayerUtil {
 				}
 			} catch (ClassNotFoundException e) {
 				if (EpicFightSharedConstants.IS_DEV_ENV) {
-					EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
+					EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {} (This is develop-only message and neglectable if the resource is not belong to you)", entry.getFirst(), entityType, e.getMessage());
 				}
 			} catch (NoSuchElementException | ClassCastException | CommandSyntaxException | IllegalArgumentException e) {
 				EpicFightMod.LOGGER.error("Can't load layer file {} for {}: {}", entry.getFirst(), entityType, e.getMessage());
