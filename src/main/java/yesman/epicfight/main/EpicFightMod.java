@@ -157,6 +157,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
+ *  20.10.1.502 -> 20.10.1.503
+ *  
+ *  Fixed players floating in the air when the guard break occurs
+ *  Fixed a crash when rendering the health bar
+ *  
+ *  ***************************************************************
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
