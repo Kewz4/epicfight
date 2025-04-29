@@ -122,7 +122,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
- *  20.10.310 -> 20.10.401
+ *  20.10.1.310 -> 20.10.1.401
  *  
  *  Added first-person animations for drink and eat animation
  *  Fixed guard consuming stamina rapidly when players block vanilla attacks
@@ -133,7 +133,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
- *  20.10.401 -> 20.10.403
+ *  20.10.1.401 -> 20.10.1.403
  *  
  *  Fixed multiple datapack editor crashes
  *  Fixed tooltips being hidden by the skill book screen
@@ -143,12 +143,19 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
- *  20.10.501 Created.
+ *  20.10.1.502 Created.
  *  
  *  Added an health bar visibility option shows both target and hurt entities
  *  Added health bar animation
  *  Added health bar variations based on factions
  *  Fixed the absorption amount to be expressed in health bar
+ *  Fixed a crash when playing Steel whirlwind animation without the skill
+ *  Fixed a crash when Vex tries to attack
+ *  Fixed the vex model
+ *  Fixed the guard being bypassed when players take guard action right after finishing an attack
+ *  Fixed demolition leap not working
+ *  
+ *  ***************************************************************
  *  
  *  --- TO DO ---
  *  
