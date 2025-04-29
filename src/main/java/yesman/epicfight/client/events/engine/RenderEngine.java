@@ -844,7 +844,7 @@ public class RenderEngine {
 		
 		@SubscribeEvent
 		public static void levelTickEvent(TickEvent.LevelTickEvent event) {
-			if (event.phase == TickEvent.Phase.END) {
+			if (event.level.isClientSide() && event.phase == TickEvent.Phase.END) {
 				EntityUI.HEALTH_BAR.tick();
 			}
 		}
