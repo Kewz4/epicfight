@@ -135,7 +135,8 @@ public class ActionAnimation extends MainFrameAnimation {
 		super.tick(entitypatch);
 		
 		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
-			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
+			double gravity = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false) ? 0.0D : entitypatch.getOriginal().getDeltaMovement().y;
+			entitypatch.getOriginal().setDeltaMovement(0.0D, gravity, 0.0D);
 		}
 		
 		this.move(entitypatch, this.getAccessor());
@@ -144,7 +145,8 @@ public class ActionAnimation extends MainFrameAnimation {
 	@Override
 	public void linkTick(LivingEntityPatch<?> entitypatch, AssetAccessor<? extends DynamicAnimation> linkAnimation) {
 		if (this.getProperty(ActionAnimationProperty.REMOVE_DELTA_MOVEMENT).orElse(false)) {
-			entitypatch.getOriginal().setDeltaMovement(0.0D, 0.0D, 0.0D);
+			double gravity = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false) ? 0.0D : entitypatch.getOriginal().getDeltaMovement().y;
+			entitypatch.getOriginal().setDeltaMovement(0.0D, gravity, 0.0D);
 		}
 		
 		this.move(entitypatch, linkAnimation);
