@@ -22,6 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.Tags.EntityTypes;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
@@ -43,15 +44,17 @@ public class HealthBar extends EntityUI {
 		HealthBarVisibility healthBarVisibility = ClientConfig.healthBarVisibility;
 		Minecraft mc = Minecraft.getInstance();
 		
-		if (healthBarVisibility != HealthBarVisibility.NONE) {
-			EntityAttributeTracker healthTracker = this.trackingEntities.computeIfAbsent(entity, (key) -> new EntityAttributeTracker(key, entitypatch));
-			healthTracker.checkChange(partialTicks);
-			healthTracker.setKeepUp(true);
-		}
-		
 		if (healthBarVisibility == HealthBarVisibility.NONE) {
 			return false;
-		} else if (!entity.canChangeDimensions() || entity.isInvisibleTo(playerpatch.getOriginal()) || entity == playerpatch.getOriginal().getVehicle()) {
+		} else if (entity.getType().is(EntityTypes.BOSSES)) {
+			return false;
+		}
+		
+		EntityAttributeTracker healthTracker = this.trackingEntities.computeIfAbsent(entity, (key) -> new EntityAttributeTracker(key, entitypatch));
+		healthTracker.checkChange(partialTicks);
+		healthTracker.setKeepUp(true);
+		
+		if (entity.isInvisibleTo(playerpatch.getOriginal()) || entity == playerpatch.getOriginal().getVehicle()) {
 			return false;
 		} else if (entity.distanceToSqr(mc.getCameraEntity()) >= 400) {
 			return false;
@@ -159,16 +162,16 @@ public class HealthBar extends EntityUI {
 		}
 		
 		float ratio = Mth.clamp(entity.getHealth() / maxHealth, 0.0F, 1.0F);
-		float filledHealthEnd = -0.5F + ratio * healthEnd;
+		float filledHealthEnd = Math.max(-0.5F + ratio * healthEnd, -0.46875F);
 		
-		// Draw filled health
+		// Draw health amount
 		drawUIAsLevelModel(modelViewMatrix, healthBarTexture, buffers, -0.5F, -healthBarHeight, filledHealthEnd, healthBarHeight, 0.0F, (texV + 5) / 64.0F, ratio * healthEnd, (texV + 10) / 64.0F);
 		
 		if (attributeTracker.healthState.hasAnimation()) {
 			float animatedHealthRatio = Mth.clamp(partialHealth / maxHealth, 0.0F, 1.0F);
-			float animatedHealthModelX = -0.5F + animatedHealthRatio;
+			float animatedHealthModelX = Math.min(-0.5F + animatedHealthRatio, 0.46875F);
 			
-			// Draw lost health
+			// Draw lost health amount
 			drawColoredQuadAsLevelModel(modelViewMatrix, buffers, filledHealthEnd, -innerHealthBarHeight, animatedHealthModelX, innerHealthBarHeight, damageColor);
 		}
 		
@@ -184,7 +187,7 @@ public class HealthBar extends EntityUI {
 			float shieldRatio = -0.5F + stunShieldRatio;
 			int stunShieldTextureRatio = (int) (62 * stunShieldRatio);
 			
-			// Draw filled stun shield
+			// Draw stun shield amount
 			drawUIAsLevelModel(modelViewMatrix, BATTLE_ICON, buffers, -0.5F, -0.08F, shieldRatio, -healthBarHeight, 1, 5, stunShieldTextureRatio, 10, 256);
 			
 			float animatedStunShieldPosition = Mth.clamp(attributeTracker.stunShieldState.getAnimatedValue(entity.tickCount, partialTicks) / entitypatch.getMaxStunShield(), 0.0F, 1.0F);
@@ -270,8 +273,8 @@ public class HealthBar extends EntityUI {
 						this.valueO = this.getAnimatedValue(tickCount, partialTick);
 					}
 					
-					this.lastChangeTick = tickCount;
-					this.animationFrames = currentValue == 0 ? 4 : Math.max(4, (int)((Math.abs(this.valueO - currentValue) / this.maxValueGetter.get())) * 10);
+					this.lastChangeTick = tickCount + 3;
+					this.animationFrames = currentValue == 0 ? 4 : Math.max(4, (int)((Math.abs(this.valueO - currentValue) / this.maxValueGetter.get()) * 10.0F));
 					this.value = currentValue;
 				}
 			}
@@ -291,10 +294,14 @@ public class HealthBar extends EntityUI {
 				if (this.animationFrames == 0) {
 					return this.value;
 				} else {
-					float divide = (float)(tickCount - this.lastChangeTick) / (float)this.animationFrames;
-					float partial = divide + partialTick / this.animationFrames;
-					
-					return this.valueO + (this.value - this.valueO) * partial;
+					if (tickCount < this.lastChangeTick) {
+						return this.valueO;
+					} else {
+						float divide = (float)(tickCount - this.lastChangeTick) / (float)this.animationFrames;
+						float partial = divide + partialTick / this.animationFrames;
+						
+						return this.valueO + (this.value - this.valueO) * partial;
+					}
 				}
 			}
 		}
