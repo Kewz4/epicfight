@@ -164,6 +164,15 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
+ *  20.10.1.503 -> 20.10.1.504
+ *  
+ *  Fixed the damage part of the health bar not to exceed the background
+ *  Fixed the health bar so that the higher the damage taken, the more transition time there is
+ *  Fixed the demolition leap not to cancel hand animation (greatsword, spear holding animations)
+ *  Fixed the teleport bug that randomly happens when attacking
+ *  
+ *  ***************************************************************
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
