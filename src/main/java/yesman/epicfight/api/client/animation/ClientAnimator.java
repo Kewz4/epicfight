@@ -427,7 +427,7 @@ public class ClientAnimator extends Animator {
 		return this.currentCompositeMotion.isSame(motion);
 	}
 	
-	public void forceChangeLivingMotion(LivingMotions livingMotion, LivingMotions compositeLivingMotion) {
+	public void forceResetBeforeAction(LivingMotions livingMotion, LivingMotions compositeLivingMotion) {
 		this.entitypatch.currentLivingMotion = livingMotion;
 		this.currentMotion = livingMotion;
 		
@@ -435,22 +435,14 @@ public class ClientAnimator extends Animator {
 			this.baseLayer.playAnimation(this.getLivingMotion(this.currentMotion), this.entitypatch, 0.0F);
 		}
 		
-		this.currentCompositeMotion = compositeLivingMotion;
-		
-		if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
-			AssetAccessor<? extends StaticAnimation> nextLivingAnimation = this.getCompositeLivingMotion(this.currentCompositeMotion);
-			AssetAccessor<? extends StaticAnimation> currentLivingMotion = this.getCompositeLivingMotion(this.currentCompositeMotion);
-			
-			if (nextLivingAnimation == null || (currentLivingMotion != null && nextLivingAnimation.get().getPriority() != currentLivingMotion.get().getPriority())) {
-				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
-			}
-			
-			this.playAnimation(this.getCompositeLivingMotion(this.currentCompositeMotion), 0.0F);
-		} else if (this.compositeLivingAnimations.containsKey(this.entitypatch.currentCompositeMotion)) {
-			this.getCompositeLayer(this.getCompositeLivingMotion(this.entitypatch.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
+		if (this.compositeLivingAnimations.containsKey(compositeLivingMotion)) {
+			this.playAnimation(this.getCompositeLivingMotion(compositeLivingMotion), 0.0F);
+		} else if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
+			this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
 		}
 		
-		this.entitypatch.currentCompositeMotion = compositeLivingMotion;
+		this.currentCompositeMotion = LivingMotions.NONE;
+		this.entitypatch.currentCompositeMotion = LivingMotions.NONE;
 	}
 	
 	public void resetMotion(boolean resetPrevMotion) {

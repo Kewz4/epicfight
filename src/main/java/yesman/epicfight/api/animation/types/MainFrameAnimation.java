@@ -25,8 +25,6 @@ public class MainFrameAnimation extends StaticAnimation {
 	
 	@Override
 	public void begin(LivingEntityPatch<?> entitypatch) {
-		super.begin(entitypatch);
-		
 		TypeFlexibleHashMap<StateFactor<?>> stateMap = this.stateSpectrum.getStateMap(entitypatch, 0.0F);
 		TypeFlexibleHashMap<StateFactor<?>> modifiedStateMap = new TypeFlexibleHashMap<> (false);
 		stateMap.forEach((k, v) -> modifiedStateMap.put(k, this.getModifiedLinkState(k, v, entitypatch, 0.0F)));
@@ -38,6 +36,8 @@ public class MainFrameAnimation extends StaticAnimation {
 			entitypatch.getClientAnimator().resetCompositeMotion();
 			entitypatch.getClientAnimator().getPlayerFor(this.getAccessor()).setReversed(false);
 		}
+		
+		super.begin(entitypatch);
 		
 		if (entitypatch instanceof PlayerPatch<?> playerpatch) {
 			if (playerpatch.isLogicalClient()) {

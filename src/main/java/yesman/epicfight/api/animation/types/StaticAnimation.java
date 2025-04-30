@@ -245,12 +245,6 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 		// Load if null
 		this.getAnimationClip();
 		
-		this.getProperty(StaticAnimationProperty.ON_BEGIN_EVENTS).ifPresent((events) -> {
-			for (SimpleEvent<?> event : events) {
-				event.execute(entitypatch, this.getAccessor(), 0.0F, 0.0F);
-			}
-		});
-		
 		// Please fix this implementation when minecraft supports any mixinable method that returns noPhysics variable 
 		this.getProperty(StaticAnimationProperty.NO_PHYSICS).ifPresent((val) -> {
 			if (val) {
@@ -286,6 +280,12 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 				}
 			});
 		}
+		
+		this.getProperty(StaticAnimationProperty.ON_BEGIN_EVENTS).ifPresent((events) -> {
+			for (SimpleEvent<?> event : events) {
+				event.execute(entitypatch, this.getAccessor(), 0.0F, 0.0F);
+			}
+		});
 		
 		if (entitypatch instanceof PlayerPatch<?> playerpatch) {
 			playerpatch.getEventListener().triggerEvents(EventType.ANIMATION_BEGIN_EVENT, new AnimationBeginEvent(playerpatch, this));
