@@ -43,7 +43,7 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 public class ActionAnimation extends MainFrameAnimation {
 	public static final SharedAnimationVariableKey<TransformSheet> ACTION_ANIMATION_COORD = AnimationVariables.shared((animator) -> new TransformSheet(), false);
 	public static final IndependentAnimationVariableKey<Vec3> BEGINNING_LOCATION = AnimationVariables.independent((animator) -> animator.getEntityPatch().getOriginal().position(), true);
-	public static final IndependentAnimationVariableKey<Float> INITIAL_LOOK_VEC_DOT = AnimationVariables.independent((animator) -> animator.getEntityPatch().getYRot(), true);
+	public static final IndependentAnimationVariableKey<Float> INITIAL_LOOK_VEC_DOT = AnimationVariables.independent((animator) -> 1.0F, true);
 	
 	public ActionAnimation(float transitionTime, AnimationAccessor<? extends ActionAnimation> accessor, AssetAccessor<? extends Armature> armature) {
 		this(transitionTime, Float.MAX_VALUE, accessor, armature);
@@ -97,13 +97,10 @@ public class ActionAnimation extends MainFrameAnimation {
 	protected void initCoordVariables(LivingEntityPatch<?> entitypatch) {
 		Vec3 start = entitypatch.getOriginal().position();
 		
-		if (entitypatch.getTarget() == null) {
-			entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), 1.0F);
-		} else {
+		if (entitypatch.getTarget() != null) {
 			Vec3 targetTracePosition = entitypatch.getTarget().position();
 			Vec3 toDestWorld = targetTracePosition.subtract(start);
 			float dot = Mth.clamp((float)toDestWorld.normalize().dot(MathUtils.getVectorForRotation(0.0F, entitypatch.getYRot())), 0.0F, 1.0F);
-			
 			entitypatch.getAnimator().getVariables().put(INITIAL_LOOK_VEC_DOT, this.getAccessor(), dot);
 		}
 		
