@@ -2,6 +2,8 @@ package yesman.epicfight.compat;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
+
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -31,6 +33,7 @@ import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.model.Mesh.DrawingFunction;
 import yesman.epicfight.api.client.model.SkinnedMesh;
 import yesman.epicfight.api.client.model.transformer.HumanoidModelBaker;
+import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.renderer.EpicFightRenderTypes;
@@ -82,7 +85,7 @@ public class CuriosCompat implements ICompatModule {
 			, LivingEntity livingEntity
 			, CuriosLayer<LivingEntity, EntityModel<LivingEntity>> vanillaLayer
 			, PoseStack poseStack
-			, MultiBufferSource buffer
+			, MultiBufferSource buffers
 			, int packedLight
 			, OpenMatrix4f[] poses
 			, float bob
@@ -90,6 +93,8 @@ public class CuriosCompat implements ICompatModule {
 			, float xRot
 			, float partialTicks
 		) {
+			MutableBoolean renderedEpicFightModel = new MutableBoolean(false);
+			
 			CuriosApi.getCuriosInventory(livingEntity).ifPresent((handler) -> {
 				handler.getCurios().forEach((id, stacksHandler) -> {
 					IDynamicStackHandler stackHandler = stacksHandler.getStacks();
@@ -126,7 +131,7 @@ public class CuriosCompat implements ICompatModule {
 											parentRenderer = (LivingEntityRenderer<?, ?>)Minecraft.getInstance().getEntityRenderDispatcher().getSkinMap().get("default");
 										}
 										
-										curioRenderer.render(finalStack, slotContext, poseStack, parentRenderer, buffer, 0, 0, 0, 0, 0, 0, 0);
+										curioRenderer.render(finalStack, slotContext, poseStack, parentRenderer, buffers, 0, 0, 0, 0, 0, 0, 0);
 										poseStack.popPose();
 										
 										skinnedMesh = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(curioModel);
@@ -137,7 +142,7 @@ public class CuriosCompat implements ICompatModule {
 									
 									skinnedMesh.drawPosed(
 										  poseStack
-										, buffer.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(humanoidRenderer.getModelTexture(finalStack, slotContext))))
+										, buffers.getBuffer(EpicFightRenderTypes.getTriangulated(RenderType.entityCutoutNoCull(humanoidRenderer.getModelTexture(finalStack, slotContext))))
 										, DrawingFunction.NEW_ENTITY
 										, packedLight
 										, 1.0F
@@ -148,14 +153,28 @@ public class CuriosCompat implements ICompatModule {
 										, entitypatch.getArmature()
 										, poses
 									);
+									
+									renderedEpicFightModel.setTrue();
 								} else if (curioRenderer instanceof EpicFightCurioRenderer epicfightRenderer) {
-									epicfightRenderer.draw(finalStack, slotContext, entitypatch, livingEntity, vanillaLayer, poseStack, buffer, packedLight, poses, bob, yRot, xRot, partialTicks);
+									epicfightRenderer.draw(finalStack, slotContext, entitypatch, livingEntity, vanillaLayer, poseStack, buffers, packedLight, poses, bob, yRot, xRot, partialTicks);
+									renderedEpicFightModel.setTrue();
 								}
 							});
 						}
 					}
 				});
 			});
+			
+			// Render vanilla model when no epic fight model is found
+			if (!renderedEpicFightModel.booleanValue()) {
+				poseStack.pushPose();
+				OpenMatrix4f modelMatrix = poses[entitypatch.getArmature().searchJointByName("Root").getId()];
+				MathUtils.mulStack(poseStack, modelMatrix);
+				poseStack.translate(0.0F, 0.75F, 0.0F);
+				poseStack.scale(-1.0F, -1.0F, 1.0F);
+				vanillaLayer.render(poseStack, buffers, packedLight, livingEntity, livingEntity.walkAnimation.position(partialTicks), livingEntity.walkAnimation.speed(partialTicks), partialTicks, bob, yRot, xRot);
+				poseStack.popPose();
+			}
 		}
 	}
 	
