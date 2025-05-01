@@ -2371,7 +2371,7 @@ public class DatapackEditScreen extends Screen {
 				this.inputComponentsList.newRow();
 				this.inputComponentsList.addComponentCurrentRow(new Static(parentScreen, this.inputComponentsList.nextStart(4), 100, 60, 15, HorizontalSizing.LEFT_WIDTH, null, "datapack_edit.mob_patch.faction"));
 				this.inputComponentsList.addComponentCurrentRow(new ComboBox<>(parentScreen, parentScreen.getMinecraft().font, this.inputComponentsList.nextStart(5), 124, 100, 15, HorizontalSizing.LEFT_WIDTH, null, 8,
-					Component.translatable("datapack_edit.mob_patch.faction"), List.of(Faction.ENUM_MANAGER.universalValues()), (faction) -> ParseUtil.snakeToSpacedCamel(faction), (faction) -> {
+					Component.translatable("datapack_edit.mob_patch.faction"), Faction.ENUM_MANAGER.universalValues(), (faction) -> ParseUtil.snakeToSpacedCamel(faction), (faction) -> {
 						this.packList.get(this.packListGrid.getRowposition()).getValue().putString("faction", ParseUtil.nullOrToString(faction, (value) -> value.toString().toLowerCase(Locale.ROOT)));
 					}));
 				

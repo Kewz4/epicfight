@@ -44,7 +44,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-public class EpicFightRenderTypes extends RenderType {
+public abstract class EpicFightRenderTypes extends RenderType {
 	private static final RenderType ENTITY_UI_COLORED = 
 		create(
 			  EpicFightMod.MODID + ":ui_color"

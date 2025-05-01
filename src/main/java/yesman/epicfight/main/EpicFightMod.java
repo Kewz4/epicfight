@@ -80,6 +80,8 @@ import yesman.epicfight.skill.SkillDataKeys;
 import yesman.epicfight.skill.SkillSlot;
 import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.Faction;
+import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.Styles;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
 import yesman.epicfight.world.capabilities.item.Style;
@@ -173,6 +175,14 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
+ *  20.10.1.504 -> 20.10.1.505
+ *  
+ *  Fixed a datapack issue where the faction combo box is broken
+ *  Fixed a datapack issue where it fails to find a faction
+ *  Fixed to show models from the Curio slots regardless of whether they're compatible or not
+ *  
+ *  ***************************************************************
+ *  
  *  --- TO DO ---
  *  
  *  Update language files (always)
@@ -245,6 +255,7 @@ public class EpicFightMod {
     	SkillSlot.ENUM_MANAGER.registerEnumCls(EpicFightMod.MODID, SkillSlots.class);
     	Style.ENUM_MANAGER.registerEnumCls(EpicFightMod.MODID, Styles.class);
     	WeaponCategory.ENUM_MANAGER.registerEnumCls(EpicFightMod.MODID, WeaponCategories.class);
+    	Faction.ENUM_MANAGER.registerEnumCls(EpicFightMod.MODID, Factions.class);
     	
     	EpicFightMobEffects.EFFECTS.register(bus);
     	EpicFightPotions.POTIONS.register(bus);
@@ -318,6 +329,7 @@ public class EpicFightMod {
     	event.enqueueWork(SkillSlot.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(Style.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(WeaponCategory.ENUM_MANAGER::loadEnum);
+    	event.enqueueWork(Faction.ENUM_MANAGER::loadEnum);
     	event.enqueueWork(() -> {
 			AnimationRegistryEvent animationregistryevent = new AnimationRegistryEvent();
     		ModLoader.get().postEvent(animationregistryevent);
