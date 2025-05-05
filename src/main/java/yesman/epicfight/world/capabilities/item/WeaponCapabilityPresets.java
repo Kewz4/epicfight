@@ -129,12 +129,11 @@ public class WeaponCapabilityPresets {
 		
 		return builder;
 	};
-	public static final Function<Item, CapabilityItem.Builder> SPEAR = (item) ->
-		WeaponCapability.builder()
+	public static final Function<Item, CapabilityItem.Builder> SPEAR = (item) -> {
+		WeaponCapability.Builder builder = WeaponCapability.builder()
 			.category(WeaponCategories.SPEAR)
 			.styleProvider((playerpatch) -> (playerpatch.getHoldingItemCapability(InteractionHand.OFF_HAND).getWeaponCategory() == WeaponCategories.SHIELD) ? Styles.ONE_HAND : Styles.TWO_HAND)
 			.collider(ColliderPreset.SPEAR)
-			.hitSound(EpicFightSounds.BLADE_HIT.get())
 			.canBePlacedOffhand(false)
 			.newStyleCombo(Styles.ONE_HAND, Animations.SPEAR_ONEHAND_AUTO, Animations.SPEAR_DASH, Animations.SPEAR_ONEHAND_AIR_SLASH)
 			.newStyleCombo(Styles.TWO_HAND, Animations.SPEAR_TWOHAND_AUTO1, Animations.SPEAR_TWOHAND_AUTO2, Animations.SPEAR_DASH, Animations.SPEAR_TWOHAND_AIR_SLASH)
@@ -148,14 +147,21 @@ public class WeaponCapabilityPresets {
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.RUN, Animations.BIPED_RUN_SPEAR)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.SWIM, Animations.BIPED_HOLD_SPEAR)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.BLOCK, Animations.SPEAR_GUARD);
+		
+		if (item instanceof TieredItem tieredItem) {
+			builder.hitSound(tieredItem.getTier() == Tiers.WOOD ? EpicFightSounds.BLUNT_HIT.get() : EpicFightSounds.BLADE_HIT.get());
+			builder.hitParticle(tieredItem.getTier() == Tiers.WOOD ? EpicFightParticles.HIT_BLUNT.get() : EpicFightParticles.HIT_BLADE.get());
+		}
+		
+		return builder;
+	};
 
-	public static final Function<Item, CapabilityItem.Builder> GREATSWORD = (item) ->
-		WeaponCapability.builder()
+	public static final Function<Item, CapabilityItem.Builder> GREATSWORD = (item) -> {
+		WeaponCapability.Builder builder = WeaponCapability.builder()
 			.category(WeaponCategories.GREATSWORD)
 			.styleProvider((playerpatch) -> Styles.TWO_HAND)
 			.collider(ColliderPreset.GREATSWORD)
 			.swingSound(EpicFightSounds.WHOOSH_BIG.get())
-			.hitSound(EpicFightSounds.BLADE_HIT.get())
 			.canBePlacedOffhand(false)
 			.newStyleCombo(Styles.TWO_HAND, Animations.GREATSWORD_AUTO1, Animations.GREATSWORD_AUTO2, Animations.GREATSWORD_DASH, Animations.GREATSWORD_AIR_SLASH)
 			.innateSkill(Styles.TWO_HAND, (itemstack) -> EpicFightSkills.STEEL_WHIRLWIND)
@@ -171,6 +177,14 @@ public class WeaponCapabilityPresets {
 	    	.livingMotionModifier(Styles.TWO_HAND, LivingMotions.CREATIVE_FLY, Animations.BIPED_HOLD_GREATSWORD)
 	    	.livingMotionModifier(Styles.TWO_HAND, LivingMotions.CREATIVE_IDLE, Animations.BIPED_HOLD_GREATSWORD)
 	    	.livingMotionModifier(Styles.TWO_HAND, LivingMotions.BLOCK, Animations.GREATSWORD_GUARD);
+		
+		if (item instanceof TieredItem tieredItem) {
+			builder.hitSound(tieredItem.getTier() == Tiers.WOOD ? EpicFightSounds.BLUNT_HIT.get() : EpicFightSounds.BLADE_HIT.get());
+			builder.hitParticle(tieredItem.getTier() == Tiers.WOOD ? EpicFightParticles.HIT_BLUNT.get() : EpicFightParticles.HIT_BLADE.get());
+		}
+		
+		return builder;
+	};
 
 	public static final Function<Item, CapabilityItem.Builder> UCHIGATANA = (item) ->
 		WeaponCapability.builder()
@@ -211,12 +225,11 @@ public class WeaponCapabilityPresets {
 			.livingMotionModifier(Styles.SHEATH, LivingMotions.FALL, Animations.BIPED_HOLD_UCHIGATANA_SHEATHING)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.BLOCK, Animations.UCHIGATANA_GUARD);
 
-	public static final Function<Item, CapabilityItem.Builder> TACHI = (item) ->
-		WeaponCapability.builder()
+	public static final Function<Item, CapabilityItem.Builder> TACHI = (item) -> {
+		WeaponCapability.Builder builder = WeaponCapability.builder()
 			.category(WeaponCategories.TACHI)
 			.styleProvider((playerpatch) -> Styles.TWO_HAND)
 			.collider(ColliderPreset.TACHI)
-			.hitSound(EpicFightSounds.BLADE_HIT.get())
 			.canBePlacedOffhand(false)
 			.newStyleCombo(Styles.TWO_HAND, Animations.TACHI_AUTO1, Animations.TACHI_AUTO2, Animations.TACHI_AUTO3, Animations.TACHI_DASH, Animations.LONGSWORD_AIR_SLASH)
 			.newStyleCombo(Styles.MOUNT, Animations.SWORD_MOUNT_ATTACK)
@@ -231,9 +244,17 @@ public class WeaponCapabilityPresets {
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.FLOAT, Animations.BIPED_HOLD_TACHI)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.FALL, Animations.BIPED_HOLD_TACHI)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.BLOCK, Animations.LONGSWORD_GUARD);
+	
+		if (item instanceof TieredItem tieredItem) {
+			builder.hitSound(tieredItem.getTier() == Tiers.WOOD ? EpicFightSounds.BLUNT_HIT.get() : EpicFightSounds.BLADE_HIT.get());
+			builder.hitParticle(tieredItem.getTier() == Tiers.WOOD ? EpicFightParticles.HIT_BLUNT.get() : EpicFightParticles.HIT_BLADE.get());
+		}
+		
+		return builder;
+	};
 
-	public static final Function<Item, CapabilityItem.Builder> LONGSWORD = (item) ->
-		WeaponCapability.builder()
+	public static final Function<Item, CapabilityItem.Builder> LONGSWORD = (item) -> {
+		WeaponCapability.Builder builder = WeaponCapability.builder()
 			.category(WeaponCategories.LONGSWORD)
 			.styleProvider((playerpatch) -> {
 				if (playerpatch.getHoldingItemCapability(InteractionHand.OFF_HAND).getWeaponCategory() == WeaponCategories.SHIELD) {
@@ -244,7 +265,6 @@ public class WeaponCapabilityPresets {
 				
 				return Styles.TWO_HAND;
 			})
-			.hitSound(EpicFightSounds.BLADE_HIT.get())
 			.collider(ColliderPreset.LONGSWORD)
 			.canBePlacedOffhand(false)
 			.newStyleCombo(Styles.ONE_HAND, Animations.LONGSWORD_AUTO1, Animations.LONGSWORD_AUTO2, Animations.LONGSWORD_AUTO3, Animations.LONGSWORD_DASH, Animations.LONGSWORD_AIR_SLASH)
@@ -273,12 +293,19 @@ public class WeaponCapabilityPresets {
 			.livingMotionModifier(Styles.ONE_HAND, LivingMotions.BLOCK, Animations.SWORD_GUARD)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.BLOCK, Animations.LONGSWORD_GUARD)
 			.livingMotionModifier(Styles.OCHS, LivingMotions.BLOCK, Animations.LONGSWORD_GUARD);
+		
+		if (item instanceof TieredItem tieredItem) {
+			builder.hitSound(tieredItem.getTier() == Tiers.WOOD ? EpicFightSounds.BLUNT_HIT.get() : EpicFightSounds.BLADE_HIT.get());
+			builder.hitParticle(tieredItem.getTier() == Tiers.WOOD ? EpicFightParticles.HIT_BLUNT.get() : EpicFightParticles.HIT_BLADE.get());
+		}
+		
+		return builder;
+	};
 	
-	public static final Function<Item, CapabilityItem.Builder> DAGGER = (item) ->
-		WeaponCapability.builder()
+	public static final Function<Item, CapabilityItem.Builder> DAGGER = (item) -> {
+		WeaponCapability.Builder builder = WeaponCapability.builder()
 			.category(WeaponCategories.DAGGER)
 			.styleProvider((playerpatch) -> playerpatch.getHoldingItemCapability(InteractionHand.OFF_HAND).getWeaponCategory() == WeaponCategories.DAGGER ? Styles.TWO_HAND : Styles.ONE_HAND)
-			.hitSound(EpicFightSounds.BLADE_HIT.get())
 			.swingSound(EpicFightSounds.WHOOSH_SMALL.get())
 			.collider(ColliderPreset.DAGGER)
 			.weaponCombinationPredicator((entitypatch) -> EpicFightCapabilities.getItemStackCapability(entitypatch.getOriginal().getOffhandItem()).getWeaponCategory() == WeaponCategories.DAGGER)
@@ -296,6 +323,14 @@ public class WeaponCapabilityPresets {
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.SWIM, Animations.BIPED_HOLD_DUAL_WEAPON)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.FLOAT, Animations.BIPED_HOLD_DUAL_WEAPON)
 			.livingMotionModifier(Styles.TWO_HAND, LivingMotions.FALL, Animations.BIPED_HOLD_DUAL_WEAPON);
+		
+		if (item instanceof TieredItem tieredItem) {
+			builder.hitSound(tieredItem.getTier() == Tiers.WOOD ? EpicFightSounds.BLUNT_HIT.get() : EpicFightSounds.BLADE_HIT.get());
+			builder.hitParticle(tieredItem.getTier() == Tiers.WOOD ? EpicFightParticles.HIT_BLUNT.get() : EpicFightParticles.HIT_BLADE.get());
+		}
+		
+		return builder;
+	};
 
 	public static final Function<Item, CapabilityItem.Builder> FIST = (item) -> WeaponCapability.builder()
 			.newStyleCombo(Styles.ONE_HAND, Animations.FIST_AUTO1, Animations.FIST_AUTO2, Animations.FIST_AUTO3, Animations.FIST_DASH, Animations.FIST_AIR_SLASH)
