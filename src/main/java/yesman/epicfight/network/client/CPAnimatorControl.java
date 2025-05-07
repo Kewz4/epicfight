@@ -16,14 +16,14 @@ public class CPAnimatorControl extends AnimatorControlPacket {
 	private boolean isClientOnly;
 	private boolean responseToSender;
 	
-	public CPAnimatorControl(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTime, boolean pause, boolean clinetOnly, boolean resendToSender) {
-		this(action, animation.get().getId(), transitionTime, pause, clinetOnly, resendToSender);
+	public CPAnimatorControl(AnimatorControlPacket.Action action, AssetAccessor<? extends StaticAnimation> animation, float transitionTime, boolean pause, boolean clientOnly, boolean resendToSender) {
+		this(action, animation.get().getId(), transitionTime, pause, clientOnly, resendToSender);
 	}
 	
-	public CPAnimatorControl(AnimatorControlPacket.Action action, int animationId, float transitionTimeModifier, boolean pause, boolean clinetOnly, boolean resendToSender) {
+	public CPAnimatorControl(AnimatorControlPacket.Action action, int animationId, float transitionTimeModifier, boolean pause, boolean clientOnly, boolean resendToSender) {
 		super(action, animationId, transitionTimeModifier, pause);
 		
-		this.isClientOnly = clinetOnly;
+		this.isClientOnly = clientOnly;
 		this.responseToSender = resendToSender;
 	}
 	

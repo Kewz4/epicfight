@@ -46,10 +46,12 @@ import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.network.EpicFightNetworkManager;
+import yesman.epicfight.network.client.CPAnimatorControl;
 import yesman.epicfight.network.client.CPChangePlayerMode;
 import yesman.epicfight.network.client.CPModifyEntityModelYRot;
 import yesman.epicfight.network.client.CPSetPlayerTarget;
 import yesman.epicfight.network.client.CPSetStamina;
+import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -442,6 +444,21 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 				this.original.setYRot(this.lockOnYRot);
 				this.original.setXRot(this.lockOnXRot);
 			}
+		}
+	}
+	
+	/**
+	 * Play an animation ensuring synchronization between client-server
+	 * Plays animation when getting response from server if it called in client side.
+	 * Do not call this in client side for non-player entities.
+	 * 
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	@Override
+	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		if (this.isLogicalClient()) {
+			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
 		}
 	}
 	

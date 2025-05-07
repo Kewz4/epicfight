@@ -7,9 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.function.BiConsumer;
+
+import javax.net.ssl.SSLContext;
 
 import net.minecraft.Util;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,7 +24,7 @@ import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class EpicFightServerConnectionHelper {
-	public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(60000)).build();
+	public static HttpClient HTTP_CLIENT;
 	private static final String LIB_FILE = "ServerCommunicationHelper";
 	private static boolean SUPPORTED;
 	
@@ -31,6 +35,23 @@ public class EpicFightServerConnectionHelper {
 	public static boolean init(String configPath) {
 		SupportedOS os = SupportedOS.getOS();
 		boolean supported = false;
+		
+		try {
+			SSLContext ssl = SSLContext.getInstance("TLSv1.3");
+			ssl.init(null, null, null);
+			
+			HTTP_CLIENT = HttpClient.newBuilder().sslContext(ssl).connectTimeout(Duration.ofMillis(60000)).build();
+		} catch (NoSuchAlgorithmException e) {
+			EpicFightMod.LOGGER.warn("TLS 1.3 not found, we do not support TLS communication lower than 1.3");
+			HTTP_CLIENT = null;
+			SUPPORTED = false;
+			return false;
+		} catch (KeyManagementException e) {
+			EpicFightMod.LOGGER.warn("Failed at initializing SSL context");
+			HTTP_CLIENT = null;
+			SUPPORTED = false;
+			return false;
+		}
 		
 		if (os != null) {
 			String libpath = MessageFormat.format("/assets/epicfight/nativelib/{0}/{1}{2}", os.telemetryName(), LIB_FILE, os.libExtension());

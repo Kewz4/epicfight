@@ -91,7 +91,7 @@ public class EntityEvents {
 	
 	@SubscribeEvent
 	public static void updateEvent(LivingEvent.LivingTickEvent event) {
-		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), LivingEntityPatch.class).ifPresent(entitypatch -> {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), HurtableEntityPatch.class).ifPresent(entitypatch -> {
 			if (entitypatch.getOriginal() != null) {
 				entitypatch.tick(event);
 			}

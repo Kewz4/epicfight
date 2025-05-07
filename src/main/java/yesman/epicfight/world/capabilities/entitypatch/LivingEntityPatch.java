@@ -163,7 +163,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		return this.armature;
 	}
 	
+	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
+		super.tick(event);
+		
 		this.oStyle = this.getHoldingItemCapability(InteractionHand.MAIN_HAND).getStyle(this);
 		
 		if (this.original.getHealth() <= 0.0F) {
@@ -195,9 +198,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	protected void clientTick(LivingEvent.LivingTickEvent event) {}
 	
-	protected void serverTick(LivingEvent.LivingTickEvent event) {
-		super.updateStunTime();
-	}
+	protected void serverTick(LivingEvent.LivingTickEvent event) {}
 	
 	public void poseTick(DynamicAnimation animation, Pose pose, float elapsedTime, float partialTicks) {
 		if (pose.hasTransform("Head") && this.armature.hasJoint("Head")) {
@@ -506,12 +507,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param transitionTimeModifier
 	 */
 	public void playAnimation(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
-		if (this.isLogicalClient()) {
-			this.animator.playAnimation(animation, transitionTimeModifier);
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, false));
-		} else {
-			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
-		}
+		this.animator.playAnimation(animation, transitionTimeModifier);
 	}
 	
 	/**
@@ -547,9 +543,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param transitionTimeModifier
 	 */
 	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
-		if (this.isLogicalClient()) {
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
-		} else {
+		if (!this.isLogicalClient()) {
 			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, SPAnimatorControl::new);
 		}
 	}

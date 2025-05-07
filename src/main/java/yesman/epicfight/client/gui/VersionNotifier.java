@@ -8,14 +8,17 @@ import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.ModList;
+import yesman.epicfight.main.EpicFightMod;
 
 @OnlyIn(Dist.CLIENT)
 public class VersionNotifier {
 	private final Minecraft minecraft;
+	private final boolean visible;
 	private int count = 0;
 	
 	public VersionNotifier(Minecraft minecraft) {
 		this.minecraft = minecraft;
+		this.visible = ModList.get().getModFileById(EpicFightMod.MODID).versionString().matches("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+");
 	}
 	
 	public void init() {
@@ -23,6 +26,10 @@ public class VersionNotifier {
 	}
 	
 	public void render(GuiGraphics guiGraphics, boolean inWorld) {
+		if (!this.visible) {
+			return;
+		}
+		
 		if (this.count > 600 && inWorld) {
 			return;
 		}

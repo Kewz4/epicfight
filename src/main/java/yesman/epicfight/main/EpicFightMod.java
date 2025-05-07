@@ -122,6 +122,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Enhanced the accuracy of tracing ability of attack animations
  *  
  *  ***************************************************************
+ *  
+ *  20.10.2.101 -> 20.10.3
+ *  
+ *  Fixed the mob AI being stopped after a hit
+ *  Removed test version notifier
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401
@@ -185,6 +192,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  --- TO DO ---
  *  
+ *  Fix cape in ladder
  *  Update language files (always)
  *  Add an reach property to attack animation (idea)
  *  Add an alert function when an entity targeting the player tries grappling or execution attack
