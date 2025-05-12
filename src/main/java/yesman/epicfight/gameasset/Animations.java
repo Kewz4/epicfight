@@ -658,7 +658,23 @@ public class Animations {
 		
 		BIPED_SLEEPING = builder.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
 		
-		BIPED_JAVELIN_AIM = builder.nextAccessor("biped/combat/javelin_aim", (accessor) -> new AimAnimation(false, accessor, "biped/combat/javelin_aim_mid", "biped/combat/javelin_aim_up", "biped/combat/javelin_aim_down", "biped/combat/javelin_aim_lying", Armatures.BIPED));
+		BIPED_JAVELIN_AIM = builder.nextAccessor("biped/combat/javelin_aim", (accessor) ->
+			new AimAnimation(false, accessor, "biped/combat/javelin_aim_mid", "biped/combat/javelin_aim_up", "biped/combat/javelin_aim_down", "biped/combat/javelin_aim_lying", Armatures.BIPED)
+				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER,
+					(animation, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
+						if (animation.isLinkAnimation()) {
+							return 1.0F;
+						}
+						
+						if (entitypatch.getOriginal().isUsingItem() && elapsedTime + EpicFightSharedConstants.A_TICK * speed > animation.getTotalTime()) {
+							return 0.0F;
+						}
+						
+						return 1.0F;
+					}
+				)
+		);
+		
 		BIPED_JAVELIN_THROW = builder.nextAccessor("biped/combat/javelin_throw", (accessor) -> new ReboundAnimation(0.08F, false, accessor, "biped/combat/javelin_throw_mid", "biped/combat/javelin_throw_up", "biped/combat/javelin_throw_down", "biped/combat/javelin_throw_lying", Armatures.BIPED));
 		
 		OFF_ANIMATION_HIGHEST = builder.nextAccessor("common/off_highest", (accessor) -> new OffAnimation(accessor));
@@ -2195,7 +2211,7 @@ public class Animations {
 		SHARP_STAB = builder.nextAccessor("biped/skill/sharp_stab", (accessor) -> new AttackAnimation(0.15F, 0.05F, 0.1F, 0.15F, 0.7F, ColliderPreset.LONGSWORD, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
 	}
 	
-	public static class ReusableSources {
+	public static abstract class ReusableSources {
 		public static final AnimationEvent.E1<EntityDimensions> RESIZE_BOUNDING_BOX = (entitypatch, animation, params) -> {
 			if (params != null) {
 				entitypatch.resetSize(params.first());

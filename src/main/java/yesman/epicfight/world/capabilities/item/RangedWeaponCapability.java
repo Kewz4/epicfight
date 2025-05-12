@@ -41,13 +41,13 @@ public class RangedWeaponCapability extends CapabilityItem {
 		return false;
 	}
 	
-	public static RangedWeaponCapability.Builder builder() {
-		return new RangedWeaponCapability.Builder();
-	}
-	
 	@Override
 	public ZoomInType getZoomInType() {
 		return this.zoomInType;
+	}
+	
+	public static RangedWeaponCapability.Builder builder() {
+		return new RangedWeaponCapability.Builder();
 	}
 	
 	public static class Builder extends CapabilityItem.Builder {

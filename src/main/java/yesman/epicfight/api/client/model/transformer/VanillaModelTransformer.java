@@ -181,7 +181,7 @@ public class VanillaModelTransformer extends HumanoidModelTransformer {
 			newList.add(partName);
 		}
 		
-		if (part.visible) {
+		if (part.visible && !part.skipDraw) {
 			MeshPartDefinition partDefinition = VanillaMeshPartDefinition.of(partName);
 			
 			if (bindPart) {

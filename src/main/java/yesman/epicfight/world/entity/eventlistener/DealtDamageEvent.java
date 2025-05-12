@@ -13,8 +13,8 @@ public abstract class DealtDamageEvent<T extends LivingEvent> extends PlayerEven
 	private final EpicFightDamageSource damageSource;
 	protected final T forgeevent;
 	
-	public DealtDamageEvent(ServerPlayerPatch playerpatch, LivingEntity target, EpicFightDamageSource source, T forgeevent) {
-		super(playerpatch, false);
+	public DealtDamageEvent(ServerPlayerPatch playerpatch, LivingEntity target, EpicFightDamageSource source, T forgeevent, boolean cancelable) {
+		super(playerpatch, cancelable);
 		this.target = target;
 		this.damageSource = source;
 		this.forgeevent = forgeevent;
@@ -36,7 +36,7 @@ public abstract class DealtDamageEvent<T extends LivingEvent> extends PlayerEven
 	
 	public static class Attack extends DealtDamageEvent<LivingAttackEvent> {
 		public Attack(ServerPlayerPatch playerpatch, LivingEntity target, EpicFightDamageSource source, LivingAttackEvent forgeevent) {
-			super(playerpatch, target, source, forgeevent);
+			super(playerpatch, target, source, forgeevent, true);
 		}
 		
 		@Override
@@ -47,7 +47,7 @@ public abstract class DealtDamageEvent<T extends LivingEvent> extends PlayerEven
 	
 	public static class Hurt extends DealtDamageEvent<LivingHurtEvent> {
 		public Hurt(ServerPlayerPatch playerpatch, LivingEntity target, EpicFightDamageSource source, LivingHurtEvent forgeevent) {
-			super(playerpatch, target, source, forgeevent);
+			super(playerpatch, target, source, forgeevent, false);
 		}
 		
 		public void setAttackDamage(float damage) {
@@ -62,7 +62,7 @@ public abstract class DealtDamageEvent<T extends LivingEvent> extends PlayerEven
 	
 	public static class Damage extends DealtDamageEvent<LivingDamageEvent> {
 		public Damage(ServerPlayerPatch playerpatch, LivingEntity target, EpicFightDamageSource source, LivingDamageEvent forgeevent) {
-			super(playerpatch, target, source, forgeevent);
+			super(playerpatch, target, source, forgeevent, false);
 		}
 		
 		public void setAttackDamage(float damage) {

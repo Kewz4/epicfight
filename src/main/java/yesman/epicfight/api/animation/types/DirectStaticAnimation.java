@@ -1,13 +1,9 @@
 package yesman.epicfight.api.animation.types;
 
-import java.util.Optional;
-
 import net.minecraft.resources.ResourceLocation;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.asset.AssetAccessor;
-import yesman.epicfight.api.client.animation.property.JointMaskEntry;
 import yesman.epicfight.api.model.Armature;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 public class DirectStaticAnimation extends StaticAnimation implements AnimationAccessor<DirectStaticAnimation> {
 	private ResourceLocation registryName;
@@ -28,11 +24,6 @@ public class DirectStaticAnimation extends StaticAnimation implements AnimationA
 		super(baseAnimPath, transitionTime, repeatPlay, registryName, armature);
 		
 		this.registryName = ResourceLocation.parse(registryName);
-	}
-	
-	@Override
-	public Optional<JointMaskEntry> getJointMaskEntry(LivingEntityPatch<?> entitypatch, boolean useCurrentMotion) {
-		return super.getJointMaskEntry(entitypatch, useCurrentMotion);
 	}
 	
 	@Override

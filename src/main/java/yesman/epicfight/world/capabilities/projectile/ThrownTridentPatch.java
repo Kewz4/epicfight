@@ -41,6 +41,10 @@ public class ThrownTridentPatch extends ProjectilePatch<ThrownTrident> {
 	public float renderYRot;
 	public float renderYRotO;
 	
+	public ThrownTridentPatch() {
+		this.setPlayShootingAnimation(true);
+	}
+	
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
 		if (this.innateActivated) {

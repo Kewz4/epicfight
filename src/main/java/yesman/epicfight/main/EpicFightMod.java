@@ -129,6 +129,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Removed test version notifier
  *  
  *  ***************************************************************
+ *  
+ *  20.10.3 -> 20.10.4
+ *  
+ *  Fixed the player head rotation while aiming bow, crossbow, and trident
+ *  Fixed the epic fight painting to visible in creative tab
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401

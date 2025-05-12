@@ -58,6 +58,23 @@ public class AimAnimation extends StaticAnimation {
 				return 1.0F;
 			}
 		);
+		
+		this.addProperty(
+			StaticAnimationProperty.POSE_MODIFIER,
+			(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float elapsedTime, float partialTicks) -> {
+				if (!entitypatch.isFirstPerson() && !animation.isLinkAnimation()) {
+					JointTransform chest = pose.orElseEmpty("Chest");
+					JointTransform head = pose.orElseEmpty("Head");
+					float f = 90.0F;
+					float ratio = (f - Math.abs(entitypatch.getOriginal().getXRot())) / f;
+					float yRotHead = entitypatch.getOriginal().yHeadRotO;
+					float yRot = entitypatch.getOriginal().getVehicle() != null ? yRotHead : entitypatch.getYRot();
+					
+					MathUtils.mulQuaternion(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRot - yRotHead) * ratio), head.rotation(), head.rotation());
+					chest.frontResult(JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRotHead - yRot) * ratio)), OpenMatrix4f::mulAsOriginInverse);
+				}
+			}
+		);
 	}
 	
 	@Override
@@ -84,7 +101,7 @@ public class AimAnimation extends StaticAnimation {
 				interpolateAnimation = (pitch > 0) ? this.lookDown : this.lookUp;
 				Pose pose1 = super.getPoseByTime(entitypatch, time, partialTicks);	
 				Pose pose2 = interpolateAnimation.getPoseByTime(entitypatch, time, partialTicks);
-				this.modifyPose(this, pose2, entitypatch, time, partialTicks);
+				//this.modifyPose(this, pose2, entitypatch, time, partialTicks);
 				Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, (Math.abs(pitch) / 90.0F));
 				
 				return interpolatedPose;
@@ -92,22 +109,6 @@ public class AimAnimation extends StaticAnimation {
 		}
 		
 		return this.lookForward.getPoseByTime(entitypatch, time, partialTicks);
-	}
-	
-	@Override
-	public void modifyPose(DynamicAnimation animation, Pose pose, LivingEntityPatch<?> entitypatch, float time, float partialTicks) {
-		super.modifyPose(animation, pose, entitypatch, time, partialTicks);
-		
-		if (!entitypatch.isFirstPerson() && !animation.isLinkAnimation()) {
-			JointTransform chest = pose.orElseEmpty("Chest");
-			JointTransform head = pose.orElseEmpty("Head");
-			float f = 90.0F;
-			float ratio = (f - Math.abs(entitypatch.getOriginal().getXRot())) / f;
-			float yRotHead = entitypatch.getOriginal().yHeadRotO;
-			float yRot = entitypatch.getOriginal().getVehicle() != null ? yRotHead : entitypatch.getYRot();
-			MathUtils.mulQuaternion(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRot - yRotHead) * ratio), head.rotation(), head.rotation());
-			chest.frontResult(JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRotHead - yRot) * ratio)), OpenMatrix4f::mulAsOriginInverse);
-		}
 	}
 	
 	@Override

@@ -12,10 +12,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +28,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.JointTransform;
+import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
@@ -51,7 +50,6 @@ import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
-import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
 
 @OnlyIn(Dist.CLIENT)
 public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends PlayerPatch<T> implements ClothSimulatable {
@@ -130,19 +128,25 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 		if (!this.state.updateLivingMotion() && considerInaction) {
 			this.currentCompositeMotion = LivingMotions.NONE;
 		} else {
-			CapabilityItem holdingItemCap = this.getHoldingItemCapability(this.original.getUsedItemHand());
+			CapabilityItem mainhandItemCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
+			CapabilityItem offhandItemCap = this.getHoldingItemCapability(InteractionHand.OFF_HAND);
+			LivingMotion customLivingMotion = mainhandItemCap.getLivingMotion(this, InteractionHand.MAIN_HAND);
 			
-			if (this.original.isUsingItem()) {
+			if (customLivingMotion == null) customLivingMotion = offhandItemCap.getLivingMotion(this, InteractionHand.OFF_HAND);
+			
+			if (customLivingMotion != null) {
+				// When item capabilities has custom living motion
+				currentCompositeMotion = customLivingMotion;
+			} else if (this.original.isUsingItem()) {
+				CapabilityItem itemUsingCap = this.original.getUsedItemHand() == InteractionHand.MAIN_HAND ? mainhandItemCap : offhandItemCap;
 				UseAnim useAnim = this.original.getUseItem().getUseAnimation();
-				UseAnim capUseAnim = holdingItemCap.getUseAnimation(this);
+				UseAnim capUseAnim = itemUsingCap.getUseAnimation(this);
 				
 				if (useAnim == UseAnim.BLOCK || capUseAnim == UseAnim.BLOCK)
-					if (holdingItemCap.getWeaponCategory() == WeaponCategories.SHIELD)
+					if (itemUsingCap.getWeaponCategory() == WeaponCategories.SHIELD)
 						currentCompositeMotion = LivingMotions.BLOCK_SHIELD;
 					else
 						currentCompositeMotion = LivingMotions.BLOCK;
-				else if (useAnim == UseAnim.BOW || useAnim == UseAnim.SPEAR)
-					currentCompositeMotion = LivingMotions.AIM;
 				else if (useAnim == UseAnim.CROSSBOW)
 					currentCompositeMotion = LivingMotions.RELOAD;
 				else if (useAnim == UseAnim.DRINK)
@@ -154,25 +158,19 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 				else
 					currentCompositeMotion = currentLivingMotion;
 			} else {
-				if (this.getEntityState().canUseItem() && this.original.getMainHandItem().getItem() instanceof ProjectileWeaponItem && CrossbowItem.isCharged(this.original.getMainHandItem()))
-					currentCompositeMotion = LivingMotions.AIM;
-				else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
-					currentCompositeMotion = LivingMotions.NONE;
+				if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getRealAnimation().get().isReboundAnimation())
+					currentCompositeMotion = LivingMotions.SHOT;
 				else if (this.original.swinging && this.original.getSleepingPos().isEmpty())
 					currentCompositeMotion = LivingMotions.DIGGING;
 				else
 					currentCompositeMotion = currentLivingMotion;
-				
-				if (this.getEntityState().canUseItem() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM && holdingItemCap instanceof RangedWeaponCapability) {
-					this.playShootingAnimation();
-				}
 			}
+			
+			UpdatePlayerMotionEvent.CompositeLayer compositeLayerEvent = new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion);
+			MinecraftForge.EVENT_BUS.post(compositeLayerEvent);
+			
+			this.currentCompositeMotion = compositeLayerEvent.getMotion();
 		}
-		
-		UpdatePlayerMotionEvent.CompositeLayer compositeLayerEvent = new UpdatePlayerMotionEvent.CompositeLayer(this, this.currentCompositeMotion);
-		MinecraftForge.EVENT_BUS.post(compositeLayerEvent);
-		
-		this.currentCompositeMotion = compositeLayerEvent.getMotion();
 	}
 	
 	@Override

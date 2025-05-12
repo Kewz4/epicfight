@@ -373,7 +373,7 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 					  Logger::error
 					, "Datapack animation reading failed: No constructor information has provided: " + rl
 					, IllegalStateException::new
-					, "No constructor information has provided in User animation, " + rl + "\nPlease remove this resouce if it's unnecessary to optimize your project."
+					, "No constructor information has provided in User animation, " + rl + "\nPlease remove this resource if it's unnecessary to optimize your project."
 				);
 				return;
 			}

@@ -152,7 +152,7 @@ public class ClientAnimator extends Animator {
 				this.compositeLivingAnimations.put(livingMotion, multilayerAnimation);
 				
 				if (livingMotion == this.currentCompositeMotion) {
-					EntityState state = getEntityState();
+					EntityState state = this.getEntityState();
 					
 					if (!state.inaction()) {
 						layer.playLivingAnimation(multilayerAnimation, this.entitypatch);
@@ -569,7 +569,7 @@ public class ClientAnimator extends Animator {
 				continue;
 			}
 			
-			if (!layer.isOff() && layer.animationPlayer.getRealAnimation().get().isMainFrameAnimation()) {
+			if (!layer.isOff()) {
 				stateMap.putAll(layer.animationPlayer.getAnimation().get().getStatesMap(this.entitypatch, layer.animationPlayer.getElapsedTime()));
 			}
 			

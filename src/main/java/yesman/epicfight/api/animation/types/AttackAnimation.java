@@ -221,6 +221,7 @@ public class AttackAnimation extends ActionAnimation {
 		
 		if (prevState.attacking() || state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)) {
 			if (!prevState.attacking() || (phase != this.getPhaseByTime(prevElapsedTime) && (state.attacking() || (prevState.getLevel() <= 2 && state.getLevel() > 2)))) {
+				entitypatch.onStrike(this, phase.hand);
 				entitypatch.playSound(this.getSwingSound(entitypatch, phase), 0.0F, 0.0F);
 				entitypatch.removeHurtEntities();
 			}

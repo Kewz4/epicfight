@@ -351,6 +351,24 @@ public class CapabilityItem {
 		return true;
 	}
 	
+	/**
+	 * Get a custom composite living motion when holding item
+	 * @param entitypatch
+	 * @return
+	 */
+	public LivingMotion getLivingMotion(LivingEntityPatch<?> entitypatch, InteractionHand hand) {
+		return null;
+	}
+	
+	/**
+	 * Called when player attacks with holding this item {@link AttackAnimation#attackTick}
+	 * 
+	 * @param entitypatch
+	 * @param animation
+	 */
+	public void onStrike(LivingEntityPatch<?> entitypatch, AttackAnimation animation) {
+	}
+	
 	public UseAnim getUseAnimation(LivingEntityPatch<?> entitypatch) {
 		return UseAnim.NONE;
 	}

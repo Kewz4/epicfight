@@ -387,16 +387,16 @@ public class RenderEngine {
 		return availableRendererEntities;
 	}
 	
-	//Nothing happens if player is already zooming-in
 	public void zoomIn() {
+		// Nothing happens if player is already zooming-in
 		if (!this.zoomingIn) {
 			this.zoomingIn = true;
 			this.zoomCount = this.zoomCount == 0 ? 1 : this.zoomCount;
 		}
 	}
 	
-	//Nothing happens if player is already zooming-out
 	public void zoomOut(int zoomOutTicks) {
+		// Nothing happens if player is already zooming-out
 		if (this.zoomingIn) {
 			this.zoomingIn = false;
 			this.zoomOutStandbyTicks = zoomOutTicks;

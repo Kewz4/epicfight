@@ -65,7 +65,6 @@ import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.main.EpicFightSharedConstants;
 import yesman.epicfight.model.armature.types.ToolHolderArmature;
 import yesman.epicfight.network.EpicFightNetworkManager;
-import yesman.epicfight.network.client.CPAnimatorControl;
 import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.network.server.SPAnimatorControl;
 import yesman.epicfight.particle.HitParticleType;
@@ -464,7 +463,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.isLogicalClient()) {
 			this.animator.reserveAnimation(animation);
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, false, false, false));
 		} else {
 			this.handleAnimationPacket(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, SPAnimatorControl::new);
 		}
@@ -486,7 +484,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.isLogicalClient()) {
 			this.animator.playAnimationInstantly(animation);
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, false, false, false));
 		} else {
 			this.handleAnimationPacket(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, SPAnimatorControl::new);
 		}
@@ -518,7 +515,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void stopPlaying(AssetAccessor<? extends StaticAnimation> animation) {
 		if (this.isLogicalClient()) {
 			this.animator.stopPlaying(animation);
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.STOP, animation, -1.0F, false, false, false));
 		} else {
 			this.handleAnimationPacket(AnimatorControlPacket.Action.STOP, animation, -1.0F, SPAnimatorControl::new);
 		}
@@ -568,7 +564,6 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	public void playAnimationInClientSide(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
 		if (this.isLogicalClient()) {
 			this.animator.playAnimation(animation, transitionTimeModifier);
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, true, false));
 		} else {
 			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, this.original.getId(), transitionTimeModifier, false));
 		}
@@ -576,7 +571,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	/**
 	 * Play a shooting animation to end aim pose
-	 * This method doesn't send packet from client to server
+	 * Synchronized if the method is called in the server
 	 */
 	public void playShootingAnimation() {
 		if (this.isLogicalClient()) {
@@ -621,6 +616,12 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		this.sendToAllPlayerTrackingMe(packetProvider.get(action, animation, transitionTimeModifier, this));
 	}
 	
+	/**
+	 * Pause an animator until it receives a proper order
+	 * @param action SOFT_PAUSE: resume when next animation plays
+	 * 				 HARD_PAUSE: resume when hard pause is set false
+	 * @param pause
+	 **/
 	public void pauseAnimator(AnimatorControlPacket.Action action, boolean pause) {
 		switch (action) {
 		case SOFT_PAUSE -> {
@@ -634,9 +635,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 		}
 		}
 		
-		if (this.isLogicalClient()) {
-			this.sendToAllPlayerTrackingMe(new CPAnimatorControl(action, -1, 0.0F, pause, false, true));
-		} else {
+		if (!this.isLogicalClient()) {
 			this.sendToAllPlayerTrackingMe(new SPAnimatorControl(action, -1, this.original.getId(), 0.0F, pause));
 		}
 	}
@@ -720,6 +719,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	 * @param blocker
 	 */
 	public void onAttackBlocked(DamageSource damageSource, LivingEntityPatch<?> blocker) {
+	}
+	
+	public void onStrike(AttackAnimation animation, InteractionHand hand) {
+		this.getAdvancedHoldingItemCapability(hand).onStrike(this, animation);
 	}
 	
 	public void onMount(boolean isMountOrDismount, Entity ridingEntity) {

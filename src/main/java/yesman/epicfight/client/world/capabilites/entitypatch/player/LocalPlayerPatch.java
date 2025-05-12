@@ -54,6 +54,7 @@ import yesman.epicfight.network.client.CPSetStamina;
 import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.capabilities.item.CapabilityItem.ZoomInType;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 
 @OnlyIn(Dist.CLIENT)
@@ -187,33 +188,34 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		}
 		
 		// Handle camera zoom in/out
-		CapabilityItem itemCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
+		CapabilityItem mainhandItemCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
+		CapabilityItem offhandItemCap = this.getHoldingItemCapability(InteractionHand.OFF_HAND);
+		CapabilityItem.ZoomInType rangeWeaponZoomInType =
+			mainhandItemCap.isEmpty() || mainhandItemCap.getZoomInType() == ZoomInType.NONE
+				? offhandItemCap.getZoomInType() : mainhandItemCap.getZoomInType();
 		
-		switch (itemCap.getZoomInType()) {
-		case ALWAYS:
+		switch (rangeWeaponZoomInType) {
+		case ALWAYS -> {
 			ClientEngine.getInstance().renderEngine.zoomIn();
-			break;
-		case USE_TICK:
+		}
+		case USE_TICK -> {
 			if (this.original.getUseItemRemainingTicks() > 0) {
 				ClientEngine.getInstance().renderEngine.zoomIn();
 			} else {
 				ClientEngine.getInstance().renderEngine.zoomOut(40);
 			}
-			
-			break;
-		case AIMING:
+		}
+		case AIMING -> {
 			if (this.getClientAnimator().isAiming()) {
 				ClientEngine.getInstance().renderEngine.zoomIn();
 			} else {
 				ClientEngine.getInstance().renderEngine.zoomOut(40);
 			}
-			
-			break;
-		case CUSTOM:
-			//Zoom manually handled
-			break;
-		default:
+		}
+		case CUSTOM -> {} //Zoom manually handled
+		default -> {
 			ClientEngine.getInstance().renderEngine.zoomOut(0);
+		}
 		}
 		
 		// Handle first person animation
@@ -448,6 +450,47 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	}
 	
 	/**
+	 * Play an animation after the current animation is finished
+	 * @param animation
+	 */
+	@Override
+	public void reserveAnimation(AssetAccessor<? extends StaticAnimation> animation) {
+		this.animator.reserveAnimation(animation);
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.RESERVE, animation, 0.0F, false, false, false));
+	}
+	
+	/**
+	 * Play an animation without convert time
+	 * @param animation
+	 */
+	@Override
+	public void playAnimationInstantly(AssetAccessor<? extends StaticAnimation> animation) {
+		this.animator.playAnimationInstantly(animation);
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY_INSTANTLY, animation, 0.0F, false, false, false));
+	}
+	
+	/**
+	 * Play a shooting animation to end aim pose
+	 * This method doesn't send packet from client to server
+	 */
+	@Override
+	public void playShootingAnimation() {
+		this.animator.playShootingAnimation();
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.SHOT, -1, 0.0F, false, true, false));
+	}
+	
+	/**
+	 * Stop playing an animation
+	 * @param animation
+	 * @param transitionTimeModifier
+	 */
+	@Override
+	public void stopPlaying(AssetAccessor<? extends StaticAnimation> animation) {
+		this.animator.stopPlaying(animation);
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.STOP, animation, -1.0F, false, false, false));
+	}
+	
+	/**
 	 * Play an animation ensuring synchronization between client-server
 	 * Plays animation when getting response from server if it called in client side.
 	 * Do not call this in client side for non-player entities.
@@ -457,9 +500,30 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	 */
 	@Override
 	public void playAnimationSynchronized(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
-		if (this.isLogicalClient()) {
-			EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
-		}
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, false, true));
+	}
+	
+	/**
+	 * Play an animation only in client side, including all clients tracking this entity
+	 * @param animation
+	 * @param convertTimeModifier
+	 */
+	@Override
+	public void playAnimationInClientSide(AssetAccessor<? extends StaticAnimation> animation, float transitionTimeModifier) {
+		this.animator.playAnimation(animation, transitionTimeModifier);
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(AnimatorControlPacket.Action.PLAY, animation, transitionTimeModifier, false, true, false));
+	}
+	
+	/**
+	 * Pause an animator until it receives a proper order
+	 * @param action SOFT_PAUSE: resume when next animation plays
+	 * 				 HARD_PAUSE: resume when hard pause is set false
+	 * @param pause
+	 **/
+	@Override
+	public void pauseAnimator(AnimatorControlPacket.Action action, boolean pause) {
+		super.pauseAnimator(action, pause);
+		EpicFightNetworkManager.sendToServer(new CPAnimatorControl(action, -1, 0.0F, pause, false, false));
 	}
 	
 	@Override

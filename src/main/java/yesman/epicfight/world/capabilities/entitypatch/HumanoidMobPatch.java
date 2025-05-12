@@ -29,6 +29,7 @@ import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.MobCombatBehaviors;
 import yesman.epicfight.model.armature.HumanoidArmature;
@@ -182,34 +183,45 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 	}
 	
 	public void modifyLivingMotionByCurrentItem() {
-		this.getAnimator().resetLivingAnimations();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
 		
 		CapabilityItem mainhandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
 		CapabilityItem offhandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
 		
-		Map<LivingMotion, AnimationAccessor<? extends StaticAnimation>> motionModifier = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
-		motionModifier.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
+		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainhandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+		livingMotionModifiers.putAll(offhandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
 		
-		for (Map.Entry<LivingMotion, AnimationAccessor<? extends StaticAnimation>> entry : motionModifier.entrySet()) {
-			this.getAnimator().addLivingAnimation(entry.getKey(), entry.getValue());
+		boolean hasChange = false;
+		
+		for (Map.Entry<LivingMotion, AssetAccessor<? extends StaticAnimation>> entry : livingMotionModifiers.entrySet()) {
+			AssetAccessor<? extends StaticAnimation> aniamtion = entry.getValue();
+			
+			if (!oldLivingAnimations.containsKey(entry.getKey())) {
+				hasChange = true;
+			} else if (oldLivingAnimations.get(entry.getKey()) != aniamtion) {
+				hasChange = true;
+			}
+			
+			newLivingAnimations.put(entry.getKey(), aniamtion);
 		}
 		
-		if (this.weaponLivingMotions != null && this.weaponLivingMotions.containsKey(mainhandCap.getWeaponCategory())) {
-			Map<Style, Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>>> mapByStyle = this.weaponLivingMotions.get(mainhandCap.getWeaponCategory());
-			Style style = mainhandCap.getStyle(this);
-			
-			if (mapByStyle.containsKey(style) || mapByStyle.containsKey(CapabilityItem.Styles.COMMON)) {
-				Set<Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>>> animModifierSet = mapByStyle.getOrDefault(style, mapByStyle.get(CapabilityItem.Styles.COMMON));
-				
-				for (Pair<LivingMotion, AnimationAccessor<? extends StaticAnimation>> pair : animModifierSet) {
-					this.animator.addLivingAnimation(pair.getFirst(), pair.getSecond());
-				}
+		for (LivingMotion oldLivingMotion : oldLivingAnimations.keySet()) {
+			if (!newLivingAnimations.containsKey(oldLivingMotion)) {
+				hasChange = true;
+				break;
 			}
 		}
 		
-		SPChangeLivingMotion msg = new SPChangeLivingMotion(this.original.getId());
-		msg.putEntries(this.getAnimator().getLivingAnimations().entrySet());
-		EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(msg, this.original);
+		if (hasChange) {
+			this.getAnimator().resetLivingAnimations();
+			newLivingAnimations.forEach(this.getAnimator()::addLivingAnimation);
+			
+			SPChangeLivingMotion msg = new SPChangeLivingMotion(this.original.getId());
+			msg.putEntries(newLivingAnimations.entrySet());
+			
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(msg, this.original);
+		}
 	}
 	
 	public boolean isArmed() {

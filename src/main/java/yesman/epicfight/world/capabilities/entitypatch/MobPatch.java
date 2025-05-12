@@ -128,14 +128,13 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 			else
 				currentCompositeMotion = LivingMotions.AIM;
 		} else {
-			if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getAnimation().get().isReboundAnimation())
-				currentCompositeMotion = LivingMotions.NONE;
+			if (CrossbowItem.isCharged(this.original.getMainHandItem()))
+				currentCompositeMotion = LivingMotions.AIM;
+			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getRealAnimation().get().isReboundAnimation())
+				currentCompositeMotion = LivingMotions.SHOT;
+			else
+				currentCompositeMotion = this.currentLivingMotion;
 		}
-		
-		if (CrossbowItem.isCharged(this.original.getMainHandItem()))
-			currentCompositeMotion = LivingMotions.AIM;
-		else if (!this.getEntityState().inaction() && this.getClientAnimator().isAiming() && currentCompositeMotion != LivingMotions.AIM)
-			this.playShootingAnimation();
 	}
 	
 	@Override
