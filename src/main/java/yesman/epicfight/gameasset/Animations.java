@@ -29,15 +29,20 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.DragonFireball;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -513,22 +518,28 @@ public class Animations {
 		BIPED_HOLD_CROSSBOW = builder.nextAccessor("biped/living/hold_crossbow", (accessor) -> new StaticAnimation(true, accessor, Armatures.BIPED));
 		BIPED_HOLD_MAP_TWOHAND = builder.nextAccessor("biped/living/hold_map_twohand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		BIPED_HOLD_MAP_OFFHAND = builder.nextAccessor("biped/living/hold_map_offhand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		BIPED_HOLD_MAP_MAINHAND = builder.nextAccessor("biped/living/hold_map_mainhand", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		BIPED_HOLD_MAP_TWOHAND_MOVE = builder.nextAccessor("biped/living/hold_map_twohand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		BIPED_HOLD_MAP_OFFHAND_MOVE = builder.nextAccessor("biped/living/hold_map_offhand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		BIPED_HOLD_MAP_MAINHAND_MOVE = builder.nextAccessor("biped/living/hold_map_mainhand_move", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION));
+				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.MAP_ARMS_CORRECTION)
+		);
 		
 		BIPED_RUN = builder.nextAccessor("biped/living/run", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
 		BIPED_SNEAK = builder.nextAccessor("biped/living/sneak", (accessor) -> new MovementAnimation(true, accessor, Armatures.BIPED));
@@ -541,25 +552,33 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
 				.addProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT_AND_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_MOUNT, Side.CLIENT))
-				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT)));
+				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
+		);
 		
 		BIPED_SIT = builder.nextAccessor("biped/living/sit", (accessor) ->
 			new StaticAnimation(true, accessor, Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
+				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
+		);
 		
 		BIPED_DIG = builder.nextAccessor("biped/living/dig", (accessor) ->
-			new SelectiveAnimation((entitypatch) -> entitypatch.getOriginal().swingingArm == InteractionHand.OFF_HAND ? 1 : 0, accessor,
-									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
-									new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)));
+			new SelectiveAnimation(
+				(entitypatch) -> entitypatch.getOriginal().swingingArm == InteractionHand.OFF_HAND ? 1 : 0,
+				accessor,
+				new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_mainhand"), Armatures.BIPED),
+				new DirectStaticAnimation(0.1F, true, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "biped/living/dig_offhand"), Armatures.BIPED)
+			)
+		);
 		
 		BIPED_BOW_AIM = builder.nextAccessor("biped/combat/bow_aim", (accessor) -> new AimAnimation(true, accessor, "biped/combat/bow_aim_mid", "biped/combat/bow_aim_up", "biped/combat/bow_aim_down", "biped/combat/bow_aim_lying", Armatures.BIPED));
 		BIPED_BOW_SHOT = builder.nextAccessor("biped/combat/bow_shot", (accessor) -> new ReboundAnimation(0.05F, false, accessor, "biped/combat/bow_shot_mid", "biped/combat/bow_shot_up", "biped/combat/bow_shot_down", "biped/combat/bow_shot_lying", Armatures.BIPED));
 		BIPED_DRINK = builder.nextAccessor("biped/living/drink", (accessor) ->
 			new MirrorAnimation(0.35F, true, accessor, "biped/living/drink_mainhand", "biped/living/drink_offhand", Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
+				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
+		);
 		BIPED_EAT = builder.nextAccessor("biped/living/eat", (accessor) ->
 			new MirrorAnimation(0.35F, true, accessor, "biped/living/eat_mainhand", "biped/living/eat_offhand", Armatures.BIPED)
-				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
+				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
+		);
 		
 		BIPED_SPYGLASS_USE = builder.nextAccessor("biped/living/spyglass", (accessor) ->
 			new MirrorAnimation(0.15F, true, accessor, "biped/living/spyglass_mainhand", "biped/living/spyglass_offhand", Armatures.BIPED)
@@ -594,7 +613,8 @@ public class Animations {
 						pose.load(rawPose, Pose.LoadOperation.OVERWRITE);
 					}
 				})
-				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true));
+				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
+		);
 		
 		BIPED_CROSSBOW_AIM = builder.nextAccessor("biped/combat/crossbow_aim", (accessor) -> new AimAnimation(true, accessor, "biped/combat/crossbow_aim_mid", "biped/combat/crossbow_aim_up", "biped/combat/crossbow_aim_down", "biped/combat/crossbow_aim_lying", Armatures.BIPED));
 		BIPED_CROSSBOW_SHOT = builder.nextAccessor("biped/combat/crossbow_shot", (accessor) -> new ReboundAnimation(false, accessor, "biped/combat/crossbow_shot_mid", "biped/combat/crossbow_shot_up", "biped/combat/crossbow_shot_down", "biped/combat/crossbow_shot_lying", Armatures.BIPED));
@@ -627,7 +647,8 @@ public class Animations {
 		
 		BIPED_UCHIGATANA_SCRAP = builder.nextAccessor("biped/living/uchigatana_scrap", (accessor) ->
 			new StaticAnimation(0.05F, false, accessor, Armatures.BIPED)
-				.addEvents(InTimeEvent.create(0.15F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(EpicFightSounds.SWORD_IN.get())));
+				.addEvents(InTimeEvent.create(0.15F, ReusableSources.PLAY_SOUND, AnimationEvent.Side.CLIENT).params(EpicFightSounds.SWORD_IN.get()))
+		);
 		BIPED_LIECHTENAUER_READY = builder.nextAccessor("biped/living/liechtenauer_ready", (accessor) -> new StaticAnimation(0.1F, false, accessor, Armatures.BIPED));
 		
 		BIPED_HIT_SHIELD = builder.nextAccessor("biped/combat/hit_shield", (accessor) -> new MirrorAnimation(0.05F, false, accessor, "biped/combat/hit_shield_mainhand", "biped/combat/hit_shield_offhand", Armatures.BIPED));
@@ -650,11 +671,14 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.FIXED_HEAD_ROTATION, true)
 				.addProperty(StaticAnimationProperty.ON_ITEM_CHANGE_EVENT, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK_WHEN_ITEM_CHANGED, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create(Animations.ReusableSources.SET_TOOLS_BACK, Side.CLIENT))
+				.addEvents(StaticAnimationProperty.TICK_EVENTS, SimpleEvent.create(Animations.ReusableSources.UPDATE_Y_TO_NEARBY_LADDER, Side.CLIENT))
 				.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.REVERT_TO_HANDS, Side.CLIENT))
 				.newTimePair(0.0F, 10000.0F)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, false)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
-					.addStateRemoveOld(EntityState.INACTION, true));
+					.addStateRemoveOld(EntityState.TURNING_LOCKED, true)
+					.addStateRemoveOld(EntityState.INACTION, true)
+		);
 		
 		BIPED_SLEEPING = builder.nextAccessor("biped/living/sleep", (accessor) -> new StaticAnimation(0.16F, true, accessor, Armatures.BIPED));
 		
@@ -865,38 +889,54 @@ public class Animations {
 		
 		GREATSWORD_AUTO1 = builder.nextAccessor("biped/combat/greatsword_auto1", (accessor) ->
 			new BasicAttackAnimation(0.25F, 0.15F, 0.25F, 0.65F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
+				.newTimePair(0.0F, 0.5F)
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+		);
 		GREATSWORD_AUTO2 = builder.nextAccessor("biped/combat/greatsword_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.5F, 0.65F, 1.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
+				.newTimePair(0.0F, 0.5F)
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+		);
 		GREATSWORD_DASH = builder.nextAccessor("biped/combat/greatsword_dash", (accessor) ->
 			new DashAttackAnimation(0.2F, 0.2F, 0.35F, 0.6F, 1.2F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, false)
 				.addProperty(AttackPhaseProperty.SOURCE_TAG, Set.of(EpicFightDamageType.FINISHER))
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
 				.addProperty(ActionAnimationProperty.MOVE_VERTICAL, false)
-				.addEvents(InTimeEvent.create(0.4F, Animations.ReusableSources.FRACTURE_GROUND_SIMPLE, Side.CLIENT).params(new Vec3f(0.0F, -0.24F, -2.0F), Armatures.BIPED.get().toolR, 1.1D, 0.55F)));
+				.addEvents(InTimeEvent.create(0.4F, Animations.ReusableSources.FRACTURE_GROUND_SIMPLE, Side.CLIENT).params(new Vec3f(0.0F, -0.24F, -2.0F), Armatures.BIPED.get().toolR, 1.1D, 0.55F))
+		);
 		
 		SPEAR_ONEHAND_AUTO = builder.nextAccessor("biped/combat/spear_onehand_auto", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.35F, 0.45F, 0.75F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
+		);
 		SPEAR_TWOHAND_AUTO1 = builder.nextAccessor("biped/combat/spear_twohand_auto1", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.2F, 0.3F, 0.45F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
+				.newTimePair(0.0F, 0.55F)
+					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, false)
+		);
 		SPEAR_TWOHAND_AUTO2 = builder.nextAccessor("biped/combat/spear_twohand_auto2", (accessor) ->
 			new BasicAttackAnimation(0.1F, 0.2F, 0.3F, 0.7F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
+		);
 		SPEAR_DASH = builder.nextAccessor("biped/combat/spear_dash", (accessor) ->
 			new DashAttackAnimation(0.1F, 0.25F, 0.3F, 0.4F, 0.8F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
-				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
+				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
+		);
 		
 		TOOL_AUTO1 = builder.nextAccessor("biped/combat/tool_auto1", (accessor) ->
 			new BasicAttackAnimation(0.13F, 0.05F, 0.15F, 0.3F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
-				.setResourceLocation(EpicFightMod.MODID, "biped/combat/sword_auto1"));
+				.setResourceLocation(EpicFightMod.MODID, "biped/combat/sword_auto1")
+		);
 		TOOL_AUTO2 = builder.nextAccessor("biped/combat/sword_auto4", (accessor) ->
-			new BasicAttackAnimation(0.13F, 0.05F, 0.15F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED));
+			new BasicAttackAnimation(0.13F, 0.05F, 0.15F, 0.4F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+		);
 		TOOL_DASH = builder.nextAccessor("biped/combat/tool_dash", (accessor) ->
 			new DashAttackAnimation(0.16F, 0.08F, 0.15F, 0.25F, 0.58F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true)
-				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(1)));
+				.addProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER, ValueModifier.adder(1))
+		);
 		
 		AXE_DASH = builder.nextAccessor("biped/combat/axe_dash", (accessor) ->
 			new DashAttackAnimation(0.25F, 0.08F, 0.4F, 0.46F, 0.9F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED, true));
@@ -2341,6 +2381,93 @@ public class Animations {
 		public static final AnimationEvent.E0 SET_TOOLS_BACK_WHEN_MOUNT = (entitypatch, animation, params) -> {
 			if (!entitypatch.getHoldingItemCapability(InteractionHand.MAIN_HAND).availableOnHorse() && entitypatch.getArmature() instanceof ToolHolderArmature toolArmature) {
 				moveToolBonesToBack(entitypatch, animation, toolArmature);
+			}
+		};
+		
+		@SuppressWarnings("incomplete-switch")
+		public static final AnimationEvent.E0 UPDATE_Y_TO_NEARBY_LADDER = (entitypatch, animation, params) -> {
+			LivingEntity original = entitypatch.getOriginal();
+			BlockState bs = original.getFeetBlockState();
+			Level level = original.level();
+			BlockPos bp = original.blockPosition();
+			
+			boolean isSpectator = (entitypatch.getOriginal() instanceof Player && entitypatch.getOriginal().isSpectator());
+			Direction direction = null;
+			
+	        if (isSpectator || original.onGround() || !original.isAlive()) {
+	        	direction = Direction.UP;
+	        }
+	        
+			if (ForgeConfig.SERVER.fullBoundingBoxLadders.get()) {
+	            if (bs.isLadder(level, bp, original)) {
+	            	if (bs.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+	            		direction = bs.getValue(BlockStateProperties.HORIZONTAL_FACING);
+	            	} else {
+	            		if (bs.hasProperty(BlockStateProperties.UP) && bs.getValue(BlockStateProperties.UP)) {
+	            			direction = Direction.UP;
+		            	} else if (bs.hasProperty(BlockStateProperties.NORTH) && bs.getValue(BlockStateProperties.NORTH)) {
+		            		direction = Direction.SOUTH;
+		            	} else if (bs.hasProperty(BlockStateProperties.WEST) && bs.getValue(BlockStateProperties.WEST)) {
+		            		direction = Direction.EAST;
+		            	} else if (bs.hasProperty(BlockStateProperties.SOUTH) && bs.getValue(BlockStateProperties.SOUTH)) {
+		            		direction = Direction.NORTH;
+		            	} else if (bs.hasProperty(BlockStateProperties.EAST) && bs.getValue(BlockStateProperties.EAST)) {
+		            		direction = Direction.WEST;
+		            	}
+	            	}
+	            }
+			} else {
+	            AABB bb = original.getBoundingBox();
+	            int mX = Mth.floor(bb.minX);
+	            int mY = Mth.floor(bb.minY);
+	            int mZ = Mth.floor(bb.minZ);
+	            
+				for (int y2 = mY; y2 < bb.maxY; y2++) {
+					for (int x2 = mX; x2 < bb.maxX; x2++) {
+						for (int z2 = mZ; z2 < bb.maxZ; z2++) {
+	                        BlockPos tmp = new BlockPos(x2, y2, z2);
+	                        bs = level.getBlockState(tmp);
+							if (bs.isLadder(level, tmp, original)) {
+								if (bs.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+									direction = bs.getValue(BlockStateProperties.HORIZONTAL_FACING);
+				            	} else {
+				            		if (bs.hasProperty(BlockStateProperties.UP) && bs.getValue(BlockStateProperties.UP)) {
+					            		direction = Direction.UP;
+					            	} else if (bs.hasProperty(BlockStateProperties.NORTH) && bs.getValue(BlockStateProperties.NORTH)) {
+					            		direction = Direction.SOUTH;
+					            	} else if (bs.hasProperty(BlockStateProperties.WEST) && bs.getValue(BlockStateProperties.WEST)) {
+					            		direction = Direction.EAST;
+					            	} else if (bs.hasProperty(BlockStateProperties.SOUTH) && bs.getValue(BlockStateProperties.SOUTH)) {
+					            		direction = Direction.NORTH;
+					            	} else if (bs.hasProperty(BlockStateProperties.EAST) && bs.getValue(BlockStateProperties.EAST)) {
+					            		direction = Direction.WEST;
+					            	}
+				            	}
+	                        }
+	                    }
+	                }
+	            }
+	        }
+			
+			if (direction != null) {
+				switch(direction) {
+				case NORTH -> {
+					entitypatch.setYRot(0.0F);
+					entitypatch.setYRotO(0.0F);
+				}
+				case EAST -> {
+					entitypatch.setYRot(90.0F);
+					entitypatch.setYRotO(90.0F);
+				}
+				case WEST -> {
+					entitypatch.setYRot(-90.0F);
+					entitypatch.setYRotO(-90.0F);
+				}
+				case SOUTH -> {
+					entitypatch.setYRot(180.0F);
+					entitypatch.setYRotO(180.0F);
+				}
+				}
 			}
 		};
 		

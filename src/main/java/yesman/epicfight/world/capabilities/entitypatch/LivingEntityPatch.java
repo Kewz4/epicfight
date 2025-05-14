@@ -926,7 +926,7 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	}
 	
 	/**
-	 * Use this instead of {@link Entity#getYRot()} to get the fixed rotation when player's taking action
+	 * Use this instead of {@link Entity#getYRot()} to get the y rotation especiall player's turning is locked
 	 * @return
 	 */
 	public float getYRot() {
@@ -939,6 +939,10 @@ public abstract class LivingEntityPatch<T extends LivingEntity> extends Hurtable
 	
 	public void setYRot(float yRot) {
 		this.original.setYRot(yRot);
+	}
+	
+	public void setYRotO(float yRot) {
+		this.original.yRotO = yRot;
 	}
 	
 	@Override

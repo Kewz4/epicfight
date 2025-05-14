@@ -134,6 +134,9 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  Fixed the player head rotation while aiming bow, crossbow, and trident
  *  Fixed the epic fight painting to visible in creative tab
+ *  Fixed the Blade Rush passing through enemies with no hit
+ *  Fixed the simulated cape unsynced to the player's y rotation
+ *  Setting the config option "Enable cosmetic" to false will disable cloth simulation too
  *  
  *  ***************************************************************
  *  Minor version changes

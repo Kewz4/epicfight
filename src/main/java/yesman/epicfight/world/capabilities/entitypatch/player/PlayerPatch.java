@@ -679,6 +679,11 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	@Override
+	public void setYRotO(float yRot) {
+		this.modelYRotO = yRot;
+	}
+	
+	@Override
 	public void setYRot(float yRot) {
 		this.setModelYRot(yRot, true);
 	}

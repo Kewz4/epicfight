@@ -20,6 +20,7 @@ import yesman.epicfight.api.animation.types.LongHitAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.utils.MutableBoolean;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -75,6 +76,7 @@ public class GrapplingTryAnimation extends AttackAnimation {
 		
 		if (isEnd && !entitypatch.isLogicalClient()) {
 			LivingEntity hitEntity = entitypatch.getTarget();
+			MutableBoolean mb = new MutableBoolean(false);
 			
 			if (hitEntity != null) {
 				Phase phase = this.getPhaseByTime(0.0F);
@@ -85,22 +87,25 @@ public class GrapplingTryAnimation extends AttackAnimation {
 				
 				if (list.contains(hitEntity)) {
 					DamageSource dmgSource = this.getEpicFightDamageSource(entitypatch, hitEntity, phase);
-					
-					if (entitypatch.tryHurt(dmgSource, 0.0F).resultType.dealtDamage()) {
-						entitypatch.reserveAnimation(this.grapplingAttackAnimation);
-						entitypatch.setGrapplingTarget(hitEntity);
-						
-						EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(hitEntity, LivingEntity.class, LivingEntityPatch.class).ifPresent(hitEntityPatch -> {
+					EpicFightCapabilities.<LivingEntity, LivingEntityPatch<LivingEntity>>getParameterizedEntityPatch(hitEntity, LivingEntity.class, LivingEntityPatch.class).ifPresentOrElse(hitEntityPatch -> {
+						if (hitEntityPatch.tryHurt(dmgSource, 0.0F).resultType.dealtDamage()) {
+							entitypatch.reserveAnimation(this.grapplingAttackAnimation);
+							entitypatch.setGrapplingTarget(hitEntity);
 							hitEntity.lookAt(EntityAnchorArgument.Anchor.FEET, entitypatch.getOriginal().position());
 							hitEntityPatch.playAnimationSynchronized(this.grapplingHitAnimation, 0.0F);
-						});
-						
-						return;
-					}
+							mb.set(true);
+						}
+					}, () -> {
+						entitypatch.reserveAnimation(this.grapplingAttackAnimation);
+						entitypatch.setGrapplingTarget(hitEntity);
+						mb.set(true);
+					});
 				}
 			}
 			
-			entitypatch.reserveAnimation(this.failAnimation);
+			if (!mb.value()) {
+				entitypatch.reserveAnimation(this.failAnimation);
+			}
 		}
 	}
 	

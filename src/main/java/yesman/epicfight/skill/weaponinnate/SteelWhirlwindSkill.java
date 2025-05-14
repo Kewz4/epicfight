@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation.Phase;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
@@ -101,6 +102,12 @@ public class SteelWhirlwindSkill extends WeaponInnateSkill implements Chargeable
 	
 	@Override
 	public void startCharging(PlayerPatch<?> caster) {
+		AssetAccessor<? extends StaticAnimation> currentPlaying = caster.getAnimator().getPlayerFor(null).getRealAnimation();
+		
+		if (currentPlaying.get().isMainFrameAnimation()) {
+			caster.stopPlaying(currentPlaying);
+		}
+		
 		caster.playAnimationSynchronized(this.chargingAnimation, 0.0F);
 	}
 	

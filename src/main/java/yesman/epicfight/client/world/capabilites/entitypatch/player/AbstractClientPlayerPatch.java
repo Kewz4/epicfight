@@ -2,27 +2,19 @@ package yesman.epicfight.client.world.capabilites.entitypatch.player;
 
 import java.util.Optional;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PlayerRideableJumping;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.ForgeConfig;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -271,7 +263,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@Override
 	public OpenMatrix4f getModelMatrix(float partialTick) {
-		Direction direction;
+		//Direction direction;
 		
 		if (this.original.isAutoSpinAttack()) {
 			OpenMatrix4f mat = MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0, 0, 0, 0, partialTick, PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
@@ -327,24 +319,6 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			}
 			
 			return MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, yRot, yRot, 0, PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
-		} else if ((direction = this.getLadderDirection(this.original.getFeetBlockState(), this.original.level(), this.original.blockPosition(), this.original)) != Direction.UP) {
-			float yRot = 0.0F;
-			
-			switch(direction) {
-			case EAST:
-				yRot = 90.0F;
-				break;
-			case WEST:
-				yRot = -90.0F;
-				break;
-			case SOUTH:
-				yRot = 180.0F;
-				break;
-			default:
-				break;
-			}
-			
-			return MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, yRot, yRot, 0.0F, PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
 		} else {
 			float yRotO;
 			float yRot;
@@ -369,65 +343,6 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 			
 			return MathUtils.getModelMatrixIntegral(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, xRotO, xRot, yRotO, yRot, partialTick, PLAYER_SCALE, PLAYER_SCALE, PLAYER_SCALE);
 		}
-	}
-	
-	public Direction getLadderDirection(@Nonnull BlockState state, @Nonnull Level world, @Nonnull BlockPos pos, @Nonnull LivingEntity entity) {
-		boolean isSpectator = (entity instanceof Player && entity.isSpectator());
-        if (isSpectator || this.original.onGround() || !this.original.isAlive()) {
-        	return Direction.UP;
-        }
-        
-		if (ForgeConfig.SERVER.fullBoundingBoxLadders.get()) {
-            if (state.isLadder(world, pos, entity)) {
-            	if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-            		return state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            	}
-            	
-            	if (state.hasProperty(BlockStateProperties.UP) && state.getValue(BlockStateProperties.UP)) {
-            		return Direction.UP;
-            	} else if (state.hasProperty(BlockStateProperties.NORTH) && state.getValue(BlockStateProperties.NORTH)) {
-            		return Direction.SOUTH;
-            	} else if (state.hasProperty(BlockStateProperties.WEST) && state.getValue(BlockStateProperties.WEST)) {
-            		return Direction.EAST;
-            	} else if (state.hasProperty(BlockStateProperties.SOUTH) && state.getValue(BlockStateProperties.SOUTH)) {
-            		return Direction.NORTH;
-            	} else if (state.hasProperty(BlockStateProperties.EAST) && state.getValue(BlockStateProperties.EAST)) {
-            		return Direction.WEST;
-            	}
-            }
-		} else {
-            AABB bb = entity.getBoundingBox();
-            int mX = Mth.floor(bb.minX);
-            int mY = Mth.floor(bb.minY);
-            int mZ = Mth.floor(bb.minZ);
-            
-			for (int y2 = mY; y2 < bb.maxY; y2++) {
-				for (int x2 = mX; x2 < bb.maxX; x2++) {
-					for (int z2 = mZ; z2 < bb.maxZ; z2++) {
-                        BlockPos tmp = new BlockPos(x2, y2, z2);
-                        state = world.getBlockState(tmp);
-						if (state.isLadder(world, tmp, entity)) {
-							if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-			            		return state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-			            	}
-			            	if (state.hasProperty(BlockStateProperties.UP) && state.getValue(BlockStateProperties.UP)) {
-			            		return Direction.UP;
-			            	} else if (state.hasProperty(BlockStateProperties.NORTH) && state.getValue(BlockStateProperties.NORTH)) {
-			            		return Direction.SOUTH;
-			            	} else if (state.hasProperty(BlockStateProperties.WEST) && state.getValue(BlockStateProperties.WEST)) {
-			            		return Direction.EAST;
-			            	} else if (state.hasProperty(BlockStateProperties.SOUTH) && state.getValue(BlockStateProperties.SOUTH)) {
-			            		return Direction.NORTH;
-			            	} else if (state.hasProperty(BlockStateProperties.EAST) && state.getValue(BlockStateProperties.EAST)) {
-			            		return Direction.WEST;
-			            	}
-                        }
-                    }
-                }
-            }
-        }
-		
-		return Direction.UP;
 	}
 	
 	public void setEpicSkinsInformation(EpicSkins epicSkinsInformation) {
