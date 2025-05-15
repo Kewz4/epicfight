@@ -265,11 +265,11 @@ public class RenderEngine {
 		}
 		
 		RenderItemBase baseRenderer = new RenderItemBase(new JsonObject());
-		RenderTwoHandedRangedWeapon bowRenderer = new RenderTwoHandedRangedWeapon(new JsonObject());
-		RenderTwoHandedRangedWeapon crossbowRenderer = new RenderTwoHandedRangedWeapon(new JsonObject());
-		RenderTrident tridentRenderer = new RenderTrident(new JsonObject());
-		RenderFilledMap mapRenderer = new RenderFilledMap(new JsonObject());
-		RenderShield shieldRenderer = new RenderShield(new JsonObject());
+		RenderTwoHandedRangedWeapon bowRenderer = new RenderTwoHandedRangedWeapon(objects.get(ForgeRegistries.ITEMS.getKey(Items.BOW)).getAsJsonObject());
+		RenderTwoHandedRangedWeapon crossbowRenderer = new RenderTwoHandedRangedWeapon(objects.get(ForgeRegistries.ITEMS.getKey(Items.CROSSBOW)).getAsJsonObject());
+		RenderTrident tridentRenderer = new RenderTrident(objects.get(ForgeRegistries.ITEMS.getKey(Items.TRIDENT)).getAsJsonObject());
+		RenderFilledMap mapRenderer = new RenderFilledMap(objects.get(ForgeRegistries.ITEMS.getKey(Items.FILLED_MAP)).getAsJsonObject());
+		RenderShield shieldRenderer = new RenderShield(objects.get(ForgeRegistries.ITEMS.getKey(Items.SHIELD)).getAsJsonObject());
 		
 		// Render by item classes
 		this.itemRendererMapByClass.put(BowItem.class, bowRenderer);

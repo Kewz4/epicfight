@@ -136,6 +136,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the epic fight painting to visible in creative tab
  *  Fixed the Blade Rush passing through enemies with no hit
  *  Fixed the simulated cape unsynced to the player's y rotation
+ *  Fixed the modded bows & crossbows' rotations in hand
  *  Setting the config option "Enable cosmetic" to false will disable cloth simulation too
  *  
  *  ***************************************************************

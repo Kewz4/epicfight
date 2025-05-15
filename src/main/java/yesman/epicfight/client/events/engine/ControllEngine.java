@@ -347,6 +347,7 @@ public class ControllEngine {
 				this.moverPressCounter = 0;
 				
 				if (this.player.onGround()) {
+					this.player.noJumpDelay = 0;
 					input.jumping = true;
 				}
 			} else {
@@ -357,7 +358,7 @@ public class ControllEngine {
 					this.moverPressToggle = false;
 					this.moverPressCounter = 0;
 				} else {
-					input.jumping = false;
+					this.player.noJumpDelay = 2;
 					this.moverPressCounter++;
 				}
 			}
@@ -452,6 +453,22 @@ public class ControllEngine {
 	
 	public static void setKeyBind(KeyMapping key, boolean setter) {
 		KeyMapping.set(key.getKey(), setter);
+	}
+	
+	public boolean moverToggling() {
+		return this.moverPressToggle;
+	}
+	
+	public boolean sneakToggling() {
+		return this.sneakPressToggle;
+	}
+	
+	public boolean attackToggling() {
+		return this.attackLightPressToggle;
+	}
+	
+	public boolean weaponInnateToggling() {
+		return this.weaponInnatePressToggle;
 	}
 	
 	@OnlyIn(Dist.CLIENT)

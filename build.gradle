@@ -40,8 +40,6 @@ minecraft {
         client {
             workingDirectory project.file('run')
             property 'forge.enabledGameTestNamespaces', mod_id
-            
-            args '--username', 'Maybeman'
         }
 
         server {
@@ -90,7 +88,7 @@ mixin {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-	// Required dependencies to build project
+	// Required dependencies to build the project
 	// compile against the JEI API but do not include it at runtime
   	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
  	compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
