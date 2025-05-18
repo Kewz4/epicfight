@@ -15,7 +15,7 @@ public class SPChangePlayerMode {
 
 	public SPChangePlayerMode() {
 		this.entityId = 0;
-		this.mode = PlayerPatch.PlayerMode.MINING;
+		this.mode = PlayerPatch.PlayerMode.VANILLA;
 	}
 
 	public SPChangePlayerMode(int entityId, PlayerPatch.PlayerMode battleMode) {

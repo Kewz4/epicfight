@@ -20,7 +20,6 @@ public class EpicFightControlOptionScreen extends EpicFightOptionSubScreen {
 	
 	public EpicFightControlOptionScreen(Screen parentScreen) {
 		super(parentScreen, Component.translatable("gui." + EpicFightMod.MODID + ".control_options"));
-		
 	}
 	
 	@Override
@@ -54,25 +53,12 @@ public class EpicFightControlOptionScreen extends EpicFightOptionSubScreen {
 		
 		buttonHeight += 24;
 		
-		Button autoPreparationButton = Button.builder(Component.translatable("gui." + modid + ".auto_preparation." + (ClientConfig.autoPreparation ? "on" : "off")), (button) -> {
-			ClientConfig.autoPreparation = !ClientConfig.autoPreparation;
-			button.setMessage(Component.translatable("gui." + modid + ".auto_preparation." + (ClientConfig.autoPreparation ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".auto_preparation.tooltip"))).build();
+		Button autoSwitchingItems = Button.builder(Component.translatable("gui." + modid + ".item_preferences"), (button) -> {
+			this.minecraft.setScreen(new PreferredItemsScreen(this));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".item_preferences.tooltip"))).build();
 		
-		Button autoSwitchingItems = Button.builder(Component.translatable("gui." + modid + ".auto_switching_items"), (button) -> {
-			this.minecraft.setScreen(new EditSwitchingItemScreen(this));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".auto_switching_items.tooltip"))).build();
+		this.optionsList.addSmall(autoSwitchingItems, null);
 		
-		this.optionsList.addSmall(autoPreparationButton, autoSwitchingItems);
-		
-		buttonHeight += 24;
-		
-		Button noMiningInCombatButton = Button.builder(Component.translatable("gui." + modid + ".no_mining_in_combat." + (ClientConfig.preventMiningInCombatMode ? "on" : "off")), (button) -> {
-			ClientConfig.preventMiningInCombatMode = !ClientConfig.preventMiningInCombatMode;
-			button.setMessage(Component.translatable("gui." + modid + ".no_mining_in_combat." + (ClientConfig.preventMiningInCombatMode ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".no_mining_in_combat.tooltip"))) .build();
-		
-		this.optionsList.addSmall(noMiningInCombatButton, null);
 		this.addWidget(this.optionsList);
 	}
 	

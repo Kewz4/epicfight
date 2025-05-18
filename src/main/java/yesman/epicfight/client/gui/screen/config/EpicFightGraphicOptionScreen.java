@@ -37,33 +37,33 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		int buttonHeight = -32;
 		
-		Button filterAnimationButton = Button.builder(Component.translatable("gui." + modid + ".filter_animation." + (ClientConfig.filterAnimation ? "on" : "off")), (button) -> {
-			ClientConfig.filterAnimation = !ClientConfig.filterAnimation;
-			button.setMessage(Component.translatable("gui." + modid + ".filter_animation." + (ClientConfig.filterAnimation ? "on" : "off")));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(title)).build();
-		
-		Button healthBarShowOptionButton = Button.builder(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()), (button) -> {
-			ClientConfig.healthBarVisibility = ClientConfig.healthBarVisibility.nextEnum();
-			button.setMessage(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()));
-		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".filter_animation.tooltip"))).build();
-		
-		this.optionsList.addSmall(filterAnimationButton, healthBarShowOptionButton);
-		
-		buttonHeight += 24;
-		
 		Button showTargetIndicatorButton = Button.builder(Component.translatable("gui." + modid + ".target_indicator." + (ClientConfig.showTargetIndicator ? "on" : "off")), (button) -> {
 			ClientConfig.showTargetIndicator = !ClientConfig.showTargetIndicator;
 			button.setMessage(Component.translatable("gui." + modid + ".target_indicator." + (ClientConfig.showTargetIndicator ? "on" : "off")));
 		}).pos(this.width / 2 + 5, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".target_indicator.tooltip"))).build();
 		
+		Button healthBarVisibilityOptionButton = Button.builder(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()), (button) -> {
+			ClientConfig.healthBarVisibility = ClientConfig.healthBarVisibility.nextEnum();
+			button.setMessage(Component.translatable("gui." + modid + ".health_bar_show_option." + ClientConfig.healthBarVisibility.toString()));
+		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".filter_animation.tooltip"))).build();
+		
+		this.optionsList.addSmall(showTargetIndicatorButton, healthBarVisibilityOptionButton);
+		
+		buttonHeight += 24;
+		
+		Button aimingCorrectionButton = Button.builder(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")), (button) -> {
+			ClientConfig.aimingPovCorrection = !ClientConfig.aimingPovCorrection;
+			button.setMessage(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aiming_correction.tooltip"))).build();
+		
 		Button enableAimHelperButton = Button.builder(Component.translatable("gui." + modid + ".aim_helper." + (ClientConfig.enableAimHelper ? "on" : "off")), (button) -> {
 			ClientConfig.enableAimHelper = !ClientConfig.enableAimHelper;
 			button.setMessage(Component.translatable("gui." + modid + ".aim_helper." + (ClientConfig.enableAimHelper ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aim_helper.tooltip"))).build();
+		}).pos(this.width / 2 + 5, this.height / 4 - 8).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aim_helper.tooltip"))).build();
 		
-		this.optionsList.addSmall(showTargetIndicatorButton, enableAimHelperButton);
+		this.optionsList.addSmall(aimingCorrectionButton, enableAimHelperButton);
 		
-		buttonHeight+=24;
+		buttonHeight += 24;
 		
 		Button bloodEffectsButton = Button.builder(Component.translatable("gui." + modid + ".blood_effects." + (ClientConfig.bloodEffects ? "on" : "off")), (button) -> {
 			ClientConfig.bloodEffects = !ClientConfig.bloodEffects;
@@ -85,16 +85,16 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		buttonHeight += 24;
 		
-		Button aimingCorrectionButton = Button.builder(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")), (button) -> {
-			ClientConfig.aimingPovCorrection = !ClientConfig.aimingPovCorrection;
-			button.setMessage(Component.translatable("gui." + modid + ".aiming_correction." + (ClientConfig.aimingPovCorrection ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".aiming_correction.tooltip"))).build();
+		Button enablePovAction = Button.builder(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")), (button) -> {
+			ClientConfig.enablePovAction = !ClientConfig.enablePovAction;
+			button.setMessage(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")));
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_pov_action.tooltip"))).build();
 		
 		Button uiSetupButton = Button.builder(Component.translatable("gui." + modid + ".ui_setup"), (button) -> {
 			this.minecraft.setScreen(new UISetupScreen(this));
 		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".ui_setup.tooltip"))).build();
 		
-		this.optionsList.addSmall(aimingCorrectionButton, uiSetupButton);
+		this.optionsList.addSmall(enablePovAction, uiSetupButton);
 		
 		buttonHeight += 24;
 		
@@ -131,17 +131,12 @@ public class EpicFightGraphicOptionScreen extends EpicFightOptionSubScreen {
 		
 		buttonHeight += 24;
 		
-		Button enablePovAction = Button.builder(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")), (button) -> {
-			ClientConfig.enablePovAction = !ClientConfig.enablePovAction;
-			button.setMessage(Component.translatable("gui." + modid + ".enable_pov_action." + (ClientConfig.enablePovAction ? "on" : "off")));
-		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_pov_action.tooltip"))).build();
-		
 		Button enableCosmetics = Button.builder(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")), (button) -> {
 			ClientConfig.enableCosmetics = !ClientConfig.enableCosmetics;
 			button.setMessage(Component.translatable("gui." + modid + ".enable_cosmetics." + (ClientConfig.enableCosmetics ? "on" : "off")));
-		}).pos(this.width / 2 + 5, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_cosmetics.tooltip"))).build();
+		}).pos(this.width / 2 - 165, this.height / 4 + buttonHeight).size(160, 20).tooltip(Tooltip.create(Component.translatable("gui." + modid + ".enable_cosmetics.tooltip"))).build();
 		
-		this.optionsList.addSmall(enablePovAction, enableCosmetics);
+		this.optionsList.addSmall(enableCosmetics, null);
 		
 		buttonHeight += 30;
 		

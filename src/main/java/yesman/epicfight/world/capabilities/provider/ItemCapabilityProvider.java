@@ -6,8 +6,10 @@ import java.util.function.Function;
 import com.google.common.collect.Maps;
 
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.HoeItem;
@@ -26,9 +28,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.item.ArmorCapability;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.capabilities.item.ItemKeywordReloadListener;
 import yesman.epicfight.world.capabilities.item.MapCapability;
 import yesman.epicfight.world.capabilities.item.TagBasedSeparativeCapability;
 import yesman.epicfight.world.capabilities.item.WeaponCapabilityPresets;
+import yesman.epicfight.world.capabilities.item.WeaponTypeReloadListener;
 
 public class ItemCapabilityProvider implements ICapabilityProvider, NonNullSupplier<CapabilityItem> {
 	private static final Map<Class<? extends Item>, Function<Item, CapabilityItem.Builder>> CAPABILITY_BY_CLASS = Maps.newHashMap();
@@ -60,8 +64,26 @@ public class ItemCapabilityProvider implements ICapabilityProvider, NonNullSuppl
 	}
 	
 	public static void addDefaultItems() {
-		for (Item item : ForgeRegistries.ITEMS.getValues()) {
-			if (!CAPABILITIES.containsKey(item)) {
+		ForgeRegistries.ITEMS.getEntries().stream().filter(entry -> !CAPABILITIES.containsKey(entry.getValue())).forEach(entry -> {
+			Function<Item, CapabilityItem.Builder> type = null;
+			Item item = entry.getValue();
+			
+			if (item instanceof BlockItem) {
+				return;
+			}
+			
+			for (Map.Entry<ResourceLocation, ItemKeywordReloadListener.ItemRegex> regexEntry : ItemKeywordReloadListener.getRegexes().entrySet()) {
+				if (regexEntry.getValue().matchesAny(entry.getKey().location().toString())) {
+					type = WeaponTypeReloadListener.get(regexEntry.getKey());
+					
+					if (type != null) {
+						CAPABILITIES.put(item, type.apply(item).build());
+						break;
+					}
+				}
+			}
+			
+			if (type == null) {
 				Class<?> clazz = item.getClass();
 				CapabilityItem capability = null;
 				
@@ -75,7 +97,7 @@ public class ItemCapabilityProvider implements ICapabilityProvider, NonNullSuppl
 					CAPABILITIES.put(item, capability);
 				}
 			}
-		}
+		});
 	}
 	
 	private CapabilityItem capability;

@@ -510,7 +510,7 @@ public class RenderEngine {
 			}
 			
 			// First person camera correction
-			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isBattleMode() && !localPlayerPatch.getFirstPersonLayer().isOff() && localPlayerPatch.hasCameraAnimation()) {
+			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isEpicFightMode() && !localPlayerPatch.getFirstPersonLayer().isOff() && localPlayerPatch.hasCameraAnimation()) {
 				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
 				JointTransform cameraTransform;
 				
@@ -777,9 +777,9 @@ public class RenderEngine {
 			LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
 			
 			if (playerpatch != null) {
-				boolean isBattleMode = playerpatch.isBattleMode();
+				boolean isBattleMode = playerpatch.isEpicFightMode();
 				
-				if ((isBattleMode || !ClientConfig.filterAnimation) && ClientConfig.enableAnimatedFirstPersonModel) {
+				if (isBattleMode && ClientConfig.enableAnimatedFirstPersonModel) {
 					RenderItemBase mainhandItemSkin = renderEngine.getItemRenderer(playerpatch.getOriginal().getMainHandItem());
 					RenderItemBase offhandItemSkin = renderEngine.getItemRenderer(playerpatch.getOriginal().getOffhandItem());
 					boolean useEpicFightModel = (mainhandItemSkin == null || !mainhandItemSkin.forceVanillaFirstPerson()) && (offhandItemSkin == null || !offhandItemSkin.forceVanillaFirstPerson());

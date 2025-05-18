@@ -262,20 +262,20 @@ public class ServerPlayerPatch extends PlayerPatch<ServerPlayer> {
 	}
 
 	@Override
-	public void toMiningMode(boolean synchronize) {
-		super.toMiningMode(synchronize);
+	public void toVanillaMode(boolean synchronize) {
+		super.toVanillaMode(synchronize);
 		
 		if (synchronize) {
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(SPModifyPlayerData.setPlayerMode(this.original.getId(), PlayerMode.MINING), this.original);
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(SPModifyPlayerData.setPlayerMode(this.original.getId(), PlayerMode.VANILLA), this.original);
 		}
 	}
 	
 	@Override
-	public void toBattleMode(boolean synchronize) {
-		super.toBattleMode(synchronize);
+	public void toEpicFightMode(boolean synchronize) {
+		super.toEpicFightMode(synchronize);
 		
 		if (synchronize) {
-			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(SPModifyPlayerData.setPlayerMode(this.original.getId(), PlayerMode.BATTLE), this.original);
+			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntityWithSelf(SPModifyPlayerData.setPlayerMode(this.original.getId(), PlayerMode.EPICFIGHT), this.original);
 		}
 	}
 	

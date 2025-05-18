@@ -93,9 +93,9 @@ public class SkinLayer3DCompat implements ICompatModule {
 			if (event.getScreen() instanceof dev.tr7zw.skinlayers.config.CustomConfigScreen) {
 				PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
 				
-				if (playerpatch != null && playerpatch.isMiningMode()) {
+				if (playerpatch != null && playerpatch.isVanillaMode()) {
 					REVERT_TO_MINING = true;
-					playerpatch.toBattleMode(false);
+					playerpatch.toEpicFightMode(false);
 				}
 				
 				if (!ClientEngine.getInstance().isVanillaModelDebuggingMode()) {
@@ -111,7 +111,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 				}
 				
 				if (REVERT_TO_MINING) {
-					ClientEngine.getInstance().getPlayerPatch().toMiningMode(false);
+					ClientEngine.getInstance().getPlayerPatch().toVanillaMode(false);
 					REVERT_TO_MINING = false;
 				}
 			}

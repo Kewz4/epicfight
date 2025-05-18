@@ -101,16 +101,22 @@ public abstract class Skill {
 		}
 	}
 	
+	/**
+	 * Check the player state if he can execute the skill or not
+	 */
 	public boolean isExecutableState(PlayerPatch<?> executor) {
 		return !executor.getOriginal().isSpectator() && !executor.isInAir() && executor.getEntityState().canUseSkill();
 	}
 	
+	/**
+	 * Check the resource & other restrictions to execute the skill
+	 */
 	public boolean canExecute(SkillContainer container) {
 		return this.checkExecuteCondition(container);
 	}
 	
 	/**
-	 * This makes the skill icon white if it returns false
+	 * This makes the skill icon white in Gui if it returns false
 	 */
 	public boolean checkExecuteCondition(SkillContainer container) {
 		return true;

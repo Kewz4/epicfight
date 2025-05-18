@@ -47,8 +47,8 @@ import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListener {
 	public static final String DIRECTORY = "capabilities";
 	private static final Gson GSON = (new GsonBuilder()).create();
-	private static final Map<Item, CompoundTag> CAPABILITY_ARMOR_DATA_MAP = Maps.newHashMap();
-	private static final Map<Item, CompoundTag> CAPABILITY_WEAPON_DATA_MAP = Maps.newHashMap();
+	private static final Map<Item, CompoundTag> ARMOR_COMPOUNDS = Maps.newHashMap();
+	private static final Map<Item, CompoundTag> WEAPON_COMPOUNDS = Maps.newHashMap();
 	
 	public ItemCapabilityReloadListener() {
 		super(GSON, DIRECTORY);
@@ -56,8 +56,8 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 	
 	@Override
 	protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profileIn) {
-		CAPABILITY_ARMOR_DATA_MAP.clear();
-		CAPABILITY_WEAPON_DATA_MAP.clear();
+		ARMOR_COMPOUNDS.clear();
+		WEAPON_COMPOUNDS.clear();
 		
 		return super.prepare(resourceManager, profileIn);
 	}
@@ -68,7 +68,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 			ResourceLocation rl = entry.getKey();
 			String path = rl.getPath();
 			
-			if (path.contains("/") && !path.contains("types")) {
+			if (path.contains("/") && !path.contains("types") && !path.contains("item_keyword")) {
 				String[] str = path.split("/", 2);
 				ResourceLocation registryName = ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), str[1]);
 				
@@ -91,11 +91,11 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 					if (str[0].equals("armors")) {
 						CapabilityItem capability = deserializeArmor(item, tag);
 						ItemCapabilityProvider.put(item, capability);
-						CAPABILITY_ARMOR_DATA_MAP.put(item, tag);
+						ARMOR_COMPOUNDS.put(item, tag);
 					} else if (str[0].equals("weapons")) {
 						CapabilityItem capability = deserializeWeapon(item, tag);
 						ItemCapabilityProvider.put(item, capability);
-						CAPABILITY_WEAPON_DATA_MAP.put(item, tag);
+						WEAPON_COMPOUNDS.put(item, tag);
 					}
 				} catch (Exception e) {
 					EpicFightMod.LOGGER.warn("Error while deserializing datapack for " + registryName + ": " + e.getLocalizedMessage());
@@ -204,7 +204,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 	}
 	
 	public static Stream<CompoundTag> getArmorDataStream() {
-		Stream<CompoundTag> tagStream = CAPABILITY_ARMOR_DATA_MAP.entrySet().stream().map((entry) -> {
+		Stream<CompoundTag> tagStream = ARMOR_COMPOUNDS.entrySet().stream().map((entry) -> {
 			entry.getValue().putInt("id", Item.getId(entry.getKey()));
 			return entry.getValue();
 		});
@@ -212,7 +212,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 	}
 	
 	public static Stream<CompoundTag> getWeaponDataStream() {
-		Stream<CompoundTag> tagStream = CAPABILITY_WEAPON_DATA_MAP.entrySet().stream().map((entry) -> {
+		Stream<CompoundTag> tagStream = WEAPON_COMPOUNDS.entrySet().stream().map((entry) -> {
 			entry.getValue().putInt("id", Item.getId(entry.getKey()));
 			return entry.getValue();
 		});
@@ -220,11 +220,11 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 	}
 	
 	public static int armorCount() {
-		return CAPABILITY_ARMOR_DATA_MAP.size();
+		return ARMOR_COMPOUNDS.size();
 	}
 	
 	public static int weaponCount() {
-		return CAPABILITY_WEAPON_DATA_MAP.size();
+		return WEAPON_COMPOUNDS.size();
 	}
 	
 	private static boolean armorReceived = false;
@@ -248,14 +248,14 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 		case ARMOR:
 			for (CompoundTag tag : packet.getTags()) {
 				Item item = Item.byId(tag.getInt("id"));
-				CAPABILITY_ARMOR_DATA_MAP.put(item, tag);
+				ARMOR_COMPOUNDS.put(item, tag);
 			}
 			armorReceived = true;
 			break;
 		case WEAPON:
 			for (CompoundTag tag : packet.getTags()) {
 				Item item = Item.byId(tag.getInt("id"));
-				CAPABILITY_WEAPON_DATA_MAP.put(item, tag);
+				WEAPON_COMPOUNDS.put(item, tag);
 			}
 			weaponReceived = true;
 			break;
@@ -264,7 +264,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 		}
 		
 		if (weaponTypeReceived && armorReceived && weaponReceived) {
-			CAPABILITY_ARMOR_DATA_MAP.forEach((item, tag) -> {
+			ARMOR_COMPOUNDS.forEach((item, tag) -> {
 				try {
 					CapabilityItem itemCap = deserializeArmor(item, tag);
 					ItemCapabilityProvider.put(item, itemCap);
@@ -275,7 +275,7 @@ public class ItemCapabilityReloadListener extends SimpleJsonResourceReloadListen
 				}
 			});
 			
-			CAPABILITY_WEAPON_DATA_MAP.forEach((item, tag) -> {
+			WEAPON_COMPOUNDS.forEach((item, tag) -> {
 				try {
 					CapabilityItem itemCap = deserializeWeapon(item, tag);
 					ItemCapabilityProvider.put(item, itemCap);

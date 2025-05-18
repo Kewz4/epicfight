@@ -51,6 +51,6 @@ public class ClientEngine {
 			return false;
 		}
 		
-		return localPlayerPatch.isBattleMode();
+		return localPlayerPatch.isEpicFightMode();
 	}
 }

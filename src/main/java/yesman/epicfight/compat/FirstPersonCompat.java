@@ -17,7 +17,7 @@ public class FirstPersonCompat implements ICompatModule {
 			public boolean preventFirstperson() {
 				PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
 				
-				if (playerpatch != null && playerpatch.getPlayerMode() == PlayerPatch.PlayerMode.BATTLE && ClientConfig.enableAnimatedFirstPersonModel) {
+				if (playerpatch != null && playerpatch.getPlayerMode() == PlayerPatch.PlayerMode.EPICFIGHT && ClientConfig.enableAnimatedFirstPersonModel) {
 					return true;
 				}
 				

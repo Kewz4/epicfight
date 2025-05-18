@@ -60,10 +60,6 @@ public class BasicAttack extends Skill {
 				}
 			}
 		});
-		
-		container.getExecutor().getEventListener().addEventListener(EventType.ANIMATION_END_EVENT, EVENT_UUID, (event) -> {
-			container.getDataManager().setData(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get(), false);
-		});
 	}
 	
 	@Override
@@ -130,7 +126,6 @@ public class BasicAttack extends Skill {
 		
 		if (attackMotion != null) {
 			executor.playAnimationSynchronized(attackMotion, 0.0F);
-			dataManager.setData(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get(), true);
 		}
 		
 		executor.updateEntityState();

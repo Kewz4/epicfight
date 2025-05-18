@@ -28,6 +28,10 @@ public class SkillDataKeys {
 	public static final DeferredRegister<SkillDataKey<?>> DATA_KEYS = DeferredRegister.create(ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "skill_data_keys"), EpicFightMod.MODID);
 	public static final Supplier<IForgeRegistry<SkillDataKey<?>>> REGISTRY = DATA_KEYS.makeRegistry(BUILDER);
 	
+	/**
+	 * Check COMBO_COUNTER > 0 to judge if basic attack is activated
+	 */
+	@Deprecated(forRemoval = true, since = "1.21.1")
 	public static final RegistryObject<SkillDataKey<Boolean>> BASIC_ATTACK_ACTIVATE = DATA_KEYS.register("basic_attack_active", () -> SkillDataKey.createSkillDataKey(PacketBufferCodec.BOOLEAN, false, false, BasicAttack.class));
 	public static final RegistryObject<SkillDataKey<Integer>> COMBO_COUNTER = DATA_KEYS.register("combo_counter", () -> SkillDataKey.createSkillDataKey(PacketBufferCodec.INTEGER, 0, false, BasicAttack.class, BladeRushSkill.class));
 	public static final RegistryObject<SkillDataKey<Boolean>> SHEATH = DATA_KEYS.register("sheath", () -> SkillDataKey.createSkillDataKey(PacketBufferCodec.BOOLEAN, false, false, BattojutsuPassive.class, BattojutsuSkill.class));

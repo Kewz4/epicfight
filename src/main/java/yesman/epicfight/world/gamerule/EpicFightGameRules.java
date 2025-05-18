@@ -17,14 +17,6 @@ import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPChangeGamerule;
 
 public class EpicFightGameRules {
-	public static final ConfigurableGameRule<Boolean, ForgeConfigSpec.BooleanValue, GameRules.BooleanValue> DO_VANILLA_ATTACK = create(
-			  "doVanillaAttack"
-			, GameRules.Category.PLAYER
-			, (configBuilder) -> configBuilder.define("default_gamerule.doVanillaAttack", true)
-			, RuleType.BOOLEAN
-			, false
-	);
-	
 	public static final ConfigurableGameRule<Boolean, ForgeConfigSpec.BooleanValue, GameRules.BooleanValue> GLOBAL_STUN = create(
 			  "globalStun"
 			, GameRules.Category.MOBS
@@ -58,9 +50,9 @@ public class EpicFightGameRules {
 	);
 	
 	public static final ConfigurableGameRule<Boolean, ForgeConfigSpec.BooleanValue, GameRules.BooleanValue> CAN_SWITCH_PLAYER_MODE = create(
-			  "canSwitchCombat"
+			  "canSwitchPlayerMode"
 			, GameRules.Category.PLAYER
-			, (configBuilder) -> configBuilder.define("default_gamerule.canSwitchCombat", true)
+			, (configBuilder) -> configBuilder.define("default_gamerule.canSwitchPlayerMode", false)
 			, RuleType.BOOLEAN
 			, true
 	);
@@ -84,7 +76,7 @@ public class EpicFightGameRules {
 	public static final ConfigurableGameRule<Integer, ForgeConfigSpec.IntValue, GameRules.IntegerValue> INITIAL_PLAYER_MODE = create(
 			  "initialMode"
 			, GameRules.Category.PLAYER
-			, (configBuilder) -> configBuilder.defineInRange("default_gamerule.setBattleModeOnJoin", 0, 0, 1)
+			, (configBuilder) -> configBuilder.comment("0 = vanilla, 1 = epicfight").defineInRange("default_gamerule.initialMode", 1, 0, 1)
 			, RuleType.INTEGER
 			, true
 	);
@@ -106,12 +98,11 @@ public class EpicFightGameRules {
 	);
 	
 	public static final Map<String, ConfigurableGameRule<?, ?, ?>> GAME_RULES = ImmutableMap.<String, ConfigurableGameRule<?, ?, ?>>builder()
-			.put("doVanillaAttack", DO_VANILLA_ATTACK)
 			.put("globalStun", GLOBAL_STUN)
 			.put("keepSkills", KEEP_SKILLS)
 			.put("hasFallAnimation", HAS_FALL_ANIMATION)
 			.put("disableEntityUI", DISABLE_ENTITY_UI)
-			.put("canSwitchCombat", CAN_SWITCH_PLAYER_MODE)
+			.put("canSwitchPlayerMode", CAN_SWITCH_PLAYER_MODE)
 			.put("stiffComboAttacks", STIFF_COMBO_ATTACKS)
 			.put("noMobsInBossfight", NO_MOBS_IN_BOSSFIGHT)
 			.put("initialMode", INITIAL_PLAYER_MODE)

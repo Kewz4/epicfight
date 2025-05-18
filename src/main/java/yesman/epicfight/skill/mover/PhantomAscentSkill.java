@@ -56,7 +56,7 @@ public class PhantomAscentSkill extends Skill {
 		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.MOVEMENT_INPUT_EVENT, EVENT_UUID, (event) -> {
-			if (event.getPlayerPatch().getOriginal().getVehicle() != null || !event.getPlayerPatch().isBattleMode() || event.getPlayerPatch().getOriginal().getAbilities().flying 
+			if (event.getPlayerPatch().getOriginal().getVehicle() != null || !event.getPlayerPatch().isEpicFightMode() || event.getPlayerPatch().getOriginal().getAbilities().flying 
 					|| event.getPlayerPatch().isChargingSkill() || event.getPlayerPatch().getEntityState().inaction()) {
 				return;
 			}

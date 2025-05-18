@@ -38,7 +38,6 @@ import yesman.epicfight.api.physics.SimulationTypes;
 import yesman.epicfight.api.utils.math.MathUtils;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.WeaponCategories;
@@ -229,8 +228,7 @@ public class AbstractClientPlayerPatch<T extends AbstractClientPlayer> extends P
 	
 	@Override
 	public boolean overrideRender() {
-		boolean originalShouldRender = this.isBattleMode() || !ClientConfig.filterAnimation;
-		RenderEpicFightPlayerEvent renderepicfightplayerevent = new RenderEpicFightPlayerEvent(this, originalShouldRender);
+		RenderEpicFightPlayerEvent renderepicfightplayerevent = new RenderEpicFightPlayerEvent(this, this.isEpicFightMode());
 		MinecraftForge.EVENT_BUS.post(renderepicfightplayerevent);
 		
 		return renderepicfightplayerevent.getShouldRender();

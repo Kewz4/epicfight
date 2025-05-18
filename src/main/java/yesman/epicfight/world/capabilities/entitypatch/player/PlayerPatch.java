@@ -74,7 +74,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	protected static final UUID PLAYER_EVENT_UUID = UUID.fromString("e6beeac4-77d2-11eb-9439-0242ac130002");
 	protected static final float PLAYER_SCALE = 0.9375F;
 	protected PlayerEventListener eventListeners;
-	protected PlayerMode playerMode = PlayerMode.MINING;
+	protected PlayerMode playerMode = PlayerMode.VANILLA;
 	protected boolean battleModeRestricted;
 	
 	protected float modelYRotO;
@@ -222,19 +222,19 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	@Override
 	public void tick(LivingEvent.LivingTickEvent event) {
-		if (this.playerMode == PlayerMode.BATTLE || this.battleModeRestricted) {
+		if (this.playerMode == PlayerMode.EPICFIGHT || this.battleModeRestricted) {
 			BattleModeSustainableEvent battleModeSustainableEvent = new BattleModeSustainableEvent(this);
 			MinecraftForge.EVENT_BUS.post(battleModeSustainableEvent);
 			
 			if (battleModeSustainableEvent.isCanceled()) {
-				if (this.playerMode == PlayerMode.BATTLE) {
-					this.toMiningMode(false);
+				if (this.playerMode == PlayerMode.EPICFIGHT) {
+					this.toVanillaMode(false);
 					this.battleModeRestricted = true;
 				}
 			} else {
 				if (this.battleModeRestricted) {
 					this.battleModeRestricted = false;
-					this.toBattleMode(false);
+					this.toEpicFightMode(false);
 				}
 			}
 		}
@@ -597,22 +597,22 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	
 	public void toggleMode() {
 		switch (this.playerMode) {
-		case MINING -> {
-			this.toBattleMode(true);
+		case VANILLA -> {
+			this.toEpicFightMode(true);
 		}
-		case BATTLE -> {
-			this.toMiningMode(true);
+		case EPICFIGHT -> {
+			this.toVanillaMode(true);
 		}
 		}
 	}
 	
 	public void toMode(PlayerMode playerMode, boolean synchronize) {
 		switch (playerMode) {
-		case MINING -> {
-			this.toMiningMode(synchronize);
+		case VANILLA -> {
+			this.toVanillaMode(synchronize);
 		}
-		case BATTLE -> {
-			this.toBattleMode(synchronize);
+		case EPICFIGHT -> {
+			this.toEpicFightMode(synchronize);
 		}
 		}
 	}
@@ -621,8 +621,8 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		return this.playerMode;
 	}
 	
-	public void toMiningMode(boolean synchronize) {
-		if (this.playerMode == PlayerMode.MINING) {
+	public void toVanillaMode(boolean synchronize) {
+		if (this.playerMode == PlayerMode.VANILLA) {
 			return;
 		}
 		
@@ -630,31 +630,31 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			this.battleModeRestricted = false;
 		}
 		
-		ChangePlayerModeEvent prepareModelEvent = new ChangePlayerModeEvent(this, PlayerMode.MINING);
+		ChangePlayerModeEvent prepareModelEvent = new ChangePlayerModeEvent(this, PlayerMode.VANILLA);
 		
 		if (!MinecraftForge.EVENT_BUS.post(prepareModelEvent)) {
 			this.playerMode = prepareModelEvent.getPlayerMode();
 		}
 	}
 	
-	public void toBattleMode(boolean synchronize) {
-		if (this.playerMode == PlayerMode.BATTLE) {
+	public void toEpicFightMode(boolean synchronize) {
+		if (this.playerMode == PlayerMode.EPICFIGHT) {
 			return;
 		}
 		
-		ChangePlayerModeEvent prepareModelEvent = new ChangePlayerModeEvent(this, PlayerMode.BATTLE);
+		ChangePlayerModeEvent prepareModelEvent = new ChangePlayerModeEvent(this, PlayerMode.EPICFIGHT);
 		
 		if (!MinecraftForge.EVENT_BUS.post(prepareModelEvent)) {
 			this.playerMode = prepareModelEvent.getPlayerMode();
 		}
 	}
 	
-	public boolean isBattleMode() {
-		return this.playerMode == PlayerMode.BATTLE;
+	public boolean isEpicFightMode() {
+		return this.playerMode == PlayerMode.EPICFIGHT;
 	}
 	
-	public boolean isMiningMode() {
-		return this.playerMode == PlayerMode.MINING;
+	public boolean isVanillaMode() {
+		return this.playerMode == PlayerMode.VANILLA;
 	}
 	
 	@Override
@@ -720,6 +720,6 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 	}
 	
 	public enum PlayerMode {
-		MINING, BATTLE
+		VANILLA, EPICFIGHT
 	}
 }

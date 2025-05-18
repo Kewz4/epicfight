@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.JsonOps;
 
@@ -32,6 +33,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -350,6 +352,14 @@ public class ParseUtil {
 		Objects.requireNonNull(defaultVal);
 		
 		return value == null ? defaultVal.get() : value;
+	}
+	
+	public static CompoundTag parseTagOrThrow(JsonElement jsonElement) {
+		try {
+			return TagParser.parseTag(jsonElement.toString());
+		} catch (CommandSyntaxException e) {
+			throw new RuntimeException("Can't parse element:", e);
+		}
 	}
 	
 	private ParseUtil() {}

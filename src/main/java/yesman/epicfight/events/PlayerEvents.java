@@ -10,7 +10,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -131,17 +130,6 @@ public class PlayerEvents {
 			
 			if (itemCap.getUseAnimation(playerpatch) == UseAnim.BLOCK) {
 				event.setDuration(Integer.MAX_VALUE);
-			}
-		});
-	}
-	
-	@SubscribeEvent
-	public static void attackEntityEvent(AttackEntityEvent event) {
-		EpicFightCapabilities.<Player, PlayerPatch<Player>>getParameterizedEntityPatch(event.getEntity(), Player.class, PlayerPatch.class).ifPresent(playerpatch -> {
-			boolean isLivingTarget = event.getTarget() instanceof LivingEntity livingEntity && livingEntity.attackable();
-			
-			if (!EpicFightGameRules.DO_VANILLA_ATTACK.getRuleValue(event.getEntity().level()) && isLivingTarget && playerpatch.getEpicFightDamageSource() == null && !fakePlayerCheck(event.getEntity())) {
-				event.setCanceled(true);
 			}
 		});
 	}

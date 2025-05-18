@@ -148,9 +148,18 @@ public class CapabilitySkill {
 		}
 		
 		if (compound.contains("playerMode")) {
-			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(compound.getString("playerMode").toUpperCase(Locale.ROOT)), true);
+			String playerMode = compound.getString("playerMode");
+			
+			// Parse old name
+			if ("MINING".equals(playerMode)) {
+				playerMode = "VANILLA";
+			} else if ("BATTLE".equals(playerMode)) {
+				playerMode = "EPICFIGHT";
+			}
+			
+			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(playerMode.toUpperCase(Locale.ROOT)), true);
 		} else {
-			this.skillContainers[0].getExecutor().toMiningMode(true);
+			this.skillContainers[0].getExecutor().toVanillaMode(true);
 		}
 	}
 }

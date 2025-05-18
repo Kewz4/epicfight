@@ -77,7 +77,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	
 	private static final Gson GSON = (new GsonBuilder()).create();
 	private static final Map<ResourceLocation, Function<Item, CapabilityItem.Builder>> PRESETS = Maps.newHashMap();
-	private static final Map<ResourceLocation, CompoundTag> TAGMAP = Maps.newHashMap();
+	private static final Map<ResourceLocation, CompoundTag> CAPABILITY_COMPOUNDS = Maps.newHashMap();
 	
 	public WeaponTypeReloadListener() {
 		super(GSON, DIRECTORY);
@@ -99,7 +99,7 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 			try {
 				final CompoundTag comptagFinal = compTag;
 				PRESETS.put(entry.getKey(), (itemstack) -> deserializeWeaponCapabilityBuilder(entry.getKey(), comptagFinal));
-				TAGMAP.put(entry.getKey(), compTag);
+				CAPABILITY_COMPOUNDS.put(entry.getKey(), compTag);
 			} catch (Exception e) {
 				EpicFightMod.LOGGER.warn("Error while deserializing weapon type datapack: " + entry.getKey());
 				e.printStackTrace();
@@ -118,8 +118,11 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static Function<Item, CapabilityItem.Builder> get(String typeName) {
-		ResourceLocation rl = ResourceLocation.parse(typeName);
-		return PRESETS.get(rl);
+		return get(ResourceLocation.parse(typeName));
+	}
+	
+	public static Function<Item, CapabilityItem.Builder> get(ResourceLocation typeName) {
+		return PRESETS.get(typeName);
 	}
 	
 	public static void register(ResourceLocation rl, CapabilityItem.Builder builder) {
@@ -270,11 +273,11 @@ public class WeaponTypeReloadListener extends SimpleJsonResourceReloadListener {
 	}
 	
 	public static int getTagCount() {
-		return TAGMAP.size();
+		return CAPABILITY_COMPOUNDS.size();
 	}
 	
 	public static Stream<CompoundTag> getWeaponTypeDataStream() {
-		Stream<CompoundTag> tagStream = TAGMAP.entrySet().stream().map((entry) -> {
+		Stream<CompoundTag> tagStream = CAPABILITY_COMPOUNDS.entrySet().stream().map((entry) -> {
 			entry.getValue().putString("registry_name", entry.getKey().toString());
 			return entry.getValue();
 		});

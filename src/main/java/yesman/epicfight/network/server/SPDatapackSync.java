@@ -9,6 +9,7 @@ import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.data.reloader.ItemCapabilityReloadListener;
 import yesman.epicfight.api.data.reloader.MobPatchReloadListener;
 import yesman.epicfight.api.exception.DatapackException;
+import yesman.epicfight.world.capabilities.item.ItemKeywordReloadListener;
 import yesman.epicfight.world.capabilities.item.WeaponTypeReloadListener;
 
 public class SPDatapackSync {
@@ -69,6 +70,7 @@ public class SPDatapackSync {
 				case WEAPON -> ItemCapabilityReloadListener.processServerPacket(msg);
 				case ARMOR -> ItemCapabilityReloadListener.processServerPacket(msg);
 				case WEAPON_TYPE -> WeaponTypeReloadListener.processServerPacket(msg);
+				case ITEM_KEYWORD -> ItemKeywordReloadListener.handleClientBoundSyncPacket(msg);
 				case MANDATORY_RESOURCE_PACK_ANIMATION, RESOURCE_PACK_ANIMATION -> AnimationManager.getInstance().processServerPacket(msg, msg.getType() == Type.MANDATORY_RESOURCE_PACK_ANIMATION);
 				}
 			} catch (Exception e) {
@@ -81,6 +83,6 @@ public class SPDatapackSync {
 	}
 	
 	public enum Type {
-		ARMOR, WEAPON, MOB, SKILL_PARAMS, WEAPON_TYPE, MANDATORY_RESOURCE_PACK_ANIMATION, RESOURCE_PACK_ANIMATION
+		ARMOR, WEAPON, MOB, SKILL_PARAMS, WEAPON_TYPE, ITEM_KEYWORD, MANDATORY_RESOURCE_PACK_ANIMATION, RESOURCE_PACK_ANIMATION
 	}
 }
