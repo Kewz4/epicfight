@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Logger;
@@ -96,24 +97,17 @@ public class AnimationManager extends SimpleJsonResourceReloadListener {
 	}
 	
 	public Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> getAnimations(Predicate<AssetAccessor<? extends StaticAnimation>> filter) {
-		Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> filteredItems = this.animations.entrySet().stream()
-			.filter((entry) -> filter.test(entry.getKey()))
-			.reduce(Maps.<ResourceLocation, AnimationAccessor<? extends StaticAnimation>>newHashMap(),
-					(map, entry) -> {
-						map.put(entry.getKey().registryName(), entry.getKey());
-						return map;
-					},
-					(map1, map2) -> {
-						map1.putAll(map2);
-						return map1;
-					}
-			);
+		Map<ResourceLocation, AnimationAccessor<? extends StaticAnimation>> filteredItems =
+			this.animationByName.entrySet().stream()
+				.filter(entry -> {
+					return filter.test(entry.getValue());
+				})
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 		
 		return ImmutableMap.copyOf(filteredItems);
 	}
 	
 	public AnimationClip loadAnimationClip(StaticAnimation animation, BiFunction<JsonAssetLoader, StaticAnimation, AnimationClip> clipLoader) {
-
 		try
 		{
 			if (getAnimationResourceManager() == null) {
