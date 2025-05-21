@@ -130,7 +130,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
- *  20.10.3 -> 20.10.4
+ *  20.10.3 -> 20.10.5
  *  
  *  Fixed the player head rotation while aiming bow, crossbow, and trident
  *  Fixed the epic fight painting to visible in creative tab
@@ -138,6 +138,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the simulated cape unsynced to the player's y rotation
  *  Fixed the modded bows & crossbows' rotations in hand
  *  Setting the config option "Enable cosmetic" to false will disable cloth simulation too
+ *  
+ *  ***************************************************************
+ *  
+ *  20.10.5 -> 20.10.6
+ *  
+ *  Fixed the animations entry not showing up on the list in datapack editor screen
+ *  Fixed the crash when fighting against Ender dragon in a dedicated server
  *  
  *  ***************************************************************
  *  Minor version changes
