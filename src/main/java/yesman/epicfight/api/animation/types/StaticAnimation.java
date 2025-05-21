@@ -140,7 +140,7 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 	public void loadAnimation() {
 		if (!this.isMetaAnimation()) {
 			if (this.properties.containsKey(StaticAnimationProperty.IK_DEFINITION)) {
-				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
+				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
 				
 				this.getProperty(StaticAnimationProperty.IK_DEFINITION).ifPresent((ikDefinitions) -> {
 					boolean correctY = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false);
@@ -153,7 +153,7 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 					this.properties.remove(StaticAnimationProperty.IK_DEFINITION);
 				});
 			} else {
-				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
+				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
 			}
 		}
 	}
