@@ -139,9 +139,9 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 	
 	public void loadAnimation() {
 		if (!this.isMetaAnimation()) {
-			this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
-			
 			if (this.properties.containsKey(StaticAnimationProperty.IK_DEFINITION)) {
+				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadClipForAnimation);
+				
 				this.getProperty(StaticAnimationProperty.IK_DEFINITION).ifPresent((ikDefinitions) -> {
 					boolean correctY = this.getProperty(ActionAnimationProperty.MOVE_VERTICAL).orElse(false);
 					boolean correctZ = this.isMainFrameAnimation();
@@ -152,6 +152,8 @@ public class StaticAnimation extends DynamicAnimation implements InverseKinemati
 					// Remove the unbaked data
 					this.properties.remove(StaticAnimationProperty.IK_DEFINITION);
 				});
+			} else {
+				this.animationClip = AnimationManager.getInstance().loadAnimationClip(this, JsonAssetLoader::loadAllJointsClipForAnimation);
 			}
 		}
 	}
