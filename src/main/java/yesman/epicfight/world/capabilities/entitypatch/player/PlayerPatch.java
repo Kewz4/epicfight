@@ -486,15 +486,17 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			return false;
 		}
 		
-		if (skillConsumeEvent.getResourceType().predicate.canExecute(skillContainer, this, amount)) {
+		float modifiedAmount = skillConsumeEvent.getAmount();
+		
+		if (skillConsumeEvent.getResourceType().predicate.canExecute(skillContainer, this, modifiedAmount)) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, modifiedAmount);
 			}
 			
 			return true;
 		} else if (activateConsumeForce) {
 			if (!this.isLogicalClient()) {
-				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, amount);
+				skillConsumeEvent.getResourceType().consumer.consume(skillContainer, (ServerPlayerPatch)this, modifiedAmount);
 			}
 		}
 		
