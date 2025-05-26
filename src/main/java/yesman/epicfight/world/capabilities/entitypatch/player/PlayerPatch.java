@@ -418,7 +418,9 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		damagesource.setImpact(this.getImpact(hand));
 		damagesource.setArmorNegation(this.getArmorNegation(hand));
 		damagesource.setHurtItem(this.getOriginal().getItemInHand(hand));
-		damagesource.setBasicAttack(this.getSkill(SkillSlots.BASIC_ATTACK).getDataManager().getDataValue(SkillDataKeys.BASIC_ATTACK_ACTIVATE.get()));
+		
+		boolean comboCounted = animation.get().isBasicAttackAnimation() || this.getSkill(SkillSlots.BASIC_ATTACK).getDataManager().getDataValue(SkillDataKeys.COMBO_COUNTER.get()) > 0;
+		damagesource.setBasicAttack(comboCounted);
 		
 		return damagesource;
 	}

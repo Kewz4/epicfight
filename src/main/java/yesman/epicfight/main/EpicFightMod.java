@@ -147,6 +147,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the crash when fighting against Ender dragon in a dedicated server
  *  
  *  ***************************************************************
+ *  
+ *  20.10.6 -> 20.10.7
+ *  
+ *  Fixed the Wrathful Lightning skill not summoning volts
+ *  Fixed the dash attacks not charging up weapon innate skills
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401

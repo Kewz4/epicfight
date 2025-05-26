@@ -32,7 +32,7 @@ public class EntityState {
 	public static final StateFactor<Boolean> ATTACKING = new StateFactor<>("attacking", false);
 	public static final StateFactor<Boolean> CAN_BASIC_ATTACK = new StateFactor<>("canBasicAttack", true);
 	public static final StateFactor<Boolean> CAN_SKILL_EXECUTION = new StateFactor<>("canExecuteSkill", true);
-	public static final StateFactor<Boolean> CAN_USE_ITEM = new StateFactor<>("canSwitchHandItem", true);
+	public static final StateFactor<Boolean> CAN_USE_ITEM = new StateFactor<>("canUseItem", true);
 	public static final StateFactor<Boolean> CAN_SWITCH_HAND_ITEM = new StateFactor<>("canSwitchHandItem", true);
 	public static final StateFactor<Boolean> INACTION = new StateFactor<>("takingAction", false);
 	public static final StateFactor<Boolean> KNOCKDOWN = new StateFactor<>("knockdown", false);

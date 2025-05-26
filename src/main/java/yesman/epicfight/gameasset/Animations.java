@@ -2312,8 +2312,8 @@ public class Animations {
 			if (entitypatch.isLogicalClient()) {
 				return;
 			}
-
-			if (animation instanceof AttackAnimation attackAnimation) {
+			
+			if (animation.get() instanceof AttackAnimation attackAnimation) {
 				Phase phase = attackAnimation.phases[1];
 				
 				int i = (int)phase.getProperty(AttackPhaseProperty.MAX_STRIKES_MODIFIER).orElse(ValueModifier.setter(3)).getTotalValue(0);
