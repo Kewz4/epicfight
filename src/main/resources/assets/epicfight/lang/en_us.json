@@ -626,5 +626,8 @@
 	"epicfight.messages.test_version_warning_line2": "(%s)",
 	"epicfight.messages.version_notifier": "EpicFight-%s",
 	
-	"epicfight.messages.shader_transform_fail": "Failed to create shader %s. Don't turn on animation shader in your environment..."
+	"epicfight.messages.shader_transform_fail": "Failed to create shader %s. Don't turn on animation shader in your environment...",
+	"epicfight.messages.mode_switching_disabled": "Switching vanilla/epicfight mode is disabled in this world.",
+	
+	"eof": "eof"
 }

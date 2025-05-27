@@ -7,12 +7,14 @@ import org.lwjgl.glfw.GLFW;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.InputConstants;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -232,6 +234,8 @@ public class ControllEngine {
 		while (isKeyPressed(EpicFightKeyMappings.SWITCH_MODE, false)) {
 			if (EpicFightGameRules.CAN_SWITCH_PLAYER_MODE.getRuleValue(this.playerpatch.getOriginal().level())) {
 				this.playerpatch.toggleMode();
+			} else {
+				this.minecraft.gui.getChat().addMessage(Component.translatable("epicfight.messages.mode_switching_disabled").withStyle(ChatFormatting.RED));
 			}
 		}
 		
