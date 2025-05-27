@@ -108,6 +108,8 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
 			return;
 		}
 		
+		RenderSystem.setShaderTexture(0, this.trailInfo.texturePath());
+		
 		PoseStack poseStack = new PoseStack();
 		int light = this.getLightColor(partialTick);
 		this.setupPoseStack(poseStack, camera, partialTick);
@@ -163,9 +165,13 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
         return false;
     }
 	
+	public void prepareDraw() {
+		
+	}
+	
 	@Override
 	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.TRAIL_PROVIDER.apply(this.trailInfo.texturePath());
+		return EpicFightParticleRenderTypes.TRAIL_EFFECT;
 	}
 	
 	protected void setupPoseStack(PoseStack poseStack, Camera camera, float partialTicks) {

@@ -24,9 +24,9 @@ public class FlickeringOverlay extends OverlayManager.Overlay {
 	public boolean render(int xResolution, int yResolution) {
 		this.time += this.deltaTime;
 		float darkenAmount = Mth.clamp((float)Math.sin(this.time), -1.0F, 0.0F);
-		
 		OverlayManager overlayManager = ClientEngine.getInstance().renderEngine.getOverlayManager();
-		overlayManager.setModifiedGamma(this.initialGamma + darkenAmount * strength);
+		float gamma = (float)Math.max(this.initialGamma + darkenAmount * this.strength, 0.0F);
+		overlayManager.setModifiedGamma(gamma);
 
 		if (this.time >= 0) {
 			return true;

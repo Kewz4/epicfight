@@ -79,13 +79,11 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 		poseStack.mulPoseMatrix(this.modelMatrix);
 		float alpha = (this.alphaO + (this.alpha - this.alphaO) * partialTicks);
 		
-		RenderSystem.setShaderTexture(0, WHITE);
-		
 		if (useAnimationShader) {
-			AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getPositionColorLightmapShader());
+			AnimationShaderInstance animShader = EpicFightRenderTypes.getAnimationShader(GameRenderer.getParticleShader());
 			this.particleMeshProvider.get().drawWithShader(poseStack, animShader, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
 		} else {
-			this.particleMeshProvider.get().drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.POSITION_COLOR_LIGHTMAP, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
+			this.particleMeshProvider.get().drawPosed(poseStack, vertexConsumer, Mesh.DrawingFunction.POSITION_TEX_COLOR_LIGHTMAP, this.getLightColor(partialTicks), this.rCol, this.gCol, this.bCol, alpha, OverlayTexture.NO_OVERLAY, null, this.poseMatrices);
 		}
 	}
 	
@@ -112,7 +110,7 @@ public class EntityAfterImageParticle extends CustomModelParticle<SkinnedMesh> {
 	
 	@Override
 	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.TRANSLUCENT;
+		return EpicFightParticleRenderTypes.AFTER_IMAGE;
 	}
 	
 	@OnlyIn(Dist.CLIENT)

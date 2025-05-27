@@ -376,10 +376,10 @@ public abstract class EpicFightRenderTypes extends RenderType {
 					shaderParser.replaceScript("Normal", "Normal_a", -1, ShaderParser.ExceptionHandler.THROW, "uniform mat3 Normal_Mv_Matrix;", "in vec3 Normal;");
 				}
 				
-				shaderParser.insertToScript("in vec3 Position;", "\nvec3 Position_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING);
+				shaderParser.insertToScript("in vec3 Position;", "\nvec3 Position_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
 				
 				if (hasNormalAttribute && !isEyesShader) {
-					shaderParser.insertToScript("in vec3 Normal;", "\nvec3 Normal_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING);
+					shaderParser.insertToScript("in vec3 Normal;", "\nvec3 Normal_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
 				}
 				
 				shaderParser.insertToScript("void main\\(\\) \\{",
@@ -391,7 +391,7 @@ public abstract class EpicFightRenderTypes extends RenderType {
 										  + "        Position_a += vec3(posePosition.xyz) * Weights[i];\n"
 										  + "    }\n"
 										  + "}\n"
-										  + "\n", 0, ShaderParser.InsertPosition.PRECEDING);
+										  + "\n", 0, ShaderParser.InsertPosition.PRECEDING, ShaderParser.ExceptionHandler.THROW);
 				
 				if (hasNormalAttribute && !isEyesShader) {
 					shaderParser.insertToScript("void main\\(\\) \\{",
@@ -405,12 +405,12 @@ public abstract class EpicFightRenderTypes extends RenderType {
 											  + "    }\n"
 											  + "    \n"
 											  + "    Normal_a = Normal_Mv_Matrix * Normal_a;\n"
-											  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING);
+											  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING, ShaderParser.ExceptionHandler.THROW);
 					
-					shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationNormal();", 0, ShaderParser.InsertPosition.FOLLOWING);
+					shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationNormal();", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
 				}
 				
-				shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationPosition();", 0, ShaderParser.InsertPosition.FOLLOWING);
+				shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationPosition();", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
 				
 				Map<ResourceLocation, Resource> cache = Maps.newHashMap();
 				cache.putAll(SHADER_LIBS);

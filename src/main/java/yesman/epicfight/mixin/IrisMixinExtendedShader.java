@@ -34,6 +34,7 @@ import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.shader.AnimationShaderInstance;
 import yesman.epicfight.client.renderer.shader.IrisAnimationShader;
 import yesman.epicfight.client.renderer.shader.ShaderParser;
+import yesman.epicfight.client.renderer.shader.ShaderParser.Formatter;
 import yesman.epicfight.compat.IRISCompat;
 import yesman.epicfight.main.EpicFightMod;
 
@@ -59,7 +60,7 @@ public abstract class IrisMixinExtendedShader {
 					}
 					
 					if (shaderParser.hasAttribute("UV1") && !isEyesShader) {
-						shaderParser.addUniform("iris_UV1", ShaderParser.GLSLType.IVEC2, "in .* iris_UV1;", ShaderParser.InsertPosition.FOLLOWING, Integer.MAX_VALUE, ShaderParser.ExceptionHandler.THROW, new Integer[] {0, 0});
+						shaderParser.addUniform("iris_UV1", ShaderParser.GLSLType.IVEC2, "in .* iris_UV1;", ShaderParser.InsertPosition.FOLLOWING, Integer.MAX_VALUE, ShaderParser.ExceptionHandler.IGNORE, new Integer[] {0, 0});
 					}
 					
 					if (shaderParser.hasAttribute("UV2") && !isEyesShader) {
@@ -87,10 +88,12 @@ public abstract class IrisMixinExtendedShader {
 						shaderParser.replaceScript("iris_Normal", "Normal_a", -1, ShaderParser.ExceptionHandler.THROW, "in .* iris_Normal;", "iris_NormalMat", "uniform mat3 iris_Normal_Mv_Matrix;");
 					}
 					
-					shaderParser.insertToScript("in vec3 iris_Position;", "\nvec3 Position_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING);
+					shaderParser.insertToScript("in vec3 iris_Position;", "\nvec3 Position_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
+					
+					Formatter normalAttribute = null;
 					
 					if (hasNormalAttribute && !isEyesShader) {
-						shaderParser.insertToScript("in vec3 iris_Normal;", "\nvec3 Normal_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING);
+						normalAttribute = shaderParser.insertToScript("in vec3 iris_Normal;", "\nvec3 Normal_a = vec3(0.0);", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.IGNORE);
 					}
 					
 					shaderParser.insertToScript("void main\\(\\) \\{",
@@ -101,7 +104,7 @@ public abstract class IrisMixinExtendedShader {
 											  + "        vec4 posePosition = jointTransform * vec4(iris_Position, 1.0);\n"
 											  + "        Position_a += vec3(posePosition.xyz) * Weights[i];\n"
 											  + "    }\n"
-											  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING);
+											  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING, ShaderParser.ExceptionHandler.THROW);
 					
 					if (hasNormalAttribute && !isEyesShader) {
 						shaderParser.insertToScript("void main\\(\\) \\{",
@@ -115,12 +118,12 @@ public abstract class IrisMixinExtendedShader {
 												  + "    }\n"
 												  + "    \n"
 												  + "    Normal_a = iris_Normal_Mv_Matrix * Normal_a;\n"
-												  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING);
+												  + "}\n", 0, ShaderParser.InsertPosition.PRECEDING, ShaderParser.ExceptionHandler.THROW).whenSuccess(normalAttribute);
 						
-						shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationNormal();", 0, ShaderParser.InsertPosition.FOLLOWING);
+						shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationNormal();", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW).whenSuccess(normalAttribute);
 					}
 					
-					shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationPosition();", 0, ShaderParser.InsertPosition.FOLLOWING);
+					shaderParser.insertToScript("void main\\(\\) \\{", "\n    setAnimationPosition();", 0, ShaderParser.InsertPosition.FOLLOWING, ShaderParser.ExceptionHandler.THROW);
 					
 					Map<ResourceLocation, Resource> cache = Maps.newHashMap();
 					shaderParser.addToResourceCache(cache);

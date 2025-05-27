@@ -23,7 +23,6 @@ import net.irisshaders.iris.uniforms.custom.CustomUniforms;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class IrisAnimationShader extends ExtendedShader implements AnimationShaderInstance {

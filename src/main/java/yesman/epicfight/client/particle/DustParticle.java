@@ -41,7 +41,7 @@ public class DustParticle extends TextureSheetParticle {
 	
 	@Override
 	public ParticleRenderType getRenderType() {
-		return EpicFightParticleRenderTypes.BLEND_LIGHTMAP_PARTICLE;
+		return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
 	}
 	
 	@Override

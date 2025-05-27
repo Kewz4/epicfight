@@ -70,6 +70,14 @@ public interface Mesh {
 			builder.endVertex();
 		};
 		
+		public static final DrawingFunction POSITION_TEX_COLOR_LIGHTMAP = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
+			builder.vertex(posX, posY, posZ);
+			builder.uv(u, v);
+			builder.color(r, g, b, a);
+			builder.uv2(packedLight);
+			builder.endVertex();
+		};
+		
 		public static final DrawingFunction POSITION_COLOR_LIGHTMAP = (builder, posX, posY, posZ, normX, normY, normZ, packedLight, r, g, b, a, u, v, overlay) -> {
 			builder.vertex(posX, posY, posZ);
 			builder.color(r, g, b, a);

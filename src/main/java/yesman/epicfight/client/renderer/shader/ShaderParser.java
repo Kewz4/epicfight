@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ShaderParser {
 	private static final Double[] IDENTY_MATRIX4F = {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0};
 	
 	private final String shaderName;
-	private final JsonObject propertiesJson;
+	public final JsonObject propertiesJson;
 	private final String vertexShaderScript;
 	private final List<Formatter> formatters = Lists.newArrayList();
 	private final Resource rProperties;
@@ -87,44 +88,62 @@ public class ShaderParser {
 		return uniformNames.contains(name);
 	}
 	
-	public void insertToScript(String regex, String toInsert, int ordinal, InsertPosition insertPosition) {
-		this.formatters.add(new ScriptInserter(regex, toInsert, ordinal, insertPosition));
+	public Formatter insertToScript(String regex, String toInsert, int ordinal, InsertPosition insertPosition, ExceptionHandler exceptionHandler) {
+		Formatter formatter = new ScriptInserter(regex, toInsert, ordinal, insertPosition, exceptionHandler);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void replaceScript(String regex, String toReplace, int ordinal, ExceptionHandler exceptionHandler) {
-		this.replaceScript(regex, toReplace, ordinal, exceptionHandler, (String[])null);
+	public Formatter replaceScript(String regex, String toReplace, int ordinal, ExceptionHandler exceptionHandler) {
+		return this.replaceScript(regex, toReplace, ordinal, exceptionHandler, (String[])null);
 	}
 	
-	public void replaceScript(String regex, String toReplace, int ordinal, ExceptionHandler exceptionHandler, String... exceptionsRegex) {
-		this.formatters.add(new ScriptReplacer(regex, toReplace, ordinal, exceptionHandler, exceptionsRegex));
+	public Formatter replaceScript(String regex, String toReplace, int ordinal, ExceptionHandler exceptionHandler, String... exceptionsRegex) {
+		Formatter formatter = new ScriptReplacer(regex, toReplace, ordinal, exceptionHandler, exceptionsRegex);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void addAttribute(String name, ExceptionHandler exceptionHandler, GLSLType type) {
-		this.formatters.add(new Inserter(name, Usage.ATTRIBUTE, type, exceptionHandler, null));
+	public Formatter addAttribute(String name, ExceptionHandler exceptionHandler, GLSLType type) {
+		Formatter formatter = new Inserter(name, Usage.ATTRIBUTE, type, exceptionHandler, null);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void replaceAttribute(String name, String replacedName, GLSLType type, ExceptionHandler exceptionHandler) {
-		this.formatters.add(new Replacer(name, replacedName, Usage.ATTRIBUTE, type, exceptionHandler, null));
+	public Formatter replaceAttribute(String name, String replacedName, GLSLType type, ExceptionHandler exceptionHandler) {
+		Formatter formatter = new Replacer(name, replacedName, Usage.ATTRIBUTE, type, exceptionHandler, null);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void remove(String name, Usage usage, ExceptionHandler exceptionHandler) {
-		this.formatters.add(new Remover(name, usage, exceptionHandler));
+	public Formatter remove(String name, Usage usage, ExceptionHandler exceptionHandler) {
+		Formatter formatter = new Remover(name, usage, exceptionHandler);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void addUniform(String name, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
-		this.formatters.add(new Inserter(name, Usage.UNIFORM, type, exceptionHandler, defaultUniformValues));
+	public Formatter addUniform(String name, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
+		Formatter formatter = new Inserter(name, Usage.UNIFORM, type, exceptionHandler, defaultUniformValues);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void addUniform(String name, GLSLType type, String positionRegex, InsertPosition insertPosition, int ordinal, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
-		this.formatters.add(new Inserter(name, Usage.UNIFORM, type, exceptionHandler, positionRegex, insertPosition, ordinal, defaultUniformValues, -1));
+	public Formatter addUniform(String name, GLSLType type, String positionRegex, InsertPosition insertPosition, int ordinal, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
+		Formatter formatter = new Inserter(name, Usage.UNIFORM, type, exceptionHandler, positionRegex, insertPosition, ordinal, defaultUniformValues, -1);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void addUniformArray(String name, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues, int arraySize) {
-		this.formatters.add(new Inserter(name, Usage.UNIFORM_ARRAY, type, exceptionHandler, defaultUniformValues, arraySize));
+	public Formatter addUniformArray(String name, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues, int arraySize) {
+		Formatter formatter = new Inserter(name, Usage.UNIFORM_ARRAY, type, exceptionHandler, defaultUniformValues, arraySize);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
-	public void replaceUniform(String name, String replacedName, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
-		this.formatters.add(new Replacer(name, replacedName, Usage.UNIFORM, type, exceptionHandler, defaultUniformValues));
+	public Formatter replaceUniform(String name, String replacedName, GLSLType type, ExceptionHandler exceptionHandler, Number[] defaultUniformValues) {
+		Formatter formatter = new Replacer(name, replacedName, Usage.UNIFORM, type, exceptionHandler, defaultUniformValues);
+		this.formatters.add(formatter);
+		return formatter;
 	}
 	
 	public void addToResourceCache(Map<ResourceLocation, Resource> cache) throws ShaderParsingException {
@@ -160,7 +179,11 @@ public class ShaderParser {
 	private IoSupplier<InputStream> getVertexShaderScript() {
 		return () -> {
 			StringBuilder sb = new StringBuilder(this.vertexShaderScript);
-			this.formatters.forEach((formatter) -> formatter.reformScript(sb));
+			this.formatters.forEach((formatter) -> {
+				if (formatter.checkPrerequisites()) {
+					formatter.reformScript(sb);
+				}
+			});
 			return new ByteArrayInputStream(sb.toString().getBytes());
 		};
 	}
@@ -217,7 +240,32 @@ public class ShaderParser {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private abstract class Formatter {
+	public abstract class Formatter {
+		List<Formatter> prerequisites = new ArrayList<> ();
+		boolean success = false;
+		
+		public boolean checkPrerequisites() {
+			if (this.prerequisites.isEmpty()) {
+				return true;
+			} else {
+				for (Formatter formatter : this.prerequisites) {
+					if (!formatter.success) {
+						return false;
+					}
+				}
+			}
+			
+			return true;
+		}
+		
+		public Formatter whenSuccess(Formatter prerequisite) {
+			if (prerequisite != null) {
+				this.prerequisites.add(prerequisite);
+			}
+			
+			return this;
+		}
+		
 		public abstract void reformJson(JsonObject propertiesJson) throws ShaderParsingException;
 		public abstract void reformScript(StringBuilder stringBuilder) throws ShaderParsingException;
 	}
@@ -228,12 +276,14 @@ public class ShaderParser {
 		private final String toInsert;
 		private final int ordinal;
 		private final InsertPosition insertPosition;
+		private final ExceptionHandler exceptionHandler;
 		
-		private ScriptInserter(String regex, String toEdit, int ordinal, InsertPosition insertPosition) {
+		private ScriptInserter(String regex, String toEdit, int ordinal, InsertPosition insertPosition, ExceptionHandler exceptionHandler) {
 			this.regex = regex;
 			this.toInsert = toEdit;
 			this.ordinal = ordinal;
 			this.insertPosition = insertPosition;
+			this.exceptionHandler = exceptionHandler;
 		}
 		
 		@Override
@@ -241,6 +291,8 @@ public class ShaderParser {
 		
 		@Override
 		public void reformScript(StringBuilder stringBuilder) throws ShaderParsingException {
+			this.success = false;
+			
 			Pattern pattern = Pattern.compile(this.regex);
 			Matcher matcher = pattern.matcher(stringBuilder.toString());
 			int start = -1;
@@ -258,9 +310,10 @@ public class ShaderParser {
 				}
 				
 				ordinal++;
+				this.success = true;
 			}
 			
-			if (ordinal == 0) {
+			if (ordinal == 0 && this.exceptionHandler == ExceptionHandler.THROW) {
 				throw new ShaderParsingException("Can't find matching regular expression " + this.regex + " in the glsl script.");
 			}
 		}
@@ -290,6 +343,8 @@ public class ShaderParser {
 		
 		@Override
 		public void reformScript(StringBuilder stringBuilder) throws ShaderParsingException {
+			this.success = false;
+			
 			List<Pair<Integer, Integer>> boundaries = Lists.newArrayList();
 			
 			if (!this.exceptionsRegex.isEmpty()) {
@@ -332,6 +387,7 @@ public class ShaderParser {
 					}
 				}
 				
+				this.success = true;
 				ordinal++;
 			}
 			
@@ -423,6 +479,8 @@ public class ShaderParser {
 		
 		@Override
 		public void reformScript(StringBuilder stringBuilder) throws ShaderParsingException {
+			this.success = true;
+			
 			String regex = this.positionRegex;
 			Pattern pattern = Pattern.compile(regex);
 			Matcher matcher = pattern.matcher(stringBuilder.toString());
@@ -443,11 +501,12 @@ public class ShaderParser {
 			
 			if (start == -1 && end == -1) {
 				if (this.exceptionHandler == ExceptionHandler.IGNORE) {
+					this.success = false;
 					this.positionRegex = String.format(this.usage.format, ".*", ".*");
 					this.reformScript(stringBuilder);
 					return;
 				} else {
-					throw new ShaderParsingException("No " + regex + " expression.");
+					throw new ShaderParsingException("Failed to detect next regex: " + regex);
 				}
 			}
 			
@@ -521,6 +580,8 @@ public class ShaderParser {
 		
 		@Override
 		public void reformScript(StringBuilder stringBuilder) throws ShaderParsingException {
+			this.success = false;
+			
 			String regex = String.format(this.usage.format, ".*", this.name);
 			Pattern pattern = Pattern.compile(regex);
 			Matcher matcher = pattern.matcher(stringBuilder.toString());
@@ -535,11 +596,14 @@ public class ShaderParser {
 				end = matcher.end();
 			}
 			
-			if (!find && this.exceptionHandler == ExceptionHandler.THROW) {
-				throw new ShaderParsingException("No " + regex + " expression.");
+			if (!find) {
+				if (this.exceptionHandler == ExceptionHandler.THROW) {
+					throw new ShaderParsingException("Failed to detect next regex: " + regex);
+				}
+			} else {
+				stringBuilder.replace(start, end, String.format(this.usage.format, this.type.typeInScript, this.replacedName));
+				this.success = true;
 			}
-			
-			stringBuilder.replace(start, end, String.format(this.usage.format, this.type.typeInScript, this.replacedName));
 		}
 	}
 	
@@ -573,10 +637,6 @@ public class ShaderParser {
 						break;
 					}
 				}
-				
-				if (this.exceptionHandler == ExceptionHandler.THROW) {
-					throw new ShaderParsingException("No matching " + this.name + " expression");
-				}
 			}
 			case UNIFORM_ARRAY -> {}
 			}
@@ -584,6 +644,8 @@ public class ShaderParser {
 		
 		@Override
 		public void reformScript(StringBuilder stringBuilder) throws ShaderParsingException {
+			this.success = false;
+			
 			String regex = "\n" + String.format(this.usage.format, ".*", this.name);
 			Pattern pattern = Pattern.compile(regex);
 			Matcher matcher = pattern.matcher(stringBuilder.toString());
@@ -600,8 +662,9 @@ public class ShaderParser {
 			
 			if (find) {
 				stringBuilder.replace(start, end, "");
+				this.success = true;
 			} else if (this.exceptionHandler == ExceptionHandler.THROW) {
-				throw new ShaderParsingException("No matching " + regex + " expression");
+				throw new ShaderParsingException("Failed to detect next regex: " + regex);
 			}
 		}
 	}
