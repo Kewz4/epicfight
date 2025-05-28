@@ -89,12 +89,6 @@ public class Pose {
 		}
 	}
 	
-	public void read(String jointName, TransformSheet transformSheet, float time) {
-		if (this.jointTransformData.containsKey(jointName)) {
-			transformSheet.getInterpolatedTransform(time, this.jointTransformData.get(jointName));
-		}
-	}
-	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

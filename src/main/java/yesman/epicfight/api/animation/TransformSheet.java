@@ -94,25 +94,34 @@ public class TransformSheet {
 	
 	public Vec3f getInterpolatedTranslation(float currentTime) {
 		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
+		
+		if (interpolInfo == InterpolationInfo.EMPTY_SHEET) {
+			return new Vec3f();
+		}
+		
 		Vec3f vec3f = MathUtils.lerpVector(this.keyframes[interpolInfo.prev].transform().translation(), this.keyframes[interpolInfo.next].transform().translation(), interpolInfo.zero2One);
 		return vec3f;
 	}
 	
 	public Quaternionf getInterpolatedRotation(float currentTime) {
 		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
+		
+		if (interpolInfo == InterpolationInfo.EMPTY_SHEET) {
+			return new Quaternionf();
+		}
+		
 		Quaternionf quat = MathUtils.lerpQuaternion(this.keyframes[interpolInfo.prev].transform().rotation(), this.keyframes[interpolInfo.next].transform().rotation(), interpolInfo.zero2One);
 		return quat;
 	}
 	
 	public JointTransform getInterpolatedTransform(float currentTime) {
 		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
+		
+		if (interpolInfo == InterpolationInfo.EMPTY_SHEET) {
+			return JointTransform.empty();
+		}
+		
 		JointTransform trasnform = JointTransform.interpolate(this.keyframes[interpolInfo.prev].transform(), this.keyframes[interpolInfo.next].transform(), interpolInfo.zero2One);
-		return trasnform;
-	}
-	
-	public JointTransform getInterpolatedTransform(float currentTime, JointTransform dest) {
-		InterpolationInfo interpolInfo = this.getInterpolationInfo(currentTime);
-		JointTransform trasnform = JointTransform.interpolate(this.keyframes[interpolInfo.prev].transform(), this.keyframes[interpolInfo.next].transform(), interpolInfo.zero2One, dest);
 		return trasnform;
 	}
 	
@@ -262,6 +271,10 @@ public class TransformSheet {
 	}
 	
 	private InterpolationInfo getInterpolationInfo(float currentTime) {
+		if (this.keyframes.length == 0) {
+			return InterpolationInfo.EMPTY_SHEET;
+		}
+		
 		if (currentTime < 0.0F) {
 			currentTime = this.keyframes[this.keyframes.length - 1].time() + currentTime;
 		}
@@ -317,5 +330,6 @@ public class TransformSheet {
 	}
 	
 	private static record InterpolationInfo(int prev, int next, float zero2One) {
+		private static final InterpolationInfo EMPTY_SHEET = new InterpolationInfo(-1, -1, -1.0F);
 	}
 }
