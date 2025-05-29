@@ -69,6 +69,7 @@ public class ItemKeywordReloadListener extends SimplePreparableReloadListener<Ma
 	@Override
 	protected void apply(Map<ResourceLocation, List<JsonElement>> packEntry, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
 		REGEXES.clear();
+		COMPOUNDS.clear();
 		
 		Map<ResourceLocation, List<String>> regexMap = new HashMap<> ();
 		
