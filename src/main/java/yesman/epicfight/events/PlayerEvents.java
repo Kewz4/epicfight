@@ -23,6 +23,7 @@ import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.entity.eventlistener.ItemUseEndEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.RightClickItemEvent;
 import yesman.epicfight.world.gamerule.EpicFightGameRules;
@@ -131,6 +132,14 @@ public class PlayerEvents {
 			if (itemCap.getUseAnimation(playerpatch) == UseAnim.BLOCK) {
 				event.setDuration(Integer.MAX_VALUE);
 			}
+		});
+	}
+	
+	@SubscribeEvent
+	public static void itemUseStopEvent(LivingEntityUseItemEvent.Stop event) {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
+			boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.SERVER_ITEM_STOP_EVENT, new ItemUseEndEvent(playerpatch, event));
+			event.setCanceled(canceled);
 		});
 	}
 	

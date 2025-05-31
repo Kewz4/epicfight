@@ -155,6 +155,14 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the dash attacks not charging up weapon innate skills
  *  
  *  ***************************************************************
+ *  
+ *  20.10.7 -> 20.10.8
+ *  
+ *  Added item keyword & preferences
+ *  Fixed the Guard penalty reset immediately when stop using guard
+ *  Fixed the afterimage particle becoming invisible when a shader is applied
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401
