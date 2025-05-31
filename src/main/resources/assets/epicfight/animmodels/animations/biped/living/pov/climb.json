@@ -10,7 +10,7 @@
     "limit_degree": {
     	"x": [-10, 90],
     	"y": [-30, 30]
-    }
+    },
     "animation": [
         {
             "name": "Root",
