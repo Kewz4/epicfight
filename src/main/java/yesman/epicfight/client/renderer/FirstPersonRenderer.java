@@ -6,6 +6,7 @@ import java.util.Map;
 import org.joml.Matrix4f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.LocalPlayer;
@@ -81,8 +82,19 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 				MathUtils.mulStack(poseStack, cameraTransform.toMatrix().invert());
 			}
 			
-			poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
-			poseStack.mulPoseMatrix(lastPose);
+			switch (localPlayerPatch.getPovSettings().transformation()) {
+			case CAMERA -> {
+				poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
+				poseStack.mulPoseMatrix(lastPose);
+			}
+			case WORLD -> {
+				float yRot = 180.0F - Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
+				float yRotWorld = 180.0F - Mth.lerp(partialTicks, localPlayerPatch.getYRotO(), localPlayerPatch.getYRot());
+				poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot())));
+				poseStack.mulPose(Axis.YP.rotationDegrees(yRotWorld - yRot));
+				poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
+			}
+			}
 			
 			HumanoidMesh mesh = this.getMeshProvider(localPlayerPatch).get();
 			this.prepareModel(mesh, entity, localPlayerPatch, renderer);

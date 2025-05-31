@@ -42,6 +42,7 @@ import yesman.epicfight.api.client.animation.property.JointMaskReloadListener;
 import yesman.epicfight.api.client.animation.property.LayerInfo;
 import yesman.epicfight.api.client.animation.property.TrailInfo;
 import yesman.epicfight.api.exception.AssetLoadingException;
+import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
@@ -225,7 +226,10 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record PovSettings(@Nullable TransformSheet cameraTransform, Map<String, Boolean> visibilities, boolean visibilityOthers) {
+	public static record PovSettings(@Nullable TransformSheet cameraTransform, Map<String, Boolean> visibilities, RootTransformation transformation, boolean visibilityOthers) {
+		public enum RootTransformation {
+			CAMERA, WORLD
+		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
@@ -264,6 +268,11 @@ public class AnimationSubFileReader {
 		public PovSettings deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws AssetLoadingException, JsonParseException {
 			JsonObject jObject = json.getAsJsonObject();
 			TransformSheet cameraTransform = null;
+			PovSettings.RootTransformation rootTrasnformation = PovSettings.RootTransformation.CAMERA;
+			
+			if (jObject.has("root")) {
+				rootTrasnformation = PovSettings.RootTransformation.valueOf(ParseUtil.toUpperCase(GsonHelper.getAsString(jObject, "root")));
+			}
 			
 			if (jObject.has("camera")) {
 				JsonObject cameraTransformJObject = jObject.getAsJsonObject("camera");
@@ -284,7 +293,7 @@ public class AnimationSubFileReader {
 				visibilitiesBuilder.put("rightSleeve", true);
 			}
 			
-			return new PovSettings(cameraTransform, visibilitiesBuilder.build(), others);
+			return new PovSettings(cameraTransform, visibilitiesBuilder.build(), rootTrasnformation, others);
 		}
 	}
 }
