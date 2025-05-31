@@ -399,6 +399,7 @@ public class EntityEvents {
 	@SubscribeEvent
 	public static void projectileImpactEvent(ProjectileImpactEvent event) {
 		ProjectilePatch<?> projectilepatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), ProjectilePatch.class);
+		projectilepatch.setHit(true);
 		
 		if (projectilepatch != null && !event.getProjectile().level().isClientSide()) {
 			if (projectilepatch.onProjectileImpact(event)) {
@@ -409,14 +410,13 @@ public class EntityEvents {
 		
 		if (event.getRayTraceResult() instanceof EntityHitResult rayresult) {
 			if (rayresult.getEntity() != null) {
-				if (rayresult.getEntity() instanceof ServerPlayer) {
-					ServerPlayerPatch playerpatch = EpicFightCapabilities.getEntityPatch(rayresult.getEntity(), ServerPlayerPatch.class);
+				EpicFightCapabilities.getUnparameterizedEntityPatch(rayresult.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.PROJECTILE_HIT_EVENT, new ProjectileHitEvent(playerpatch, event));
 					
 					if (canceled) {
 						event.setImpactResult(ImpactResult.SKIP_ENTITY);
 					}
-				}
+				});
 				
 				if (event.getProjectile().getOwner() != null) {
 					if (rayresult.getEntity().equals(event.getProjectile().getOwner().getVehicle())) {

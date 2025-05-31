@@ -31,6 +31,7 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 	protected float armorNegation;
 	protected Vec3 initialFirePosition;
 	protected boolean playShooterShootingAnimation;
+	protected boolean hasHit;
 	
 	@Override
 	public void onJoinWorld(T projectileEntity, EntityJoinLevelEvent event) {
@@ -114,5 +115,13 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 	@Override
 	public OpenMatrix4f getModelMatrix(float partialTicks) {
 		return super.getMatrix(partialTicks);
+	}
+	
+	public void setHit(boolean hit) {
+		this.hasHit = hit;
+	}
+	
+	public boolean hit() {
+		return this.hasHit;
 	}
 }

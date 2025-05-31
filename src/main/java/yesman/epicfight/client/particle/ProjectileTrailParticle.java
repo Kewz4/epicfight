@@ -32,7 +32,6 @@ import yesman.epicfight.world.capabilities.projectile.ProjectilePatch;
 public class ProjectileTrailParticle extends AbstractTrailParticle<ProjectilePatch<AbstractArrow>> {
 	protected float lastXRot;
 	protected float lastYRot;
-	private int noMoveCount;
 	
 	protected ProjectileTrailParticle(ClientLevel level, ProjectilePatch<AbstractArrow> entitypatch, TrailInfo trailInfo) {
 		super(level, entitypatch, trailInfo);
@@ -49,17 +48,19 @@ public class ProjectileTrailParticle extends AbstractTrailParticle<ProjectilePat
 			return false;
 		}
 		
-		if (this.owner.getOriginal().getDeltaMovement().lengthSqr() < 0.03D) {
-			this.noMoveCount++;
-		} else {
-			this.noMoveCount = 0;
+		if (this.owner.hit()) {
+			return false;
 		}
 		
-		return this.noMoveCount < 9 && this.owner.getOriginal().isAlive() && !this.owner.getOriginal().inGround;
+		return this.owner.getOriginal().isAlive() && !this.owner.getOriginal().inGround;
 	}
 	
 	@Override
 	protected void createNextCurve() {
+		if (this.shouldRemove) {
+			return;
+		}
+		
 		if (this.owner.getOriginal() instanceof Arrow arrow) {
 			int color = arrow.getColor();
 			float r = ((color & 0x00FF0000) >> 16) / 255.0F;

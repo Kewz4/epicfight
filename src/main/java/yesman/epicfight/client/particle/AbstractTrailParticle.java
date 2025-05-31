@@ -165,10 +165,6 @@ public abstract class AbstractTrailParticle<T extends EntityPatch<?>> extends Te
         return false;
     }
 	
-	public void prepareDraw() {
-		
-	}
-	
 	@Override
 	public ParticleRenderType getRenderType() {
 		return EpicFightParticleRenderTypes.TRAIL_EFFECT;

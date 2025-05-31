@@ -39,7 +39,7 @@ public class UISetupScreen extends Screen {
 		
 		//Weapon innate icon
 		this.addRenderableWidget(new UIComponent(weaponInnateX, weaponInnateY, weaponInnateXHandler, weaponInnateYHandler, weaponInnateBaseXHandler, weaponInnateBaseYHandler
-			, 32, 32, 0, 0, 1, 1, 1, 1, 0, 163, 184, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/sweeping_edge.png")
+			, 32, 32, 0, 0, 1, 1, 1, 1, 0, 163, 184, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/weapon_innate/sweeping_edge.png")
 		));
 
 		int staminaX = ClientConfig.staminaBarBaseX.positionGetter.apply(this.width, ClientConfig.staminaBarX);
@@ -76,7 +76,7 @@ public class UISetupScreen extends Screen {
 		
 		//Passive skill icons
 		this.addRenderableWidget(new PassiveUIComponent(passiveX, passiveY, passiveXHandler, passiveYHandler, passiveBaseXHandler, passiveBaseYHandler, passiveAlignDirectionHandler
-			, 24, 24, 0, 0, 1, 1, 1, 1, 255, 255, 255, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/guard.png"), ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/berserker.png")
+			, 24, 24, 0, 0, 1, 1, 1, 1, 255, 255, 255, this, ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/guard/guard.png"), ResourceLocation.fromNamespaceAndPath(EpicFightMod.MODID, "textures/gui/skills/passive/berserker.png")
 		));
 	}
 

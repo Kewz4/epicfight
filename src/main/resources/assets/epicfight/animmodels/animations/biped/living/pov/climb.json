@@ -1,12 +1,6 @@
 {
     "format": "attributes",
     "root": "world",
-    "visibilities": {
-    	"head": false,
-    	"hat": false,
-    	"torso": false,
-    	"others": true
-    },
     "limit_degree": {
     	"x": [-10, 90],
     	"y": [-30, 30]
