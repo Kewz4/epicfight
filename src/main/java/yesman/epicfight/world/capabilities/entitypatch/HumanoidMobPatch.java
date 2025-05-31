@@ -72,7 +72,7 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 	
 	@Override
 	public void onStartTracking(ServerPlayer trackingPlayer) {
-		this.modifyLivingMotionByCurrentItem();
+		this.modifyLivingMotionByCurrentItem(true);
 	}
 	
 	protected void setWeaponMotions() {
@@ -177,12 +177,12 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 			}
 		}
 		
-		this.modifyLivingMotionByCurrentItem();
+		this.modifyLivingMotionByCurrentItem(false);
 		
 		super.updateHeldItem(fromCap, toCap, from, to, hand);
 	}
 	
-	public void modifyLivingMotionByCurrentItem() {
+	public void modifyLivingMotionByCurrentItem(boolean onStartTracking) {
 		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> oldLivingAnimations = this.getAnimator().getLivingAnimations();
 		Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> newLivingAnimations = Maps.newHashMap();
 		
@@ -213,13 +213,12 @@ public abstract class HumanoidMobPatch<T extends PathfinderMob> extends MobPatch
 			}
 		}
 		
-		if (hasChange) {
+		if (hasChange || onStartTracking) {
 			this.getAnimator().resetLivingAnimations();
 			newLivingAnimations.forEach(this.getAnimator()::addLivingAnimation);
 			
 			SPChangeLivingMotion msg = new SPChangeLivingMotion(this.original.getId());
 			msg.putEntries(newLivingAnimations.entrySet());
-			
 			EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(msg, this.original);
 		}
 	}

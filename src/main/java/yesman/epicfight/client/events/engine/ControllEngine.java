@@ -131,7 +131,7 @@ public class ControllEngine {
 							if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
 								BlockPos bp = ((BlockHitResult)this.minecraft.hitResult).getBlockPos();
 								BlockState bs = this.minecraft.level.getBlockState(bp);
-								shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || this.player.getMainHandItem().getDestroySpeed(bs) <= 1.0F;
+								shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || this.player.getMainHandItem().getDestroySpeed(bs) <= 5.0F;
 							} else {
 								shouldPlayAttackAnimation = true;
 							}

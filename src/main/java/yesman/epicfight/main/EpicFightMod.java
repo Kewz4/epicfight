@@ -161,6 +161,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Added item keyword & preferences
  *  Fixed the Guard penalty reset immediately when stop using guard
  *  Fixed the afterimage particle becoming invisible when a shader is applied
+ *  Fixed the mobs' living animations being reset when rejoining the world
  *  
  *  ***************************************************************
  *  Minor version changes
