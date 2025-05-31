@@ -156,7 +156,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  ***************************************************************
  *  
- *  20.10.7 -> 20.10.8
+ *  20.10.7 -> 20.11.2
  *  
  *  Added item keyword & preferences
  *  Fixed the Guard penalty reset immediately when stop using guard

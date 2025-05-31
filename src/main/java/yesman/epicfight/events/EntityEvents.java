@@ -399,12 +399,15 @@ public class EntityEvents {
 	@SubscribeEvent
 	public static void projectileImpactEvent(ProjectileImpactEvent event) {
 		ProjectilePatch<?> projectilepatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), ProjectilePatch.class);
-		projectilepatch.setHit(true);
 		
-		if (projectilepatch != null && !event.getProjectile().level().isClientSide()) {
-			if (projectilepatch.onProjectileImpact(event)) {
-				event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
-				return;
+		if (projectilepatch != null) {
+			projectilepatch.setHit(true);
+			
+			if (!event.getProjectile().level().isClientSide()) {
+				if (projectilepatch.onProjectileImpact(event)) {
+					event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+					return;
+				}
 			}
 		}
 		
