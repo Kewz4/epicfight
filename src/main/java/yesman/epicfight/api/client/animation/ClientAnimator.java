@@ -427,18 +427,22 @@ public class ClientAnimator extends Animator {
 		return this.currentCompositeMotion.isSame(motion);
 	}
 	
-	public void forceResetBeforeAction(LivingMotions livingMotion, LivingMotions compositeLivingMotion) {
+	public void forceResetBeforeAction(LivingMotion livingMotion, LivingMotion compositeLivingMotion) {
+		if (!this.currentMotion.equals(livingMotion)) {
+			if (this.livingAnimations.containsKey(this.currentMotion)) {
+				this.baseLayer.playAnimation(this.getLivingMotion(this.currentMotion), this.entitypatch, 0.0F);
+			}
+		}
+		
 		this.entitypatch.currentLivingMotion = livingMotion;
 		this.currentMotion = livingMotion;
 		
-		if (this.livingAnimations.containsKey(this.currentMotion)) {
-			this.baseLayer.playAnimation(this.getLivingMotion(this.currentMotion), this.entitypatch, 0.0F);
-		}
-		
-		if (this.compositeLivingAnimations.containsKey(compositeLivingMotion)) {
-			this.playAnimation(this.getCompositeLivingMotion(compositeLivingMotion), 0.0F);
-		} else if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
+		if (!this.currentCompositeMotion.equals(compositeLivingMotion)) {
 			this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
+			
+			if (this.compositeLivingAnimations.containsKey(compositeLivingMotion)) {
+				this.playAnimation(this.getCompositeLivingMotion(compositeLivingMotion), 0.0F);
+			}
 		}
 		
 		this.currentCompositeMotion = LivingMotions.NONE;

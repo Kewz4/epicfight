@@ -122,7 +122,9 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		this.commonAggressiveMobUpdateMotion(considerInaction);
 		UseAnim useAction = this.original.getItemInHand(this.original.getUsedItemHand()).getUseAnimation();
 		
-		if (this.original.isUsingItem()) {
+		if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getRealAnimation().get().isReboundAnimation())
+			currentCompositeMotion = LivingMotions.SHOT;
+		else if (this.original.isUsingItem()) {
 			if (useAction == UseAnim.CROSSBOW)
 				currentCompositeMotion = LivingMotions.RELOAD;
 			else
@@ -130,8 +132,6 @@ public abstract class MobPatch<T extends Mob> extends LivingEntityPatch<T> {
 		} else {
 			if (CrossbowItem.isCharged(this.original.getMainHandItem()))
 				currentCompositeMotion = LivingMotions.AIM;
-			else if (this.getClientAnimator().getCompositeLayer(Layer.Priority.MIDDLE).animationPlayer.getRealAnimation().get().isReboundAnimation())
-				currentCompositeMotion = LivingMotions.SHOT;
 			else
 				currentCompositeMotion = this.currentLivingMotion;
 		}

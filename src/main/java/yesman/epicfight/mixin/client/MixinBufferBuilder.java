@@ -1,4 +1,4 @@
-package yesman.epicfight.mixin;
+package yesman.epicfight.mixin.client;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;

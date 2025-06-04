@@ -823,9 +823,7 @@ public class Animations {
 					JointTransform head = pose.orElseEmpty("Head");
 					MathUtils.mulQuaternion(QuaternionUtils.XP.rotationDegrees(xRot), head.rotation(), head.rotation());
 				})
-				.addEvents(StaticAnimationProperty.ON_BEGIN_EVENTS, SimpleEvent.create((entitypatch, animation, params) -> {
-					entitypatch.getClientAnimator().forceResetBeforeAction(LivingMotions.IDLE, LivingMotions.IDLE);
-				}, Side.CLIENT))
+				.addProperty(StaticAnimationProperty.RESET_LIVING_MOTION, LivingMotions.IDLE)
 				.newTimePair(0.0F, Float.MAX_VALUE)
 					.addStateRemoveOld(EntityState.CAN_BASIC_ATTACK, true)
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true));

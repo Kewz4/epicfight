@@ -54,7 +54,7 @@ import yesman.epicfight.client.renderer.patched.entity.PPlayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.mixin.SkinLayer3DMixinSkinUtil;
+import yesman.epicfight.mixin.skinlayers.MixinSkinUtil;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 public class SkinLayer3DCompat implements ICompatModule {
@@ -244,7 +244,7 @@ public class SkinLayer3DCompat implements ICompatModule {
 		
 		private static SkinnedMesh createEpicFight3DSkinLayer(AbstractClientPlayer player, PlayerModelPart playerModelPart, Mesh skinlayerModelPart, ModelPart vanillaModelPart, int width, int height, int depth, int textureU, int textureV, boolean topPivot, float rotationOffset) {
             CustomizableCubeListBuilder builder = new CustomizableCubeListBuilder();
-			NativeImage skinImage = SkinLayer3DMixinSkinUtil.invokeGetSkinTexture(player);
+			NativeImage skinImage = MixinSkinUtil.invokeGetSkinTexture(player);
             
             if (SolidPixelWrapper.wrapBox(builder, new WrappedNativeImage(skinImage), width, height, depth, textureU, textureV, topPivot, rotationOffset) != null) {
                 return SkinLayer3DTransformer.transformMesh(

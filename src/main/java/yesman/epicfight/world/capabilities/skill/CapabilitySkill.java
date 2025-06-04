@@ -159,7 +159,7 @@ public class CapabilitySkill {
 			
 			this.skillContainers[0].getExecutor().toMode(PlayerPatch.PlayerMode.valueOf(playerMode.toUpperCase(Locale.ROOT)), true);
 		} else {
-			this.skillContainers[0].getExecutor().toVanillaMode(true);
+			this.skillContainers[0].getExecutor().toEpicFightMode(true);
 		}
 	}
 }

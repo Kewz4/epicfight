@@ -36,8 +36,8 @@ import yesman.epicfight.api.client.model.transformer.VanillaModelTransformer.Van
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.mixin.SkinLayer3DMixinCustomModelPart;
-import yesman.epicfight.mixin.SkinLayer3DMixinCustomizableCubeWrapper.SkinLayer3DMixinCustomModelCube;
+import yesman.epicfight.mixin.skinlayers.MixinCustomModelPart;
+import yesman.epicfight.mixin.skinlayers.MixinCustomizableCubeWrapper.SkinLayer3DMixinCustomModelCube;
 
 @OnlyIn(Dist.CLIENT)
 public class SkinLayer3DTransformer extends CustomizableCube {
@@ -163,7 +163,7 @@ public class SkinLayer3DTransformer extends CustomizableCube {
 		LayerFeatureTransformerAPI.getTransformer().transform(abstractClientPlayer, poseStack, modelpartition.vanillaModelPart);
 		modelpartition.transformFunction.accept(poseStack);
 		
-		SkinLayer3DMixinCustomModelPart customModelPart = (SkinLayer3DMixinCustomModelPart)modelpartition.skinlayerModelPart;
+		MixinCustomModelPart customModelPart = (MixinCustomModelPart)modelpartition.skinlayerModelPart;
 		poseStack.translate(customModelPart.getX(), customModelPart.getY(), customModelPart.getZ());
 		
         if (customModelPart.getXRot() != 0.0F || customModelPart.getYRot() != 0.0F || customModelPart.getZRot() != 0.0F) {

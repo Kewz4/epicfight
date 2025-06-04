@@ -42,7 +42,7 @@ import yesman.epicfight.client.renderer.LayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.LayerUtil;
 import yesman.epicfight.client.renderer.patched.layer.PatchedLayer;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.mixin.MixinLivingEntityRenderer;
+import yesman.epicfight.mixin.client.MixinLivingEntityRenderer;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 /**

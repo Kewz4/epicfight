@@ -3,6 +3,7 @@ package yesman.epicfight.api.animation.types;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
 import yesman.epicfight.api.animation.types.EntityState.StateFactor;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.Layer;
@@ -32,8 +33,14 @@ public class MainFrameAnimation extends StaticAnimation {
 		
 		if (entitypatch.isLogicalClient()) {
 			entitypatch.updateMotion(false);
-			entitypatch.getClientAnimator().resetMotion(true);
-			entitypatch.getClientAnimator().resetCompositeMotion();
+			
+			this.getProperty(StaticAnimationProperty.RESET_LIVING_MOTION).ifPresentOrElse(livingMotion -> {
+				entitypatch.getClientAnimator().forceResetBeforeAction(livingMotion, livingMotion);
+			}, () -> {
+				entitypatch.getClientAnimator().resetMotion(true);
+				entitypatch.getClientAnimator().resetCompositeMotion();
+			});			
+			
 			entitypatch.getClientAnimator().getPlayerFor(this.getAccessor()).setReversed(false);
 		}
 		

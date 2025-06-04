@@ -28,7 +28,7 @@ import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.patched.entity.PPlayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.PatchedLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
-import yesman.epicfight.mixin.WerewolvesMixinHumanWerewolfLayer;
+import yesman.epicfight.mixin.teamlapen.MixinHumanWerewolfLayer;
 
 public class WerewolvesCompat implements ICompatModule {
 	@Override
@@ -89,7 +89,7 @@ public class WerewolvesCompat implements ICompatModule {
 				                  )
 		{
 			@SuppressWarnings("unchecked")
-			WerewolvesMixinHumanWerewolfLayer<AbstractClientPlayer, A> accessor = (WerewolvesMixinHumanWerewolfLayer<AbstractClientPlayer, A>)vanillaLayer;
+			MixinHumanWerewolfLayer<AbstractClientPlayer, A> accessor = (MixinHumanWerewolfLayer<AbstractClientPlayer, A>)vanillaLayer;
 			String modelType = entityliving.getModelName();
 			A vanillaModel = accessor.getModel();
 			

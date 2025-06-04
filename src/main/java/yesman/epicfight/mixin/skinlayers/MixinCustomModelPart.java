@@ -1,4 +1,4 @@
-package yesman.epicfight.mixin;
+package yesman.epicfight.mixin.skinlayers;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import dev.tr7zw.skinlayers.versionless.render.CustomModelPart;
 
 @Mixin(value = CustomModelPart.class)
-public interface SkinLayer3DMixinCustomModelPart {
+public interface MixinCustomModelPart {
 	@Accessor
 	public float getX();
 	

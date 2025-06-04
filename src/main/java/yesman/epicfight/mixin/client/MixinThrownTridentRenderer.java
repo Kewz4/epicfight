@@ -1,4 +1,4 @@
-package yesman.epicfight.mixin;
+package yesman.epicfight.mixin.client;
 
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,8 +1,10 @@
 package yesman.epicfight.api.animation.types;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.api.utils.datastruct.TypeFlexibleHashMap;
 
@@ -41,6 +43,7 @@ public class EntityState {
 	public static final StateFactor<Integer> HURT_LEVEL = new StateFactor<>("hurtLevel", 0);
 	public static final StateFactor<Integer> PHASE_LEVEL = new StateFactor<>("phaseLevel", 0);
 	public static final StateFactor<Function<DamageSource, AttackResult.ResultType>> ATTACK_RESULT = new StateFactor<>("attackResultModifier", (damagesource) -> AttackResult.ResultType.SUCCESS);
+	public static final StateFactor<Consumer<ProjectileImpactEvent>> PROJECTILE_IMPACT_RESULT = new StateFactor<>("projectileImpactResult", (event) -> {});
 	
 	private final TypeFlexibleHashMap<StateFactor<?>> stateMap;
 	
@@ -74,6 +77,10 @@ public class EntityState {
 	
 	public AttackResult.ResultType attackResult(DamageSource damagesource) {
 		return this.getState(EntityState.ATTACK_RESULT).apply(damagesource);
+	}
+	
+	public void setProjectileImpactResult(ProjectileImpactEvent event) {
+		this.getState(EntityState.PROJECTILE_IMPACT_RESULT).accept(event);
 	}
 	
 	public boolean canBasicAttack() {

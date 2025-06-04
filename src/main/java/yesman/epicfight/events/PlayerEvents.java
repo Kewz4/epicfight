@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.ArrowLooseEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,7 +18,9 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.network.EpicFightNetworkManager;
+import yesman.epicfight.network.common.AnimatorControlPacket;
 import yesman.epicfight.network.server.SPAbsorption;
+import yesman.epicfight.network.server.SPAnimatorControl;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
@@ -30,6 +33,17 @@ import yesman.epicfight.world.gamerule.EpicFightGameRules;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID)
 public class PlayerEvents {
+	@SubscribeEvent
+	public static void arrowLoose(ArrowLooseEvent event) {
+		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), PlayerPatch.class).ifPresent(playerpatch -> {
+			if (playerpatch.isLogicalClient()) {
+				playerpatch.getAnimator().playShootingAnimation();
+			} else {
+				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPAnimatorControl(AnimatorControlPacket.Action.SHOT, -1, event.getEntity().getId(), 0.0F, false), event.getEntity());
+			}
+		});
+	}
+	
 	@SubscribeEvent
 	public static void startTrackingEvent(PlayerEvent.StartTracking event) {
 		// Sync absorption attribute
@@ -86,8 +100,9 @@ public class PlayerEvents {
 			playerpatch.getAnimator().resetLivingAnimations();
 			playerpatch.modifyLivingMotionByCurrentItem(true);
 			
-			EpicFightGameRules.WEIGHT_PENALTY.synchronizeTo(playerpatch.getOriginal());
-			EpicFightGameRules.DISABLE_ENTITY_UI.synchronizeTo(playerpatch.getOriginal());
+			EpicFightGameRules.GAME_RULES.values().forEach((gamerule) -> {
+				gamerule.synchronizeTo(playerpatch.getOriginal());
+			});
 		});
 	}
 	

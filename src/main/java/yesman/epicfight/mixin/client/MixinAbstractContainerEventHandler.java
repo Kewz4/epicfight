@@ -1,4 +1,4 @@
-package yesman.epicfight.mixin;
+package yesman.epicfight.mixin.client;
 
 import javax.annotation.Nullable;
 

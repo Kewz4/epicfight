@@ -20,6 +20,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.RegistryObject;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
@@ -155,6 +156,11 @@ public abstract class AnimationProperty<T> {
 		 * This property automatically baked when animation is loaded
 		 */
 		public static final StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> BAKED_IK_DEFINITION = new StaticAnimationProperty<List<BakedInverseKinematicsDefinition>> ();
+		
+		/**
+		 * This property reset the entity's living motion
+		 */
+		public static final StaticAnimationProperty<LivingMotion> RESET_LIVING_MOTION = new StaticAnimationProperty<LivingMotion> ();
 	}
 	
 	public static class ActionAnimationProperty<T> extends StaticAnimationProperty<T> {

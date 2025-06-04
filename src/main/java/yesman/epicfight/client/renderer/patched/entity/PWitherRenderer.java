@@ -21,7 +21,7 @@ import yesman.epicfight.api.client.model.Meshes;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.client.mesh.WitherMesh;
 import yesman.epicfight.client.renderer.patched.layer.PatchedWitherArmorLayer;
-import yesman.epicfight.mixin.MixinLivingEntityRenderer;
+import yesman.epicfight.mixin.client.MixinLivingEntityRenderer;
 import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
 
 @OnlyIn(Dist.CLIENT)

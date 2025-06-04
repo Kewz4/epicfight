@@ -71,6 +71,7 @@ import yesman.epicfight.world.damagesource.EpicFightDamageType;
 import yesman.epicfight.world.damagesource.ExtraDamageInstance;
 import yesman.epicfight.world.damagesource.StunType;
 import yesman.epicfight.world.effect.EpicFightMobEffects;
+import yesman.epicfight.world.entity.EpicFightEntities;
 import yesman.epicfight.world.entity.eventlistener.DealtDamageEvent;
 import yesman.epicfight.world.entity.eventlistener.HurtEvent;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
@@ -401,40 +402,50 @@ public class EntityEvents {
 		ProjectilePatch<?> projectilepatch = EpicFightCapabilities.getEntityPatch(event.getEntity(), ProjectilePatch.class);
 		
 		if (projectilepatch != null) {
-			projectilepatch.setHit(true);
-			
-			if (!event.getProjectile().level().isClientSide()) {
-				if (projectilepatch.onProjectileImpact(event)) {
-					event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
-					return;
+			if (projectilepatch.onProjectileImpact(event)) {
+				event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+			}
+		}
+		
+		if (event.getImpactResult() != ProjectileImpactEvent.ImpactResult.SKIP_ENTITY) {
+			if (event.getRayTraceResult() instanceof EntityHitResult rayresult) {
+				if (rayresult.getEntity() != null) {
+					EpicFightCapabilities.getUnparameterizedEntityPatch(rayresult.getEntity(), PlayerPatch.class).ifPresent(playerpatch -> {
+						playerpatch.getEntityState().setProjectileImpactResult(event);
+						
+						// Fix later: since ProjectileImpactEvent fired both in client and server it needs to fire both in client and server
+						if (event.getImpactResult() == ProjectileImpactEvent.ImpactResult.DEFAULT && playerpatch instanceof ServerPlayerPatch serverplayerpatch) {
+							boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.PROJECTILE_HIT_EVENT, new ProjectileHitEvent(serverplayerpatch, event));
+							
+							if (canceled) {
+								event.setImpactResult(ImpactResult.SKIP_ENTITY);
+							}
+						}
+					});
+					
+					if (event.getProjectile().getOwner() != null) {
+						if (rayresult.getEntity().equals(event.getProjectile().getOwner().getVehicle())) {
+							event.setImpactResult(ImpactResult.SKIP_ENTITY);
+						}
+						
+						if (rayresult.getEntity() instanceof PartEntity<?> partEntity) {
+							Entity parent = partEntity.getParent();
+							
+							if (event.getProjectile().getOwner().is(parent)) {
+								event.setImpactResult(ImpactResult.SKIP_ENTITY);
+							}
+						}
+					}
+					
+					if (EpicFightEntities.DODGE_LOCATION_INDICATOR.get().equals(rayresult.getEntity().getType())) {
+						event.setImpactResult(ImpactResult.SKIP_ENTITY);
+					}
 				}
 			}
 		}
 		
-		if (event.getRayTraceResult() instanceof EntityHitResult rayresult) {
-			if (rayresult.getEntity() != null) {
-				EpicFightCapabilities.getUnparameterizedEntityPatch(rayresult.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
-					boolean canceled = playerpatch.getEventListener().triggerEvents(EventType.PROJECTILE_HIT_EVENT, new ProjectileHitEvent(playerpatch, event));
-					
-					if (canceled) {
-						event.setImpactResult(ImpactResult.SKIP_ENTITY);
-					}
-				});
-				
-				if (event.getProjectile().getOwner() != null) {
-					if (rayresult.getEntity().equals(event.getProjectile().getOwner().getVehicle())) {
-						event.setImpactResult(ImpactResult.SKIP_ENTITY);
-					}
-					
-					if (rayresult.getEntity() instanceof PartEntity<?> partEntity) {
-						Entity parent = partEntity.getParent();
-						
-						if (event.getProjectile().getOwner().is(parent)) {
-							event.setImpactResult(ImpactResult.SKIP_ENTITY);
-						}
-					}
-				}
-			}
+		if (projectilepatch != null && event.getImpactResult() == ImpactResult.DEFAULT) {
+			projectilepatch.setHit(true);
 		}
 	}
 	

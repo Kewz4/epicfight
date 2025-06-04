@@ -22,7 +22,7 @@ import yesman.epicfight.client.renderer.EpicFightRenderTypes;
 import yesman.epicfight.client.renderer.patched.entity.PPlayerRenderer;
 import yesman.epicfight.client.renderer.patched.layer.ModelRenderLayer;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.AbstractClientPlayerPatch;
-import yesman.epicfight.mixin.VampirismMixinVampirePlayerHeadLayer;
+import yesman.epicfight.mixin.teamlapen.MixinVampirePlayerHeadLayer;
 
 public class VampirismCompat implements ICompatModule {
 	@Override
@@ -78,7 +78,7 @@ public class VampirismCompat implements ICompatModule {
 	        VampirismPlayerAttributes atts = VampirismPlayerAttributes.get(entityliving);
 	        
 	        if (atts.vampireLevel > 0 && !atts.getVampSpecial().disguised && !entityliving.isInvisible()) {
-	        	VampirismMixinVampirePlayerHeadLayer accessor = ((VampirismMixinVampirePlayerHeadLayer)vanillaLayer);
+	        	MixinVampirePlayerHeadLayer accessor = ((MixinVampirePlayerHeadLayer)vanillaLayer);
 	        	
 	        	int eyeType = Math.max(0, Math.min(atts.getVampSpecial().eyeType, accessor.getEyeOverlays().length - 1));
 	            int fangType = Math.max(0, Math.min(atts.getVampSpecial().fangType, accessor.getFangOverlays().length - 1));

@@ -153,8 +153,9 @@ public class EpicFightGameRules {
 				this.gameRuleKey = GameRules.register(
 						  this.ruleName
 						, this.ruleCategory
-						, this.ruleType.valueCreator.apply(  this.configValueHolder.get()
-														  , (server, value) -> EpicFightNetworkManager.sendToAll(new SPChangeGamerule<> (this, this.ruleType.getRule.apply(value)))
+						, this.ruleType.valueCreator.apply(
+							    this.configValueHolder.get()
+							  , (server, value) -> EpicFightNetworkManager.sendToAll(new SPChangeGamerule<> (this, this.ruleType.getRule.apply(value)))
 						  )
 				);
 			} else {

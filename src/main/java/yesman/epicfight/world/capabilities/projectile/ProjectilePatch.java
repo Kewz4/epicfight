@@ -17,7 +17,6 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.EntityPatch;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.CapabilityItem.Styles;
 import yesman.epicfight.world.capabilities.item.RangedWeaponCapability;
@@ -30,7 +29,6 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 	protected float impact;
 	protected float armorNegation;
 	protected Vec3 initialFirePosition;
-	protected boolean playShooterShootingAnimation;
 	protected boolean hasHit;
 	
 	@Override
@@ -64,12 +62,6 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 				
 				flag = false;
 			}
-			
-			if (this.playShooterShootingAnimation) {
-				EpicFightCapabilities.getUnparameterizedEntityPatch(livingshooter, LivingEntityPatch.class).ifPresent(entitypatch -> {
-					entitypatch.playShootingAnimation();
-				});
-			}
 		}
 		
 		if (flag) {
@@ -86,12 +78,11 @@ public abstract class ProjectilePatch<T extends Projectile> extends EntityPatch<
 		}
 	}
 	
+	/**
+	 * @return true if event should be canceled
+	 */
 	public boolean onProjectileImpact(ProjectileImpactEvent event) {
 		return false;
-	}
-	
-	public void setPlayShootingAnimation(boolean playShooterShootingAnimation) {
-		this.playShooterShootingAnimation = playShooterShootingAnimation;
 	}
 	
 	protected abstract void setMaxStrikes(T projectileEntity, int maxStrikes);

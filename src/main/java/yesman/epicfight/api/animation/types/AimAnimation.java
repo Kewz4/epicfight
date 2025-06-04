@@ -67,8 +67,8 @@ public class AimAnimation extends StaticAnimation {
 					JointTransform head = pose.orElseEmpty("Head");
 					float f = 90.0F;
 					float ratio = (f - Math.abs(entitypatch.getOriginal().getXRot())) / f;
-					float yRotHead = entitypatch.getOriginal().yHeadRotO;
-					float yRot = entitypatch.getOriginal().getVehicle() != null ? yRotHead : entitypatch.getYRot();
+					float yRotHead = Mth.lerp(partialTicks, entitypatch.getOriginal().yHeadRotO, entitypatch.getOriginal().yHeadRot);
+					float yRot = entitypatch.getOriginal().getVehicle() != null ? yRotHead : Mth.lerp(partialTicks, entitypatch.getOriginal().yBodyRotO, entitypatch.getOriginal().yBodyRot);
 					
 					MathUtils.mulQuaternion(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRot - yRotHead) * ratio), head.rotation(), head.rotation());
 					chest.frontResult(JointTransform.rotation(QuaternionUtils.YP.rotationDegrees(Mth.wrapDegrees(yRotHead - yRot) * ratio)), OpenMatrix4f::mulAsOriginInverse);
@@ -101,7 +101,6 @@ public class AimAnimation extends StaticAnimation {
 				interpolateAnimation = (pitch > 0) ? this.lookDown : this.lookUp;
 				Pose pose1 = super.getPoseByTime(entitypatch, time, partialTicks);	
 				Pose pose2 = interpolateAnimation.getPoseByTime(entitypatch, time, partialTicks);
-				//this.modifyPose(this, pose2, entitypatch, time, partialTicks);
 				Pose interpolatedPose = Pose.interpolatePose(pose1, pose2, (Math.abs(pitch) / 90.0F));
 				
 				return interpolatedPose;

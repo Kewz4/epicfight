@@ -32,7 +32,7 @@ import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.api.utils.math.QuaternionUtils;
 import yesman.epicfight.api.utils.math.Vec2f;
 import yesman.epicfight.api.utils.math.Vec3f;
-import yesman.epicfight.mixin.MixinAgeableListModel;
+import yesman.epicfight.mixin.client.MixinAgeableListModel;
 
 @OnlyIn(Dist.CLIENT)
 public class VanillaModelTransformer extends HumanoidModelTransformer {

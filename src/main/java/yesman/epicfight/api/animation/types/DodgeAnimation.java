@@ -1,11 +1,13 @@
 package yesman.epicfight.api.animation.types;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
 import yesman.epicfight.api.animation.property.AnimationEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.SimpleEvent;
@@ -34,6 +36,10 @@ public class DodgeAnimation extends ActionAnimation {
 		return AttackResult.ResultType.SUCCESS;
 	};
 	
+	public static final Consumer<ProjectileImpactEvent> IGNORE_ALL_PROJECTILES = (event) -> {
+		event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+	};
+	
 	public DodgeAnimation(float transitionTime, AnimationAccessor<? extends DodgeAnimation> accessor, float width, float height, AssetAccessor<? extends Armature> armature) {
 		this(transitionTime, 10.0F, accessor, width, height, armature);
 	}
@@ -50,7 +56,9 @@ public class DodgeAnimation extends ActionAnimation {
 			.addState(EntityState.CAN_SKILL_EXECUTION, false)
 			.addState(EntityState.INACTION, true)
 			.newTimePair(0.0F, Float.MAX_VALUE)
-			.addState(EntityState.ATTACK_RESULT, DODGEABLE_SOURCE_VALIDATOR);
+			.addState(EntityState.ATTACK_RESULT, DODGEABLE_SOURCE_VALIDATOR)
+			.addState(EntityState.PROJECTILE_IMPACT_RESULT, IGNORE_ALL_PROJECTILES);
+		
 		
 		this.addProperty(ActionAnimationProperty.AFFECT_SPEED, true);
 		this.addEvents(StaticAnimationProperty.ON_END_EVENTS, SimpleEvent.create(Animations.ReusableSources.RESTORE_BOUNDING_BOX, AnimationEvent.Side.BOTH));

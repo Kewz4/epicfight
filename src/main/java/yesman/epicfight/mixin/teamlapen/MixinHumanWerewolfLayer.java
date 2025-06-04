@@ -1,4 +1,4 @@
-package yesman.epicfight.mixin;
+package yesman.epicfight.mixin.teamlapen;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 @Mixin(value = HumanWerewolfLayer.class)
-public interface WerewolvesMixinHumanWerewolfLayer<T extends LivingEntity, A extends HumanoidModel<T>> {
+public interface MixinHumanWerewolfLayer<T extends LivingEntity, A extends HumanoidModel<T>> {
 	@Accessor
     public List<ResourceLocation> getTextures();
 	@Accessor
