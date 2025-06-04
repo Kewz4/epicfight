@@ -32,6 +32,7 @@ import yesman.epicfight.client.gui.widgets.ColorSlider;
 import yesman.epicfight.epicskins.user.AuthenticationHelper;
 import yesman.epicfight.epicskins.user.AuthenticationHelper.AuthenticationProvider;
 import yesman.epicfight.main.EpicFightMod;
+import yesman.epicfight.main.EpicFightSharedConstants;
 
 @Mod.EventBusSubscriber(modid = EpicFightMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 @OnlyIn(Dist.CLIENT)
@@ -189,7 +190,10 @@ public class ClientConfig {
 		
 		EpicFightServerConnectionHelper.init(event.getConfig().getFullPath().getParent().toString());
 		
-		if (EpicFightServerConnectionHelper.supported()) {
+		if (EpicFightServerConnectionHelper.supported() && !EpicFightSharedConstants.IS_DEV_ENV) {
+			/**
+			 * On developer side, disable this part to avoid loading epic skins classes
+			 */
 			AuthenticationHelper.initialize(ACCESS_TOKEN, REFRESH_TOKNE, PROVIDER);
 		}
     }

@@ -52,12 +52,11 @@ public class EpicFightKubeJSPlugin extends KubeJSPlugin {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
     public void registerTypeWrappers(ScriptType type, TypeWrappers typeWrappers) {
         typeWrappers.registerSimple(Skill.class, o -> {
             if (o instanceof Skill skill) return skill;
             if (o instanceof String) {
-                return SkillManager.getSkillRegistry().getValue(new ResourceLocation((String) o));
+                return SkillManager.getSkillRegistry().getValue(ResourceLocation.parse((String)o));
             }
             if (o instanceof ResourceLocation) {
                 return SkillManager.getSkillRegistry().getValue((ResourceLocation) o);
