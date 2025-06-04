@@ -99,10 +99,6 @@ public class PlayerEvents {
 		EpicFightCapabilities.getUnparameterizedEntityPatch(event.getEntity(), ServerPlayerPatch.class).ifPresent(playerpatch -> {
 			playerpatch.getAnimator().resetLivingAnimations();
 			playerpatch.modifyLivingMotionByCurrentItem(true);
-			
-			EpicFightGameRules.GAME_RULES.values().forEach((gamerule) -> {
-				gamerule.synchronizeTo(playerpatch.getOriginal());
-			});
 		});
 	}
 	

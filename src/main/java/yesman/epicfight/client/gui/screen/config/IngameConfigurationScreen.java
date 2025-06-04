@@ -13,7 +13,6 @@ import yesman.epicfight.client.gui.datapack.screen.DatapackEditScreen;
 import yesman.epicfight.client.gui.datapack.screen.MessageScreen;
 import yesman.epicfight.epicskins.client.screen.AvatarEditScreen;
 import yesman.epicfight.main.EpicFightMod;
-import yesman.epicfight.main.EpicFightSharedConstants;
 
 @OnlyIn(Dist.CLIENT)
 public class IngameConfigurationScreen extends Screen {
@@ -41,7 +40,7 @@ public class IngameConfigurationScreen extends Screen {
 		Button skinConfigScreen = Button.builder(Component.translatable("gui." + EpicFightMod.EPICSKINS_MODID + ".button.skin_configuration"), (button) -> {
 			if (Minecraft.getInstance().level == null) {
 				/**
-				 * On developer side, disable this part to avoid loading epic skins classes
+				 * On the development side, disable this part to avoid loading epic skins classes
 				 */
 				Minecraft.getInstance().setScreen(new AvatarEditScreen(this));
 			} else {
@@ -49,10 +48,8 @@ public class IngameConfigurationScreen extends Screen {
 			}
 		}).pos(this.width / 2 + 5, 68).size(160, 20).build();
 		
-		if (!EpicFightSharedConstants.IS_DEV_ENV) {
-			skinConfigScreen.active = EpicFightServerConnectionHelper.supported();
-			this.addRenderableWidget(skinConfigScreen);
-		}
+		skinConfigScreen.active = EpicFightServerConnectionHelper.supported();
+		this.addRenderableWidget(skinConfigScreen);
 		
 		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, (button) -> {
 			this.minecraft.setScreen(this.parentScreen);

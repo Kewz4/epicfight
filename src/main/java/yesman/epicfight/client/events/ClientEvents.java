@@ -28,6 +28,8 @@ import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 import yesman.epicfight.world.capabilities.provider.ItemCapabilityProvider;
 import yesman.epicfight.world.entity.eventlistener.PlayerEventListener.EventType;
 import yesman.epicfight.world.entity.eventlistener.RightClickItemEvent;
+import yesman.epicfight.world.gamerule.EpicFightGameRules;
+import yesman.epicfight.world.gamerule.EpicFightGameRules.ConfigurableGameRule;
 import yesman.epicfight.world.level.block.FractureBlockState;
 
 @OnlyIn(Dist.CLIENT)
@@ -137,6 +139,7 @@ public class ClientEvents {
 	@Deprecated
 	public static ClientboundRespawnPacket packet;
 	
+	@SuppressWarnings("unchecked")
 	@SubscribeEvent
 	public static void clientRespawnEvent(ClientPlayerNetworkEvent.Clone event) {
 		LocalPlayerPatch oldCap = EpicFightCapabilities.getEntityPatch(event.getOldPlayer(), LocalPlayerPatch.class);
@@ -154,6 +157,11 @@ public class ClientEvents {
 			newCap.onRespawnLocalPlayer(event);
 			newCap.toMode(oldCap.getPlayerMode(), false);
 		}
+		
+		EpicFightGameRules.GAME_RULES.values().forEach(gamerule -> {
+			Object val = gamerule.getRuleValue(event.getOldPlayer().level());
+			((ConfigurableGameRule<Object, ?, ?>)gamerule).setRuleValue(event.getNewPlayer().level(), val);
+		});
 		
 		ClientEngine.getInstance().controllEngine.setPlayerPatch(newCap);
 		ClientEngine.getInstance().renderEngine.init();

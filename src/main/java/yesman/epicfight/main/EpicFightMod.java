@@ -172,7 +172,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the shot animations playing randomly
  *  Fixed the pillager's body twisting while aiming
  *  Fixed the arrows ricochet due to the virtual entity created by the player's dodge skills
- *  Fixed the arrows not to ricochet when player's dodging
+ *  Fixed the arrows not to ricochet while player's dodging
  *  Fixed the player still playing running animation when charging Demolition Leap with Longsword in hand
  *  Added a Kube JS event hook for registering skills
  *  

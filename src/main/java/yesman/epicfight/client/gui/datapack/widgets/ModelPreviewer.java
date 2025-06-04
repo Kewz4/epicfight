@@ -571,6 +571,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 		Minecraft minecraft = Minecraft.getInstance();
 		minecraft.getMainRenderTarget().unbindWrite();
 		
+		RenderSystem.enableDepthTest();
+		
 		ScreenRectangle screenrectangle = null;
 		boolean scissorApplied = guiGraphics.scissorStack.stack.size() > 0;
 		
@@ -652,6 +654,8 @@ public class ModelPreviewer extends AbstractWidget implements ResizableComponent
 				this.showColliderCheckbox._renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
 			}
 		}
+		
+		RenderSystem.disableDepthTest();
 	}
 	
 	@Override
