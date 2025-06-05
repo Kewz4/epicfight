@@ -438,7 +438,9 @@ public class ClientAnimator extends Animator {
 		this.currentMotion = livingMotion;
 		
 		if (!this.currentCompositeMotion.equals(compositeLivingMotion)) {
-			this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
+			if (this.compositeLivingAnimations.containsKey(this.currentCompositeMotion)) {
+				this.getCompositeLayer(this.getCompositeLivingMotion(this.currentCompositeMotion).get().getPriority()).off(this.entitypatch);
+			}
 			
 			if (this.compositeLivingAnimations.containsKey(compositeLivingMotion)) {
 				this.playAnimation(this.getCompositeLivingMotion(compositeLivingMotion), 0.0F);
