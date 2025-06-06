@@ -140,9 +140,8 @@ public class ControllEngine {
 								if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
 									BlockPos bp = ((BlockHitResult)this.minecraft.hitResult).getBlockPos();
 									BlockState bs = this.minecraft.level.getBlockState(bp);
-									boolean isSuitableTool = this.player.getMainHandItem().getDestroySpeed(bs) <= 5.0F || this.player.getMainHandItem().isCorrectToolForDrops(bs);
 									
-									shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || isSuitableTool;
+									shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || !this.player.getMainHandItem().isCorrectToolForDrops(bs);
 								} else {
 									shouldPlayAttackAnimation = true;
 								}
