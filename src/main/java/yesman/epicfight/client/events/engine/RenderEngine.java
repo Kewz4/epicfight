@@ -73,6 +73,7 @@ import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.animation.JointTransform;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader.PovSettings.ViewLimit;
 import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
 import yesman.epicfight.api.client.forgeevent.RenderEnderDragonEvent;
 import yesman.epicfight.api.client.model.Meshes;
@@ -485,8 +486,8 @@ public class RenderEngine {
 		
 		if (localPlayerPatch != null) {
 			if (localPlayerPatch.getTarget() != null && localPlayerPatch.isTargetLockedOn()) {
-				float xRot = localPlayerPatch.getLerpedLockOnX(event.getPartialTick());
-				float yRot = localPlayerPatch.getLerpedLockOnY(event.getPartialTick());
+				float xRot = localPlayerPatch.getLerpedLockOnX(partialTicks);
+				float yRot = localPlayerPatch.getLerpedLockOnY(partialTicks);
 				
 				if (cameraType.isMirrored()) {
 					yRot += 180.0F;
@@ -510,32 +511,52 @@ public class RenderEngine {
 			}
 			
 			// First person camera correction
-			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isEpicFightMode() && !localPlayerPatch.getFirstPersonLayer().isOff() && localPlayerPatch.hasCameraAnimation()) {
-				float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
-				JointTransform cameraTransform;
-				
-				if (localPlayerPatch.getFirstPersonLayer().animationPlayer.getAnimation().get().isLinkAnimation() || localPlayerPatch.getPovSettings() == null) {
-					cameraTransform = localPlayerPatch.getFirstPersonLayer().getLinkCameraTransform().getInterpolatedTransform(time);
+			if (ClientConfig.enablePovAction && cameraType.isFirstPerson() && localPlayerPatch.isEpicFightMode() && !localPlayerPatch.getFirstPersonLayer().isOff()) {
+				if (localPlayerPatch.isLerpingFpv()) {
+					float xRot = localPlayerPatch.getLerpedFpvXRot(partialTicks);
+					float yRot = localPlayerPatch.getLerpedFpvYRot(partialTicks);
+					this.minecraft.cameraEntity.setXRot(xRot);
+					this.minecraft.cameraEntity.setYRot(yRot);
 				} else {
-					cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+					ViewLimit viewLimit = localPlayerPatch.getPovSettings().viewLimit();
+					
+					if (viewLimit != null) {
+						float clampedXRot = Mth.clamp(event.getPitch(), viewLimit.xRotMin(), viewLimit.xRotMax());
+						float clampedYRot = Mth.clamp(event.getYaw(), localPlayerPatch.getYRot() + viewLimit.yRotMin(), localPlayerPatch.getYRot() + viewLimit.yRotMax());
+						
+						if (Float.compare(clampedXRot, event.getPitch()) != 0 || Float.compare(clampedYRot, event.getYaw()) != 0) {
+							localPlayerPatch.fixFpvRotation(clampedXRot, localPlayerPatch.getYRot());
+						}
+					}
 				}
 				
-				float xRot = localPlayerPatch.getOriginal().getXRot();
-				float yRot = localPlayerPatch.getOriginal().getYRot();
-				
-				Vec3f translation = OpenMatrix4f.transform3v(OpenMatrix4f.ofRotationDegree(yRot, Vec3f.Y_AXIS, PLAYER_ROTATION).rotate(xRot, Vec3f.X_AXIS), cameraTransform.translation(), null);
-				Quaternionf rot = cameraTransform.rotation();
-				rot.getEulerAnglesXYZ(CAMERA_ROTATION_EULER);
-				
-				CAMERA_ROTATION_EULER.x = (float)Math.toDegrees(CAMERA_ROTATION_EULER.x);
-				CAMERA_ROTATION_EULER.y = (float)Math.toDegrees(CAMERA_ROTATION_EULER.y);
-				CAMERA_ROTATION_EULER.z = (float)Math.toDegrees(CAMERA_ROTATION_EULER.z);
-				
-				camera.move(translation.x, translation.y, translation.z);
-				
-				event.setPitch(event.getPitch() + CAMERA_ROTATION_EULER.x);
-				event.setYaw(event.getYaw() + CAMERA_ROTATION_EULER.y);
-				event.setRoll(event.getRoll() + CAMERA_ROTATION_EULER.z);
+				if (localPlayerPatch.hasCameraAnimation()) {
+					float time = Mth.lerp(partialTicks, localPlayerPatch.getFirstPersonLayer().animationPlayer.getPrevElapsedTime(), localPlayerPatch.getFirstPersonLayer().animationPlayer.getElapsedTime());
+					JointTransform cameraTransform;
+					
+					if (localPlayerPatch.getFirstPersonLayer().animationPlayer.getAnimation().get().isLinkAnimation() || localPlayerPatch.getPovSettings() == null) {
+						cameraTransform = localPlayerPatch.getFirstPersonLayer().getLinkCameraTransform().getInterpolatedTransform(time);
+					} else {
+						cameraTransform = localPlayerPatch.getPovSettings().cameraTransform().getInterpolatedTransform(time);
+					}
+					
+					float xRot = localPlayerPatch.getOriginal().getXRot();
+					float yRot = localPlayerPatch.getOriginal().getYRot();
+					
+					Vec3f translation = OpenMatrix4f.transform3v(OpenMatrix4f.ofRotationDegree(yRot, Vec3f.Y_AXIS, PLAYER_ROTATION).rotate(xRot, Vec3f.X_AXIS), cameraTransform.translation(), null);
+					Quaternionf rot = cameraTransform.rotation();
+					rot.getEulerAnglesXYZ(CAMERA_ROTATION_EULER);
+					
+					CAMERA_ROTATION_EULER.x = (float)Math.toDegrees(CAMERA_ROTATION_EULER.x);
+					CAMERA_ROTATION_EULER.y = (float)Math.toDegrees(CAMERA_ROTATION_EULER.y);
+					CAMERA_ROTATION_EULER.z = (float)Math.toDegrees(CAMERA_ROTATION_EULER.z);
+					
+					camera.move(translation.x, translation.y, translation.z);
+					
+					event.setPitch(event.getPitch() + CAMERA_ROTATION_EULER.x);
+					event.setYaw(event.getYaw() + CAMERA_ROTATION_EULER.y);
+					event.setRoll(event.getRoll() + CAMERA_ROTATION_EULER.z);
+				}
 			}
 		}
 	}

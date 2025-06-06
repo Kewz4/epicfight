@@ -546,9 +546,13 @@ public class JsonAssetLoader {
 			Joint joint = armature.searchJointByName(name);
 			
 			if (joint == null) {
-				if (name.equals("Coord") && action) {
+				if (name.equals("Coord")) {
 					TransformSheet sheet = getTransformSheet(jObject, new OpenMatrix4f(), true, format);
-					((ActionAnimation)animation).addProperty(ActionAnimationProperty.COORD, sheet);
+					
+					if (action) {
+						((ActionAnimation)animation).addProperty(ActionAnimationProperty.COORD, sheet);
+					}
+					
 					root = false;
 					continue;
 				} else {

@@ -714,6 +714,14 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 		}
 	}
 	
+	public double checkXTurn(double xRot) {
+		return xRot;
+	}
+	
+	public double checkYTurn(double yRot) {
+		return yRot;
+	}
+	
 	@Override
 	public Faction getFaction() {
 		return Factions.NEUTRAL;

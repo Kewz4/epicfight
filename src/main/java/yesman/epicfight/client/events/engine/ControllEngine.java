@@ -16,8 +16,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -122,25 +124,35 @@ public class ControllEngine {
 				boolean shouldPlayAttackAnimation = true;
 				
 				if (this.options.keyAttack.getKey() == EpicFightKeyMappings.ATTACK.getKey()) {
-					if (this.playerpatch.isTargetLockedOn()) {
-						shouldPlayAttackAnimation = true;
-					} else if (ClientConfig.combatPreferredItems.contains(this.player.getMainHandItem().getItem())) {
-						if (this.playerpatch.getTarget() != null) {
+					if (this.minecraft.hitResult.getType() == HitResult.Type.ENTITY) {
+						if (!(((EntityHitResult)this.minecraft.hitResult).getEntity() instanceof LivingEntity)) {
+							shouldPlayAttackAnimation = false;
+						}
+					}
+					
+					if (shouldPlayAttackAnimation) {
+						if (this.playerpatch.isTargetLockedOn()) {
 							shouldPlayAttackAnimation = true;
+						} else if (ClientConfig.combatPreferredItems.contains(this.player.getMainHandItem().getItem())) {
+							if (this.playerpatch.getTarget() != null) {
+								shouldPlayAttackAnimation = true;
+							} else {
+								if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
+									BlockPos bp = ((BlockHitResult)this.minecraft.hitResult).getBlockPos();
+									BlockState bs = this.minecraft.level.getBlockState(bp);
+									boolean isSuitableTool = this.player.getMainHandItem().getDestroySpeed(bs) <= 5.0F || this.player.getMainHandItem().isCorrectToolForDrops(bs);
+									
+									shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || isSuitableTool;
+								} else {
+									shouldPlayAttackAnimation = true;
+								}
+							}
 						} else {
 							if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
-								BlockPos bp = ((BlockHitResult)this.minecraft.hitResult).getBlockPos();
-								BlockState bs = this.minecraft.level.getBlockState(bp);
-								shouldPlayAttackAnimation = !this.player.getMainHandItem().getItem().canAttackBlock(bs, this.player.level(), bp, this.player) || this.player.getMainHandItem().getDestroySpeed(bs) <= 5.0F;
+								shouldPlayAttackAnimation = false;
 							} else {
 								shouldPlayAttackAnimation = true;
 							}
-						}
-					} else {
-						if (this.minecraft.hitResult.getType() == HitResult.Type.BLOCK) {
-							shouldPlayAttackAnimation = false;
-						} else {
-							shouldPlayAttackAnimation = true;
 						}
 					}
 					

@@ -12,15 +12,12 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.internal.Streams;
+import com.google.gson.stream.JsonReader;
 import com.ibm.icu.impl.Pair;
 
 import net.minecraft.resources.ResourceLocation;
@@ -32,6 +29,7 @@ import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationProperty.StaticAnimationProperty;
+import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.DirectStaticAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -73,27 +71,25 @@ public class AnimationSubFileReader {
 	@OnlyIn(Dist.CLIENT)
 	public static abstract class SubFileType<T> {
 		private final String directory;
-		private final Gson gson;
-		private final TypeToken<T> typeToken;
-		private final JsonDeserializer<T> deserializer;
+		private final AnimationSubFileDeserializer<T> deserializer;
 		
-		private SubFileType(String directory, Class<T> type, TypeToken<T> typeToken, JsonDeserializer<T> deserializer) {
+		private SubFileType(String directory,  AnimationSubFileDeserializer<T> deserializer) {
 			this.directory = directory;
-			this.gson = new GsonBuilder().registerTypeAdapter(type, deserializer).create();
-			this.typeToken = typeToken;
 			this.deserializer = deserializer;
 		}
 		
 		// Deserialize from input stream
 		public void apply(InputStream inputstream, StaticAnimation animation) {
 			Reader reader = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
-			T deserialized = GsonHelper.fromJson(this.gson, reader, this.typeToken);
+			JsonReader jsonReader = new JsonReader(reader);
+			jsonReader.setLenient(true);
+			T deserialized = this.deserializer.deserialize(animation, Streams.parse(jsonReader));
 			this.applySubFileInfo(deserialized, animation);
 		}
 		
 		// Deserialize from json object
 		public void apply(JsonElement jsonElement, StaticAnimation animation) {
-			T deserialized = this.deserializer.deserialize(jsonElement, null, null);
+			T deserialized = this.deserializer.deserialize(animation, jsonElement);
 			this.applySubFileInfo(deserialized, animation);
 		}
 		
@@ -111,12 +107,7 @@ public class AnimationSubFileReader {
 	@OnlyIn(Dist.CLIENT)
 	private static class ClientPropertyType extends SubFileType<ClientProperty> {
 		private ClientPropertyType() {
-			super(
-				  "data"
-				,  ClientProperty.class
-				, new TypeToken<ClientProperty>() {}
-				, new AnimationSubFileReader.ClientAnimationPropertyDeserializer()
-			);
+			super("data", new AnimationSubFileReader.ClientAnimationPropertyDeserializer());
 		}
 		
 		@Override
@@ -163,7 +154,7 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private static class ClientAnimationPropertyDeserializer implements JsonDeserializer<ClientProperty> {
+	private static class ClientAnimationPropertyDeserializer implements AnimationSubFileDeserializer<ClientProperty> {
 		private static LayerInfo deserializeLayerInfo(JsonObject jsonObject) {
 			return deserializeLayerInfo(jsonObject, null);
 		}
@@ -201,7 +192,7 @@ public class AnimationSubFileReader {
 		}
 		
 		@Override
-		public ClientProperty deserialize(JsonElement json, java.lang.reflect.Type type, JsonDeserializationContext context) throws JsonParseException {
+		public ClientProperty deserialize(StaticAnimation animation, JsonElement json) throws JsonParseException {
 			JsonObject jsonObject = json.getAsJsonObject();
 			LayerInfo layerInfo = null;
 			LayerInfo multilayerInfo = null;
@@ -226,27 +217,35 @@ public class AnimationSubFileReader {
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	public static record PovSettings(@Nullable TransformSheet cameraTransform, Map<String, Boolean> visibilities, RootTransformation transformation, boolean visibilityOthers) {
+	public static record PovSettings(
+		@Nullable TransformSheet cameraTransform,
+		Map<String, Boolean> visibilities,
+		RootTransformation rootTransformation,
+		@Nullable ViewLimit viewLimit,
+		boolean visibilityOthers,
+		boolean hasUniqueAnimation,
+		boolean syncFrame
+	) {
+		@OnlyIn(Dist.CLIENT)
 		public enum RootTransformation {
 			CAMERA, WORLD
+		}
+		
+		@OnlyIn(Dist.CLIENT)
+		public record ViewLimit(float xRotMin, float xRotMax, float yRotMin, float yRotMax) {
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
 	private static class PovAnimationType extends SubFileType<PovSettings> {
 		private PovAnimationType() {
-			super(
-				  "pov"
-				, PovSettings.class
-				, new TypeToken<PovSettings>() {}
-				, new AnimationSubFileReader.PovAnimationDeserializer()
-			);
+			super("pov", new AnimationSubFileReader.PovAnimationDeserializer());
 		}
 		
 		@Override
 		public void applySubFileInfo(PovSettings deserialized, StaticAnimation animation) {
-			ResourceLocation povAnimationLocation = AnimationManager.getSubAnimationFileLocation(animation.getLocation(), SUBFILE_POV_ANIMATION);
-			DirectStaticAnimation multilayerAnimation = new DirectStaticAnimation(povAnimationLocation, animation.getTransitionTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_pov", animation.getArmature()) {
+			ResourceLocation povAnimationLocation = deserialized.hasUniqueAnimation() ? AnimationManager.getSubAnimationFileLocation(animation.getLocation(), SUBFILE_POV_ANIMATION) : animation.getLocation();
+			DirectStaticAnimation povAnimation = new DirectStaticAnimation(povAnimationLocation, animation.getTransitionTime(), animation.isRepeat(), animation.getRegistryName().toString() + "_pov", animation.getArmature()) {
 				@Override
 				public float getPlaySpeed(LivingEntityPatch<?> entitypatch, DynamicAnimation pAnimation) {
 					return animation.getPlaySpeed(entitypatch, pAnimation);
@@ -254,24 +253,37 @@ public class AnimationSubFileReader {
 			};
 			
 			animation.getProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER).ifPresent(speedModifier -> {
-				multilayerAnimation.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, speedModifier);
+				povAnimation.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, speedModifier);
 			});
 			
-			animation.addProperty(ClientAnimationProperties.POV_ANIMATION, multilayerAnimation);
+			if (deserialized.syncFrame()) {
+				animation.getProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER).ifPresent(elapsedTimeModifier -> {
+					povAnimation.addProperty(StaticAnimationProperty.ELAPSED_TIME_MODIFIER, elapsedTimeModifier);
+				});
+			}
+			
+			animation.addProperty(ClientAnimationProperties.POV_ANIMATION, povAnimation);
 			animation.addProperty(ClientAnimationProperties.POV_SETTINGS, deserialized);
 		}
 	}
 	
 	@OnlyIn(Dist.CLIENT)
-	private static class PovAnimationDeserializer implements JsonDeserializer<PovSettings> {
+	private static class PovAnimationDeserializer implements AnimationSubFileDeserializer<PovSettings> {
 		@Override
-		public PovSettings deserialize(JsonElement json, java.lang.reflect.Type typeOfT, JsonDeserializationContext context) throws AssetLoadingException, JsonParseException {
+		public PovSettings deserialize(StaticAnimation animation, JsonElement json) throws AssetLoadingException, JsonParseException {
 			JsonObject jObject = json.getAsJsonObject();
 			TransformSheet cameraTransform = null;
-			PovSettings.RootTransformation rootTrasnformation = PovSettings.RootTransformation.CAMERA;
+			PovSettings.ViewLimit viewLimit = null;
+			PovSettings.RootTransformation rootTrasnformation = null;
 			
 			if (jObject.has("root")) {
 				rootTrasnformation = PovSettings.RootTransformation.valueOf(ParseUtil.toUpperCase(GsonHelper.getAsString(jObject, "root")));
+			} else {
+				if (animation instanceof ActionAnimation) {
+					rootTrasnformation = PovSettings.RootTransformation.WORLD;
+				} else {
+					rootTrasnformation = PovSettings.RootTransformation.CAMERA;
+				}
 			}
 			
 			if (jObject.has("camera")) {
@@ -293,7 +305,24 @@ public class AnimationSubFileReader {
 				visibilitiesBuilder.put("rightSleeve", true);
 			}
 			
-			return new PovSettings(cameraTransform, visibilitiesBuilder.build(), rootTrasnformation, others);
+			if (jObject.has("limited_view_degrees")) {
+				JsonObject limitedViewDegrees = jObject.getAsJsonObject("limited_view_degrees");
+				JsonArray xRot = limitedViewDegrees.get("xRot").getAsJsonArray();
+				JsonArray yRot = limitedViewDegrees.get("yRot").getAsJsonArray();
+				
+				float xRotMin = Math.min(xRot.get(0).getAsFloat(), xRot.get(1).getAsFloat());
+				float xRotMax = Math.max(xRot.get(0).getAsFloat(), xRot.get(1).getAsFloat());
+				float yRotMin = Math.min(yRot.get(0).getAsFloat(), yRot.get(1).getAsFloat());
+				float yRotMax = Math.max(yRot.get(0).getAsFloat(), yRot.get(1).getAsFloat());
+				viewLimit = new PovSettings.ViewLimit(xRotMin, xRotMax, yRotMin, yRotMax);
+			}
+			
+			return new PovSettings(cameraTransform, visibilitiesBuilder.build(), rootTrasnformation, viewLimit, others, jObject.has("animation"), GsonHelper.getAsBoolean(jObject, "sync_frame", false));
 		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public interface AnimationSubFileDeserializer<T> {
+		public T deserialize(StaticAnimation animation, JsonElement json) throws JsonParseException;
 	}
 }

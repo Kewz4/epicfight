@@ -1,9 +1,9 @@
 {
     "format": "attributes",
     "root": "world",
-    "limit_degree": {
-    	"x": [-10, 90],
-    	"y": [-30, 30]
+    "limited_view_degrees": {
+    	"xRot": [-90.0, 0.0],
+    	"yRot": [-30.0, 30.0]
     },
     "animation": [
         {

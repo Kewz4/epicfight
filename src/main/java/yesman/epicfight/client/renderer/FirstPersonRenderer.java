@@ -82,16 +82,18 @@ public class FirstPersonRenderer extends PatchedLivingEntityRenderer<LocalPlayer
 				MathUtils.mulStack(poseStack, cameraTransform.toMatrix().invert());
 			}
 			
-			switch (localPlayerPatch.getPovSettings().transformation()) {
+			switch (localPlayerPatch.getPovSettings().rootTransformation()) {
 			case CAMERA -> {
 				poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
 				poseStack.mulPoseMatrix(lastPose);
 			}
 			case WORLD -> {
-				float yRot = 180.0F - Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
-				float yRotWorld = 180.0F - Mth.lerp(partialTicks, localPlayerPatch.getYRotO(), localPlayerPatch.getYRot());
-				poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot())));
-				poseStack.mulPose(Axis.YP.rotationDegrees(yRotWorld - yRot));
+				float yRotModel = 180.0F - Mth.rotLerp(partialTicks, entity.yRotO, entity.getYRot());
+				float yRotWorld = 180.0F - Mth.rotLerp(partialTicks, localPlayerPatch.getYRotO(), localPlayerPatch.getYRot());
+				float yRot = yRotWorld - yRotModel;
+				float xRot = Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot());
+				poseStack.mulPose(Axis.XP.rotationDegrees(xRot));
+				poseStack.mulPose(Axis.YP.rotationDegrees(yRot));
 				poseStack.translate(0.0F, -standingEyeHeight, 0.0F);
 			}
 			}

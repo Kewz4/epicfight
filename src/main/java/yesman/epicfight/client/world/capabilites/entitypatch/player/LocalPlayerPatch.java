@@ -38,6 +38,7 @@ import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.client.animation.AnimationSubFileReader;
 import yesman.epicfight.api.client.animation.AnimationSubFileReader.PovSettings;
+import yesman.epicfight.api.client.animation.AnimationSubFileReader.PovSettings.ViewLimit;
 import yesman.epicfight.api.client.animation.Layer;
 import yesman.epicfight.api.client.animation.property.ClientAnimationProperties;
 import yesman.epicfight.api.utils.math.MathUtils;
@@ -72,6 +73,12 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	private float lockOnXRotO;
 	private float lockOnYRot;
 	private float lockOnYRotO;
+	
+	private float fpvXRotO;
+	private float fpvXRot;
+	private float fpvYRotO;
+	private float fpvYRot;
+	private int fpvLerpTick;
 	
 	private FirstPersonLayer firstPersonLayer = new FirstPersonLayer();
 	private AnimationSubFileReader.PovSettings povSettings;
@@ -163,17 +170,19 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			}
 		}
 		
+		this.lockOnXRotO = this.lockOnXRot;
+		this.lockOnYRotO = this.lockOnYRot;
+		
 		// Handle camera lock-on
 		if (this.rayTarget != null) {
-			if (this.targetLockedOn) {
+			if (this.targetLockedOn && !this.isLerpingFpv()) {
 				Vec3 playerPosition = this.original.getEyePosition();
 				Vec3 targetPosition = this.rayTarget.getEyePosition();
 				Vec3 toTarget = targetPosition.subtract(playerPosition);
 				float yaw = (float)MathUtils.getYRotOfVector(toTarget);
 				float pitch = (float)MathUtils.getXRotOfVector(toTarget);
 				CameraType cameraType = this.minecraft.options.getCameraType();
-				this.lockOnXRotO = this.lockOnXRot;
-				this.lockOnYRotO = this.lockOnYRot;
+				
 				float lockOnXRotDst = pitch + (cameraType.isFirstPerson() ? 0.0F : 30.0F);
 				lockOnXRotDst = Mth.clamp(lockOnXRotDst, 0.0F, 60.0F);
 				
@@ -186,7 +195,6 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 				float yDiff = Mth.wrapDegrees(lockOnYRotDst - this.lockOnYRotO);
 				float xLerp = Mth.clamp(xDiff * 0.4F, -30.0F, 30.0F);
 				float yLerp = Mth.clamp(yDiff * 0.4F, -30.0F, 30.0F);
-				
 				this.lockOnXRot = this.lockOnXRotO + xLerp;
 				this.lockOnYRot = this.lockOnYRotO + yLerp;
 				
@@ -204,8 +212,6 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 			} else {
 				this.lockOnXRot = this.original.getXRot();
 				this.lockOnYRot = this.original.getYRot();
-				this.lockOnXRotO = this.lockOnXRot;
-				this.lockOnYRotO = this.lockOnYRot;
 			}
 			
 			if (this.rayTarget.isRemoved() || this.rayTarget.isInvisibleTo(this.original) || this.getOriginal().distanceToSqr(this.rayTarget) > 400.0D || (this.getAngleTo(this.rayTarget) > 80.0D && !this.targetLockedOn)) {
@@ -278,6 +284,14 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		
 		if (this.firstPersonLayer.animationPlayer.getAnimation().equals(Animations.EMPTY_ANIMATION)) {
 			this.povSettings = null;
+		}
+		
+		boolean isLerping = this.isLerpingFpv();
+		
+		if (isLerping) this.fpvLerpTick--;
+		if (isLerping && !this.isLerpingFpv()) {
+			this.original.setXRot(this.fpvXRot);
+			this.original.setYRot(this.fpvYRot);
 		}
 	}
 	
@@ -406,6 +420,11 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 	
 	@Override
 	public void setModelYRot(float amount, boolean sendPacket) {
+		/**
+		if (this.isFirstPerson() && !this.useModelYRot) {
+			this.fixFpvRotation(0.0F, amount);
+		}
+		**/
 		super.setModelYRot(amount, sendPacket);
 		
 		if (sendPacket) {
@@ -427,6 +446,28 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		this.modelYRot = originalDeg;
 	}
 	
+	public void fixFpvRotation(float xRot, float yRot) {
+		this.fpvXRot = Mth.wrapDegrees(xRot);
+		this.fpvXRotO = Mth.wrapDegrees(this.original.getXRot());
+		this.fpvYRot = Mth.wrapDegrees(yRot);
+		this.fpvYRotO = Mth.wrapDegrees(this.original.getYRot());
+		this.fpvLerpTick = 5;
+	}
+	
+	public float getLerpedFpvXRot(float partialTicks) {
+		float delta = ((this.fpvLerpTick) / 5.0F + (1.0F - partialTicks) * (1.0F / 5.0F));
+		return this.isLerpingFpv() ? Mth.rotLerp(delta, this.fpvXRot, this.fpvXRotO) : this.original.getXRot();
+	}
+	
+	public float getLerpedFpvYRot(float partialTicks) {
+		float delta = ((this.fpvLerpTick) / 5.0F + (1.0F - partialTicks) * (1.0F / 5.0F));
+		return this.isLerpingFpv() ? Mth.rotLerp(delta, this.fpvYRot, this.fpvYRotO) : this.original.getYRot();
+	}
+	
+	public boolean isLerpingFpv() {
+		return this.fpvLerpTick > -1;
+	}
+	
 	@Override
 	public void disableModelYRot(boolean sendPacket) {
 		super.disableModelYRot(sendPacket);
@@ -434,6 +475,49 @@ public class LocalPlayerPatch extends AbstractClientPlayerPatch<LocalPlayer> {
 		if (sendPacket) {
 			EpicFightNetworkManager.sendToServer(new CPModifyEntityModelYRot());
 		}
+	}
+	
+	@Override
+	public double checkXTurn(double xRot) {
+		if (xRot == 0.0D) {
+			return xRot;
+		}
+		
+		if (ClientConfig.enablePovAction && this.minecraft.options.getCameraType().isFirstPerson() && this.isEpicFightMode() && !this.getFirstPersonLayer().isOff()) {
+			ViewLimit viewLimit = this.getPovSettings().viewLimit();
+			
+			if (viewLimit != null) {
+				float xRotDest = this.original.getXRot() + (float)xRot * 0.15F;
+				
+				if (xRotDest <= viewLimit.xRotMin() || xRotDest >= viewLimit.xRotMax()) {
+					return 0.0D;
+				}
+			}
+		}
+		
+		return xRot;
+	}
+	
+	@Override
+	public double checkYTurn(double yRot) {
+		if (yRot == 0.0D) {
+			return yRot;
+		}
+		
+		if (ClientConfig.enablePovAction && this.minecraft.options.getCameraType().isFirstPerson() && this.isEpicFightMode() && !this.getFirstPersonLayer().isOff()) {
+			ViewLimit viewLimit = this.getPovSettings().viewLimit();
+			
+			if (viewLimit != null) {
+				float yRotDest = this.original.getYRot() + (float)yRot * 0.15F;
+				float yRotClamped = Mth.clamp(yRotDest, this.getYRot() + viewLimit.yRotMin(), this.getYRot() + viewLimit.yRotMax());
+				
+				if (yRotDest != yRotClamped) {
+					return 0.0D;
+				}
+			}
+		}
+		
+		return yRot;
 	}
 	
 	@Override

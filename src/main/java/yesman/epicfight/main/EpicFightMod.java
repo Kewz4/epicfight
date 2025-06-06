@@ -177,6 +177,14 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Added a Kube JS event hook for registering skills
  *  
  *  ***************************************************************
+ *  
+ *  20.11.3 -> 20.11.4
+ *  
+ *  Fixed the Demolition Leap charging animation not playing
+ *  Fixed the players to be able to break non-living entities like boats and item frames in Epic Fight mode
+ *  Added a FPV angle limitation when climbing ladder
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401
