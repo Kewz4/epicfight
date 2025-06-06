@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
-import com.ibm.icu.impl.Pair;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 

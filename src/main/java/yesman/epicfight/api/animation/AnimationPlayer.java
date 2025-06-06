@@ -1,6 +1,6 @@
 package yesman.epicfight.api.animation;
 
-import com.ibm.icu.impl.Pair;
+import com.mojang.datafixers.util.Pair;
 
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackSpeedModifier;
 import yesman.epicfight.api.animation.property.AnimationProperty.PlaybackTimeModifier;
@@ -41,8 +41,8 @@ public class AnimationPlayer {
 		
 		if (playTimeModifier != null) {
 			Pair<Float, Float> time = playTimeModifier.modify(currentPlay, entitypatch, playbackSpeed, this.prevElapsedTime, this.elapsedTime);
-			this.prevElapsedTime = time.first;
-			this.elapsedTime = time.second;
+			this.prevElapsedTime = time.getFirst();
+			this.elapsedTime = time.getSecond();
 		}
 		
 		if (this.elapsedTime > currentPlay.getTotalTime()) {
