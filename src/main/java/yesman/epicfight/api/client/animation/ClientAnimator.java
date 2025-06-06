@@ -429,8 +429,8 @@ public class ClientAnimator extends Animator {
 	
 	public void forceResetBeforeAction(LivingMotion livingMotion, LivingMotion compositeLivingMotion) {
 		if (!this.currentMotion.equals(livingMotion)) {
-			if (this.livingAnimations.containsKey(this.currentMotion)) {
-				this.baseLayer.playAnimation(this.getLivingMotion(this.currentMotion), this.entitypatch, 0.0F);
+			if (this.livingAnimations.containsKey(livingMotion)) {
+				this.baseLayer.playAnimation(this.getLivingMotion(livingMotion), this.entitypatch, 0.0F);
 			}
 		}
 		
