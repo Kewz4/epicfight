@@ -16,6 +16,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -26,6 +27,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
+import net.minecraftforge.entity.PartEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -125,7 +127,9 @@ public class ControllEngine {
 				
 				if (this.options.keyAttack.getKey() == EpicFightKeyMappings.ATTACK.getKey()) {
 					if (this.minecraft.hitResult.getType() == HitResult.Type.ENTITY) {
-						if (!(((EntityHitResult)this.minecraft.hitResult).getEntity() instanceof LivingEntity)) {
+						Entity hitEntity = ((EntityHitResult)this.minecraft.hitResult).getEntity();
+						
+						if (!(hitEntity instanceof LivingEntity) && !(hitEntity instanceof PartEntity)) {
 							shouldPlayAttackAnimation = false;
 						}
 					}

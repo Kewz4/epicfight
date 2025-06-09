@@ -1,5 +1,5 @@
 {
-	"xp_requirement": 0,
+	"xp_requirement": 5,
 	"attribute_modifiers": [
 		{
 			"attribute": "minecraft:generic.attack_damage",

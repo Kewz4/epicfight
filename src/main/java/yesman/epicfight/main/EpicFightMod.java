@@ -185,6 +185,14 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Added a FPV angle limitation when climbing ladder
  *  
  *  ***************************************************************
+ *  
+ *  20.11.4 -> 20.11.5
+ *  
+ *  Fixed the players doing vanilla attacks against Ender dragon
+ *  Fixed the Demolition Leap animation ends earlier with Tachi and Greatsword holding animations
+ *  Fixed the Death Harvest not requiring XP level to change the skill
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401
