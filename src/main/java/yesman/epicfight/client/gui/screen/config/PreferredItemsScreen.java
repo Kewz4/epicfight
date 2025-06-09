@@ -22,7 +22,6 @@ import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.SwordItem;
@@ -99,7 +98,7 @@ public class PreferredItemsScreen extends Screen {
 		return isweapon;
 	}
 	
-	public static void resetItems(boolean save) {
+	public static void resetItems() {
 		ClientConfig.combatPreferredItems.clear();
 		ClientConfig.miningPreferredItems.clear();
 		
@@ -110,10 +109,6 @@ public class PreferredItemsScreen extends Screen {
 				ClientConfig.miningPreferredItems.add(item);
 			}
 		});
-		
-		if (save) {
-			ClientConfig.saveChanges();
-		}
 	}
 	
 	public static void addWeaponCategorizedItemClass(Class<? extends Item> cls) {
@@ -245,9 +240,6 @@ public class PreferredItemsScreen extends Screen {
 					ClientConfig.combatPreferredItems.addAll(this.combatItems);
 					ClientConfig.miningPreferredItems.addAll(this.miningItems);
 					ClientConfig.saveChanges();
-					
-					System.out.println("mining " + this.miningItems.contains(Items.BOW) +" "+ ClientConfig.miningPreferredItems.contains(Items.BOW));
-					
 					this.onClose();
 				}
 			)
@@ -259,8 +251,7 @@ public class PreferredItemsScreen extends Screen {
 			Button.builder(
 				PreferredItemsScreen.GUI_FIND_WEAPONS,
 				(button) -> {
-					resetItems(false);
-					
+					resetItems();
 					
 					this.combatPreferredItems.children().clear();
 					this.miningPreferredItems.children().clear();
