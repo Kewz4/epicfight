@@ -191,6 +191,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the players doing vanilla attacks against Ender dragon
  *  Fixed the Demolition Leap animation ends earlier with Tachi and Greatsword holding animations
  *  Fixed the Death Harvest not requiring XP level to change the skill
+ *  Fixed the mount attack animations not playing
  *  
  *  ***************************************************************
  *  Minor version changes

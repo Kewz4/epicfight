@@ -255,9 +255,9 @@ public class MoveCoordFunctions {
 			}
 			
 			int startFrame = self.getRealAnimation().get().getProperty(ActionAnimationProperty.COORD_START_KEYFRAME_INDEX).orElse(0);
-			int endFrame = self.getRealAnimation().get().getProperty(ActionAnimationProperty.COORD_DEST_KEYFRAME_INDEX).orElse(self.getRealAnimation().get().getCoord().getKeyframes().length - 1);
+			int realAnimationEndFrame = self.getRealAnimation().get().getProperty(ActionAnimationProperty.COORD_DEST_KEYFRAME_INDEX).orElse(self.getRealAnimation().get().getCoord().getKeyframes().length - 1);
 			Vec3 toDestWorld = destLocation.subtract(startInWorld);
-			Vec3f toDestAnim = realAnimationCoord[endFrame].transform().translation();
+			Vec3f toDestAnim = realAnimationCoord[realAnimationEndFrame].transform().translation();
 			LivingEntity attackTarget = entitypatch.getTarget();
 			
 			// Calculate Entity-Entity collide radius
@@ -272,6 +272,8 @@ public class MoveCoordFunctions {
 			if (self.isLinkAnimation()) {
 				scale *= coord[coord.length - 1].transform().translation().length() / animLength;
 			}
+			
+			int endFrame = self.getRealAnimation().get().getProperty(ActionAnimationProperty.COORD_DEST_KEYFRAME_INDEX).orElse(coord.length - 1);
 			
 			for (int i = startFrame; i <= endFrame; i++) {
 				Vec3f translation = coord[i].transform().translation();
