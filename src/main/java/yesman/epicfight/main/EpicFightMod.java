@@ -194,6 +194,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the mount attack animations not playing
  *  
  *  ***************************************************************
+ *  
+ *  20.11.5 -> 20.11.6
+ *  
+ *  Fixed the tools to be registered as Mining preferred items
+ *  Added filter function in Item preference screen
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401

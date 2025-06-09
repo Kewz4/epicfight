@@ -1,8 +1,8 @@
 package yesman.epicfight.client.gui.screen.config;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
@@ -16,16 +16,22 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.TridentItem;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import yesman.epicfight.api.utils.ParseUtil;
+import yesman.epicfight.client.gui.screen.config.PreferredItemsScreen.ItemList.ItemEntry;
 import yesman.epicfight.config.ClientConfig;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -35,7 +41,8 @@ import yesman.epicfight.world.item.WeaponItem;
 
 @OnlyIn(Dist.CLIENT)
 public class PreferredItemsScreen extends Screen {
-	private static final Set<Class<? extends Item>> WEAPON_CATEGORIZED_ITEM_CLASSES = Sets.newHashSet();
+	private static final Set<Class<? extends Item>> WEAPON_CATEGORIZED_ITEM_CLASSES = new HashSet<> ();
+	private static final Set<Class<? extends Item>> TOOL_CATEGORIZED_ITEM_CLASSES = new HashSet<> ();
 	
 	static {
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(SwordItem.class);
@@ -43,6 +50,53 @@ public class PreferredItemsScreen extends Screen {
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(BowItem.class);
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(CrossbowItem.class);
 		WEAPON_CATEGORIZED_ITEM_CLASSES.add(TridentItem.class);
+		
+		TOOL_CATEGORIZED_ITEM_CLASSES.add(AxeItem.class);
+		TOOL_CATEGORIZED_ITEM_CLASSES.add(HoeItem.class);
+		TOOL_CATEGORIZED_ITEM_CLASSES.add(PickaxeItem.class);
+		TOOL_CATEGORIZED_ITEM_CLASSES.add(ShovelItem.class);
+	}
+	
+	@SafeVarargs
+	public static void registerWeaponCategorizedItemClasses(Class<? extends Item>... weaponClasses) {
+		WEAPON_CATEGORIZED_ITEM_CLASSES.addAll(Set.of(weaponClasses));
+	}
+	
+	@SafeVarargs
+	public static void registerToolCategorizedItemClasses(Class<? extends Item>... toolClasses) {
+		TOOL_CATEGORIZED_ITEM_CLASSES.addAll(Set.of(toolClasses));
+	}
+	
+	private static boolean judgeItemPreference(Item item) {
+		boolean isweapon = false;
+		boolean foundMatchingClass = false;
+		Class<?> itemClass = item.getClass();
+		
+		while (itemClass != Item.class) {
+			if (WEAPON_CATEGORIZED_ITEM_CLASSES.contains(itemClass)) {
+				isweapon = true;
+				foundMatchingClass = true;
+				break;
+			}
+			
+			if (TOOL_CATEGORIZED_ITEM_CLASSES.contains(itemClass)) {
+				isweapon = false;
+				foundMatchingClass = true;
+				break;
+			}
+			
+			itemClass = itemClass.getSuperclass();
+		}
+		
+		if (!foundMatchingClass) {
+			CapabilityItem itemCapability = EpicFightCapabilities.getItemStackCapability(item.getDefaultInstance());
+			
+			if (itemCapability != null && itemCapability instanceof WeaponCapability) {
+				isweapon = true;
+			}
+		}
+		
+		return isweapon;
 	}
 	
 	public static void resetItems(boolean save) {
@@ -50,27 +104,7 @@ public class PreferredItemsScreen extends Screen {
 		ClientConfig.miningPreferredItems.clear();
 		
 		ForgeRegistries.ITEMS.getValues().forEach(item -> {
-			boolean isweapon = false;
-			Class<?> itemClass = item.getClass();
-			
-			while (itemClass != Item.class) {
-				if (WEAPON_CATEGORIZED_ITEM_CLASSES.contains(itemClass)) {
-					isweapon = true;
-					break;
-				}
-				
-				itemClass = itemClass.getSuperclass();
-			}
-			
-			if (!isweapon) {
-				CapabilityItem itemCapability = EpicFightCapabilities.getItemStackCapability(item.getDefaultInstance());
-				
-				if (itemCapability != null && itemCapability instanceof WeaponCapability) {
-					isweapon = true;
-				}
-			}
-			
-			if (isweapon) {
+			if (judgeItemPreference(item)) {
 				ClientConfig.combatPreferredItems.add(item);
 			} else {
 				ClientConfig.miningPreferredItems.add(item);
@@ -95,17 +129,34 @@ public class PreferredItemsScreen extends Screen {
 	private PreferredItemsScreen.ItemList combatPreferredItems;
 	private PreferredItemsScreen.ItemList miningPreferredItems;
 	
+	private Set<Item> combatItems = new HashSet<> ();
+	private Set<Item> miningItems = new HashSet<> ();
+	
 	public PreferredItemsScreen(Screen parentScreen) {
 		super(Component.translatable(EpicFightMod.MODID + ".gui.configuration.item_preferences"));
 		
 		this.parentScreen = parentScreen;
+		
+		ForgeRegistries.ITEMS.forEach(item -> {
+			if (ClientConfig.combatPreferredItems.contains(item)) {
+				this.combatItems.add(item);
+			} else if (ClientConfig.miningPreferredItems.contains(item)) {
+				this.miningItems.add(item);
+			} else {
+				if (judgeItemPreference(item)) {
+					this.combatItems.add(item);
+				} else {
+					this.miningItems.add(item);
+				}
+			}
+		});
 	}
 	
 	@Override
 	protected void init() {
 		if (this.combatPreferredItems == null) {
 			this.combatPreferredItems = new PreferredItemsScreen.ItemList(200, this.height, true, Component.translatable(EpicFightMod.MODID + ".gui.combat_perferred"), Component.translatable(EpicFightMod.MODID + ".gui.combat_perferred.tooltip"), () -> this.miningPreferredItems);
-			ClientConfig.combatPreferredItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.combatPreferredItems.addEntry(item));
+			this.combatItems.stream().sorted(ItemEntry::compare).forEach((item) -> this.combatPreferredItems.addEntry(item));
 		} else {
 			this.combatPreferredItems.resize(200, this.height);
 			this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
@@ -113,7 +164,7 @@ public class PreferredItemsScreen extends Screen {
 		
 		if (this.miningPreferredItems == null) {
 			this.miningPreferredItems = new PreferredItemsScreen.ItemList(200, this.height, false, Component.translatable(EpicFightMod.MODID + ".gui.mining_preferred"), Component.translatable(EpicFightMod.MODID + ".gui.mining_preferred.tooltip"), () -> this.combatPreferredItems);
-			ClientConfig.miningPreferredItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.miningPreferredItems.addEntry(item));
+			this.miningItems.stream().sorted(ItemEntry::compare).forEach((item) -> this.miningPreferredItems.addEntry(item));
 		} else {
 			this.miningPreferredItems.resize(200, this.height);
 			this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
@@ -124,8 +175,16 @@ public class PreferredItemsScreen extends Screen {
 		this.addRenderableWidget(this.combatPreferredItems);
 		this.addRenderableWidget(this.miningPreferredItems);
 		
-		EditBox keyward = new EditBox(this.minecraft.font, this.width / 2 - 75, this.height - 50, 150, 15, Component.empty());
-		this.addRenderableWidget(keyward);
+		EditBox keywordEditBox = new EditBox(this.minecraft.font, this.width / 2 - 75, this.height - 50, 150, 15, Component.empty());
+		
+		keywordEditBox.setResponder(keyword -> {
+			this.combatPreferredItems.filter(keyword);
+			this.miningPreferredItems.filter(keyword);
+			this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
+			this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+		});
+		
+		this.addRenderableWidget(keywordEditBox);
 		
 		this.addRenderableWidget(
 			Button.builder(
@@ -134,7 +193,9 @@ public class PreferredItemsScreen extends Screen {
 					this.miningPreferredItems.children().removeIf(itemEntry -> {
 						String name = Component.translatable(itemEntry.itemStack.getItem().getDescriptionId()).getString();
 						
-						if (ParseUtil.toLowerCase(name).contains(ParseUtil.toLowerCase(keyward.getValue()))) {
+						if (ParseUtil.toLowerCase(name).contains(ParseUtil.toLowerCase(keywordEditBox.getValue()))) {
+							this.miningItems.remove(itemEntry.itemStack.getItem());
+							this.combatItems.add(itemEntry.itemStack.getItem());
 							this.combatPreferredItems.createOpponent(itemEntry);
 							return true;
 						}
@@ -157,7 +218,9 @@ public class PreferredItemsScreen extends Screen {
 					this.combatPreferredItems.children().removeIf(itemEntry -> {
 						String name = Component.translatable(itemEntry.itemStack.getItem().getDescriptionId()).getString();
 						
-						if (ParseUtil.toLowerCase(name).contains(ParseUtil.toLowerCase(keyward.getValue()))) {
+						if (ParseUtil.toLowerCase(name).contains(ParseUtil.toLowerCase(keywordEditBox.getValue()))) {
+							this.combatItems.remove(itemEntry.itemStack.getItem());
+							this.miningItems.add(itemEntry.itemStack.getItem());
 							this.miningPreferredItems.createOpponent(itemEntry);
 							return true;
 						}
@@ -179,9 +242,12 @@ public class PreferredItemsScreen extends Screen {
 				(button) -> {
 					ClientConfig.combatPreferredItems.clear();
 					ClientConfig.miningPreferredItems.clear();
-					ClientConfig.combatPreferredItems.addAll(this.combatPreferredItems.toSet());
-					ClientConfig.miningPreferredItems.addAll(this.miningPreferredItems.toSet());
+					ClientConfig.combatPreferredItems.addAll(this.combatItems);
+					ClientConfig.miningPreferredItems.addAll(this.miningItems);
 					ClientConfig.saveChanges();
+					
+					System.out.println("mining " + this.miningItems.contains(Items.BOW) +" "+ ClientConfig.miningPreferredItems.contains(Items.BOW));
+					
 					this.onClose();
 				}
 			)
@@ -193,16 +259,30 @@ public class PreferredItemsScreen extends Screen {
 			Button.builder(
 				PreferredItemsScreen.GUI_FIND_WEAPONS,
 				(button) -> {
-					resetItems(true);
+					resetItems(false);
+					
 					
 					this.combatPreferredItems.children().clear();
 					this.miningPreferredItems.children().clear();
+					this.combatItems.clear();
+					this.miningItems.clear();
 					
-					ClientConfig.combatPreferredItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.combatPreferredItems.addEntry(item));
-					ClientConfig.miningPreferredItems.stream().sorted((e1, e2) -> e1.getDescriptionId().compareTo(e2.getDescriptionId())).forEach((item) -> this.miningPreferredItems.addEntry(item));
+					ClientConfig.combatPreferredItems.stream()
+						.sorted(ItemEntry::compare)
+						.forEach(item -> {
+							this.combatItems.add(item);
+							this.combatPreferredItems.addEntry(item);
+						});
 					
-					this.combatPreferredItems.setScrollAmount(this.combatPreferredItems.getScrollAmount());
-					this.miningPreferredItems.setScrollAmount(this.miningPreferredItems.getScrollAmount());
+					ClientConfig.miningPreferredItems.stream()
+						.sorted(ItemEntry::compare)
+						.forEach(item -> {
+							this.miningItems.add(item);
+							this.miningPreferredItems.addEntry(item);
+						});
+					
+					this.combatPreferredItems.setScrollAmount(0.0F);
+					this.miningPreferredItems.setScrollAmount(0.0F);
 				}
 			)
 			.bounds(this.width / 2 + 2, this.height - 28, 100, 20)
@@ -296,10 +376,6 @@ public class PreferredItemsScreen extends Screen {
 			this.children().removeIf(entry -> entry.itemStack.getItem().equals(item));
 		}
 		
-		protected Set<Item> toSet() {
-			return this.children().stream().map(entry -> entry.itemStack.getItem()).collect(Collectors.toSet());
-		}
-		
 		protected void createOpponent(ItemEntry itemEntry) {
 			ItemEntry newEntry = new ItemEntry(itemEntry.itemStack, this.left);
 			this.addEntry(newEntry);
@@ -307,9 +383,26 @@ public class PreferredItemsScreen extends Screen {
 			this.setFocused(newEntry);
 		}
 		
+		public void filter(String keyword) {
+			this.children().clear();
+			
+			Set<Item> list = this.left ? PreferredItemsScreen.this.combatItems : PreferredItemsScreen.this.miningItems;
+			
+			list.stream().filter(item -> {
+				String name = Component.translatable(item.getDescriptionId()).getString();
+				return ParseUtil.toLowerCase(name).contains(ParseUtil.toLowerCase(keyword));
+			}).sorted(ItemEntry::compare).forEach(this::addEntry);
+		}
+		
 		@OnlyIn(Dist.CLIENT)
 		class ItemEntry extends ObjectSelectionList.Entry<PreferredItemsScreen.ItemList.ItemEntry> {
 			private static final Set<Item> UNRENDERABLE_ITEMS = Sets.newHashSet();
+			
+			public static int compare(Item e1, Item e2) {
+				String e1DisplayName = Component.translatable(e1.getDescriptionId()).getString();
+				String e2DisplayName = Component.translatable(e2.getDescriptionId()).getString();
+				return e1DisplayName.compareTo(e2DisplayName);
+			}
 			
 			private final ItemStack itemStack;
 			private final Button switchButton;
@@ -322,8 +415,15 @@ public class PreferredItemsScreen extends Screen {
 					(button) -> {
 						ItemList.this.removeEntry(this);
 						ItemList.this.setScrollAmount(ItemList.this.getScrollAmount());
-						
 						ItemList.this.opponent.get().createOpponent(this);
+						
+						if (left) {
+							PreferredItemsScreen.this.combatItems.remove(itemStack.getItem());
+							PreferredItemsScreen.this.miningItems.add(itemStack.getItem());
+						} else {
+							PreferredItemsScreen.this.miningItems.remove(itemStack.getItem());
+							PreferredItemsScreen.this.combatItems.add(itemStack.getItem());
+						}
 					}
 				)
 				.bounds(0, 0, 20, 20)

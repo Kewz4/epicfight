@@ -164,7 +164,7 @@ public class ClientConfig {
 				.collect(Collectors.toSet());
 		
 		if (combatPreferredItems.isEmpty() && miningPreferredItems.isEmpty()) {
-			PreferredItemsScreen.resetItems(false);
+			PreferredItemsScreen.resetItems(true);
 		}
 		
 		showTargetIndicator = SHOW_TARGET_INDICATOR.get();
