@@ -832,8 +832,10 @@ public class Animations {
 					.addStateRemoveOld(EntityState.CAN_SKILL_EXECUTION, true));
 		
 		BIPED_DEMOLITION_LEAP = builder.nextAccessor("biped/skill/demolition_leap", (accessor) ->
-			new ActionAnimation(0.05F, 1.0F, accessor, Armatures.BIPED)
-				.addProperty(ActionAnimationProperty.SYNC_CAMERA, true));
+			new ActionAnimation(0.05F, 0.4F, accessor, Armatures.BIPED)
+				.addProperty(ActionAnimationProperty.SYNC_CAMERA, true)
+				.newTimePair(0.0F, 1.0F)
+					.addStateRemoveOld(EntityState.UPDATE_LIVING_MOTION, false));
 		
 		BIPED_PHANTOM_ASCENT_FORWARD = builder.nextAccessor("biped/skill/phantom_ascent_forward", (accessor) ->
 			new ActionAnimation(0.05F, 0.7F, accessor, Armatures.BIPED)
