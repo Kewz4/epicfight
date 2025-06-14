@@ -35,21 +35,22 @@ public class WitherSkullPatch extends ProjectilePatch<WitherSkull> {
 	@Override
 	public boolean onProjectileImpact(ProjectileImpactEvent event) {
 		if (!(event.getRayTraceResult() instanceof EntityHitResult entityHitResult)) {
-			if (Math.random() < 0.2D) {
+			if (event.getProjectile().level() instanceof ServerLevel serverLevel && Math.random() < 0.2D) {
 				Vec3 location = event.getRayTraceResult().getLocation();
 				BlockPos blockpos = new BlockPos.MutableBlockPos(location.x, location.y, location.z);
 				Projectile projectile = event.getProjectile();
-				ServerLevel level = (ServerLevel)projectile.level();
 				EntityType<?> entityType = EpicFightEntities.WITHER_SKELETON_MINION.get();
 				
-				if (NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(entityType), level, blockpos, entityType) && SpawnPlacements.checkSpawnRules(entityType, level, MobSpawnType.REINFORCEMENT, blockpos, level.random)
-					&& !EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(level)
+				if (
+					NaturalSpawner.isSpawnPositionOk(SpawnPlacements.getPlacementType(entityType), serverLevel, blockpos, entityType) &&
+					SpawnPlacements.checkSpawnRules(entityType, serverLevel, MobSpawnType.REINFORCEMENT, blockpos, serverLevel.random) &&
+					!EpicFightGameRules.NO_MOBS_IN_BOSSFIGHT.getRuleValue(serverLevel)
 				) {
 					WitherBoss summoner = (projectile.getOwner() instanceof WitherBoss) ? ((WitherBoss)projectile.getOwner()) : null;
-					WitherSkeletonMinion witherskeletonminion = new WitherSkeletonMinion(level, summoner, projectile.getX(), projectile.getY() + 0.1D, projectile.getZ());
-					witherskeletonminion.finalizeSpawn(level, level.getCurrentDifficultyAt(blockpos), MobSpawnType.REINFORCEMENT, null, null);
+					WitherSkeletonMinion witherskeletonminion = new WitherSkeletonMinion(serverLevel, summoner, projectile.getX(), projectile.getY() + 0.1D, projectile.getZ());
+					witherskeletonminion.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(blockpos), MobSpawnType.REINFORCEMENT, null, null);
 					witherskeletonminion.setYRot(projectile.getYRot() - 180.0F);
-					level.addFreshEntity(witherskeletonminion);
+					serverLevel.addFreshEntity(witherskeletonminion);
 					
 					EpicFightCapabilities.<WitherSkeletonMinion, WitherSkeletonPatch<WitherSkeletonMinion>>getParameterizedEntityPatch(witherskeletonminion, WitherSkeletonMinion.class, WitherSkeletonPatch.class)
 						.ifPresent(witherskeletonpatch -> witherskeletonpatch.playAnimationInstantly(Animations.WITHER_SKELETON_SPECIAL_SPAWN));

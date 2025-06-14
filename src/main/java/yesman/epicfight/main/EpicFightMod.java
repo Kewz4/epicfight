@@ -201,6 +201,12 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Added filter function in Item preference screen
  *  
  *  ***************************************************************
+ *  
+ *  20.11.6 -> 20.11.7
+ *  
+ *  Fixed the Wither skull crash when hit terrain & entities
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  20.10.1.310 -> 20.10.1.401

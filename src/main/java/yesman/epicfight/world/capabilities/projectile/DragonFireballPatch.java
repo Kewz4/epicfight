@@ -23,10 +23,10 @@ public class DragonFireballPatch extends ProjectilePatch<DragonFireball> {
 	
 	@Override
 	public boolean onProjectileImpact(ProjectileImpactEvent event) {
-		if (event.getRayTraceResult() instanceof EntityHitResult) {
-			Entity entity = ((EntityHitResult)event.getRayTraceResult()).getEntity();
+		if (event.getRayTraceResult() instanceof EntityHitResult entityHitResult) {
+			Entity entity = entityHitResult.getEntity();
 			
-			if (!entity.is(event.getProjectile().getOwner())) {
+			if (!entity.level().isClientSide() && !entity.is(event.getProjectile().getOwner())) {
 				entity.hurt(entity.level().damageSources().indirectMagic(event.getProjectile(), event.getProjectile().getOwner()), 8.0F);
 			}
 		}
