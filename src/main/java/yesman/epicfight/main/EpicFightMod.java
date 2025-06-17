@@ -106,56 +106,6 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  ***************************************************************
  *  Major version changes
  *  ***************************************************************
- *  20.9.7 -> 20.10.1
- *  
- *  Cloth simulation for cape
- *  Added arrow trails
- *  Added first person animations for some animations
- *  
- *  Fixed witches not throwing potion
- *  Fixed custom armors parts invisible
- *  Fixed a crash when selecting mob capability model in datapack editor
- *  Fixed a crash with better nether when player equips armors
- *  Fixed skill book screen not showing up when Enhanced Visuals installed
- *  Fixed player model jitters when flying with elytra
- *  Fixed guard skill activates rapidly when blocking vanilla attacks
- *  Now players can't target or lock-on invisible entities
- *  Enhanced the accuracy of tracing ability of attack animations
- *  
- *  ***************************************************************
- *  
- *  20.10.2.101 -> 20.10.3
- *  
- *  Fixed the mob AI being stopped after a hit
- *  Removed test version notifier
- *  
- *  ***************************************************************
- *  
- *  20.10.3 -> 20.10.5
- *  
- *  Fixed the player head rotation while aiming bow, crossbow, and trident
- *  Fixed the epic fight painting to visible in creative tab
- *  Fixed the Blade Rush passing through enemies with no hit
- *  Fixed the simulated cape unsynced to the player's y rotation
- *  Fixed the modded bows & crossbows' rotations in hand
- *  Setting the config option "Enable cosmetic" to false will disable cloth simulation too
- *  
- *  ***************************************************************
- *  
- *  20.10.5 -> 20.10.6
- *  
- *  Fixed the animations entry not showing up on the list in datapack editor screen
- *  Fixed the crash when fighting against Ender dragon in a dedicated server
- *  
- *  ***************************************************************
- *  
- *  20.10.6 -> 20.10.7
- *  
- *  Fixed the Wrathful Lightning skill not summoning volts
- *  Fixed the dash attacks not charging up weapon innate skills
- *  
- *  ***************************************************************
- *  
  *  20.10.7 -> 20.11.2
  *  
  *  Added item keyword & preferences
@@ -205,66 +155,12 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  20.11.6 -> 20.11.7
  *  
  *  Fixed the Wither skull crash when hit terrain & entities
+ *  Fixed the player's innate skill disappearing when changing dimensions
+ *  Fixed the Ender dragon crash
  *  
  *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
- *  20.10.1.310 -> 20.10.1.401
- *  
- *  Added first-person animations for drink and eat animation
- *  Fixed guard consuming stamina rapidly when players block vanilla attacks
- *  Fixed arrow trail remaining after hitting a player in creative mode
- *  Corrected the shield's location when in the player's back
- *  Added {@link SkillCreateEvent.class} to modify skill builder before instantiate skills
- *  Better null check for {@link AnimationVariables.class}
- *  
- *  ***************************************************************
- *  
- *  20.10.1.401 -> 20.10.1.403
- *  
- *  Fixed multiple datapack editor crashes
- *  Fixed tooltips being hidden by the skill book screen
- *  Fixed zombies attacking each other
- *  Fixed {@link SkillCreateEvent.class} to follow generic event rule
- *  Added to register custom available weapon categories in {@link SwordmasterSkill$Builder.class}
- *  
- *  ***************************************************************
- *  
- *  20.10.1.502 Created.
- *  
- *  Added an health bar visibility option shows both target and hurt entities
- *  Added health bar animation
- *  Added health bar variations based on factions
- *  Fixed the absorption amount to be expressed in health bar
- *  Fixed a crash when playing Steel whirlwind animation without the skill
- *  Fixed a crash when Vex tries to attack
- *  Fixed the vex model
- *  Fixed the guard being bypassed when players take guard action right after finishing an attack
- *  Fixed demolition leap not working
- *  
- *  ***************************************************************
- *  
- *  20.10.1.502 -> 20.10.1.503
- *  
- *  Fixed players floating in the air when the guard break occurs
- *  Fixed a crash when rendering the health bar
- *  
- *  ***************************************************************
- *  
- *  20.10.1.503 -> 20.10.1.504
- *  
- *  Fixed the damage part of the health bar not to exceed the background
- *  Fixed the health bar so that the higher the damage taken, the more transition time there is
- *  Fixed the demolition leap not to cancel hand animation (greatsword, spear holding animations)
- *  Fixed the teleport bug that randomly happens when attacking
- *  
- *  ***************************************************************
- *  
- *  20.10.1.504 -> 20.10.1.505
- *  
- *  Fixed a datapack issue where the faction combo box is broken
- *  Fixed a datapack issue where it fails to find a faction
- *  Fixed to show models from the Curio slots regardless of whether they're compatible or not
  *  
  *  ***************************************************************
  *  

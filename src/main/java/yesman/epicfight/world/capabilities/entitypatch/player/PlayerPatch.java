@@ -155,7 +155,7 @@ public abstract class PlayerPatch<T extends Player> extends LivingEntityPatch<T>
 			container.setExecutor(this);
 			Skill oldone = oldSkill.skillContainers[i].getSkill();
 			
-			if (oldone != null && oldone.getCategory().learnable()) {
+			if (oldone != null && oldone.getCategory().shouldSynchronize()) {
 				container.setSkill(oldSkill.skillContainers[i].getSkill());
 			}
 			

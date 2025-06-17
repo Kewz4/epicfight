@@ -52,29 +52,33 @@ public class DragonCrystalLinkPhase extends PatchedDragonPhase {
 			}
 		}
 		
-		this.absorbingCrystal = nearestCrystal;
-		this.absorbingCrystal.setInvulnerable(true);
-		this.absorbCount = CHARGING_TICK;
-		
-		if (this.dragonpatch.isLogicalClient()) {
-			double x = -45.0D;
-			double z = 0.0D;
-			Vec3 correction = this.dragon.getLookAngle().multiply(2.0D, 0.0D, 2.0D).subtract(0.0D, 2.0D, 0.0D);
-			Vec3 spawnPosition = this.dragon.position().subtract(correction);
+		if (nearestCrystal != null) {
+			this.absorbingCrystal = nearestCrystal;
+			this.absorbingCrystal.setInvulnerable(true);
+			this.absorbCount = CHARGING_TICK;
 			
-			for (int i = 0; i < 2; i++) {
-				for (int j = 0; j < 2; j++) {
-					this.dragon.level().addAlwaysVisibleParticle(EpicFightParticles.FORCE_FIELD.get(), spawnPosition.x, spawnPosition.y, spawnPosition.z, x + 90.0D * i, Double.longBitsToDouble(this.dragon.getId()), z + 90.0D * j);
+			if (this.dragonpatch.isLogicalClient()) {
+				double x = -45.0D;
+				double z = 0.0D;
+				Vec3 correction = this.dragon.getLookAngle().multiply(2.0D, 0.0D, 2.0D).subtract(0.0D, 2.0D, 0.0D);
+				Vec3 spawnPosition = this.dragon.position().subtract(correction);
+				
+				for (int i = 0; i < 2; i++) {
+					for (int j = 0; j < 2; j++) {
+						this.dragon.level().addAlwaysVisibleParticle(EpicFightParticles.FORCE_FIELD.get(), spawnPosition.x, spawnPosition.y, spawnPosition.z, x + 90.0D * i, Double.longBitsToDouble(this.dragon.getId()), z + 90.0D * j);
+					}
+				}
+			} else {
+				if (!this.dragonpatch.isLogicalClient()) {
+					int shieldCorrection = this.getPlayersNearbyWithin(100.0D).size() - 1;
+					float stunShield = STUN_SHIELD_AMOUNT + 15.0F * shieldCorrection;
+					
+					this.dragonpatch.setMaxStunShield(stunShield);
+					this.dragonpatch.setStunShield(stunShield);
 				}
 			}
 		} else {
-			if (!this.dragonpatch.isLogicalClient()) {
-				int shieldCorrection = this.getPlayersNearbyWithin(100.0D).size() - 1;
-				float stunShield = STUN_SHIELD_AMOUNT + 15.0F * shieldCorrection;
-				
-				this.dragonpatch.setMaxStunShield(stunShield);
-				this.dragonpatch.setStunShield(stunShield);
-			}
+			this.dragon.getPhaseManager().setPhase(PatchedPhases.GROUND_BATTLE);
 		}
 	}
 	
