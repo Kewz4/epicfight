@@ -514,7 +514,8 @@ public class OpenMatrix4f {
 			
 			return dest; 
 		} else {
-			return null;
+			dest.setIdentity();
+			return dest;
 		}
 	}
 	
