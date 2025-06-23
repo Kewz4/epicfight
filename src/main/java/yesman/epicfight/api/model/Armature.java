@@ -16,7 +16,6 @@ import yesman.epicfight.api.animation.Joint;
 import yesman.epicfight.api.animation.JointTransform;
 import yesman.epicfight.api.animation.Pose;
 import yesman.epicfight.api.asset.JsonAssetLoader;
-import yesman.epicfight.api.utils.ParseUtil;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.main.EpicFightSharedConstants;
@@ -25,7 +24,7 @@ public class Armature {
 	private final String name;
 	private final Int2ObjectMap<Joint> jointById;
 	private final Map<String, Joint> jointByName;
-	private final Map<String, String> pathIndexMap;
+	private final Map<String, Joint.HierarchicalJointAccessor> pathIndexMap;
 	private final int jointCount;
 	private final OpenMatrix4f[] poseMatrices;
 	public final Joint rootJoint;
@@ -92,19 +91,18 @@ public class Armature {
 	}
 	
 	public OpenMatrix4f getBindedTransformFor(Pose pose, Joint joint) {
-		return this.getBindedTransformByJointIndex(pose, this.searchPathIndex(joint.getName()));
+		return this.getBoundTransformByJointIndex(pose, this.searchPathIndex(joint.getName()).createAccessTicket(this.rootJoint));
 	}
 	
-	/** Get binded position of joint **/
-	public OpenMatrix4f getBindedTransformByJointIndex(Pose pose, String pathIndex) {
-		return this.getBoundJointTransformRecursively(pose, this.rootJoint, new OpenMatrix4f(), pathIndex, pathIndex.length() - 1);
+	public OpenMatrix4f getBoundTransformByJointIndex(Pose pose, Joint.AccessTicket pathIndices) {
+		return this.getBoundJointTransformRecursively(pose, this.rootJoint, new OpenMatrix4f(), pathIndices);
 	}
 	
-	private OpenMatrix4f getBoundJointTransformRecursively(Pose pose, Joint joint, OpenMatrix4f parentTransform, String pathIndex, int index) {
+	private OpenMatrix4f getBoundJointTransformRecursively(Pose pose, Joint joint, OpenMatrix4f parentTransform, Joint.AccessTicket pathIndices) {
 		JointTransform jt = pose.orElseEmpty(joint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(joint, parentTransform);
 		
-		return index > -1 ? this.getBoundJointTransformRecursively(pose, joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndex.charAt(index)) - 1), result, pathIndex, index - 1) : result;
+		return pathIndices.hasNext() ? this.getBoundJointTransformRecursively(pose, pathIndices.next(), result, pathIndices) : result;
 	}
 	
 	public boolean hasJoint(String name) {
@@ -120,42 +118,55 @@ public class Armature {
 	}
 	
 	/**
-	 * Search a joint path to given joint name
-	 * For root joints, it returns empty string
+	 * Search and record joint path from root to terminal
 	 * 
 	 * @param terminalJointName
 	 * @return
 	 */
-	public String searchPathIndex(String terminalJointName) {
-		if (this.pathIndexMap.containsKey(terminalJointName)) {
-			return this.pathIndexMap.get(terminalJointName);
+	public Joint.HierarchicalJointAccessor searchPathIndex(String terminalJointName) {
+		return this.searchPathIndex(this.rootJoint, terminalJointName);
+	}
+	
+	/**
+	 * Search and record joint path to terminal
+	 * 
+	 * @param start
+	 * @param terminalJointName
+	 * @return
+	 */
+	public Joint.HierarchicalJointAccessor searchPathIndex(Joint start, String terminalJointName) {
+		String signature = start.getName() + "-" + terminalJointName;
+		
+		if (this.pathIndexMap.containsKey(signature)) {
+			return this.pathIndexMap.get(signature);
 		} else {
-			String pathIndex = this.rootJoint.searchPath("", terminalJointName);
+			Joint.HierarchicalJointAccessor.Builder pathBuilder = start.searchPath(Joint.HierarchicalJointAccessor.builder(), terminalJointName);
+			Joint.HierarchicalJointAccessor accessor;
 			
-			if (pathIndex == null) {
+			if (pathBuilder == null) {
 				throw new IllegalArgumentException("Failed to get joint path index for " + terminalJointName);
 			} else {
-				this.pathIndexMap.put(terminalJointName, pathIndex);
+				accessor = pathBuilder.build();
+				this.pathIndexMap.put(signature, accessor);
 			}
 			
-			return pathIndex;
+			return accessor;
 		}
 	}
 	
-	public void gatherAllJointsInPathToTerminal(String terminalJointName, Collection<String> collections) {
+	public void gatherAllJointsInPathToTerminal(String terminalJointName, Collection<String> jointsInPath) {
 		if (!this.jointByName.containsKey(terminalJointName)) {
 			throw new NoSuchElementException("No " + terminalJointName + " joint in this armature!");
 		}
 		
-		String pathIndices = this.searchPathIndex(terminalJointName);
-		Joint joint = this.rootJoint;
-		int index = pathIndices.length() - 1;
-		collections.add(joint.getName());
+		Joint.HierarchicalJointAccessor pathIndices = this.searchPathIndex(terminalJointName);
+		Joint.AccessTicket accessTicket = pathIndices.createAccessTicket(this.rootJoint);
 		
-		while (index > -1) {
-			joint = joint.getSubJoint(ParseUtil.parseCharacterToNumber(pathIndices.charAt(index)) - 1);
-			collections.add(joint.getName());
-			index--;
+		Joint joint = this.rootJoint;
+		jointsInPath.add(joint.getName());
+		
+		while (accessTicket.hasNext()) {
+			jointsInPath.add(accessTicket.next().getName());
 		}
 	}
 	

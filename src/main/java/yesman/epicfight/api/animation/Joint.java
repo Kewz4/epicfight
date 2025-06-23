@@ -1,12 +1,19 @@
 package yesman.epicfight.api.animation;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import com.google.common.collect.Lists;
 
+import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.api.utils.math.OpenMatrix4f;
 
 public class Joint {
@@ -114,17 +121,26 @@ public class Joint {
 		return this.jointName.hashCode() ^ this.jointId;
 	}
 	
-	public String searchPath(String path, String joint) {
-		if (joint.equals(this.getName())) {
-			return path;
+	/**
+	 * Use the method that memorize path search results. {@link Armature#searchPathIndex(Joint, String)}
+	 * 
+	 * @param builder
+	 * @param jointName
+	 * @return
+	 */
+	@ApiStatus.Internal
+	public HierarchicalJointAccessor.Builder searchPath(HierarchicalJointAccessor.Builder builder, String jointName) {
+		if (jointName.equals(this.getName())) {
+			return builder;
 		} else {
-			int i = 1;
+			int i = 0;
 			
 			for (Joint subJoint : this.subJoints) {
-				String str = subJoint.searchPath(i + path, joint);
+				HierarchicalJointAccessor.Builder nextBuilder = subJoint.searchPath(builder.append(i), jointName);
 				i++;
-				if (str != null) {
-					return str;
+				
+				if (nextBuilder != null) {
+					return nextBuilder;
 				}
 			}
 			
@@ -135,7 +151,6 @@ public class Joint {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		
 		sb.append("\nid: " + this.jointId);
 		sb.append("\nname: " + this.jointName);
 		sb.append("\nlocal transform: " + this.localTransform);
@@ -155,10 +170,103 @@ public class Joint {
 		
 		sb.append("]\n");
 		
+		return sb.toString();
+	}
+	
+	public String printIncludingChildren() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(this.toString());
+		
 		for (Joint joint : this.subJoints) {
-			sb.append(joint.toString());
+			sb.append(joint.printIncludingChildren());
 		}
 		
 		return sb.toString();
+	}
+	
+	public static class HierarchicalJointAccessor {
+		private Queue<Integer> indicesToTerminal;
+		private final String signature;
+		
+		private HierarchicalJointAccessor(Builder builder) {
+			this.indicesToTerminal = builder.indicesToTerminal;
+			this.signature = builder.signature;
+		}
+		
+		public AccessTicket createAccessTicket(Joint rootJoint) {
+			return new AccessTicket(this.indicesToTerminal, rootJoint);
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			if (o instanceof HierarchicalJointAccessor accessor) {
+				this.signature.equals(accessor.signature);
+			}
+			
+			return super.equals(o);
+		}
+		
+		@Override
+		public int hashCode() {
+			return this.signature.hashCode();
+		}
+		
+		public static Builder builder() {
+			return new Builder(new LinkedList<> (), "");
+		}
+		
+		public static class Builder {
+			private Queue<Integer> indicesToTerminal;
+			private String signature;
+			
+			private Builder(Queue<Integer> indicesToTerminal, String signature) {
+				this.indicesToTerminal = indicesToTerminal;
+				this.signature = signature;
+			}
+			
+			public Builder append(int index) {
+				String signatureNext;
+				
+				if (this.indicesToTerminal.isEmpty()) {
+					signatureNext = this.signature + String.valueOf(index);
+				} else {
+					signatureNext = this.signature + "-" + String.valueOf(index);
+				}
+				
+				Queue<Integer> nextQueue = new LinkedList<> (this.indicesToTerminal);
+				nextQueue.add(index);
+				
+				return new Builder(nextQueue, signatureNext);
+			}
+			
+			public HierarchicalJointAccessor build() {
+				return new HierarchicalJointAccessor(this);
+			}
+		}
+	}
+	
+	public static class AccessTicket implements Iterator<Joint> {
+		Queue<Integer> accecssStack;
+		Joint joint;
+		
+		private AccessTicket(Queue<Integer> indicesToTerminal, Joint rootJoint) {
+			this.accecssStack = new LinkedList<> (indicesToTerminal);
+			this.joint = rootJoint;
+		}
+		
+		public boolean hasNext() {
+			return !this.accecssStack.isEmpty();
+		}
+		
+		public Joint next() {
+			if (this.hasNext()) {
+				int nextIndex = this.accecssStack.poll();
+				this.joint = this.joint.subJoints.get(nextIndex);
+			} else {
+				throw new NoSuchElementException();
+			}
+			
+			return this.joint;
+		}
 	}
 }

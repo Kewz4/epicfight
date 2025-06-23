@@ -29,21 +29,20 @@ public class FABRIK {
 	}
 	
 	public void addChain(Pose pose, Joint startJoint, Joint endJoint) {
-		OpenMatrix4f bindTransform = armature.getBindedTransformFor(pose, startJoint);
-		int pathIndex = Integer.parseInt(startJoint.searchPath("", endJoint.getName()));
-		OpenMatrix4f.toTranslationVector(bindTransform, this.startPos);
-		this.addChainInternal(pose, bindTransform, startJoint, pathIndex);
+		OpenMatrix4f boundTransform = this.armature.getBindedTransformFor(pose, startJoint);
+		Joint.HierarchicalJointAccessor jointAccessor = this.armature.searchPathIndex(startJoint, endJoint.getName());
+		OpenMatrix4f.toTranslationVector(boundTransform, this.startPos);
+		this.addChainRecursively(pose, boundTransform, startJoint, jointAccessor.createAccessTicket(startJoint));
 	}
 	
-	private void addChainInternal(Pose pose, OpenMatrix4f parentTransform, Joint joint, int pathIndex) {
-		Joint nextJoint = joint.getSubJoints().get((pathIndex % 10) - 1);
+	private void addChainRecursively(Pose pose, OpenMatrix4f parentTransform, Joint joint, Joint.AccessTicket accessTicket) {
+		Joint nextJoint = accessTicket.next();
 		JointTransform jt = pose.orElseEmpty(nextJoint.getName());
 		OpenMatrix4f result = jt.getAnimationBoundMatrix(nextJoint, parentTransform);
 		this.chains.add(new Chain(joint.getName(), parentTransform.toTranslationVector(), result.toTranslationVector()));
-		int remainPath = pathIndex / 10;
 		
-		if (remainPath > 0) {
-			this.addChainInternal(pose, result, nextJoint, remainPath);
+		if (accessTicket.hasNext()) {
+			this.addChainRecursively(pose, result, nextJoint, accessTicket);
 		}
 	}
 	
@@ -54,9 +53,9 @@ public class FABRIK {
 			this.backward();
 			this.forward();
 		}
-
+		
 		Quaternionf parentQuaternion = new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F);
-
+		
 		for (Chain chain : this.chains) {
 			Vector3f tailToHeadM = chain.tailToHead.toMojangVector();
 			tailToHeadM.rotate(parentQuaternion);

@@ -196,14 +196,12 @@ public class InverseKinematicsSimulator extends AbstractSimulator<Joint, Inverse
 		
 		public BakedInverseKinematicsDefinition bake(AssetAccessor<? extends Armature> armature, Map<String, TransformSheet> animationClip, boolean correctY, boolean correctZ) {
 			Joint joint = armature.get().searchJointByName(this.startJoint.getName());
-			int pathToEnd = Integer.parseInt(joint.searchPath("", this.endJoint.getName()));
-			
+			Joint.AccessTicket accessor = armature.get().searchPathIndex(joint, this.endJoint.getName()).createAccessTicket(joint);
 			List<String> pathToTerminal = Lists.newArrayList();
 			pathToTerminal.add(joint.getName());
 			
-			while (pathToEnd > 0) {
-				joint = joint.getSubJoints().get(pathToEnd % 10 - 1);
-				pathToEnd /= 10;
+			while (accessor.hasNext()) {
+				joint = accessor.next();
 				pathToTerminal.add(joint.getName());
 			}
 			

@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.util.StringUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -48,7 +47,6 @@ public class MultiOBBCollider extends MultiCollider<OBBCollider> {
 		float partialScale = 1.0F / (colliderCount - 1);
 		float interpolation = 0.0F;
 		Armature armature = entitypatch.getArmature();
-		String pathIndex =  armature.searchPathIndex(joint.getName());
 		EntityState state = animation.getState(entitypatch, elapsedTime);
 		EntityState prevState = animation.getState(entitypatch, prevElapsedTime);
 		boolean attacking = prevState.attacking() || state.attacking() || (prevState.getLevel() < 2 && state.getLevel() > 2);
@@ -73,7 +71,7 @@ public class MultiOBBCollider extends MultiCollider<OBBCollider> {
 			
 			Pose pose;
 			
-			if (StringUtil.isNullOrEmpty(pathIndex)) {
+			if (armature.rootJoint.getName().equals(joint.getName())) {
 				pose = new Pose();
 				pose.putJointData("Root", JointTransform.empty());
 				animation.modifyPose(animation, pose, entitypatch, elapsedTime, 1.0F);
