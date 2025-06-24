@@ -174,9 +174,8 @@ public class ClientEvents {
 			ItemCapabilityProvider.clear();
 			EntityPatchProvider.clear();
 			WeaponTypeReloadListener.clear();
+			ClientEngine.getInstance().renderEngine.clear();
+			FractureBlockState.reset();
 		}
-		
-		ClientEngine.getInstance().renderEngine.clear();
-		FractureBlockState.reset();
 	}
 }
