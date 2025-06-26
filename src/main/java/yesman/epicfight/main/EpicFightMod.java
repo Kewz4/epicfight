@@ -164,6 +164,7 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  Fixed the Endurance having no cooldown
  *  Fixed the player head jittering when locking on { Credit - Exopandora(the dev of Shoulder surfing mod) }
+ *  Fixed the camera snap when locking on target is dead
  *  
  *  Interal API changes
  *  - Fixed the random crash caused by OpenMatrix4f
