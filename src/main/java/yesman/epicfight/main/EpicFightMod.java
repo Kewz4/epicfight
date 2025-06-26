@@ -159,6 +159,18 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the Ender dragon crash
  *  
  *  ***************************************************************
+ *  
+ *  20.11.7 -> 20.11.8
+ *  
+ *  Fixed the Endurance having no cooldown
+ *  Fixed the player head jittering when locking on { Credit - Exopandora(the dev of Shoulder surfing mod) }
+ *  
+ *  Interal API changes
+ *  - Fixed the random crash caused by OpenMatrix4f
+ *  - Experimental fix for ConcurrentModificationException when a player logs out
+ *  - Enhanced the armature pathing algorithm so that it can accomodates over 10 sub joints
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  

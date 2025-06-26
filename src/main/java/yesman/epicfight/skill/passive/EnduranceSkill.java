@@ -40,12 +40,12 @@ public class EnduranceSkill extends PassiveSkill {
 		PlayerEventListener listener = container.getExecutor().getEventListener();
 		
 		listener.addEventListener(EventType.HURT_EVENT_PRE, EVENT_UUID, (event) -> {
-			if (container.getStack() > 0 && container.getExecutor().getEntityState().getLevel() == 1 && !container.getExecutor().isLogicalClient()) {
-				float staminaConsume = Math.max(container.getExecutor().getStamina() * this.staminaRatio, 1.5F);
+			if (container.getExecutor().getEntityState().getLevel() == 1 && event.getDamageSource().getEntity() != null && event.getPlayerPatch().consumeForSkill(this, this.resource)) {
+				float staminaConsumption = Math.max(container.getExecutor().getStamina() * this.staminaRatio, 1.5F);
 				
-				if (container.getExecutor().consumeForSkill(this, Skill.Resource.STAMINA, staminaConsume)) {
+				if (container.getExecutor().consumeForSkill(this, Skill.Resource.STAMINA, staminaConsumption)) {
 					FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-					buf.writeFloat(staminaConsume);
+					buf.writeFloat(staminaConsumption);
 					this.executeOnServer(container, buf);
 				}
 			}
