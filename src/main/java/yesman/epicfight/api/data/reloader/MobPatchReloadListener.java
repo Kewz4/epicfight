@@ -3,6 +3,7 @@ package yesman.epicfight.api.data.reloader;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -113,7 +114,16 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 				continue;
 			}
 			
-			MOB_PATCH_PROVIDERS.put(entityType, deserialize(entityType, tag, false, resourceManager));
+			AbstractMobPatchProvider abstractMobpatchProvider = null;
+			
+			try {
+				abstractMobpatchProvider = deserialize(entityType, tag, false, resourceManager);
+			} catch (Exception e) {
+				EpicFightMod.LOGGER.warn("Can't deserialize mob capability: " + registryName + ": " + e.getLocalizedMessage());
+				continue;
+			}
+			
+			MOB_PATCH_PROVIDERS.put(entityType, abstractMobpatchProvider);
 			EntityPatchProvider.putCustomEntityPatch(entityType, (entity) -> () -> MOB_PATCH_PROVIDERS.get(entity.getType()).get(entity));
 			TAGMAP.put(entityType, filterClientData(tag));
 			
@@ -464,7 +474,13 @@ public class MobPatchReloadListener extends SimpleJsonResourceReloadListener {
 			for (int j = 0; j < behaviorList.size(); j++) {
 				Behavior.Builder<T> behaviorBuilder = Behavior.builder();
 				CompoundTag behavior = behaviorList.getCompound(j);
-				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(behavior.getString("animation"));
+				String animationName = behavior.getString("animation");
+				AnimationAccessor<? extends StaticAnimation> animation = AnimationManager.byKey(animationName);
+				
+				if (animation == null) {
+					throw new NoSuchElementException("No animation named " + animationName);
+				}
+				
 				ListTag conditionList = behavior.getList("conditions", 10);
 				behaviorBuilder.animationBehavior(animation);
 				
