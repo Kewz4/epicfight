@@ -1,10 +1,10 @@
 package yesman.epicfight.client.gui;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.platform.Window;
@@ -51,7 +51,7 @@ public class BattleModeGui {
 	private Minecraft minecraft;
 	private int sliding;
 	private boolean slidingToggle;
-	private final List<SkillContainer> skillIcons = Lists.newLinkedList();
+	private final List<SkillContainer> skillIcons = new LinkedList<> ();
 
 	public BattleModeGui(Minecraft minecraft) {
 		this.sliding = 29;
@@ -74,28 +74,34 @@ public class BattleModeGui {
 	public void renderStaminaBar(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
 		LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
 		
-		if (playerpatch != null) {
-			float maxStamina = playerpatch.getMaxStamina();
-			float stamina = playerpatch.getStamina();
-			
-			if (maxStamina > 0.0F && stamina < maxStamina) {
-				Vec2i pos = ClientConfig.getStaminaPosition(screenWidth, screenHeight);
-				float prevStamina = playerpatch.getStaminaO();
-				float ratio = (prevStamina + (stamina - prevStamina) * partialTick) / maxStamina;
+		if (playerpatch == null) {
+			return;
+		}
+		
+		float maxStamina = playerpatch.getMaxStamina();
+		float stamina = playerpatch.getStamina();
+		
+		if (maxStamina > 0.0F && stamina < maxStamina) {
+			Vec2i pos = ClientConfig.getStaminaPosition(screenWidth, screenHeight);
+			float prevStamina = playerpatch.getStaminaO();
+			float ratio = (prevStamina + (stamina - prevStamina) * partialTick) / maxStamina;
 
-				guiGraphics.pose().pushPose();
-				guiGraphics.pose().translate(0, this.sliding, 0);
-				RenderSystem.setShaderColor(1.0F, ratio, 0.25F, 1.0F);
-				guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 118, 4, 2, 38, 237, 9, 255, 255);
-				guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, (int)(118*ratio), 4, 2, 47, (int)(237*ratio), 9, 255, 255);
-				RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-				guiGraphics.pose().popPose();
-			}
+			guiGraphics.pose().pushPose();
+			guiGraphics.pose().translate(0, this.sliding, 0);
+			RenderSystem.setShaderColor(1.0F, ratio, 0.25F, 1.0F);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, 118, 4, 2, 38, 237, 9, 255, 255);
+			guiGraphics.blit(EntityUI.BATTLE_ICON, pos.x, pos.y, (int)(118*ratio), 4, 2, 47, (int)(237*ratio), 9, 255, 255);
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			guiGraphics.pose().popPose();
 		}
 	}
 	
 	public void renderNormalSkills(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
 		LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
+		
+		if (playerpatch == null) {
+			return;
+		}
 		
 		for (int i = 0; i < SkillSlot.ENUM_MANAGER.universalValues().size(); i++) {
 			SkillContainer container = playerpatch.getSkill(i);
@@ -134,6 +140,11 @@ public class BattleModeGui {
 	
 	public void renderWeaponInnateSkill(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
 		LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
+		
+		if (playerpatch == null) {
+			return;
+		}
+		
 		SkillContainer container = playerpatch.getSkill(SkillSlots.WEAPON_INNATE);
 
 		if (!container.isEmpty()) {
@@ -267,6 +278,10 @@ public class BattleModeGui {
 	
 	public void renderCharingBar(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
 		LocalPlayerPatch playerpatch = ClientEngine.getInstance().getPlayerPatch();
+		
+		if (playerpatch == null) {
+			return;
+		}
 		
 		if (playerpatch.isChargingSkill()) {
 			int chargeAmount = playerpatch.getChargingSkill().getChargingAmount(playerpatch);
