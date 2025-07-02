@@ -6,6 +6,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -106,5 +107,13 @@ public class ClientModBusEvent {
 				simOwner.getClothSimulator().restart(entry.getKey());
 			});
 		}
+	}
+	
+	@SubscribeEvent
+	public static void registerGuiOverlaysEvent(RegisterGuiOverlaysEvent event) {
+		event.registerAboveAll("stamina_bar", ClientEngine.getInstance().renderEngine.battleModeUI::renderStaminaBar);
+		event.registerAboveAll("skills", ClientEngine.getInstance().renderEngine.battleModeUI::renderNormalSkills);
+		event.registerAboveAll("weapon_innate", ClientEngine.getInstance().renderEngine.battleModeUI::renderWeaponInnateSkill);
+		event.registerAboveAll("charging_bar", ClientEngine.getInstance().renderEngine.battleModeUI::renderCharingBar);
 	}
 }

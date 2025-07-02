@@ -764,7 +764,7 @@ public class RenderEngine {
 				renderEngine.overlayManager.renderTick(window.getGuiScaledWidth(), window.getGuiScaledHeight());
 				
 				if (Minecraft.renderNames() && !(Minecraft.getInstance().screen instanceof UISetupScreen)) {
-					renderEngine.battleModeUI.renderGui(playerpatch, event.getGuiGraphics(), event.getPartialTick());
+					renderEngine.battleModeUI.renderTick();
 				}
 				
 				//Shows the epic fight version in beta
