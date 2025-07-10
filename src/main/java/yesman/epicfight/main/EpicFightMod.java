@@ -178,6 +178,8 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the Ender dragon crash when absorbing crystal
  *  Fixed the mob's living motions for Weapon categories are not applied
  *  Fixed the Giant Whirldwind animation speed not varying based on charging amount for other players
+ *  Fixed the animation list not appearing in Combat Behaviors and Weapon Combo screen in datapack editor
+ *  Fixed the parsing error for combat behavior conditions
  *  Increased the update rate of entity's position when playing movement animations
  *  
  *  Interal API changes
