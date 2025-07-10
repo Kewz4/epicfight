@@ -165,11 +165,23 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  Fixed the Endurance having no cooldown
  *  Fixed the player head jittering when locking on { Credit - Exopandora(the dev of Shoulder surfing mod) }
  *  Fixed the camera snap when locking on target is dead
- *  
  *  Interal API changes
  *  - Fixed the random crash caused by OpenMatrix4f
  *  - Experimental fix for ConcurrentModificationException when a player logs out
  *  - Enhanced the armature pathing algorithm so that it can accomodates over 10 sub joints
+ *  
+ *  ***************************************************************
+ *  
+ *  20.11.8 -> 20.11.9
+ *  
+ *  Forge version changed 47.4.0 > 47.4.3
+ *  Fixed the Ender dragon crash when absorbing crystal
+ *  Fixed the mob's living motions for Weapon categories are not applied
+ *  Fixed the Giant Whirldwind animation speed not varying based on charging amount for other players
+ *  Increased the update rate of entity's position when playing movement animations
+ *  
+ *  Interal API changes
+ *  - Splitted HUD components into multiple Forge overlays, making them hideable by event hooks
  *  
  *  ***************************************************************
  *  Minor version changes
@@ -179,16 +191,13 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  
  *  --- TO DO ---
  *  
- *  Fix cape in ladder
  *  Update language files (always)
  *  Add an reach property to attack animation (idea)
  *  Add an alert function when an entity targeting the player tries grappling or execution attack
  *  Add UI for execution resistance
  *  Add functionality to blooming effect (resists wither effect)
  *  Add a screen for setting animation properties in datapack editor
- *  First person animation system by adding /data/ folder in the path, and few samples
  *  Enhance the stun system (maybe remove or barely leave knockback)
- *  Add toasts & achievements to guide beginners
  *  Add resource hashing for animation file to prevent client modifying animation by resource pack
  *  
  *  @author yesman

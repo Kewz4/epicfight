@@ -59,6 +59,7 @@ import yesman.epicfight.api.animation.Keyframe;
 import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.Pose;
+import yesman.epicfight.api.animation.SynchedAnimationVariableKeys;
 import yesman.epicfight.api.animation.TransformSheet;
 import yesman.epicfight.api.animation.property.AnimationEvent;
 import yesman.epicfight.api.animation.property.AnimationEvent.InPeriodEvent;
@@ -120,7 +121,6 @@ import yesman.epicfight.model.armature.types.ToolHolderArmature;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.skill.identity.MeteorSlamSkill;
-import yesman.epicfight.skill.weaponinnate.SteelWhirlwindSkill;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.boss.WitherPatch;
@@ -1982,16 +1982,8 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.0F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 4)
 				.addProperty(ActionAnimationProperty.COORD_SET_BEGIN, (animation, entitypatch, transformSheet) -> {
-					if (!animation.isLinkAnimation() && entitypatch instanceof PlayerPatch<?> playerpatch) {
-						Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.STEEL_WHIRLWIND);
-						int chargingPower;
-						
-						if (skill.isEmpty()) {
-							chargingPower = 1;
-						} else {
-							chargingPower = SteelWhirlwindSkill.getChargingPower(skill.get());
-						}
-						
+					if (!animation.isLinkAnimation()) {
+						int chargingPower = entitypatch.getAnimator().getVariables().get(SynchedAnimationVariableKeys.CHARGING_TICKS.get(), animation.getRealAnimation()).orElse(0);
 						transformSheet.readFrom(animation.getCoord().copyAll().extendsZCoord(0.6666F + chargingPower / 5.0F, 0, 2));
 					} else {
 						MoveCoordFunctions.RAW_COORD.set(animation, entitypatch, transformSheet);
@@ -2002,16 +1994,8 @@ public class Animations {
 				.addProperty(StaticAnimationProperty.POSE_MODIFIER, Animations.ReusableSources.COMBO_ATTACK_DIRECTION_MODIFIER)
 				.addProperty(StaticAnimationProperty.PLAY_SPEED_MODIFIER, (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> {
 					if (elapsedTime < 1.05F) {
-						if (entitypatch instanceof PlayerPatch<?> playerpatch) {
-							Optional<SkillContainer> skill = playerpatch.getSkillContainerFor(EpicFightSkills.STEEL_WHIRLWIND);
-							
-							if (skill.isEmpty()) {
-								return 1.0F;
-							}
-							
-							int chargingPower = SteelWhirlwindSkill.getChargingPower(skill.get());
-							return 0.6666F + chargingPower / 20.0F;
-						}
+						int chargingPower = entitypatch.getAnimator().getVariables().get(SynchedAnimationVariableKeys.CHARGING_TICKS.get(), self.getRealAnimation()).orElse(0);
+						return 0.6666F + chargingPower / 20.0F;
 					}
 					
 					return 1.0F;
