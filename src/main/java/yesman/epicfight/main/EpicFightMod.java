@@ -186,6 +186,11 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  - Splitted HUD components into multiple Forge overlays, making them hideable by event hooks
  *  
  *  ***************************************************************
+ *  
+ *  20.11.9 -> 20.11.10
+ *  Fixed "Player moved wrongly" log
+ *  
+ *  ***************************************************************
  *  Minor version changes
  *  ***************************************************************
  *  

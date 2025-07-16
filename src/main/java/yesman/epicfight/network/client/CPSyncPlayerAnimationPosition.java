@@ -34,7 +34,6 @@ public class CPSyncPlayerAnimationPosition extends SyncAnimationPositionPacket {
 			Entity entity = ctx.get().getSender().level().getEntity(msg.entityId);
 			
 			if (entity != null && entity instanceof Player player) {
-				player.absMoveTo(msg.position.x, msg.position.y, msg.position.z);
 				EpicFightNetworkManager.sendToAllPlayerTrackingThisEntity(new SPSyncAnimationPosition(entity.getId(), msg.elapsedTime, msg.position, msg.lerpSteps), player);
 			}
 		});
