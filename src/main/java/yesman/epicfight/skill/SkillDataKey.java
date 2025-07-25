@@ -74,7 +74,6 @@ public class SkillDataKey<T> {
 		return createSkillDataKey(packetCodec, defaultValue, false, skillClass);
 	}
 	
-	@Deprecated(forRemoval = true, since = "1.21.1")
 	public static <T> SkillDataKey<T> createSkillDataKey(PacketBufferCodec<T> packetCodec, T defaultValue, boolean syncronizeTrackingPlayers, Class<?>... skillClass) {
 		SkillDataKey<T> key = new SkillDataKey<T>(packetCodec, defaultValue, syncronizeTrackingPlayers);
 		

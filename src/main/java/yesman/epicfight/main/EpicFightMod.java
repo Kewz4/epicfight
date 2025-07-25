@@ -188,7 +188,18 @@ import yesman.epicfight.world.level.block.entity.EpicFightBlockEntities;
  *  ***************************************************************
  *  
  *  20.11.9 -> 20.11.10
+ *  
  *  Fixed "Player moved wrongly" log
+ *  
+ *  ***************************************************************
+ *  
+ *  20.11.10 -> 20.11.11
+ *  
+ *  Fixed the darkened trail effects when absorbing Experience orbs
+ *  Interal API changes
+ *  - The default Entity Y Rot Provider is now MOB_ATTACK_TARGET_LOOK
+ *  - Added a pose modifier that rotates according to coord bone's rotation {@link yesman.epicfight.gameasset.Animations.ReusableSources#APPLY_COORD_ROTATION}
+ *    This pose modifier should be used with {@link yesman.epicfight.gameasset.Animations.ReusableSources#SYNC_COORD_ROTATION} by on End Event
  *  
  *  ***************************************************************
  *  Minor version changes

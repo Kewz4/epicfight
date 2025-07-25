@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import com.google.common.collect.Lists;
 
@@ -1017,7 +1018,7 @@ public class Animations {
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F));
 		
 		TACHI_AUTO1 = builder.nextAccessor("biped/combat/tachi_auto1", (accessor) ->
-			new BasicAttackAnimation(0.1F, 0.35F, 0.4F, 0.5F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
+			new BasicAttackAnimation(0.1F, 0.35F, 0.4F, 0.55F, null, Armatures.BIPED.get().toolR, accessor, Armatures.BIPED)
 				.addProperty(AttackAnimationProperty.BASIS_ATTACK_SPEED, 1.2F)
 				.addProperty(AttackAnimationProperty.EXTRA_COLLIDERS, 3));
 		TACHI_AUTO2 = builder.nextAccessor("biped/combat/tachi_auto2", (accessor) ->
@@ -2371,7 +2372,6 @@ public class Animations {
 			}
 		};
 		
-		@SuppressWarnings("incomplete-switch")
 		public static final AnimationEvent.E0 UPDATE_Y_TO_NEARBY_LADDER = (entitypatch, animation, params) -> {
 			LivingEntity original = entitypatch.getOriginal();
 			BlockState bs = original.getFeetBlockState();
@@ -2484,6 +2484,15 @@ public class Animations {
 			}
 		};
 		
+		public static final AnimationEvent.E0 SYNC_COORD_ROTATION = (entitypatch, animation, params) -> {
+			animation.get().getProperty(ActionAnimationProperty.COORD).ifPresent(coordTransform -> {
+				Quaternionf rotation = coordTransform.getInterpolatedRotation(animation.get().getTotalTime());
+				Vector3f eulerAngles = rotation.getEulerAnglesYXZ(new Vector3f());
+				entitypatch.setYRotO(Mth.wrapDegrees(entitypatch.getYRot() + (float)Math.toDegrees(eulerAngles.y)));
+				entitypatch.setYRot(Mth.wrapDegrees(entitypatch.getYRot() + (float)Math.toDegrees(eulerAngles.y)));
+			});
+		};
+		
 		public static final AnimationProperty.PoseModifier COMBO_ATTACK_DIRECTION_MODIFIER = (self, pose, entitypatch, time, partialTicks) -> {
 			if (!self.isStaticAnimation() || entitypatch instanceof PlayerPatch<?> playerpatch && playerpatch.isFirstPerson()) {
 				return;
@@ -2559,6 +2568,15 @@ public class Animations {
 			shoulderR.jointLocal(JointTransform.translation(new Vec3f(0.0F, trans, -trans)), OpenMatrix4f::mul);
 			shoulderL.frontResult(JointTransform.rotation(QuaternionUtils.XP.rotationDegrees(xRot)), OpenMatrix4f::mulAsOriginInverse);
 			shoulderR.frontResult(JointTransform.rotation(QuaternionUtils.XP.rotationDegrees(xRot)), OpenMatrix4f::mulAsOriginInverse);
+		};
+		
+		public static final AnimationProperty.PoseModifier APPLY_COORD_ROTATION = (self, pose, entitypatch, elapsedTime, partialTicks) -> {
+			if (!entitypatch.getAnimator().getPlayerFor(self.getAccessor()).isEnd()) {
+				self.getProperty(ActionAnimationProperty.COORD).ifPresent(coordTransform -> {
+					Quaternionf rotation = coordTransform.getInterpolatedRotation(elapsedTime);
+					pose.get("Root").parent(JointTransform.rotation(rotation), OpenMatrix4f::mul);
+				});
+			}
 		};
 		
 		public static final AnimationProperty.PlaybackSpeedModifier CONSTANT_ONE = (self, entitypatch, speed, prevElapsedTime, elapsedTime) -> 1.0F;
