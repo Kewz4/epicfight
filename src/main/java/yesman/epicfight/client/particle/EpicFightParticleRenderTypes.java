@@ -31,7 +31,6 @@ public class EpicFightParticleRenderTypes {
 			RenderSystem.disableCull();
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
-			
 			RenderSystem.depthMask(true);
 			RenderSystem.setShader(GameRenderer::getParticleShader);
 
@@ -89,9 +88,6 @@ public class EpicFightParticleRenderTypes {
 				RenderSystem.depthMask(false);
 				RenderSystem.setShaderTexture(0, textureLocation);
 				
-				// Fix when absorbing exp orbs
-				Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
-				
 				bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
 			}
 			
@@ -140,9 +136,6 @@ public class EpicFightParticleRenderTypes {
 			RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 			RenderSystem.setShaderTexture(0, WHITE);
 			RenderSystem.setShader(GameRenderer::getParticleShader);
-			
-			// Fix when absorbing exp orbs
-			Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
 			
 			bufferbuilder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.PARTICLE);
 		}
