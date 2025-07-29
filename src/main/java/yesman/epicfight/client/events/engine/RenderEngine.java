@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -144,11 +146,11 @@ public class RenderEngine {
 	public final VersionNotifier versionNotifier;
 	public final Minecraft minecraft;
 	
-	private final Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers;
-	private final BiMap<EntityType<?>, Function<EntityType<?>, PatchedEntityRenderer>> entityRendererProvider;
-	private final Map<EntityType<?>, PatchedEntityRenderer> entityRendererCache;
-	private final Map<Item, RenderItemBase> itemRendererMapByInstance;
-	private final Map<Class<?>, RenderItemBase> itemRendererMapByClass;
+    private final Map<ResourceLocation, Function<JsonElement, RenderItemBase>> itemRenderers;
+    private final BiMap<EntityType<?>, Function<EntityType<?>, PatchedEntityRenderer>> entityRendererProvider;
+    private final ConcurrentMap<EntityType<?>, PatchedEntityRenderer> entityRendererCache;
+    private final ConcurrentMap<Item, RenderItemBase> itemRendererMapByInstance;
+    private final ConcurrentMap<Class<?>, RenderItemBase> itemRendererMapByClass;
 	private final Map<UUID, BossPatch> bossEventOwners = Maps.newHashMap();
 	private final Set<Component> sentMessages;
 	private final OverlayManager overlayManager;
@@ -169,14 +171,14 @@ public class RenderEngine {
 		this.minecraft = Minecraft.getInstance();
 		this.battleModeUI = new BattleModeGui(this.minecraft);
 		this.versionNotifier = new VersionNotifier(this.minecraft);
-		this.entityRendererProvider = HashBiMap.create();
-		this.entityRendererCache = Maps.newHashMap();
-		this.itemRendererMapByInstance = Maps.newHashMap();
-		this.itemRendererMapByClass = Maps.newHashMap();
-		this.sentMessages = Sets.newHashSet();
-		this.overlayManager = new OverlayManager();
-		
-		Map<ResourceLocation, Function<JsonElement, RenderItemBase>> builder = Maps.newHashMap();
+        this.entityRendererProvider = HashBiMap.create();
+        this.entityRendererCache = new ConcurrentHashMap<>();
+        this.itemRendererMapByInstance = new ConcurrentHashMap<>();
+        this.itemRendererMapByClass = new ConcurrentHashMap<>();
+        this.sentMessages = Sets.newHashSet();
+        this.overlayManager = new OverlayManager();
+
+        Map<ResourceLocation, Function<JsonElement, RenderItemBase>> builder = new ConcurrentHashMap<>();
 		
 		builder.put(ResourceLocation.withDefaultNamespace("base"), RenderItemBase::new);
 		builder.put(ResourceLocation.withDefaultNamespace("ranged"), RenderTwoHandedRangedWeapon::new);
